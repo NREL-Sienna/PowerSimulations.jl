@@ -3,12 +3,41 @@ const TIME1 = DateTime("2024-01-01T00:00:00")
 const SEL_INCR = make_selector(ThermalStandard, "Test Unit1")
 const SEL_DECR = make_selector(InterruptiblePowerLoad, "IloadBus4")
 const SEL_MULTISTART = make_selector(ThermalMultiStart, "115_STEAM_1")
+const DEFAULT_FORMULATIONS =
+    Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}(
+        ThermalStandard => ThermalBasicUnitCommitment,
+        PowerLoad => StaticPowerLoad,
+        InterruptiblePowerLoad => PowerLoadInterruption,
+        RenewableDispatch => RenewableFullDispatch,
+        HydroDispatch => HydroCommitmentRunOfRiver,
+        EnergyReservoirStorage => StorageDispatchWithReserves,
+    )
+
+function set_formulations!(template::ProblemTemplate,
+    sys::PSY.System,
+    device_to_formulation::Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}},
+)
+    for (device, formulation) in device_to_formulation
+        if !isempty(get_components(device, sys))
+            set_device_model!(template, device, formulation)
+        end
+    end
+    for (device, formulation) in DEFAULT_FORMULATIONS
+        if !haskey(device_to_formulation, device) && !isempty(get_components(device, sys))
+            set_device_model!(template, device, formulation)
+        end
+    end
+end
 
 function test_market_bid_cost_models(sys::PSY.System,
     test_unit::PSY.Component,
     my_no_load::Float64,
     my_initial_input::Float64;
     skip_setting = false,
+    device_to_formulation = Dict{
+        Type{<:PSY.Device},
+        Type{<:PSI.AbstractDeviceFormulation},
+    }(),
 )
     fcn_data = get_function_data(
         get_value_curve(
@@ -25,21 +54,11 @@ function test_market_bid_cost_models(sys::PSY.System,
     set_no_load_cost!(get_operation_cost(test_unit), my_no_load)
     template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
 
-    device_to_formulation = Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}(
-        ThermalStandard => ThermalBasicUnitCommitment,
-        ThermalMultiStart => ThermalMultiStartUnitCommitment,
-        PowerLoad => StaticPowerLoad,
-        InterruptiblePowerLoad => PowerLoadInterruption,
-        RenewableDispatch => RenewableFullDispatch,
-        HydroDispatch => HydroCommitmentRunOfRiver,
-        EnergyReservoirStorage => StorageDispatchWithReserves,
+    set_formulations!(
+        template,
+        sys,
+        device_to_formulation,
     )
-
-    for (device, formulation) in device_to_formulation
-        if !isempty(get_components(device, sys))
-            set_device_model!(template, device, formulation)
-        end
-    end
 
     model = DecisionModel(
         template,
@@ -551,6 +570,10 @@ end
 function build_generic_mbc_model(sys::System;
     multistart::Bool = false,
     standard::Bool = false,
+    device_to_formulation = Dict{
+        Type{<:PSY.Device},
+        Type{<:PSI.AbstractDeviceFormulation},
+    }(),
 )
     template = ProblemTemplate(
         NetworkModel(
@@ -559,24 +582,16 @@ function build_generic_mbc_model(sys::System;
         ),
     )
 
-    device_to_formulation = Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}(
-        ThermalStandard => ThermalBasicUnitCommitment,
-        ThermalMultiStart => ThermalMultiStartUnitCommitment,
-        PowerLoad => StaticPowerLoad,
-        InterruptiblePowerLoad => PowerLoadInterruption,
-        RenewableDispatch => RenewableFullDispatch,
-        HydroDispatch => HydroCommitmentRunOfRiver,
-        EnergyReservoirStorage => StorageDispatchWithReserves,
+    set_formulations!(
+        template,
+        sys,
+        device_to_formulation,
     )
-
-    for (device, formulation) in device_to_formulation
-        if standard && device == ThermalStandard
-            set_device_model!(template, device, ThermalStandardUnitCommitment)
-        elseif multistart && device == ThermalMultiStart
-            set_device_model!(template, device, ThermalMultiStartUnitCommitment)
-        elseif !isempty(get_components(device, sys))
-            set_device_model!(template, device, formulation)
-        end
+    if standard
+        set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
+    end
+    if multistart
+        set_device_model!(template, ThermalMultiStart, ThermalMultiStartUnitCommitment)
     end
 
     model = DecisionModel(
@@ -596,8 +611,17 @@ function run_generic_mbc_prob(
     standard = false,
     test_success = true,
     steps::Int = 2,
+    device_to_formulation = Dict{
+        Type{<:PSY.Device},
+        Type{<:PSI.AbstractDeviceFormulation},
+    }(),
 )
-    model = build_generic_mbc_model(sys; multistart = multistart, standard = standard)
+    model = build_generic_mbc_model(
+        sys;
+        multistart = multistart,
+        standard = standard,
+        device_to_formulation = device_to_formulation,
+    )
     build_result = build!(model; output_dir = test_path)
     test_success && @test build_result == PSI.ModelBuildStatus.BUILT
     solve_result = solve!(model)
@@ -612,9 +636,17 @@ function run_generic_mbc_sim(
     in_memory_store::Bool = false,
     standard::Bool = false,
     test_success = true,
-    steps::Int = 2,
+    device_to_formulation = Dict{
+        Type{<:PSY.Device},
+        Type{<:PSI.AbstractDeviceFormulation},
+    }(),
 )
-    model = build_generic_mbc_model(sys; multistart = multistart, standard = standard)
+    model = build_generic_mbc_model(
+        sys;
+        multistart = multistart,
+        standard = standard,
+        device_to_formulation = device_to_formulation,
+    )
     models = SimulationModels(;
         decision_models = [
             model,
@@ -629,7 +661,7 @@ function run_generic_mbc_sim(
 
     sim = Simulation(;
         name = "compact_sim",
-        steps = steps,
+        steps = 2,
         models = models,
         sequence = sequence,
         initial_time = TIME1,
@@ -1157,17 +1189,14 @@ end
 end
 
 @testset "MarketBidCost incremental ThermalStandard, no time series versus constant time series" begin
-    for i in 1:2
-        sys_no_ts = load_sys_incr()
-        set_name!(sys_no_ts, "thermal_no_ts")
-        sys_constant_ts = build_sys_incr(false, false, false)
-        set_name!(sys_constant_ts, "thermal_constant_ts")
-        test_generic_mbc_equivalence(
-            sys_no_ts,
-            sys_constant_ts;
-            steps = i,
-        )
-    end
+    sys_no_ts = load_sys_incr()
+    set_name!(sys_no_ts, "thermal_no_ts")
+    sys_constant_ts = build_sys_incr(false, false, false)
+    set_name!(sys_constant_ts, "thermal_constant_ts")
+    test_generic_mbc_equivalence(
+        sys_no_ts,
+        sys_constant_ts,
+    )
 end
 
 @testset "MarketBidCost incremental RenewableDispatch, no time series versus constant time series" begin
@@ -1419,53 +1448,48 @@ function replace_load_with_interruptible!(sys::System)
     remove_component!(sys, load1)
 end
 
-# TODO LK: time series MBC weren't handled properly--load terms were added,
-# not subtracted, from objective function--which begs the question of whether time
-# series LoadCost is handled properly
+@testset "Time series constant MBC vs fixed MBC equivalence: PowerLoadInterruption" begin
+    sys_no_ts = load_sys_incr()
+    replace_load_with_interruptible!(sys_no_ts)
+    interruptible_load = first(get_components(PSY.InterruptiblePowerLoad, sys_no_ts))
+    selector = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load))
+    add_mbc!(sys_no_ts, selector; incremental = false, decremental = true)
 
-#=
-@testset "Time series LoadCost vs fixed LoadCost equivalence" begin
-    for i in 1:2
-        sys_no_ts = load_sys_incr()
-        replace_load_with_interruptible!(sys_no_ts)
-        set_name!(sys_no_ts, "thermal_w_interruptible_no_ts")
-        interruptible_load = first(get_components(PSY.InterruptiblePowerLoad, sys_no_ts))
-        selector = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load))
-        add_load_cost!(sys_no_ts, selector)
+    sys_constant_ts = load_sys_incr()
+    replace_load_with_interruptible!(sys_constant_ts)
+    interruptible_load2 =
+        first(get_components(PSY.InterruptiblePowerLoad, sys_constant_ts))
+    selector2 = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load2))
+    add_mbc!(sys_constant_ts, selector2; incremental = false, decremental = true)
+    extend_mbc!(sys_constant_ts, selector2)
 
-        sys_constant_ts = load_sys_incr()
-        replace_load_with_interruptible!(sys_constant_ts)
-        set_name!(sys_constant_ts, "thermal_w_interruptible_constant_ts")
-        interruptible_load2 = first(get_components(PSY.InterruptiblePowerLoad, sys_constant_ts))
-        selector2 = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load2))
-        add_load_cost!(sys_constant_ts, selector2)
-        extend_load_cost!(sys_constant_ts, selector2)
-    end
-end
-=#
-
-@testset "Time series but constant MBC vs fixed MBC equivalence" begin
-    for i in 1:2
-        sys_no_ts = load_sys_incr()
-        replace_load_with_interruptible!(sys_no_ts)
-        interruptible_load = first(get_components(PSY.InterruptiblePowerLoad, sys_no_ts))
-        selector = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load))
-        add_mbc!(sys_no_ts, selector; incremental = false, decremental = true)
-
-        sys_constant_ts = load_sys_incr()
-        replace_load_with_interruptible!(sys_constant_ts)
-        interruptible_load2 =
-            first(get_components(PSY.InterruptiblePowerLoad, sys_constant_ts))
-        selector2 = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load2))
-        add_mbc!(sys_constant_ts, selector2; incremental = false, decremental = true)
-        extend_mbc!(sys_constant_ts, selector2)
-
-        test_generic_mbc_equivalence(
-            sys_no_ts,
-            sys_constant_ts;
-            steps = i,
-        )
-    end
+    test_generic_mbc_equivalence(
+        sys_no_ts,
+        sys_constant_ts,
+    )
 end
 
-# TODO LK: test PowerLoadDispatch formulation.
+@testset "Time series constant MBC vs fixed MBC equivalence: PowerLoadDispatch" begin
+    device_to_formulation = Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}(
+        PSY.InterruptiblePowerLoad => PowerLoadDispatch,
+    )
+    sys_no_ts = load_sys_incr()
+    replace_load_with_interruptible!(sys_no_ts)
+    interruptible_load = first(get_components(PSY.InterruptiblePowerLoad, sys_no_ts))
+    selector = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load))
+    add_mbc!(sys_no_ts, selector; incremental = false, decremental = true)
+
+    sys_constant_ts = load_sys_incr()
+    replace_load_with_interruptible!(sys_constant_ts)
+    interruptible_load2 =
+        first(get_components(PSY.InterruptiblePowerLoad, sys_constant_ts))
+    selector2 = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load2))
+    add_mbc!(sys_constant_ts, selector2; incremental = false, decremental = true)
+    extend_mbc!(sys_constant_ts, selector2)
+
+    test_generic_mbc_equivalence(
+        sys_no_ts,
+        sys_constant_ts;
+        device_to_formulation = device_to_formulation,
+    )
+end
