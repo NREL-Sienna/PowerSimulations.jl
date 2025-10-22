@@ -145,42 +145,7 @@ The specified constraint is formulated as:
 struct FlowLimitConstraint <: ConstraintType end
 struct FlowLimitFromToConstraint <: ConstraintType end
 struct FlowLimitToFromConstraint <: ConstraintType end
-"""
-Struct to create the constraint that set the flow limits through an HVDC two-terminal branch.
 
-For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
-
-The specified constraint is formulated as:
-
-```math
-R^\\text{min} \\le f_t \\le R^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\\}
-```
-"""
-struct FlowRateConstraint <: ConstraintType end
-"""
-Struct to create the constraint that set the flow from-to limits through an HVDC two-terminal branch.
-
-For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
-
-The specified constraint is formulated as:
-
-```math
-R^\\text{from,min} \\le f_t^\\text{from-to}  \\le R^\\text{from,max}, \\forall t \\in \\{1,\\dots, T\\}
-```
-"""
-struct FlowRateConstraintFromTo <: ConstraintType end
-"""
-Struct to create the constraint that set the flow to-from limits through an HVDC two-terminal branch.
-
-For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
-
-The specified constraint is formulated as:
-
-```math
-R^\\text{to,min} \\le f_t^\\text{to-from}  \\le R^\\text{to,max},\\quad \\forall t \\in \\{1,\\dots, T\\}
-```
-"""
-struct FlowRateConstraintToFrom <: ConstraintType end
 struct FlowReactivePowerConstraint <: ConstraintType end #not being used
 struct FlowReactivePowerFromToConstraint <: ConstraintType end #not being used
 struct FlowReactivePowerToFromConstraint <: ConstraintType end #not being used
@@ -292,7 +257,7 @@ struct PostContingencyRampConstraint <: PostContingencyConstraintType end
 struct RampLimitConstraint <: ConstraintType end
 struct RangeLimitConstraint <: ConstraintType end
 """
-Struct to create the constraint that set the AC flow limits through branches.
+Struct to create the constraint that set the AC flow limits through AC branches and HVDC two-terminal branches.
 
 For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
 
@@ -305,11 +270,12 @@ The specified constraint is formulated as:
 \\end{align*}
 ```
 """
-struct RateLimitConstraint <: ConstraintType end
+struct FlowRateConstraint <: ConstraintType end
 struct PostContingencyEmergencyRateLimitConstrain <: PostContingencyConstraintType end
-struct RateLimitConstraintFromTo <: ConstraintType end
-struct RateLimitConstraintToFrom <: ConstraintType end
+struct FlowRateConstraintFromTo <: ConstraintType end
+struct FlowRateConstraintToFrom <: ConstraintType end
 struct RegulationLimitsConstraint <: ConstraintType end
+
 """
 Struct to create the constraint for satisfying active power reserve requirements.
 For more information check [Service Formulations](@ref service_formulations).

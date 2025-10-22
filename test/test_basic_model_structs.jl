@@ -27,17 +27,6 @@ end
     ) isa NetworkModel
 end
 
-#=
-@testset "ServiceModel Tests" begin
-    @test_throws ArgumentError ServiceModel(AGC, PSI.AbstractAGCFormulation, "TestName")
-    @test_throws ArgumentError ServiceModel(
-        VariableReserve{PSY.ReserveUp},
-        PSI.AbstractReservesFormulation,
-        "TestName2",
-    )
-end
-=#
-
 @testset "Feedforward Struct Tests" begin
     ffs = [
         UpperBoundFeedforward(;

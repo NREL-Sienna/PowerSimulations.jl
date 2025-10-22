@@ -830,26 +830,6 @@ end
     psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
 end
 
-#= Test disabled due to inconsistency between the models and the data
-@testset "UC with MarketBid Cost in ThermalGenerators" begin
-    sys = PSB.build_system(PSITestSystems, "c_market_bid_cost")
-    template = get_thermal_standard_uc_template()
-    set_device_model!(
-        template,
-        DeviceModel(ThermalMultiStart, ThermalMultiStartUnitCommitment),
-    )
-    UC = DecisionModel(
-        UnitCommitmentProblem,
-        template,
-        sys;
-        optimizer = HiGHS_optimizer,
-        initialize_model = false,
-    )
-    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
-    moi_tests(UC, 38, 0, 16, 8, 16, true)
-end
-=#
-
 @testset "Solving UC Models with Linear Networks" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys5_dc = PSB.build_system(PSITestSystems, "c_sys5_dc")

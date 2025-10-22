@@ -4,7 +4,7 @@
 # construct_device!(
 #     ::OptimizationContainer,
 #     ::PSY.System,
-#     ::DeviceModel{<:PSY.ACBranch, MyNewFormulation},
+#     ::DeviceModel{<:PSY.ACTransmission, MyNewFormulation},
 #     ::Union{Type{CopperPlatePowerModel}, Type{AreaBalancePowerModel}},
 # ) = nothing
 
@@ -18,34 +18,28 @@
 # for the branch flows either in AC or DC.
 
 #! format: off
-get_variable_binary(::FlowActivePowerVariable, ::Type{<:PSY.ACBranch}, ::AbstractBranchFormulation,) = false
+get_variable_binary(::FlowActivePowerVariable, ::Type{<:PSY.ACTransmission}, ::AbstractBranchFormulation,) = false
 get_variable_binary(::PhaseShifterAngle, ::Type{PSY.PhaseShiftingTransformer}, ::AbstractBranchFormulation,) = false
 
-get_parameter_multiplier(::FixValueParameter, ::PSY.ACBranch, ::AbstractBranchFormulation) = 1.0
-get_parameter_multiplier(::LowerBoundValueParameter, ::PSY.ACBranch, ::AbstractBranchFormulation) = 1.0
-get_parameter_multiplier(::UpperBoundValueParameter, ::PSY.ACBranch, ::AbstractBranchFormulation) = 1.0
+get_parameter_multiplier(::FixValueParameter, ::PSY.ACTransmission, ::AbstractBranchFormulation) = 1.0
+get_parameter_multiplier(::LowerBoundValueParameter, ::PSY.ACTransmission, ::AbstractBranchFormulation) = 1.0
+get_parameter_multiplier(::UpperBoundValueParameter, ::PSY.ACTransmission, ::AbstractBranchFormulation) = 1.0
 
 get_variable_multiplier(::PhaseShifterAngle, d::PSY.PhaseShiftingTransformer, ::PhaseAngleControl) = 1.0/PSY.get_x(d)
 
-get_multiplier_value(::AbstractDynamicBranchRatingTimeSeriesParameter, d::PSY.ACBranch, ::StaticBranch) = 1.0/PSY.get_base_power(d)
+get_multiplier_value(::AbstractDynamicBranchRatingTimeSeriesParameter, d::PSY.ACTransmission, ::StaticBranch) = 1.0/PSY.get_base_power(d)
 
 
-get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, U}) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation} = DeviceModel(T, U)
+get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, U}) where {T <: PSY.ACTransmission, U <: AbstractBranchFormulation} = DeviceModel(T, U)
 
 #### Properties of slack variables
-get_variable_binary(::FlowActivePowerSlackUpperBound, ::Type{<:PSY.ACBranch}, ::AbstractBranchFormulation,) = false
-get_variable_binary(::FlowActivePowerSlackLowerBound, ::Type{<:PSY.ACBranch}, ::AbstractBranchFormulation,) = false
+get_variable_binary(::FlowActivePowerSlackUpperBound, ::Type{<:PSY.ACTransmission}, ::AbstractBranchFormulation,) = false
+get_variable_binary(::FlowActivePowerSlackLowerBound, ::Type{<:PSY.ACTransmission}, ::AbstractBranchFormulation,) = false
 # These two methods are defined to avoid ambiguities
-get_variable_binary(::FlowActivePowerSlackUpperBound, ::Type{<:PSY.TwoTerminalGenericHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
-get_variable_binary(::FlowActivePowerSlackLowerBound, ::Type{<:PSY.TwoTerminalGenericHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
-get_variable_binary(::HVDCPiecewiseLossVariable, ::Type{<:PSY.TwoTerminalGenericHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
-get_variable_binary(::HVDCActivePowerReceivedFromVariable, ::Type{<:PSY.TwoTerminalGenericHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
-get_variable_binary(::HVDCActivePowerReceivedToVariable, ::Type{<:PSY.TwoTerminalGenericHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = false
-get_variable_binary(::HVDCPiecewiseBinaryLossVariable, ::Type{<:PSY.TwoTerminalGenericHVDCLine}, ::AbstractTwoTerminalDCLineFormulation,) = true
-get_variable_upper_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = nothing
-get_variable_lower_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = 0.0
-get_variable_upper_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = nothing
-get_variable_lower_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACBranch, ::AbstractBranchFormulation) = 0.0
+get_variable_upper_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACTransmission, ::AbstractBranchFormulation) = nothing
+get_variable_lower_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACTransmission, ::AbstractBranchFormulation) = 0.0
+get_variable_upper_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACTransmission, ::AbstractBranchFormulation) = nothing
+get_variable_lower_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACTransmission, ::AbstractBranchFormulation) = 0.0
 get_variable_upper_bound(_, ::Vector{Any}, ::AbstractBranchFormulation) = nothing
 get_variable_lower_bound(_, ::Vector{Any}, ::AbstractBranchFormulation) = nothing
 get_variable_upper_bound(_, ::Set{PSY.ACTransmission}, ::AbstractBranchFormulation) = nothing
@@ -58,14 +52,14 @@ get_variable_lower_bound(::FlowActivePowerSlackLowerBound, ::Set{PSY.ACTransmiss
 function get_default_time_series_names(
     ::Type{U},
     ::Type{V},
-) where {U <: PSY.ACBranch, V <: AbstractBranchFormulation}
+) where {U <: PSY.ACTransmission, V <: AbstractBranchFormulation}
     return Dict{Type{<:TimeSeriesParameter}, String}()
 end
 
 function get_default_attributes(
     ::Type{U},
     ::Type{V},
-) where {U <: PSY.ACBranch, V <: AbstractBranchFormulation}
+) where {U <: PSY.ACTransmission, V <: AbstractBranchFormulation}
     return Dict{String, Any}()
 end
 #################################### Flow Variable Bounds ##################################################
@@ -79,7 +73,7 @@ function add_variables!(
     formulation::AbstractBranchFormulation,
 ) where {
     T <: AbstractACActivePowerFlow,
-    U <: PSY.ACBranch}
+    U <: PSY.ACTransmission}
     time_steps = get_time_steps(container)
     network_reduction_data = network_model.network_reduction
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
@@ -145,7 +139,7 @@ function _add_variable_to_container!(
     entry::T,
     ::Type{U},
     t,
-) where {T <: PSY.ACBranch, U <: PSY.ACBranch}
+) where {T <: PSY.ACTransmission, U <: PSY.ACTransmission}
     if isa(entry, U)
         name = PSY.get_name(entry)
         variable_container[name, t] = variable
@@ -158,7 +152,7 @@ function _add_variable_to_container!(
     double_circuit::Set{PSY.ACTransmission},
     ::Type{T},
     t,
-) where {T <: PSY.ACBranch}
+) where {T <: PSY.ACTransmission}
     for circuit in double_circuit
         if isa(circuit, T)
             name = PSY.get_name(circuit) * "_double_circuit"
@@ -173,7 +167,7 @@ function _add_variable_to_container!(
     series_chain::Vector{Any},
     type::Type{T},
     t,
-) where {T <: PSY.ACBranch}
+) where {T <: PSY.ACTransmission}
     for segment in series_chain
         _add_variable_to_container!(variable_container, variable, segment, type, t)
     end
@@ -209,7 +203,7 @@ function branch_rate_bounds!(
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{<:PM.AbstractDCPModel},
-) where {B <: PSY.ACBranch}
+) where {B <: PSY.ACTransmission}
     var = get_variable(container, FlowActivePowerVariable(), B)
     network_reduction_data = get_network_reduction(network_model)
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
@@ -236,7 +230,7 @@ function branch_rate_bounds!(
     devices::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
-) where {B <: PSY.ACBranch}
+) where {B <: PSY.ACTransmission}
     vars = [
         get_variable(container, FlowActivePowerFromToVariable(), B),
         get_variable(container, FlowActivePowerToFromVariable(), B),
@@ -479,7 +473,7 @@ end
 Min and max limits for Abstract Branch Formulation
 """
 function get_min_max_limits(
-    device::PSY.ACBranch,
+    device::PSY.ACTransmission,
     ::Type{<:ConstraintType},
     ::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
@@ -499,7 +493,7 @@ end
 
 function _get_device_dynamic_branch_rating_time_series(
     param_container::ParameterContainer,
-    device::PSY.ACBranch,
+    device::PSY.ACTransmission,
     ts_name::String,
     ts_type::DataType,
 )
@@ -515,12 +509,12 @@ Add branch rate limit constraints for ACBranch with AbstractActivePowerModel
 """
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{RateLimitConstraint},
+    cons_type::Type{FlowRateConstraint},
     ::IS.FlattenIteratorWrapper{T},
     device_model::DeviceModel{T, U},
     network_model::NetworkModel{V},
 ) where {
-    T <: PSY.ACBranch,
+    T <: PSY.ACTransmission,
     U <: AbstractBranchFormulation,
     V <: PM.AbstractActivePowerModel,
 }
@@ -530,7 +524,7 @@ function add_constraints!(
     device_names = get_branch_name_constraint_axis(
         all_branch_maps_by_type,
         T,
-        RateLimitConstraint,
+        FlowRateConstraint,
         reduced_branch_tracker,
     )
     # Possible that all constraints are handled by other types:
@@ -567,7 +561,7 @@ function add_constraints!(
         network_reduction_map = all_branch_maps_by_type[map]
         !haskey(network_reduction_map, T) && continue
         for (arc_tuple, reduction_entry) in network_reduction_map[T]
-            limits = get_min_max_limits(reduction_entry, RateLimitConstraint, U)
+            limits = get_min_max_limits(reduction_entry, FlowRateConstraint, U)
             names = _get_branch_names(reduction_entry)
             for ci_name in names
                 if ci_name in device_names
@@ -592,11 +586,11 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    ::Type{RateLimitConstraint},
+    ::Type{FlowRateConstraint},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     network_model::NetworkModel{CopperPlatePowerModel},
-) where {T <: PSY.ACBranch, U <: AbstractBranchFormulation}
+) where {T <: PSY.ACTransmission, U <: AbstractBranchFormulation}
     inter_network_branches = T[]
     for d in devices
         ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
@@ -608,7 +602,7 @@ function add_constraints!(
     if !isempty(inter_network_branches)
         add_range_constraints!(
             container,
-            RateLimitConstraint,
+            FlowRateConstraint,
             FlowActivePowerVariable,
             devices,
             model,
@@ -623,18 +617,18 @@ Add rate limit from to constraints for ACBranch with AbstractPowerModel
 """
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{RateLimitConstraintFromTo},
+    cons_type::Type{FlowRateConstraintFromTo},
     ::IS.FlattenIteratorWrapper{B},
     device_model::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{T},
-) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
+) where {B <: PSY.ACTransmission, T <: PM.AbstractPowerModel}
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     network_reduction_data = get_network_reduction(network_model)
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
     device_names = get_branch_name_constraint_axis(
         all_branch_maps_by_type,
         B,
-        RateLimitConstraintFromTo,
+        FlowRateConstraintFromTo,
         reduced_branch_tracker,
     )
     # Possible that all constraints are handled by other types:
@@ -683,18 +677,18 @@ Add rate limit to from constraints for ACBranch with AbstractPowerModel
 """
 function add_constraints!(
     container::OptimizationContainer,
-    cons_type::Type{RateLimitConstraintToFrom},
+    cons_type::Type{FlowRateConstraintToFrom},
     ::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{T},
-) where {B <: PSY.ACBranch, T <: PM.AbstractPowerModel}
+) where {B <: PSY.ACTransmission, T <: PM.AbstractPowerModel}
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     network_reduction_data = get_network_reduction(network_model)
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
     device_names = get_branch_name_constraint_axis(
         all_branch_maps_by_type,
         B,
-        RateLimitConstraintToFrom,
+        FlowRateConstraintToFrom,
         reduced_branch_tracker,
     )
     # Possible that all constraints are handled by other types:
@@ -901,7 +895,7 @@ function add_constraints!(
     devices::IS.FlattenIteratorWrapper{B},
     model::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{<:AbstractPTDFModel},
-) where {B <: PSY.ACBranch}
+) where {B <: PSY.ACTransmission}
     ptdf = get_PTDF_matrix(network_model)
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     network_reduction_data = network_model.network_reduction
@@ -1041,7 +1035,7 @@ Don't add branch flow constraints for monitored lines if formulation is StaticBr
 """
 function add_constraints!(
     ::OptimizationContainer,
-    ::Type{RateLimitConstraintFromTo},
+    ::Type{FlowRateConstraintFromTo},
     devices::IS.FlattenIteratorWrapper{T},
     model::DeviceModel{T, U},
     ::NetworkModel{V},
@@ -1178,7 +1172,7 @@ function objective_function!(
     ::IS.FlattenIteratorWrapper{T},
     device_model::DeviceModel{T, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractPowerModel},
-) where {T <: PSY.ACBranch}
+) where {T <: PSY.ACTransmission}
     if get_use_slacks(device_model)
         variable_up = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         # Use device names because there might be a network reduction
@@ -1199,7 +1193,7 @@ function objective_function!(
     ::IS.FlattenIteratorWrapper{T},
     device_model::DeviceModel{T, <:AbstractBranchFormulation},
     ::Type{<:PM.AbstractActivePowerModel},
-) where {T <: PSY.ACBranch}
+) where {T <: PSY.ACTransmission}
     if get_use_slacks(device_model)
         variable_up = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         variable_dn = get_variable(container, FlowActivePowerSlackLowerBound(), T)

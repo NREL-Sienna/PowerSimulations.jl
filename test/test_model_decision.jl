@@ -760,5 +760,5 @@ end
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
     res = OptimizationProblemResults(model)
     shortage = read_variable(res, "StorageEnergyShortageVariable__EnergyReservoirStorage")
-    # @test nrow(shortage) == 1
+    @test nrow(shortage) == 1
 end

@@ -250,6 +250,42 @@ function add_feedforward_constraints!(
     return
 end
 
+function add_feedforward_constraints!(
+    container::OptimizationContainer,
+    model::DeviceModel{T, U},
+    devices::IS.FlattenIteratorWrapper{T},
+    ff::SemiContinuousFeedforward,
+) where {T <: PSY.ThermalGen, U <: AbstractThermalFormulation}
+    parameter_type = get_default_parameter_type(ff, T)
+    time_steps = get_time_steps(container)
+    for var in get_affected_values(ff)
+        variable = get_variable(container, var)
+        axes = JuMP.axes(variable)
+        @assert issetequal(axes[1], PSY.get_name.(devices))
+        IS.@assert_op axes[2] == time_steps
+        # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
+        for d in devices
+            PSY.get_must_run(d) && continue
+            for v in variable[PSY.get_name(d), :]
+                if JuMP.has_lower_bound(v) && JuMP.lower_bound(v) > 0.0
+                    @debug "lb reset $(PSY.get_name(d))" JuMP.lower_bound(v) v _group =
+                        LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
+                    JuMP.set_lower_bound(v, 0.0)
+                end
+            end
+        end
+        _add_sc_feedforward_constraints!(
+            container,
+            FeedforwardSemiContinuousConstraint,
+            parameter_type(),
+            var,
+            devices,
+            model,
+        )
+    end
+    return
+end
+
 @doc raw"""
         ub_ff(container::OptimizationContainer,
               cons_name::Symbol,

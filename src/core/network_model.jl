@@ -190,6 +190,7 @@ function instantiate_network_model!(
     end
     if length(model.subnetworks) > 1
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
+        model.network_reduction = PNM.get_network_reduction_data(PNM.Ybus(sys))
         _assign_subnetworks_to_buses(model, sys)
     end
     return
@@ -427,7 +428,9 @@ function _assign_subnetworks_to_buses(
             end
         end
         if !bus_mapped
-            error("Bus $(PSY.summary(bus)) not mapped to any reference bus")
+            error(
+                "Bus $(PSY.summary(bus)) not mapped to any reference bus: Mapped bus number: $(mapped_bus_no)",
+            )
         end
     end
     return

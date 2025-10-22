@@ -1,5 +1,5 @@
 # TODO - series network reduction elements are currently Vector{Any} (https://github.com/NREL-Sienna/PowerNetworkMatrices.jl/issues/189)
-# When this design changes, type signatures should be updated from ::Vector{Any} throughout PSI 
+# When this design changes, type signatures should be updated from ::Vector{Any} throughout PSI
 const NETWORK_REDUCTION_MAPS =
     ["direct_branch_map", "series_branch_map", "parallel_branch_map"]
 
@@ -44,7 +44,7 @@ function _search_for_reduced_branch_variable(
     t,
 ) where {
     T <: AbstractACActivePowerFlow,
-    U <: PSY.ACBranch}
+    U <: PSY.ACTransmission}
     return (false, EMPTY_BRANCH_NAME_MATCH)
 end
 
@@ -56,7 +56,7 @@ function _search_for_reduced_branch_variable(
     t,
 ) where {
     T <: AbstractACActivePowerFlow,
-    U <: PSY.ACBranch}
+    U <: PSY.ACTransmission}
     return (false, EMPTY_BRANCH_NAME_MATCH)
 end
 
@@ -68,7 +68,7 @@ function _search_for_reduced_branch_variable(
     t::Int,
 ) where {
     T <: AbstractACActivePowerFlow,
-    U <: PSY.ACBranch}
+    U <: PSY.ACTransmission}
     reduced_branch_variable_tracker = get_variable_dict(reduction_tracker)
     for segment in series_chain
         segment_type = _get_segment_type(segment)
@@ -156,7 +156,7 @@ function _add_to_variable_tracker!(
     level_3_map[t] = variable
     return
 end
-_get_segment_type(::T) where {T <: PSY.ACBranch} = T
+_get_segment_type(::T) where {T <: PSY.ACTransmission} = T
 _get_segment_type(tfw_tuple::Tuple{PSY.ThreeWindingTransformer, Int}) =
     typeof(first(tfw_tuple))
 _get_segment_type(x::Set) = typeof(first(x))
@@ -166,7 +166,7 @@ function get_branch_name_constraint_axis(
     ::Type{T},
     ::Type{U},
     reduction_tracker::BranchReductionOptimizationTracker,
-) where {T <: PSY.ACBranch, U <: ISOPT.ConstraintType}
+) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
     name_axis = Vector{String}()
     for map_name in NETWORK_REDUCTION_MAPS
         map = all_branch_maps_by_type[map_name]
@@ -181,7 +181,7 @@ end
 function get_branch_name_variable_axis(
     all_branch_maps_by_type::Dict,
     ::Type{T},
-) where {T <: PSY.ACBranch}
+) where {T <: PSY.ACTransmission}
     name_axis = Vector{String}()
     for map_name in NETWORK_REDUCTION_MAPS
         !(_has_keys_nested(all_branch_maps_by_type, [map_name, T])) && continue
@@ -201,7 +201,7 @@ function _add_names_to_axis!(
     name_axis::Vector{String},
     entry::T,
     ::Type{T},
-) where {T <: PSY.ACBranch}
+) where {T <: PSY.ACTransmission}
     push!(name_axis, PSY.get_name(entry))
     return
 end
@@ -210,7 +210,7 @@ function _add_names_to_axis!(
     name_axis,
     entry::Set,
     ::Type{T},
-) where {T <: PSY.ACBranch}
+) where {T <: PSY.ACTransmission}
     for branch in entry
         name = PSY.get_name(branch) * "_double_circuit"
         _add_names_to_axis!(name_axis, name)
@@ -222,7 +222,7 @@ function _add_names_to_axis!(
     name_axis,
     entry::Vector{Any},
     ::Type{T},
-) where {T <: PSY.ACBranch}
+) where {T <: PSY.ACTransmission}
     for segment in entry
         # Need to check type because a series chain could have elements of different types:
         if _get_segment_type(segment) == T
@@ -237,7 +237,7 @@ function has_existing_constraint(
     ::Type{T},
     ::Type{U},
     reduction_tracker::BranchReductionOptimizationTracker,
-) where {T <: PSY.ACBranch, U <: ISOPT.ConstraintType}
+) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
     reduced_branch_constraint_tracker = get_constraint_dict(reduction_tracker)
     rb1 = get!(
         reduced_branch_constraint_tracker,
@@ -255,7 +255,7 @@ function _add_names_to_axis!(
     ::Type{T},
     ::Type{U},
     ::BranchReductionOptimizationTracker,
-) where {T <: PSY.ACBranch, U <: ISOPT.ConstraintType}
+) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
     push!(name_axis, PSY.get_name(entry))
     return
 end
@@ -267,7 +267,7 @@ function _add_names_to_axis!(
     ::Type{T},
     ::Type{U},
     ::BranchReductionOptimizationTracker,
-) where {T <: PSY.ACBranch, U <: ISOPT.ConstraintType}
+) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
     modeled_circuit = first(entry)
     name = PSY.get_name(modeled_circuit) * "_double_circuit"
     _add_names_to_axis!(name_axis, name)
@@ -280,7 +280,7 @@ function _add_names_to_axis!(
     x::Type{T},
     y::Type{U},
     reduction_tracker::BranchReductionOptimizationTracker,
-) where {T <: PSY.ACBranch, U <: ISOPT.ConstraintType}
+) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
     constraint_added = false
     branch_names_in_d2_chain = _get_branch_names(entry)
     reduced_branch_constraint_tracker = get_constraint_dict(reduction_tracker)
@@ -316,7 +316,7 @@ function _add_names_to_axis!(
     return
 end
 
-function _get_branch_names(entry::T) where {T <: PSY.ACBranch}
+function _get_branch_names(entry::T) where {T <: PSY.ACTransmission}
     return [PSY.get_name(entry)]
 end
 

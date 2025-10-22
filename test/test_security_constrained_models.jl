@@ -6,8 +6,8 @@
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
         PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstrain, PSY.Line, "lb"),
@@ -125,8 +125,8 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
         PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstrain, PSY.Line, "lb"),
@@ -275,8 +275,8 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
         PSI.ConstraintKey(PostContingencyEmergencyRateLimitConstrain, PSY.Line, "lb"),

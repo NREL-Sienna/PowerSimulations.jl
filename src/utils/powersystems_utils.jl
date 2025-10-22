@@ -44,6 +44,9 @@ function get_available_components(
     end
 end
 
+_filter_function(x::PSY.ACBus) =
+    PSY.get_bustype(x) != PSY.ACBusTypes.ISOLATED && PSY.get_available(x)
+
 function get_available_components(
     model::NetworkModel,
     ::Type{PSY.ACBus},
@@ -51,7 +54,7 @@ function get_available_components(
 )
     subsystem = get_subsystem(model)
     return PSY.get_components(
-        x -> PSY.get_bustype(x) != PSY.ACBusTypes.ISOLATED,
+        _filter_function,
         PSY.ACBus,
         sys;
         subsystem_name = subsystem,
@@ -88,7 +91,7 @@ make_system_filename(sys::PSY.System) = make_system_filename(IS.get_uuid(sys))
 make_system_filename(sys_uuid::Union{Base.UUID, AbstractString}) = "system-$(sys_uuid).json"
 
 function check_hvdc_line_limits_consistency(
-    d::Union{PSY.TwoTerminalGenericHVDCLine, PSY.TModelHVDCLine},
+    d::Union{PSY.TwoTerminalHVDC, PSY.TModelHVDCLine},
 )
     from_min = PSY.get_active_power_limits_from(d).min
     to_min = PSY.get_active_power_limits_to(d).min
@@ -111,7 +114,7 @@ function check_hvdc_line_limits_consistency(
     return
 end
 
-function check_hvdc_line_limits_unidirectional(d::PSY.TwoTerminalGenericHVDCLine)
+function check_hvdc_line_limits_unidirectional(d::PSY.TwoTerminalHVDC)
     from_min = PSY.get_active_power_limits_from(d).min
     to_min = PSY.get_active_power_limits_to(d).min
     from_max = PSY.get_active_power_limits_from(d).max
