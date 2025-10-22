@@ -92,7 +92,13 @@ function verify_market_bid_cost_models(sys::PSY.System,
     component_df = @rsubset(expr, :name == get_name(test_unit))
     var_unit_cost =
         only(@combine(component_df, :var_unit_cost = sum(:value)).var_unit_cost)
-    @test isapprox(var_unit_cost, cost_reference; atol = 1)
+    unit_cost_due_to_initial =
+        nrow(@rsubset(component_df, :value != 0)) * my_initial_input
+    @test isapprox(
+        var_unit_cost,
+        cost_reference + unit_cost_due_to_initial;
+        atol = 1,
+    )
 end
 
 @testset "Test Thermal Generation MarketBidCost models" begin
