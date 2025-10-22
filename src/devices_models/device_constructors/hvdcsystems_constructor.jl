@@ -57,44 +57,20 @@ function construct_device!(
     # Add Power Variable
     add_variables!(container, ActivePowerVariable, devices, QuadraticLossConverter()) # p_c^{ac}
     #add_variables!(container, ConverterDCPower, devices, QuadraticLossConverter()) # p_c
-    add_variables!(container, ConverterPowerDirection, devices, QuadraticLossConverter()) #κ
-    # Add Current Variables: i, δ^i, z^i, i+, i-
+    #add_variables!(container, ConverterPowerDirection, devices, QuadraticLossConverter()) #κ
+    # Add Current Variables: i, i+, i-
     add_variables!(container, ConverterCurrent, devices, QuadraticLossConverter()) # i
     add_variables!(container, SquaredConverterCurrent, devices, QuadraticLossConverter()) # i^sq
-    add_variables!(
-        container,
-        InterpolationSquaredCurrentVariable,
-        devices,
-        QuadraticLossConverter(),
-    ) # δ^i
-    add_variables!(
-        container,
-        InterpolationBinarySquaredCurrentVariable,
-        devices,
-        QuadraticLossConverter(),
-    ) #  z^i
-    add_variables!(container, ConverterPositiveCurrent, devices, QuadraticLossConverter()) # i^+
-    add_variables!(container, ConverterNegativeCurrent, devices, QuadraticLossConverter()) # i^- 
-    add_variables!(
-        container,
-        ConverterBinaryAbsoluteValueCurrent,
-        devices,
-        QuadraticLossConverter(),
-    ) # ν
-    # Add Voltage Variables: v^sq, δ^v, z^v
+    #add_variables!(container, ConverterPositiveCurrent, devices, QuadraticLossConverter()) # i^+
+    #add_variables!(container, ConverterNegativeCurrent, devices, QuadraticLossConverter()) # i^- 
+    #add_variables!(
+    #    container,
+    #    ConverterBinaryAbsoluteValueCurrent,
+    #    devices,
+    #    QuadraticLossConverter(),
+    #) # ν
+    # Add Voltage Variables: v^sq
     add_variables!(container, SquaredDCVoltage, devices, QuadraticLossConverter())
-    add_variables!(
-        container,
-        InterpolationSquaredVoltageVariable,
-        devices,
-        QuadraticLossConverter(),
-    ) # δ^v
-    add_variables!(
-        container,
-        InterpolationBinarySquaredVoltageVariable,
-        devices,
-        QuadraticLossConverter(),
-    ) # z^v
     # Add Bilinear Variables: γ, γ^{sq}
     add_variables!(
         container,
@@ -108,18 +84,34 @@ function construct_device!(
         devices,
         QuadraticLossConverter(),
     ) # γ^{sq}
-    add_variables!(
-        container,
-        InterpolationSquaredBilinearVariable,
-        devices,
-        QuadraticLossConverter(),
-    ) # δ^γ
-    add_variables!(
-        container,
-        InterpolationBinarySquaredBilinearVariable,
-        devices,
-        QuadraticLossConverter(),
-    ) # z^γ
+
+    #### Add Interpolation Variables ####
+
+    v_segments = PSI.get_attribute(model, "voltage_segments")
+    i_segments = PSI.get_attribute(model, "current_segments")
+    γ_segments = PSI.get_attribute(model, "bilinear_segments")
+
+    vars_vector = [
+        # Voltage v #
+        (InterpolationSquaredVoltageVariable, v_segments), # δ^v
+        (InterpolationBinarySquaredVoltageVariable, v_segments), # z^v
+        # Current i #
+        (InterpolationSquaredCurrentVariable, i_segments), # δ^i
+        (InterpolationBinarySquaredCurrentVariable, i_segments), # z^i
+        # Bilinear γ #
+        (InterpolationSquaredBilinearVariable, γ_segments), # δ^γ
+        (InterpolationBinarySquaredBilinearVariable, γ_segments), # z^γ
+    ]
+
+    for (T, len_segments) in vars_vector
+        add_sparse_pwl_interpolation_variables!(
+            container,
+            T(),
+            devices,
+            model,
+            len_segments,
+        )
+    end
 
     #####################
     #### Expressions ####
@@ -174,6 +166,27 @@ function construct_device!(
     add_constraints!(
         container,
         ConverterMcCormickEnvelopes,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        InterpolationVoltageConstraints,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        InterpolationCurrentConstraints,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        InterpolationBilinearConstraints,
         devices,
         model,
         network_model,
