@@ -356,6 +356,9 @@ export NodalBalanceCurrentConstraint
 export DCLineCurrentConstraint
 export ConverterPowerCalculationConstraint
 export ConverterMcCormickEnvelopes
+export InterpolationVoltageConstraints
+export InterpolationCurrentConstraints
+export InterpolationBilinearConstraints
 
 # Parameters
 # Time Series Parameters
@@ -660,6 +663,7 @@ include("devices_models/devices/common/add_constraint_dual.jl")
 include("devices_models/devices/common/rateofchange_constraints.jl")
 include("devices_models/devices/common/duration_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
+include("devices_models/devices/common/add_pwl_methods.jl")
 
 # Device Modeling components
 include("devices_models/devices/default_interface_methods.jl")
