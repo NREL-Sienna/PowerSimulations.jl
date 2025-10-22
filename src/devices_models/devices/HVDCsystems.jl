@@ -124,26 +124,51 @@ get_variable_binary(::ConverterPositiveCurrent, ::Type{PSY.InterconnectingConver
 get_variable_binary(::ConverterNegativeCurrent, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
 get_variable_binary(::ConverterBinaryAbsoluteValueCurrent, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = true
 get_variable_binary(::SquaredConverterCurrent, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
-get_variable_binary(::InterpolationSquaredCurrentVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
-get_variable_binary(::InterpolationBinarySquaredCurrentVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = true
 get_variable_binary(::SquaredDCVoltage, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
-get_variable_binary(::InterpolationSquaredVoltageVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
-get_variable_binary(::InterpolationBinarySquaredVoltageVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = true
 get_variable_binary(::AuxBilinearConverterVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
 get_variable_binary(::AuxBilinearSquaredConverterVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
-get_variable_binary(::InterpolationSquaredBilinearVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
-get_variable_binary(::InterpolationBinarySquaredBilinearVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = true
+function get_variable_binary(
+    ::W,
+    ::Type{PSY.InterconnectingConverter},
+    ::AbstractConverterFormulation
+) where W <: InterpolationVariableType
+    return false
+end
+function get_variable_binary(
+    ::W,
+    ::Type{PSY.InterconnectingConverter},
+    ::AbstractConverterFormulation
+) where W <: BinaryInterpolationVariableType
+    return true
+end
+
 
 ### Warm Start ###
 get_variable_warm_start_value(::ConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_dc_current(d)
 
 ### Lower Bounds ###
 get_variable_lower_bound(::ConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = -PSY.get_max_dc_current(d)
+get_variable_lower_bound(::SquaredConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = 0.0
+get_variable_lower_bound(::SquaredDCVoltage, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_voltage_limits(d.dc_bus).min^2
+get_variable_lower_bound(::InterpolationVariableType, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = 0.0
 
 ### Upper Bounds ###
 get_variable_upper_bound(::ConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_max_dc_current(d)
+get_variable_upper_bound(::SquaredConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_max_dc_current(d)^2
+get_variable_upper_bound(::SquaredDCVoltage, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_voltage_limits(d.dc_bus).max^2
+get_variable_upper_bound(::InterpolationVariableType, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = 1.0
 
 
+function get_default_attributes(
+    ::Type{PSY.InterconnectingConverter},
+    ::Type{QuadraticLossConverter},
+)
+    return Dict{String, Any}(
+        "voltage_segments" => 3,
+        "current_segments" => 6,
+        "bilinear_segments" => 10,
+    )
+end
 
 #! format: on
 
@@ -570,13 +595,23 @@ function add_constraints!(
             meta = "aux",
         )
 
-    # TODO Loss
-    loss = 0.0
     for device in devices
         name = PSY.get_name(device)
         dc_bus_name = PSY.get_name(PSY.get_dc_bus(device))
+        loss_function = PSY.get_loss_function(device)
+        if isa(loss_function, PSY.QuadraticCurve)
+            a = PSY.get_quadratic_term(loss_function)
+            b = PSY.get_proportional_term(loss_function)
+            c = PSY.get_constant_term(loss_function)
+        else
+            a = 0.0
+            b = PSY.get_proportional_term(loss_function)
+            c = PSY.get_constant_term(loss_function)
+        end
         for t in time_steps
             # p_ac = p_dc + loss, where p_dc = v_dc * i_dc = 0.5 * (bilinear - v_dc^2 - i_dc^2)
+            # TODO: fully implement loss linear term using absolute value of current
+            loss = -a * var_sq_current[name, t] - c
             constraint[name, t] = JuMP.@constraint(
                 get_jump_model(container),
                 var_ac_power[name, t] ==
@@ -682,6 +717,122 @@ function add_constraints!(
             )
         end
     end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    model::DeviceModel{U, V},
+    ::NetworkModel{<:PM.AbstractPowerModel},
+) where {
+    T <: InterpolationVoltageConstraints,
+    U <: PSY.InterconnectingConverter,
+    V <: QuadraticLossConverter,
+}
+    dic_var_bkpts = Dict{String, Vector{Float64}}()
+    dic_function_bkpts = Dict{String, Vector{Float64}}()
+    num_segments = get_attribute(model, "voltage_segments")
+    for d in devices
+        name = PSY.get_name(d)
+        vmin, vmax = PSY.get_voltage_limits(d.dc_bus)
+        var_bkpts, function_bkpts =
+            _get_breakpoints_for_pwl_function(vmin, vmax, x -> x^2; num_segments)
+        dic_var_bkpts[name] = var_bkpts
+        dic_function_bkpts[name] = function_bkpts
+    end
+
+    _add_generic_incremental_interpolation_constraint!(
+        container,
+        DCVoltage(),
+        SquaredDCVoltage(),
+        InterpolationSquaredVoltageVariable(),
+        InterpolationBinarySquaredVoltageVariable(),
+        InterpolationVoltageConstraints(),
+        devices,
+        dic_var_bkpts,
+        dic_function_bkpts,
+    )
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    model::DeviceModel{U, V},
+    ::NetworkModel{<:PM.AbstractPowerModel},
+) where {
+    T <: InterpolationCurrentConstraints,
+    U <: PSY.InterconnectingConverter,
+    V <: QuadraticLossConverter,
+}
+    dic_var_bkpts = Dict{String, Vector{Float64}}()
+    dic_function_bkpts = Dict{String, Vector{Float64}}()
+    num_segments = get_attribute(model, "current_segments")
+    for d in devices
+        name = PSY.get_name(d)
+        Imax = PSY.get_max_dc_current(d)
+        Imin = -Imax
+        var_bkpts, function_bkpts =
+            _get_breakpoints_for_pwl_function(Imin, Imax, x -> x^2; num_segments)
+        dic_var_bkpts[name] = var_bkpts
+        dic_function_bkpts[name] = function_bkpts
+    end
+
+    _add_generic_incremental_interpolation_constraint!(
+        container,
+        ConverterCurrent(),
+        SquaredConverterCurrent(),
+        InterpolationSquaredCurrentVariable(),
+        InterpolationBinarySquaredCurrentVariable(),
+        InterpolationCurrentConstraints(),
+        devices,
+        dic_var_bkpts,
+        dic_function_bkpts,
+    )
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    model::DeviceModel{U, V},
+    ::NetworkModel{<:PM.AbstractPowerModel},
+) where {
+    T <: InterpolationBilinearConstraints,
+    U <: PSY.InterconnectingConverter,
+    V <: QuadraticLossConverter,
+}
+    dic_var_bkpts = Dict{String, Vector{Float64}}()
+    dic_function_bkpts = Dict{String, Vector{Float64}}()
+    num_segments = get_attribute(model, "bilinear_segments")
+    for d in devices
+        name = PSY.get_name(d)
+        vmin, vmax = PSY.get_voltage_limits(d.dc_bus)
+        Imax = PSY.get_max_dc_current(d)
+        Imin = -Imax
+        γ_min = vmin * Imin
+        γ_max = vmax * Imax
+        var_bkpts, function_bkpts =
+            _get_breakpoints_for_pwl_function(γ_min, γ_max, x -> x^2; num_segments)
+        dic_var_bkpts[name] = var_bkpts
+        dic_function_bkpts[name] = function_bkpts
+    end
+
+    _add_generic_incremental_interpolation_constraint!(
+        container,
+        AuxBilinearConverterVariable(),
+        AuxBilinearSquaredConverterVariable(),
+        InterpolationSquaredBilinearVariable(),
+        InterpolationBinarySquaredBilinearVariable(),
+        InterpolationBilinearConstraints(),
+        devices,
+        dic_var_bkpts,
+        dic_function_bkpts,
+    )
     return
 end
 
