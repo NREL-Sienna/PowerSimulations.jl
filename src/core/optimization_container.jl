@@ -696,6 +696,11 @@ function initialize_hvdc_system!(
     dc_model::Nothing,
     system::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
+    dc_buses = get_available_components(network_model, PSY.DCBus, system)
+    if !isempty(dc_buses)
+        @warn "HVDC Network Model is set to 'Nothing' but DC Buses are present in the system. \
+               Consider adding an HVDC Network Model or removing DC Buses from the system."
+    end
     return
 end
 
