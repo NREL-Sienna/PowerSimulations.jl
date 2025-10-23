@@ -359,6 +359,8 @@ export ConverterMcCormickEnvelopes
 export InterpolationVoltageConstraints
 export InterpolationCurrentConstraints
 export InterpolationBilinearConstraints
+export ConverterLossConstraint
+export CurrentAbsoluteValueConstraint
 
 # Parameters
 # Time Series Parameters

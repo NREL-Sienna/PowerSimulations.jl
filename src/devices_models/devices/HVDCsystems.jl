@@ -46,6 +46,7 @@ get_variable_binary(::DCLineCurrent, ::Type{PSY.TModelHVDCLine}, ::AbstractBranc
 get_variable_warm_start_value(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = PSY.get_active_power_flow(d)
 get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = _get_flow_bounds(d)[1]
 get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = _get_flow_bounds(d)[2]
+
 # This is an approximation for DC lines since the actual current limit depends on the voltage, that is a variable in the optimization problem
 function get_variable_lower_bound(::DCLineCurrent, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation)
     p_min_flow = _get_flow_bounds(d)[1]
@@ -118,11 +119,12 @@ end
 ############################################
 
 ## Binaries ###
+get_variable_binary(::ConverterDCPower, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
 get_variable_binary(::ConverterPowerDirection, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = true
 get_variable_binary(::ConverterCurrent, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
 get_variable_binary(::ConverterPositiveCurrent, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
 get_variable_binary(::ConverterNegativeCurrent, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
-get_variable_binary(::ConverterBinaryAbsoluteValueCurrent, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = true
+get_variable_binary(::ConverterCurrentDirection, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = true
 get_variable_binary(::SquaredConverterCurrent, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
 get_variable_binary(::SquaredDCVoltage, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
 get_variable_binary(::AuxBilinearConverterVariable, ::Type{PSY.InterconnectingConverter}, ::AbstractConverterFormulation) = false
@@ -147,16 +149,22 @@ end
 get_variable_warm_start_value(::ConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_dc_current(d)
 
 ### Lower Bounds ###
+get_variable_lower_bound(::ConverterDCPower, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_active_power_limits(d).min
 get_variable_lower_bound(::ConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = -PSY.get_max_dc_current(d)
 get_variable_lower_bound(::SquaredConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = 0.0
 get_variable_lower_bound(::SquaredDCVoltage, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_voltage_limits(d.dc_bus).min^2
 get_variable_lower_bound(::InterpolationVariableType, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = 0.0
+get_variable_lower_bound(::ConverterPositiveCurrent, d::PSY.InterconnectingConverter,::AbstractConverterFormulation) = 0.0
+get_variable_lower_bound(::ConverterNegativeCurrent, d::PSY.InterconnectingConverter,::AbstractConverterFormulation) = 0.0
 
 ### Upper Bounds ###
+get_variable_upper_bound(::ConverterDCPower, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_active_power_limits(d).max
 get_variable_upper_bound(::ConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_max_dc_current(d)
 get_variable_upper_bound(::SquaredConverterCurrent, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_max_dc_current(d)^2
 get_variable_upper_bound(::SquaredDCVoltage, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = PSY.get_voltage_limits(d.dc_bus).max^2
 get_variable_upper_bound(::InterpolationVariableType, d::PSY.InterconnectingConverter, ::AbstractConverterFormulation) = 1.0
+get_variable_upper_bound(::ConverterPositiveCurrent, d::PSY.InterconnectingConverter,::AbstractConverterFormulation) = PSY.get_max_dc_current(d)
+get_variable_upper_bound(::ConverterNegativeCurrent, d::PSY.InterconnectingConverter,::AbstractConverterFormulation) = PSY.get_max_dc_current(d)
 
 
 function get_default_attributes(
@@ -167,6 +175,7 @@ function get_default_attributes(
         "voltage_segments" => 3,
         "current_segments" => 6,
         "bilinear_segments" => 10,
+        "use_linear_loss" => true,
     )
 end
 
@@ -575,7 +584,7 @@ function add_constraints!(
     var_sq_voltage = get_variable(container, SquaredDCVoltage(), U)
     var_bilinear = get_variable(container, AuxBilinearConverterVariable(), U)
     var_sq_bilinear = get_variable(container, AuxBilinearSquaredConverterVariable(), U)
-    var_ac_power = get_variable(container, ActivePowerVariable(), U)
+    var_dc_power = get_variable(container, ConverterDCPower(), U)
     ipc_names = axes(varcurrent, 1)
     constraint =
         add_constraints_container!(
@@ -598,27 +607,15 @@ function add_constraints!(
     for device in devices
         name = PSY.get_name(device)
         dc_bus_name = PSY.get_name(PSY.get_dc_bus(device))
-        loss_function = PSY.get_loss_function(device)
-        if isa(loss_function, PSY.QuadraticCurve)
-            a = PSY.get_quadratic_term(loss_function)
-            b = PSY.get_proportional_term(loss_function)
-            c = PSY.get_constant_term(loss_function)
-        else
-            a = 0.0
-            b = PSY.get_proportional_term(loss_function)
-            c = PSY.get_constant_term(loss_function)
-        end
         for t in time_steps
-            # p_ac = p_dc + loss, where p_dc = v_dc * i_dc = 0.5 * (bilinear - v_dc^2 - i_dc^2)
-            # TODO: fully implement loss linear term using absolute value of current
-            loss = -a * var_sq_current[name, t] - c
+            # p_dc = v_dc * i_dc = 0.5 * (bilinear - v_dc^2 - i_dc^2)
             constraint[name, t] = JuMP.@constraint(
                 get_jump_model(container),
-                var_ac_power[name, t] ==
+                var_dc_power[name, t] ==
                 0.5 * (
                     var_sq_bilinear[name, t] - var_sq_voltage[name, t] -
                     var_sq_current[name, t]
-                ) + loss
+                )
             )
             constraint_aux[name, t] = JuMP.@constraint(
                 get_jump_model(container),
@@ -644,7 +641,7 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     varcurrent = get_variable(container, ConverterCurrent(), U)
     var_dcvoltage = get_variable(container, DCVoltage(), PSY.DCBus)
-    var_dc_power = get_variable(container, ActivePowerVariable(), U)
+    var_dc_power = get_variable(container, ConverterDCPower(), U)
     ipc_names = axes(varcurrent, 1)
     constraint1_under =
         add_constraints_container!(
@@ -714,6 +711,134 @@ function add_constraints!(
                 var_dc_power[name, t] <=
                 V_min * varcurrent[name, t] + var_dcvoltage[dc_bus_name, t] * I_max -
                 I_max * V_min
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{ConverterLossConstraint},
+    devices::IS.FlattenIteratorWrapper{U},
+    model::DeviceModel{U, V},
+    network_model::NetworkModel{X},
+) where {
+    U <: PSY.InterconnectingConverter,
+    V <: QuadraticLossConverter,
+    X <: PM.AbstractActivePowerModel,
+}
+    time_steps = get_time_steps(container)
+    var_sq_current = get_variable(container, SquaredConverterCurrent(), U)
+    var_ac_power = get_variable(container, ActivePowerVariable(), U)
+    var_dc_power = get_variable(container, ConverterDCPower(), U)
+    ipc_names = axes(var_sq_current, 1)
+    constraint =
+        add_constraints_container!(
+            container,
+            ConverterLossConstraint(),
+            U,
+            ipc_names,
+            time_steps,
+        )
+
+    use_linear_loss = PSI.get_attribute(model, "use_linear_loss")
+    if use_linear_loss
+        pos_current = get_variable(container, ConverterPositiveCurrent(), U)
+        neg_current = get_variable(container, ConverterNegativeCurrent(), U)
+    end
+
+    for device in devices
+        name = PSY.get_name(device)
+        loss_function = PSY.get_loss_function(device)
+        if isa(loss_function, PSY.QuadraticCurve)
+            a = PSY.get_quadratic_term(loss_function)
+            b = PSY.get_proportional_term(loss_function)
+            c = PSY.get_constant_term(loss_function)
+        else
+            a = 0.0
+            b = PSY.get_proportional_term(loss_function)
+            c = PSY.get_constant_term(loss_function)
+        end
+        for t in time_steps
+            if use_linear_loss
+                loss =
+                    a * var_sq_current[name, t] +
+                    b * (pos_current[name, t] + neg_current[name, t]) + c
+            else
+                loss = a * var_sq_current[name, t] + c
+            end
+            constraint[name, t] = JuMP.@constraint(
+                get_jump_model(container),
+                var_ac_power[name, t] == var_dc_power[name, t] - loss
+            )
+        end
+    end
+    return
+end
+
+function add_constraints!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::IS.FlattenIteratorWrapper{U},
+    ::DeviceModel{U, V},
+    ::NetworkModel{<:PM.AbstractPowerModel},
+) where {
+    T <: CurrentAbsoluteValueConstraint,
+    U <: PSY.InterconnectingConverter,
+    V <: QuadraticLossConverter,
+}
+    time_steps = get_time_steps(container)
+    names = [PSY.get_name(d) for d in devices]
+    JuMPmodel = get_jump_model(container)
+    # current vars #
+    current_var = get_variable(container, ConverterCurrent(), U) # From direction
+    current_var_pos = get_variable(container, ConverterPositiveCurrent(), U) # From direction
+    current_var_neg = get_variable(container, ConverterNegativeCurrent(), U) # From direction
+    current_dir = get_variable(container, ConverterCurrentDirection(), U)
+
+    constraint =
+        add_constraints_container!(
+            container,
+            CurrentAbsoluteValueConstraint(),
+            U,
+            names,
+            time_steps,
+        )
+    constraint_pos_ub =
+        add_constraints_container!(
+            container,
+            CurrentAbsoluteValueConstraint(),
+            U,
+            names,
+            time_steps;
+            meta = "pos_ub",
+        )
+    constraint_neg_ub =
+        add_constraints_container!(
+            container,
+            CurrentAbsoluteValueConstraint(),
+            U,
+            names,
+            time_steps;
+            meta = "neg_ub",
+        )
+
+    for d in devices
+        name = PSY.get_name(d)
+        I_max = PSY.get_max_dc_current(d)
+        for t in time_steps
+            constraint[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                current_var[name, t] == current_var_pos[name, t] - current_var_neg[name, t]
+            )
+            constraint_pos_ub[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                current_var_pos[name, t] <= I_max * current_dir[name, t]
+            )
+            constraint_neg_ub[name, t] = JuMP.@constraint(
+                JuMPmodel,
+                current_var_neg[name, t] <= I_max * (1 - current_dir[name, t])
             )
         end
     end

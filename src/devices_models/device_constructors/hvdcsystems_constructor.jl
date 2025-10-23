@@ -56,19 +56,31 @@ function construct_device!(
 
     # Add Power Variable
     add_variables!(container, ActivePowerVariable, devices, QuadraticLossConverter()) # p_c^{ac}
-    #add_variables!(container, ConverterDCPower, devices, QuadraticLossConverter()) # p_c
-    #add_variables!(container, ConverterPowerDirection, devices, QuadraticLossConverter()) #κ
+    add_variables!(container, ConverterDCPower, devices, QuadraticLossConverter()) # p_c
     # Add Current Variables: i, i+, i-
     add_variables!(container, ConverterCurrent, devices, QuadraticLossConverter()) # i
     add_variables!(container, SquaredConverterCurrent, devices, QuadraticLossConverter()) # i^sq
-    #add_variables!(container, ConverterPositiveCurrent, devices, QuadraticLossConverter()) # i^+
-    #add_variables!(container, ConverterNegativeCurrent, devices, QuadraticLossConverter()) # i^- 
-    #add_variables!(
-    #    container,
-    #    ConverterBinaryAbsoluteValueCurrent,
-    #    devices,
-    #    QuadraticLossConverter(),
-    #) # ν
+    use_linear_loss = PSI.get_attribute(model, "use_linear_loss")
+    if use_linear_loss
+        add_variables!(
+            container,
+            ConverterPositiveCurrent,
+            devices,
+            QuadraticLossConverter(),
+        ) # i^+
+        add_variables!(
+            container,
+            ConverterNegativeCurrent,
+            devices,
+            QuadraticLossConverter(),
+        ) # i^- 
+        add_variables!(
+            container,
+            ConverterCurrentDirection,
+            devices,
+            QuadraticLossConverter(),
+        ) # ν
+    end
     # Add Voltage Variables: v^sq
     add_variables!(container, SquaredDCVoltage, devices, QuadraticLossConverter())
     # Add Bilinear Variables: γ, γ^{sq}
@@ -156,13 +168,6 @@ function construct_device!(
         model,
         network_model,
     )
-    #add_constraints!(
-    #    container,
-    #    ConverterDirectionConstraint,
-    #    devices,
-    #    model,
-    #    network_model,
-    #)
     add_constraints!(
         container,
         ConverterMcCormickEnvelopes,
@@ -170,6 +175,23 @@ function construct_device!(
         model,
         network_model,
     )
+    add_constraints!(
+        container,
+        ConverterLossConstraint,
+        devices,
+        model,
+        network_model,
+    )
+    use_linear_loss = PSI.get_attribute(model, "use_linear_loss")
+    if use_linear_loss
+        add_constraints!(
+            container,
+            CurrentAbsoluteValueConstraint,
+            devices,
+            model,
+            network_model,
+        )
+    end
     add_constraints!(
         container,
         InterpolationVoltageConstraints,
