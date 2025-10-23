@@ -233,7 +233,7 @@ struct ConverterNegativeCurrent <: VariableType end
 Struct to dispatch the creation of DC Converter Binary for Absolute Value Current Variables for DC formulations
 Docs abbreviation: `\\nu_c``
 """
-struct ConverterBinaryAbsoluteValueCurrent <: VariableType end
+struct ConverterCurrentDirection <: VariableType end
 
 """
 Struct to dispatch the creation of Binary Variable for Converter Power Direction
