@@ -120,7 +120,7 @@ get_subsystem(m::NetworkModel) = m.subsystem
 get_hvdc_network_model(m::NetworkModel) = m.hvdc_network_model
 
 set_subsystem!(m::NetworkModel, id::String) = m.subsystem = id
-set_hvdc_network_model!(m::NetworkModel, val::AbstractHVDCNetworkModel) =
+set_hvdc_network_model!(m::NetworkModel, val::Union{Nothing, AbstractHVDCNetworkModel}) =
     m.hvdc_network_model = val
 
 function add_dual!(model::NetworkModel, dual)
