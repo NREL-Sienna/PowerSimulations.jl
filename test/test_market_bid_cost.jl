@@ -1,7 +1,7 @@
 test_path = mktempdir()
 const TIME1 = DateTime("2024-01-01T00:00:00")
 const SEL_INCR = make_selector(ThermalStandard, "Test Unit1")
-const SEL_DECR = make_selector(InterruptiblePowerLoad, "IloadBus4")
+const SEL_DECR = make_selector(InterruptiblePowerLoad, "Bus1_interruptible")
 const SEL_MULTISTART = make_selector(ThermalMultiStart, "115_STEAM_1")
 const DEFAULT_FORMULATIONS =
     Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}(
@@ -12,6 +12,36 @@ const DEFAULT_FORMULATIONS =
         HydroDispatch => HydroCommitmentRunOfRiver,
         EnergyReservoirStorage => StorageDispatchWithReserves,
     )
+
+# debugging code for inspecting objective functions -- ignore
+const DOWNLOADS = joinpath(homedir(), "Downloads")
+function format_objective_function_file(filepath::String)
+    if !isfile(filepath)
+        println("Error: File '$filepath' does not exist.")
+        exit(1)
+    end
+
+    try
+        content = read(filepath, String)
+        content = replace(content, "+" => "+\n")
+        content = replace(content, "-" => "-\n")
+        write(filepath, content)
+    catch e
+        println("Error processing file '$filepath': $e")
+        exit(1)
+    end
+end
+
+function save_objective_function(model::DecisionModel, filepath::String)
+    open(filepath, "w") do file
+        println(file, "invariant_terms:")
+        println(file, model.internal.container.objective_function.invariant_terms)
+        println(file, "variant_terms:")
+        println(file, model.internal.container.objective_function.variant_terms)
+    end
+    format_objective_function_file(filepath)
+end
+# end debugging code
 
 function set_formulations!(template::ProblemTemplate,
     sys::PSY.System,
@@ -482,8 +512,36 @@ function load_sys_incr()
     return sys
 end
 
+# currently unused. LK: I find it easier to just take sys_incr and replace PowerLoads
+# with InterruptiblePowerLoads.
 function load_sys_decr()
     sys = load_and_fix_system(PSITestSystems, "c_sys5_il")
+    return sys
+end
+
+function load_sys_decr2()
+    sys = load_and_fix_system(
+        PSITestSystems,
+        "c_fixed_market_bid_cost",
+    )
+    replace_load_with_interruptible!(sys)
+    interruptible_load = first(get_components(PSY.InterruptiblePowerLoad, sys))
+    selector = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load))
+    add_mbc!(sys, selector; incremental = false, decremental = true)
+    # replace the MBCs on the thermals with ThermalCost objects.
+    for comp in get_components(ThermalStandard, sys)
+        old_cost = get_operation_cost(comp)
+        old_cost isa MarketBidCost || continue
+        cost_curve = get_incremental_offer_curves(old_cost)::CostCurve
+        baseline = get_value_curve(cost_curve)::PiecewiseIncrementalCurve
+        new_op_cost = ThermalGenerationCost(;
+            variable = get_incremental_offer_curves(old_cost),
+            start_up = get_start_up(old_cost),
+            shut_down = get_shut_down(old_cost),
+            fixed = 0.0,
+        )
+        set_operation_cost!(comp, new_op_cost)
+    end
     return sys
 end
 
@@ -522,47 +580,51 @@ function build_sys_incr(
 )
     sys = load_sys_incr()
     @assert !isempty(get_components(active_components, sys)) "No components selected"
-    for comp in get_components(active_components, sys)
-        op_cost = get_operation_cost(comp)
-        cost_curve = get_incremental_offer_curves(op_cost)::CostCurve
-        baseline = get_value_curve(cost_curve)::PiecewiseIncrementalCurve
-        baseline_initial = get_initial_input(baseline)
-        baseline_pwl = get_function_data(baseline)
-        !isnothing(modify_baseline_pwl) &&
-            (baseline_pwl = modify_baseline_pwl(baseline_pwl))
-        min_power = with_units_base(sys, UnitSystem.NATURAL_UNITS) do
-            get_active_power_limits(comp).min
-        end
-
-        # primes for easier attribution
-        incr_initial = initial_varies ? (0.11, 0.05) : (0.0, 0.0)
-        incr_x = breakpoints_vary ? (0.02, 0.07, 0.03) : (0.0, 0.0, 0.0)
-        incr_y = slopes_vary ? (0.02, 0.07, 0.03) : (0.0, 0.0, 0.0)
-
-        name_modifier = "_$(replace(get_name(comp), " " => "_"))_"
-        my_initial_ts = _make_deterministic_ts(
-            "initial_input" * (initial_input_names_vary ? name_modifier : ""),
-            baseline_initial,
-            incr_initial...,
-            5,
-            Hour(1),
-        )
-        my_pwl_ts = _make_deterministic_ts(
-            "variable_cost" * (variable_cost_names_vary ? name_modifier : ""),
-            baseline_pwl,
-            incr_x,
-            incr_y,
-            5,
-            Hour(1);
-            override_min_x = do_override_min_x ? min_power : nothing,
-            create_extra_tranches = create_extra_tranches,
-        )
-
-        set_incremental_initial_input!(sys, comp, my_initial_ts)
-        set_variable_cost!(sys, comp, my_pwl_ts, get_power_units(cost_curve))
-    end
+    extend_mbc!(
+        sys,
+        active_components;
+        initial_varies = initial_varies,
+        breakpoints_vary = breakpoints_vary,
+        slopes_vary = slopes_vary,
+        modify_baseline_pwl = modify_baseline_pwl,
+        do_override_min_x = do_override_min_x,
+        create_extra_tranches = create_extra_tranches,
+        initial_input_names_vary = initial_input_names_vary,
+        variable_cost_names_vary = variable_cost_names_vary,
+    )
     return sys
 end
+
+function build_sys_decr2(
+    initial_varies::Bool,
+    breakpoints_vary::Bool,
+    slopes_vary::Bool;
+    modify_baseline_pwl = nothing,
+    do_override_min_x = true,
+    create_extra_tranches = false,
+    active_components = SEL_DECR,
+    initial_input_names_vary = false,
+    variable_cost_names_vary = false,
+)
+    sys = load_sys_decr2()
+    @assert !isempty(get_components(active_components, sys)) "No components selected"
+    extend_mbc!(
+        sys,
+        active_components;
+        initial_varies = initial_varies,
+        breakpoints_vary = breakpoints_vary,
+        slopes_vary = slopes_vary,
+        modify_baseline_pwl = modify_baseline_pwl,
+        do_override_min_x = do_override_min_x,
+        create_extra_tranches = create_extra_tranches,
+        initial_input_names_vary = initial_input_names_vary,
+        variable_cost_names_vary = variable_cost_names_vary,
+    )
+    return sys
+end
+
+tweak_for_decremental_initial!(sys::PSY.System) =
+    tweak_system!(sys, 1.0, 1.2, 0.5)
 
 function _read_one_value(res, var_name, gentype, unit_name)
     df = @chain begin
@@ -748,6 +810,8 @@ function run_mbc_sim(
     simulation = true,
     in_memory_store = false,
     standard = false,
+    save_obj_fcn = false,
+    # save_constraints = false,
 )
     model, res = if simulation
         run_generic_mbc_sim(sys; in_memory_store = in_memory_store, standard = standard)
@@ -755,12 +819,28 @@ function run_mbc_sim(
         run_generic_mbc_prob(sys; standard = standard)
     end
 
+    if save_obj_fcn
+        adj = is_decremental ? "decr" : "incr"
+        save_objective_function(
+            model,
+            joinpath(DOWNLOADS, "$(get_name(sys))_$(adj)_objective_function.txt"),
+        )
+    end
     # TODO test slopes, breakpoints too once we are able to write those
-    ii_param = read_parameter_dict(res, PSI.IncrementalCostAtMinParameter, ThermalStandard)
-    for (step_dt, step_df) in pairs(ii_param)
+    if is_decremental
+        comp_type = InterruptiblePowerLoad
+        param_type = PSI.DecrementalCostAtMinParameter
+        initial_getter = get_decremental_initial_input
+    else
+        comp_type = ThermalStandard
+        param_type = PSI.IncrementalCostAtMinParameter
+        initial_getter = get_incremental_initial_input
+    end
+    init_param = read_parameter_dict(res, param_type, comp_type)
+    for (step_dt, step_df) in pairs(init_param)
         for gen_name in unique(step_df.name)
-            comp = get_component(ThermalStandard, sys, gen_name)
-            ii_comp = get_incremental_initial_input(
+            comp = get_component(comp_type, sys, gen_name)
+            ii_comp = initial_getter(
                 comp,
                 PSY.get_operation_cost(comp);
                 start_time = step_dt,
@@ -777,7 +857,8 @@ function run_mbc_sim(
 
     # NOTE this could be rewritten nicely using PowerAnalytics
     comp = get_component(is_decremental ? SEL_DECR : SEL_INCR, sys)
-    gentype, genname = typeof(comp), get_name(comp)
+    @assert !isnothing(comp)
+    gentype, genname = typeof(comp), get_name(comp) # FIXME erroring at get_name.
     decisions = (
         _read_one_value(res, PSI.OnVariable, gentype, genname),
         _read_one_value(res, PSI.ActivePowerVariable, gentype, genname),
@@ -893,12 +974,12 @@ function cost_due_to_time_varying_mbc(
     res::IS.Results;
     is_decremental = false,
 )
-    is_decremental && throw(IS.NotImplementedError("TODO implement for decremental"))
-    gentype = ThermalStandard
+    gentype = is_decremental ? InterruptiblePowerLoad : ThermalStandard
     on_vars = read_variable_dict(res, PSI.OnVariable, gentype)
     power_vars = read_variable_dict(res, PSI.ActivePowerVariable, gentype)
     result = SortedDict{DateTime, DataFrame}()
     @assert all(keys(on_vars) .== keys(power_vars))
+    @assert !isempty(keys(on_vars))
     for step_dt in keys(on_vars)
         on_df = on_vars[step_dt]
         power_df = power_vars[step_dt]
@@ -906,22 +987,37 @@ function cost_due_to_time_varying_mbc(
         @assert on_df[!, :DateTime] == power_df[!, :DateTime]
         step_df = DataFrame(:DateTime => unique(on_df.DateTime))
         gen_names = unique(on_df.name)
+        @assert !isempty(gen_names)
+        @assert any([
+            get_operation_cost(comp) isa MarketBidCost for
+            comp in get_components(gentype, sys)
+        ])
         for gen_name in gen_names
             comp = get_component(gentype, sys, gen_name)
             cost = PSY.get_operation_cost(comp)
             (cost isa MarketBidCost) || continue
             step_df[!, gen_name] .= 0.0
-            if PSI.is_time_variant(get_incremental_initial_input(cost))
-                ii_ts = get_incremental_initial_input(comp, cost; start_time = step_dt)
+            ii_getter = if is_decremental
+                get_decremental_initial_input
+            else
+                get_incremental_initial_input
+            end
+            if PSI.is_time_variant(ii_getter(cost))
+                # initial cost: initial input time series multiplied by OnVariable value.
+                ii_ts = ii_getter(comp, cost; start_time = step_dt)
                 @assert all(unique(on_df.DateTime) .== TimeSeries.timestamp(ii_ts))
                 step_df[!, gen_name] .+=
                     @rsubset(on_df, :name == gen_name).value .*
                     TimeSeries.values(ii_ts)
             end
-            # TODO decremental
-            if PSI.is_time_variant(get_incremental_offer_curves(cost))
-                vc_ts = get_incremental_offer_curves(comp, cost; start_time = step_dt)
+            oc_getter =
+                is_decremental ?
+                get_decremental_offer_curves :
+                get_incremental_offer_curves
+            if PSI.is_time_variant(oc_getter(cost))
+                vc_ts = oc_getter(comp, cost; start_time = step_dt)
                 @assert all(unique(power_df.DateTime) .== TimeSeries.timestamp(vc_ts))
+                # variable cost: cost function time series evaluated at ActivePowerVariable value.
                 step_df[!, gen_name] .+=
                     _calc_pwi_cost.(
                         @rsubset(power_df, :name == gen_name).value,
@@ -930,6 +1026,7 @@ function cost_due_to_time_varying_mbc(
             end
         end
         measure_vars = [x for x in names(step_df) if x != "DateTime"]
+        # rows represent: [time, component, time-varying MBC cost for {component} at {time}]
         result[step_dt] =
             DataFrames.stack(
                 step_df,
@@ -963,8 +1060,21 @@ function tweak_system!(sys::System, load_pow_mult, therm_pow_mult, therm_price_m
             new_limits = (min = old_limits.min, max = old_limits.max * therm_pow_mult)
             set_active_power_limits!(therm, new_limits)
         end
-        prop = get_proportional_term(get_value_curve(get_variable(op_cost)))
-        set_variable!(op_cost, CostCurve(LinearCurve(prop * therm_price_mult)))
+        if get_variable(op_cost) isa CostCurve{LinearCurve} ||
+           get_variable(op_cost) isa CostCurve{QuadraticCurve}
+            prop = get_proportional_term(get_value_curve(get_variable(op_cost)))
+            set_variable!(op_cost, CostCurve(LinearCurve(prop * therm_price_mult)))
+        elseif get_variable(op_cost) isa CostCurve{PiecewiseIncrementalCurve}
+            pwl = get_value_curve(get_variable(op_cost))
+            new_pwl = PiecewiseIncrementalCurve(
+                therm_price_mult * get_initial_input(pwl),
+                get_x_coords(pwl),
+                therm_price_mult * get_slopes(pwl),
+            )
+            set_variable!(op_cost, CostCurve(new_pwl))
+        else
+            error("Unhandled operation cost variable type $(typeof(get_variable(op_cost)))")
+        end
     end
 end
 
@@ -992,14 +1102,26 @@ function create_multistart_sys(with_increments::Bool, load_mult, therm_mult; add
 end
 
 # See run_startup_shutdown_obj_fun_test for explanation
-function _obj_fun_test_helper(ground_truth_1, ground_truth_2, res1, res2)
+function _obj_fun_test_helper(
+    ground_truth_1,
+    ground_truth_2,
+    res1,
+    res2;
+    is_decremental = false,
+)
     @assert all(keys(ground_truth_1) .== keys(ground_truth_2))
-
+    # total cost due to time-varying MBCs in each scenario
     total1 =
         [only(@combine(df, :total = sum(:value)).total) for df in values(ground_truth_1)]
     total2 =
         [only(@combine(df, :total = sum(:value)).total) for df in values(ground_truth_2)]
-    ground_truth_diff = total2 .- total1  # How much did the cost increase between simulation 1 and simulation 2 for each step
+    if !is_decremental
+        ground_truth_diff = total2 .- total1  # How much did the cost increase between simulation 1 and simulation 2 for each step
+    else
+        # objective = cost - benefit. higher load prices => more willing to pay, more benefit.
+        # so we get an extra negative sign, since we're increasing benefit, not cost.
+        ground_truth_diff = total1 .- total2
+    end
 
     # An assumption in this line of testing is that our perturbations are small enough that
     # they don't actually change the decisions, just slightly alter the cost. If this assert
@@ -1013,6 +1135,11 @@ function _obj_fun_test_helper(ground_truth_1, ground_truth_2, res1, res2)
     # Make sure there is some real difference between the two scenarios
     @assert !any(isapprox.(ground_truth_diff, 0.0; atol = 0.0001))  # Always passes on 3273dda on my machine -GKS
     # Make sure the difference is reflected correctly in the objective value
+    if !all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))
+        @show obj_diff
+        @show ground_truth_diff
+        @show obj_diff .- ground_truth_diff
+    end
     @test all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))  # Always passes on my machine as of the commit that adds this message -GKS
 end
 
@@ -1064,6 +1191,7 @@ function run_mbc_obj_fun_test(
     is_decremental::Bool = false,
     simulation = true,
     in_memory_store = false,
+    save_obj_fcn = false,
 )
     _, res1, decisions1 =
         run_mbc_sim(
@@ -1071,6 +1199,7 @@ function run_mbc_obj_fun_test(
             is_decremental = is_decremental,
             simulation = simulation,
             in_memory_store = in_memory_store,
+            save_obj_fcn = save_obj_fcn,
         )
     _, res2, decisions2 =
         run_mbc_sim(
@@ -1078,6 +1207,7 @@ function run_mbc_obj_fun_test(
             is_decremental = is_decremental,
             simulation = simulation,
             in_memory_store = in_memory_store,
+            save_obj_fcn = save_obj_fcn,
         )
 
     ground_truth_1 =
@@ -1085,7 +1215,13 @@ function run_mbc_obj_fun_test(
     ground_truth_2 =
         cost_due_to_time_varying_mbc(sys2, res2; is_decremental = is_decremental)
 
-    _obj_fun_test_helper(ground_truth_1, ground_truth_2, res1, res2)
+    _obj_fun_test_helper(
+        ground_truth_1,
+        ground_truth_2,
+        res1,
+        res2;
+        is_decremental = is_decremental,
+    )
     return decisions1, decisions2
 end
 
@@ -1215,82 +1351,126 @@ end
     test_generic_mbc_equivalence(sys_no_ts, sys_constant_ts)
 end
 
-@testset "MarketBidCost incremental with time varying min gen cost" begin
-    baseline = build_sys_incr(false, false, false)
-    varying = build_sys_incr(true, false, false)
+# debugging option: change to true to save text files of objective functions for
+# certain tests that aren't passing.
+const SAVE_FILES = false
 
-    for use_simulation in (false, true)
-        in_memory_store_opts = use_simulation ? [false, true] : [false]
-        for in_memory_store in in_memory_store_opts
+for decremental in (false, true)
+    adj = decremental ? "decremental" : "incremental"
+    build_func = decremental ? build_sys_decr2 : build_sys_incr
+    @testset "MarketBidCost $(adj) with time varying min gen cost" begin
+        baseline = build_func(false, false, false)
+        varying = build_func(true, false, false)
+        if decremental
+            tweak_for_decremental_initial!(varying)
+            tweak_for_decremental_initial!(baseline)
+        end
+        for use_simulation in (false, true)
+            in_memory_store_opts = use_simulation ? [false, true] : [false]
+            for in_memory_store in in_memory_store_opts
+                decisions1, decisions2 =
+                    run_mbc_obj_fun_test(
+                        baseline,
+                        varying;
+                        is_decremental = decremental,
+                        simulation = use_simulation,
+                        in_memory_store = in_memory_store,
+                    )
+                @test all(isapprox.(decisions1, decisions2))
+                if !all(isapprox.(decisions1, decisions2))
+                    @show decisions1
+                    @show decisions2
+                end
+                @assert all(approx_geq_1.(decisions1))
+            end
+        end
+    end
+
+    @testset "MarketBidCost $(adj) with time varying slopes" begin
+        baseline = build_func(false, false, false)
+        varying = build_func(false, false, true)
+
+        set_name!(baseline, "baseline_slopes")
+        set_name!(varying, "varying_slopes")
+
+        for use_simulation in (false, true)
+            in_memory_store_opts = use_simulation ? [false, true] : [false]
+            for in_memory_store in in_memory_store_opts
+                @show in_memory_store
+                @show use_simulation
+                decisions1, decisions2 =
+                    run_mbc_obj_fun_test(
+                        baseline,
+                        varying;
+                        is_decremental = decremental,
+                        simulation = use_simulation,
+                        in_memory_store = in_memory_store,
+                        save_obj_fcn = SAVE_FILES,
+                    )
+                if !all(isapprox.(decisions1, decisions2))
+                    @show decisions1
+                    @show decisions2
+                end
+                @test all(isapprox.(decisions1, decisions2))
+                @assert all(approx_geq_1.(decisions1))
+            end
+        end
+    end
+
+    @testset "MarketBidCost $(adj) with time varying breakpoints" begin
+        baseline = build_func(false, false, false)
+        varying = build_func(false, true, false)
+
+        set_name!(baseline, "baseline_breakpoints")
+        set_name!(varying, "varying_breakpoints")
+        for use_simulation in (false, true)
+            in_memory_store_opts = use_simulation ? [false, true] : [false]
+            for in_memory_store in in_memory_store_opts
+                decisions1, decisions2 =
+                    run_mbc_obj_fun_test(
+                        baseline,
+                        varying;
+                        is_decremental = decremental,
+                        simulation = use_simulation,
+                        in_memory_store = in_memory_store,
+                        save_obj_fcn = SAVE_FILES,
+                    )
+                if !all(isapprox.(decisions1, decisions2))
+                    @show decisions1
+                    @show decisions2
+                end
+                @test all(isapprox.(decisions1, decisions2))
+                @assert all(approx_geq_1.(decisions1))
+            end
+        end
+    end
+
+    @testset "MarketBidCost $(adj) with time varying everything" begin
+        baseline = build_func(false, false, false)
+        varying = build_func(true, true, true)
+
+        for use_simulation in (false, true)
             decisions1, decisions2 =
                 run_mbc_obj_fun_test(
                     baseline,
                     varying;
                     simulation = use_simulation,
-                    in_memory_store = in_memory_store,
+                    is_decremental = decremental,
                 )
-            @test all(isapprox.(decisions1, decisions2))
+            if !all(isapprox.(decisions1, decisions2))
+                @show decisions1
+                @show decisions2
+            end
+            @assert all(isapprox.(decisions1, decisions2))
             @assert all(approx_geq_1.(decisions1))
         end
     end
-end
 
-@testset "MarketBidCost incremental with time varying slopes" begin
-    baseline = build_sys_incr(false, false, false)
-    varying = build_sys_incr(false, false, true)
-
-    for use_simulation in (false, true)
-        in_memory_store_opts = use_simulation ? [false, true] : [false]
-        for in_memory_store in in_memory_store_opts
-            decisions1, decisions2 =
-                run_mbc_obj_fun_test(
-                    baseline,
-                    varying;
-                    simulation = use_simulation,
-                    in_memory_store = in_memory_store,
-                )
-            @test all(isapprox.(decisions1, decisions2))
-            @assert all(approx_geq_1.(decisions1))
-        end
+    @testset "MarketBidCost $(adj) with variable number of tranches" begin
+        baseline = build_func(true, true, true)
+        variable_tranches = build_func(true, true, true; create_extra_tranches = true)
+        test_generic_mbc_equivalence(baseline, variable_tranches)
     end
-end
-
-@testset "MarketBidCost incremental with time varying breakpoints" begin
-    baseline = build_sys_incr(false, false, false)
-    varying = build_sys_incr(false, true, false)
-
-    for use_simulation in (false, true)
-        in_memory_store_opts = use_simulation ? [false, true] : [false]
-        for in_memory_store in in_memory_store_opts
-            decisions1, decisions2 =
-                run_mbc_obj_fun_test(
-                    baseline,
-                    varying;
-                    simulation = use_simulation,
-                    in_memory_store = in_memory_store,
-                )
-            @test all(isapprox.(decisions1, decisions2))
-            @assert all(approx_geq_1.(decisions1))
-        end
-    end
-end
-
-@testset "MarketBidCost incremental with time varying everything" begin
-    baseline = build_sys_incr(false, false, false)
-    varying = build_sys_incr(true, true, true)
-
-    for use_simulation in (false, true)
-        decisions1, decisions2 =
-            run_mbc_obj_fun_test(baseline, varying; simulation = use_simulation)
-        @assert all(isapprox.(decisions1, decisions2))
-        @assert all(approx_geq_1.(decisions1))
-    end
-end
-
-@testset "MarketBidCost incremental with variable number of tranches" begin
-    baseline = build_sys_incr(true, true, true)
-    variable_tranches = build_sys_incr(true, true, true; create_extra_tranches = true)
-    test_generic_mbc_equivalence(baseline, variable_tranches)
 end
 
 @testset "MarketBidCost incremental with heterogeneous time series names" begin
@@ -1406,7 +1586,7 @@ end
     @test_throws msg PSI.build_impl!(model)
 end
 
-@testset "InterruptibleLoad with MBC" begin
+@testset "MarketBidCost decremental basic: single problem" begin
     sys = build_system(PSITestSystems, "c_sys5_il")
     load = first(get_components(PSY.InterruptiblePowerLoad, sys))
     selector = make_selector(PSY.InterruptiblePowerLoad, get_name(load))
@@ -1415,7 +1595,7 @@ end
     _, res = run_generic_mbc_prob(sys)
 end
 
-@testset "InterruptibleLoad with time series MBC" begin
+@testset "MarketBidCost decremental basic: simulation" begin
     sys = build_system(PSITestSystems, "c_sys5_il")
     load = first(get_components(PSY.InterruptiblePowerLoad, sys))
     selector = make_selector(PSY.InterruptiblePowerLoad, get_name(load))
@@ -1454,19 +1634,13 @@ function replace_load_with_interruptible!(sys::System)
     remove_component!(sys, load1)
 end
 
-@testset "Time series constant MBC vs fixed MBC equivalence: PowerLoadInterruption" begin
-    sys_no_ts = load_sys_incr()
-    replace_load_with_interruptible!(sys_no_ts)
-    interruptible_load = first(get_components(PSY.InterruptiblePowerLoad, sys_no_ts))
-    selector = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load))
-    add_mbc!(sys_no_ts, selector; incremental = false, decremental = true)
+@testset "MarketBidCost decremental PowerLoadInterruption, no time series vs constant time series" begin
+    sys_no_ts = load_sys_decr2()
 
-    sys_constant_ts = load_sys_incr()
-    replace_load_with_interruptible!(sys_constant_ts)
+    sys_constant_ts = load_sys_decr2()
     interruptible_load2 =
         first(get_components(PSY.InterruptiblePowerLoad, sys_constant_ts))
     selector2 = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load2))
-    add_mbc!(sys_constant_ts, selector2; incremental = false, decremental = true)
     extend_mbc!(sys_constant_ts, selector2)
 
     test_generic_mbc_equivalence(
@@ -1475,7 +1649,7 @@ end
     )
 end
 
-@testset "Time series constant MBC vs fixed MBC equivalence: PowerLoadDispatch" begin
+@testset "MarketBidCost decremental PowerLoadDispatch, no time series vs constant time series" begin
     device_to_formulation = Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}(
         PSY.InterruptiblePowerLoad => PowerLoadDispatch,
     )

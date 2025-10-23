@@ -37,25 +37,24 @@ function add_mbc!(
     incremental::Bool = true,
     decremental::Bool = false,
 )
-    incr_slopes = [0.3, 0.5, 0.7]
-    decr_slopes = [0.13, 0.11, 0.09]
-    x_coords = [0.1, 0.3, 0.6, 1.0]
-    val_at_zero = 0.1
-    initial_input = 0.2
+    incr_slopes = 100 .* [0.3, 0.5, 0.7]
+    decr_slopes = 100 .* [0.7, 0.5, 0.3]
+    x_coords = [10.0, 30.0, 60.0, 100.0]
+    initial_input = 20.0
 
     if !incremental && !decremental
         error("At least one of incremental or decremental must be true")
     end
     if incremental
         incr_curve =
-            PiecewiseIncrementalCurve(val_at_zero, initial_input, x_coords, incr_slopes)
+            PiecewiseIncrementalCurve(initial_input, x_coords, incr_slopes)
     else
         incr_curve = nothing
     end
 
     if decremental
         decr_curve =
-            PiecewiseIncrementalCurve(val_at_zero, initial_input, x_coords, decr_slopes)
+            PiecewiseIncrementalCurve(initial_input, x_coords, decr_slopes)
     else
         decr_curve = nothing
     end
@@ -100,20 +99,28 @@ Extend the MarketBidCost objects attached to the selected components such that t
 function extend_mbc!(
     sys::PSY.System,
     active_components::ComponentSelector;
+    modify_baseline_pwl = nothing,
     initial_varies::Bool = false,
     breakpoints_vary::Bool = false,
     slopes_vary::Bool = false,
     initial_input_names_vary::Bool = false,
     variable_cost_names_vary::Bool = false,
     zero_cost_at_min::Bool = false,
+    create_extra_tranches::Bool = false,
+    do_override_min_x::Bool = false, # gah I want this to default to false...
 )
     @assert !isempty(get_components(active_components, sys)) "No components selected"
-    # grab some Deterministic time series, so we know the horizon, count, and interval
-    # (this assumes that things are regularly spaced)
-    model_ts = get_deterministic_ts(sys)
     # incremental_initial_input is cost at minimum generation, NOT cost at zero generation
     for comp in get_components(active_components, sys)
         op_cost = get_operation_cost(comp)
+        if do_override_min_x && :active_power_limits in fieldnames(typeof(comp))
+            min_power = with_units_base(sys, UnitSystem.NATURAL_UNITS) do
+                get_active_power_limits(comp).min
+            end
+        else
+            min_power = nothing
+        end
+
         @assert op_cost isa MarketBidCost
         for (getter, setter_initial, setter_curves, incr_or_decr) in (
             (
@@ -138,7 +145,12 @@ function extend_mbc!(
                 baseline_initial = 0.0
             end
             baseline_pwl = get_function_data(baseline)
+            if do_override_min_x && isnothing(min_power)
+                min_power = first(get_x_coords(baseline_pwl))
+            end
 
+            !isnothing(modify_baseline_pwl) &&
+                (baseline_pwl = modify_baseline_pwl(baseline_pwl))
             # primes for easier attribution
             incr_initial = initial_varies ? (0.11, 0.05) : (0.0, 0.0)
             incr_x = breakpoints_vary ? (0.02, 0.07, 0.03) : (0.0, 0.0, 0.0)
@@ -153,7 +165,7 @@ function extend_mbc!(
                 sys,
                 initial_name,
                 baseline_initial,
-                incr_initial...,
+                incr_initial...;
             )
             variable_name =
                 "variable_cost $(incr_or_decr)" *
@@ -163,7 +175,9 @@ function extend_mbc!(
                 variable_name,
                 baseline_pwl,
                 incr_x,
-                incr_y,
+                incr_y;
+                create_extra_tranches = create_extra_tranches,
+                override_min_x = do_override_min_x ? min_power : nothing,
             )
             initial_key = add_time_series!(sys, comp, my_initial_ts)
             curve_key = add_time_series!(sys, comp, my_pwl_ts)
