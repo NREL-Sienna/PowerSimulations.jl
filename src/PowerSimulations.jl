@@ -267,7 +267,6 @@ export InterpolationSquaredCurrentVariable
 export InterpolationBinarySquaredCurrentVariable
 export ConverterPositiveCurrent
 export ConverterNegativeCurrent
-export ConverterBinaryAbsoluteValueCurrent
 export SquaredDCVoltage
 export InterpolationSquaredVoltageVariable
 export InterpolationBinarySquaredVoltageVariable
