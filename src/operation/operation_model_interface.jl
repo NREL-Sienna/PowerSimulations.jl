@@ -434,7 +434,8 @@ end
 function instantiate_network_model!(model::OperationModel)
     template = get_template(model)
     network_model = get_network_model(template)
-    instantiate_network_model!(network_model, get_system(model))
+    branch_models = get_branch_models(template)
+    instantiate_network_model!(network_model, branch_models, get_system(model))
     return
 end
 
