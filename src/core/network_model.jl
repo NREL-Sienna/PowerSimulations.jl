@@ -135,8 +135,45 @@ function check_network_reduction_compatibility(
 end
 =#
 
+function _model_has_branch_filters(branch_models::BranchModelContainer)
+    for (_, bm) in branch_models.branch_models
+        if get_attribute(bm, "filter_function") !== nothing
+            return true
+        end
+    end
+    return false
+end
+
+function _check_branch_network_compatibility(
+    ::NetworkModel{T},
+    branch_models::BranchModelContainer,
+) where {T <: PM.AbstractPowerModel}
+    if supports_branch_filtering(T)
+        return
+    elseif _model_has_branch_filters(branch_models)
+        if ignores_branch_filtering(T)
+            @warn "Branch filtering is ignored for network model $(T)"
+        else
+            throw(
+                IS.ConflictingInputsError(
+                    "Branch filtering is not supported for network model $(T). Remove branch \\
+                    filter functions from branch models or use a different network model.",
+                ),
+            )
+        end
+    else
+        throw(
+            IS.ConflictingInputsError(
+                "Network model $(T) can't be validated against branch models",
+            ),
+        )
+    end
+    return
+end
+
 function instantiate_network_model!(
     model::NetworkModel{T},
+    branch_models::BranchModelContainer,
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
     if isempty(model.subnetworks)
@@ -166,15 +203,18 @@ function instantiate_network_model!(
     end
     model.network_reduction = ybus.network_reduction_data
     if !isempty(model.network_reduction)
-        # TODO: Network reimplement this
+        # TODO: Network reimplement this when it becomes necessary. We don't have any
+        # reductions that are incompatible right now.
         # check_network_reduction_compatibility(T)
     end
+    _check_branch_network_compatibility(model, branch_models)
     PNM.populate_branch_maps_by_type!(model.network_reduction)
     return
 end
 
 function instantiate_network_model!(
     model::NetworkModel{AreaBalancePowerModel},
+    branch_models::BranchModelContainer,
     sys::PSY.System,
 )
     PNM.populate_branch_maps_by_type!(model.network_reduction)
@@ -183,6 +223,7 @@ end
 
 function instantiate_network_model!(
     model::NetworkModel{CopperPlatePowerModel},
+    branch_models::BranchModelContainer,
     sys::PSY.System,
 )
     if isempty(model.subnetworks)
@@ -193,11 +234,13 @@ function instantiate_network_model!(
         model.network_reduction = PNM.get_network_reduction_data(PNM.Ybus(sys))
         _assign_subnetworks_to_buses(model, sys)
     end
+    _check_branch_network_compatibility(model, branch_models)
     return
 end
 
 function instantiate_network_model!(
     model::NetworkModel{<:AbstractPTDFModel},
+    branch_models::BranchModelContainer,
     sys::PSY.System,
 )
     if get_PTDF_matrix(model) === nothing
@@ -270,12 +313,14 @@ function instantiate_network_model!(
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
     end
+    _check_branch_network_compatibility(model, branch_models)
     PNM.populate_branch_maps_by_type!(model.network_reduction)
     return
 end
 
 function instantiate_network_model!(
     model::NetworkModel{<:AbstractSecurityConstrainedPTDFModel},
+    branch_models::BranchModelContainer,
     sys::PSY.System,
 )
     if get_PTDF_matrix(model) === nothing
@@ -382,7 +427,7 @@ function instantiate_network_model!(
                 or provide a modified LODF Matrix without the Ward reduction."),
         )
     end
-
+    _check_branch_network_compatibility(model, branch_models)
     PNM.populate_branch_maps_by_type!(model.network_reduction)
     return
 end
