@@ -1,4 +1,3 @@
-using InfrastructureSystems: TableFormat
 
 @testset "Test get_column_names_from_key" begin
     key = PSI.VariableKey(PSI.ActivePowerVariable, PSY.ThermalStandard)
