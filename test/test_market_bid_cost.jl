@@ -690,7 +690,6 @@ function build_sys_decr2(
                 0.0,
                 0.0,
             )
-            @show new_ts
             add_time_series!(sys, il, new_ts)
             break
         end
@@ -1552,9 +1551,7 @@ for decremental in (false, true)
             end
         end
     end
-    #if decremental
-    #    continue # focusing on the above failure for now.
-    #end
+
     @testset "MarketBidCost $(adj) with time varying breakpoints" begin
         baseline = build_func(false, false, false)
         varying = build_func(false, true, false)
@@ -1765,8 +1762,8 @@ end
     )
 end
 
-# TODO there are no OnVariables for InterruptiblePowerLoad on the PowerLoadDispatch formulation, what is the desired behavior?
-#=
+# TODO error if there's nonzero decremental initial input for PowerLoadDispatch.
+
 @testset "MarketBidCost decremental PowerLoadDispatch, no time series vs constant time series" begin
     device_to_formulation = Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}(
         PSY.InterruptiblePowerLoad => PowerLoadDispatch,
@@ -1791,4 +1788,3 @@ end
         device_to_formulation = device_to_formulation,
     )
 end
-=#

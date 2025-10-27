@@ -405,10 +405,31 @@ end
 ##################################################
 
 # without this, you get "variable OnVariable__RenewableDispatch is not stored"
-_include_min_gen_power_in_constraint(::PSY.RenewableDispatch, ::ActivePowerVariable) = false
-_include_min_gen_power_in_constraint(::PSY.Generator, ::ActivePowerVariable) = true
-_include_min_gen_power_in_constraint(::PSY.ControllableLoad, ::ActivePowerVariable) = true
-_include_min_gen_power_in_constraint(::Any, ::PowerAboveMinimumVariable) = false
+_include_min_gen_power_in_constraint(
+    ::PSY.RenewableDispatch,
+    ::ActivePowerVariable,
+    ::AbstractDeviceFormulation,
+) = false
+_include_min_gen_power_in_constraint(
+    ::PSY.Generator,
+    ::ActivePowerVariable,
+    ::AbstractDeviceFormulation,
+) = true
+_include_min_gen_power_in_constraint(
+    ::PSY.ControllableLoad,
+    ::ActivePowerVariable,
+    ::PowerLoadInterruption,
+) = true
+_include_min_gen_power_in_constraint(
+    ::PSY.ControllableLoad,
+    ::ActivePowerVariable,
+    ::PowerLoadDispatch,
+) = false
+_include_min_gen_power_in_constraint(
+    ::Any,
+    ::PowerAboveMinimumVariable,
+    ::AbstractDeviceFormulation,
+) = false
 
 """
 Implement the constraints for PWL Block Offer variables. That is:
@@ -422,11 +443,13 @@ function _add_pwl_constraint!(
     container::OptimizationContainer,
     component::T,
     ::U,
+    ::D,
     break_points::Vector{<:JuMPOrFloat},
     period::Int,
     ::Type{V},
     ::Type{W},
 ) where {T <: PSY.Component, U <: VariableType,
+    D <: AbstractDeviceFormulation,
     V <: AbstractPiecewiseLinearBlockOffer,
     W <: AbstractPiecewiseLinearBlockOfferConstraint}
     variables = get_variable(container, U(), T)
@@ -446,7 +469,7 @@ function _add_pwl_constraint!(
     # time-variable P1 is problematic, so for now we require P1 to be constant. Thus we can
     # just look up what it is currently fixed to and use that here without worrying about
     # updating.
-    if _include_min_gen_power_in_constraint(component, U())
+    if _include_min_gen_power_in_constraint(component, U(), D())
         on_vars = get_variable(container, OnVariable(), T)
         p1::Float64 = jump_fixed_value(first(break_points))
         sum_pwl_vars += p1 * on_vars[name, period]
@@ -656,6 +679,7 @@ function add_pwl_term!(
             container,
             component,
             U(),
+            V(),
             breakpoints,
             t,
             W,
