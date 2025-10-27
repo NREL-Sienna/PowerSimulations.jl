@@ -203,7 +203,6 @@ end
     @test PSI.to_matrix(DenseAxisArray(data, ["a", "b"], 1:3)) == permutedims(data)
 end
 
-# Test the 4 new to_results_dataframe functions for 1D DenseAxisArray with UnitRange defined by Pablo
 @testset "Test to_results_dataframe with 1D DenseAxisArray (UnitRange) - LONG format with timestamps" begin
     data = rand(3)
     array = DenseAxisArray(data, 1:3)
