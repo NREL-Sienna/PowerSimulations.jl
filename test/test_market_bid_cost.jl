@@ -884,20 +884,34 @@ function run_startup_shutdown_test(
         end
     end
 
+    # These decisions need to be equal between certain pairs of problems/simulations and also need to be approx_geq_1
     decisions = if multistart
         (
             _read_one_value(res, PSI.HotStartVariable, gentype, genname),
             _read_one_value(res, PSI.WarmStartVariable, gentype, genname),
             _read_one_value(res, PSI.ColdStartVariable, gentype, genname),
             _read_one_value(res, PSI.StopVariable, gentype, genname),
+            _read_one_value(res, PSI.OnVariable, gentype, genname),
         )
     else
         (
             _read_one_value(res, PSI.StartVariable, gentype, genname),
             _read_one_value(res, PSI.StopVariable, gentype, genname),
+            _read_one_value(res, PSI.OnVariable, gentype, genname),
         )
     end
-    return model, res, decisions
+
+    # These decisions need to be equal between certain pairs of problems/simulations but need not be approx_geq_1 for the test to be valid
+    nullable_decisions = if multistart
+        (
+            _read_one_value(res, PSI.PowerAboveMinimumVariable, gentype, genname),
+            # sometimes useful for debugging clarity to check *another* generator's decisions
+            _read_one_value(res, PSI.OnVariable, gentype, "101_CT_1"),
+        )
+    else
+        ()
+    end
+    return model, res, decisions, nullable_decisions
 end
 
 """
@@ -968,7 +982,7 @@ function run_mbc_sim(
         _read_one_value(res, PSI.OnVariable, gentype, genname),
         _read_one_value(res, PSI.ActivePowerVariable, gentype, genname),
     )
-    return model, res, decisions
+    return model, res, decisions, ()
 end
 
 "Read the relevant startup variables: no multistart case"
@@ -1228,14 +1242,14 @@ function _obj_fun_test_helper(
         ground_truth_diff = total1 .- total2
     end
 
-    # An assumption in this line of testing is that our perturbations are small enough that
-    # they don't actually change the decisions, just slightly alter the cost. If this assert
-    # triggers, that assumption is likely violated.
-    @assert isapprox(total1, total2; atol = 10, rtol = 0.01) "total1 ($total1) and total2 ($total2) are supposed to differ, but they differ by an improbably large amount ($ground_truth_diff) -- the perturbations are likely affecting the decisions"
-
     obj1 = PSI.read_optimizer_stats(res1)[!, "objective_value"]
     obj2 = PSI.read_optimizer_stats(res2)[!, "objective_value"]
     obj_diff = obj2 .- obj1
+
+    # An assumption in this line of testing is that our perturbations are small enough that
+    # they don't actually change the decisions, just slightly alter the cost. If this assert
+    # triggers, that assumption is likely violated.
+    @assert isapprox(obj1, obj2; atol = 10, rtol = 0.005) "obj1 ($obj1) and obj2 ($obj2) are supposed to differ, but they differ by an improbably large amount ($obj_diff) -- the perturbations are likely affecting the decisions"
 
     # Make sure there is some real difference between the two scenarios
     @assert !any(isapprox.(ground_truth_diff, 0.0; atol = 0.0001))  # Always passes on 3273dda on my machine -GKS
@@ -1266,20 +1280,29 @@ function run_startup_shutdown_obj_fun_test(
     simulation = true,
     in_memory_store::Bool = false,
 )
-    _, res1, decisions1 =
+    _, res1, decisions1, nullable_decisions1 =
         run_startup_shutdown_test(
             sys1;
             multistart = multistart,
             simulation = simulation,
             in_memory_store = in_memory_store,
         )
-    _, res2, decisions2 =
+    _, res2, decisions2, nullable_decisions2 =
         run_startup_shutdown_test(
             sys2;
             multistart = multistart,
             simulation = simulation,
             in_memory_store = in_memory_store,
         )
+
+    all_decisions1 = (decisions1..., nullable_decisions1...)
+    all_decisions2 = (decisions2..., nullable_decisions2...)
+
+    if !all(isapprox.(all_decisions1, all_decisions2))
+        @show all_decisions1
+        @show all_decisions2
+    end
+    @assert all(isapprox.(all_decisions1, all_decisions2))
 
     ground_truth_1 =
         cost_due_to_time_varying_startup_shutdown(sys1, res1; multistart = multistart)
@@ -1299,7 +1322,7 @@ function run_mbc_obj_fun_test(
     in_memory_store = false,
     save_obj_fcn = false,
 )
-    _, res1, decisions1 =
+    _, res1, decisions1, nullable_decisions1 =
         run_mbc_sim(
             sys1;
             is_decremental = is_decremental,
@@ -1307,7 +1330,7 @@ function run_mbc_obj_fun_test(
             in_memory_store = in_memory_store,
             save_obj_fcn = save_obj_fcn,
         )
-    _, res2, decisions2 =
+    _, res2, decisions2, nullable_decisions2 =
         run_mbc_sim(
             sys2;
             is_decremental = is_decremental,
@@ -1315,6 +1338,15 @@ function run_mbc_obj_fun_test(
             in_memory_store = in_memory_store,
             save_obj_fcn = save_obj_fcn,
         )
+
+    all_decisions1 = (decisions1..., nullable_decisions1...)
+    all_decisions2 = (decisions2..., nullable_decisions2...)
+
+    if !all(isapprox.(all_decisions1, all_decisions2))
+        @show all_decisions1
+        @show all_decisions2
+    end
+    @assert all(isapprox.(all_decisions1, all_decisions2))
 
     ground_truth_1 =
         cost_due_to_time_varying_mbc(sys1, res1; is_decremental = is_decremental)
@@ -1392,7 +1424,6 @@ approx_geq_1(x; kwargs...) = (x >= 1.0) || isapprox(x, 1.0; kwargs...)
                     simulation = use_simulation,
                     in_memory_store = in_memory_store,
                 )
-            @assert all(isapprox.(decisions1, decisions2))
             # Make sure our tests included sufficent startups and shutdowns
             @assert all(approx_geq_1.(decisions1))
         end
@@ -1405,9 +1436,9 @@ end
     # enough to change the decisions that form the correct solution
 
     # Scenario 1: hot and warm starts
-    c_sys5_pglib0a = create_multistart_sys(false, 1.0, 7.4; add_ts = false)
-    c_sys5_pglib1a = create_multistart_sys(false, 1.0, 7.4)
-    c_sys5_pglib2a = create_multistart_sys(true, 1.0, 7.4)
+    c_sys5_pglib0a = create_multistart_sys(false, 1.0, 7.45; add_ts = false)
+    c_sys5_pglib1a = create_multistart_sys(false, 1.0, 7.45)
+    c_sys5_pglib2a = create_multistart_sys(true, 1.0, 7.45)
 
     # Scenario 2: hot and cold starts
     c_sys5_pglib0b = create_multistart_sys(false, 1.05, 7.4; add_ts = false)
@@ -1425,7 +1456,6 @@ end
             multistart = true,
             simulation = use_simulation,
         )
-        @assert all(isapprox.(decisions1, decisions2))  # Always passes on my machine as of the commit that adds this message -GKS
         # NOTE not all of the decision types here have >= 1, we'll do another scenario such that we get full decision coverage across both of them:
 
         (decisions1_2, decisions2_2) = run_startup_shutdown_obj_fun_test(
@@ -1486,7 +1516,6 @@ for decremental in (false, true)
                         simulation = use_simulation,
                         in_memory_store = in_memory_store,
                     )
-                @assert all(isapprox.(decisions1, decisions2))
                 if !all(isapprox.(decisions1, decisions2))
                     @show decisions1
                     @show decisions2
@@ -1519,7 +1548,6 @@ for decremental in (false, true)
                     @show decisions1
                     @show decisions2
                 end
-                @assert all(isapprox.(decisions1, decisions2))
                 @assert all(approx_geq_1.(decisions1))
             end
         end
@@ -1549,7 +1577,6 @@ for decremental in (false, true)
                     @show decisions1
                     @show decisions2
                 end
-                @assert all(isapprox.(decisions1, decisions2))
                 @assert all(approx_geq_1.(decisions1))
             end
         end
@@ -1571,7 +1598,6 @@ for decremental in (false, true)
                 @show decisions1
                 @show decisions2
             end
-            @assert all(isapprox.(decisions1, decisions2))
             @assert all(approx_geq_1.(decisions1))
         end
     end
