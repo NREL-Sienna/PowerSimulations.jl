@@ -39,7 +39,7 @@ function add_mbc!(
 )
     incr_slopes = 100 .* [0.3, 0.5, 0.7]
     decr_slopes = 100 .* [0.7, 0.5, 0.3]
-    x_coords = [10.0, 30.0, 60.0, 100.0]
+    x_coords = [10.0, 30.0, 50.0, 100.0]
     initial_input = 20.0
 
     if !incremental && !decremental
