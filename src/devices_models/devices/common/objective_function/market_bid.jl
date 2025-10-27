@@ -407,8 +407,7 @@ end
 # without this, you get "variable OnVariable__RenewableDispatch is not stored"
 _include_min_gen_power_in_constraint(::PSY.RenewableDispatch, ::ActivePowerVariable) = false
 _include_min_gen_power_in_constraint(::PSY.Generator, ::ActivePowerVariable) = true
-_include_min_gen_power_in_constraint(::PSY.ControllableLoad, ::ActivePowerVariable) =
-    false # TODO LK: is this correct?
+_include_min_gen_power_in_constraint(::PSY.ControllableLoad, ::ActivePowerVariable) = true
 _include_min_gen_power_in_constraint(::Any, ::PowerAboveMinimumVariable) = false
 
 """
@@ -628,6 +627,9 @@ function _get_pwl_data(
         get_base_power(container),
         PSY.get_base_power(component),
     )
+
+    @show breakpoints
+    @show slopes
 
     return breakpoints, slopes
 end
