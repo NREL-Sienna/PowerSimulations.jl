@@ -628,9 +628,6 @@ function _get_pwl_data(
         PSY.get_base_power(component),
     )
 
-    @show breakpoints
-    @show slopes
-
     return breakpoints, slopes
 end
 
