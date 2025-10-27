@@ -1,3 +1,5 @@
+using InfrastructureSystems: TableFormat
+
 @testset "Test get_column_names_from_key" begin
     key = PSI.VariableKey(PSI.ActivePowerVariable, PSY.ThermalStandard)
     @test PSI.get_column_names_from_key(key) == (["ActivePowerVariable__ThermalStandard"],)
@@ -199,4 +201,62 @@ end
 
     data = rand(2, 3)
     @test PSI.to_matrix(DenseAxisArray(data, ["a", "b"], 1:3)) == permutedims(data)
+end
+
+# Test the 4 new to_results_dataframe functions for 1D DenseAxisArray with UnitRange defined by Pablo
+@testset "Test to_results_dataframe with 1D DenseAxisArray (UnitRange) - LONG format with timestamps" begin
+    data = rand(3)
+    array = DenseAxisArray(data, 1:3)
+    timestamps = [
+        DateTime(2024, 1, 1, 0),
+        DateTime(2024, 1, 1, 1),
+        DateTime(2024, 1, 1, 2),
+    ]
+    
+    df = PSI.to_results_dataframe(array, timestamps, Val(TableFormat.LONG))
+
+    @test size(df) == (3, 3)  # 3 time points, 3 columns
+    @test names(df) == ["DateTime", "name", "value"]
+    @test df.DateTime == timestamps
+    @test df.name == ["1", "1", "1"]
+    @test df.value == data
+end
+
+@testset "Test to_results_dataframe with 1D DenseAxisArray (UnitRange) - LONG format without timestamps" begin
+    data = rand(3)
+    array = DenseAxisArray(data, 1:3)
+    df = PSI.to_results_dataframe(array, nothing, Val(TableFormat.LONG))
+
+    @test size(df) == (3, 3)  # 3 time points, 3 columns
+    @test names(df) == ["time_index", "name", "value"]
+    @test df.time_index == [1, 2, 3]
+    @test df.name == ["1", "1", "1"]
+    @test df.value == data
+end
+
+@testset "Test to_results_dataframe with 1D DenseAxisArray (UnitRange) - WIDE format with timestamps" begin
+    data = rand(3)
+    array = DenseAxisArray(data, 1:3)
+    timestamps = [
+        DateTime(2024, 1, 1, 0),
+        DateTime(2024, 1, 1, 1),
+        DateTime(2024, 1, 1, 2),
+    ]
+    df = PSI.to_results_dataframe(array, timestamps, Val(TableFormat.WIDE))
+
+    @test size(df) == (3, 2)  # 3 time points, 2 columns
+    @test names(df) == ["DateTime", "1"]
+    @test df.DateTime == timestamps
+    @test df[!, "1"] == data
+end
+
+@testset "Test to_results_dataframe with 1D DenseAxisArray (UnitRange) - WIDE format without timestamps" begin
+    data = rand(3)
+    array = DenseAxisArray(data, 1:3)
+    df = PSI.to_results_dataframe(array, nothing, Val(TableFormat.WIDE))
+
+    @test size(df) == (3, 2)  # 3 time points, 2 columns
+    @test names(df) == ["time_index", "1"]
+    @test df.time_index == [1, 2, 3]
+    @test df[!, "1"] == data
 end

@@ -248,14 +248,59 @@ function to_results_dataframe(array::DenseAxisArray, timestamps)
 end
 
 function to_results_dataframe(
-    array::DenseAxisArray{Float64, 1, <:Tuple{Vector{String}}},
-    timestamps,
+    array::DenseAxisArray{Float64, 1, <:Tuple{Vector{String}}}, timestamps,
     ::Val{TableFormat.LONG},
 )
     return DataFrames.DataFrame(
         :DateTime => [1],
         :name => axes(array, 1),
         :value => array.data,
+    )
+end
+
+function to_results_dataframe(
+    array::DenseAxisArray{Float64, 1, <:Tuple{UnitRange}},
+    timestamps,
+    ::Val{TableFormat.LONG},
+)
+    return DataFrames.DataFrame(
+        :DateTime => timestamps,
+        :name => fill("1", size(array, 1)),
+        :value => array.data,
+    )
+end
+
+function to_results_dataframe(
+    array::DenseAxisArray{Float64, 1, <:Tuple{UnitRange}},
+    ::Nothing,
+    ::Val{TableFormat.LONG},
+)
+    return DataFrames.DataFrame(
+        :time_index => collect(1:size(array, 1)),
+        :name => fill("1", size(array, 1)),
+        :value => array.data,
+    )
+end
+
+function to_results_dataframe(
+    array::DenseAxisArray{Float64, 1, <:Tuple{UnitRange}},
+    timestamps,
+    ::Val{TableFormat.WIDE},
+)
+    return DataFrames.DataFrame(
+        "DateTime" => timestamps,
+        "1" => array.data,
+    )
+end
+
+function to_results_dataframe(
+    array::DenseAxisArray{Float64, 1, <:Tuple{UnitRange}},
+    ::Nothing,
+    ::Val{TableFormat.WIDE},
+)
+    return DataFrames.DataFrame(
+        "time_index" => collect(1:size(array, 1)),
+        "1" => array.data,
     )
 end
 

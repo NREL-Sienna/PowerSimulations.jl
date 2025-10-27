@@ -92,7 +92,7 @@ function write_result!(
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
     update_timestamp::Dates.DateTime,
-    array::DenseAxisArray{T, 1, <:Tuple{Vector{String}}},
+    array::DenseAxisArray{T, 1, <:Union{Tuple{Vector{String}}, Tuple{UnitRange{Int}}}},
 ) where {T}
     container = getfield(store, get_store_container_type(key))
     container[key][index] = array
