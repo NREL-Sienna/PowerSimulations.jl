@@ -328,7 +328,7 @@ function construct_device!(
         sys)
 
     if isempty(associated_outages_pairs)
-        @info "No associated outage supplemental attributes found assicuiatted with devices: $V. Skipping contingency variable addition for that service."
+        @info "No associated outage supplemental attributes found associated with devices: $V. Skipping contingency variable addition for that service."
         return
     end
 
