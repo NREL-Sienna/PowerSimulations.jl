@@ -78,6 +78,7 @@ function test_market_bid_cost_models(sys::PSY.System,
         Type{<:PSY.Device},
         Type{<:PSI.AbstractDeviceFormulation},
     }(),
+    save_obj_fcn = false,
 )
     fcn_data = get_function_data(
         get_value_curve(
@@ -112,6 +113,13 @@ function test_market_bid_cost_models(sys::PSY.System,
 
     @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    if save_obj_fcn
+        save_loc = joinpath(DOWNLOADS, "thermal_vs_renewable")
+        @assert isdir(save_loc)
+
+        save_objective_function(model, joinpath(save_loc, "objective_function_$(get_name(sys))_$(get_name(test_unit)).txt"))
+        save_constraints(model, joinpath(save_loc, "constraints_$(get_name(sys))_$(get_name(test_unit)).txt"))
+    end
 
     return OptimizationProblemResults(model)
 end
@@ -173,9 +181,11 @@ function transfer_mbc_time_series!(
         val = getfield(mbc, field)
         if val isa IS.TimeSeriesKey
             ts = PSY.get_time_series(old_comp, val)
-            add_time_series!(new_sys, new_comp, deepcopy(ts))
+            new_ts_key = add_time_series!(new_sys, new_comp, deepcopy(ts))
+            setfield!(mbc, field, new_ts_key)
         end
     end
+    set_operation_cost!(new_comp, mbc)
     return
 end
 
@@ -258,9 +268,21 @@ function zero_out_non_incremental_curve!(sys::PSY.System, unit::PSY.Component)
     set_no_load_cost!(cost, 0.0)
     set_start_up!(cost, (hot = 0.0, warm = 0.0, cold = 0.0))
     set_shut_down!(cost, 0.0)
-    zero_ts = _make_deterministic_ts(sys, "initial_input", 0.0, 0.0, 0.0)
-    zero_ts_key = add_time_series!(sys, unit, zero_ts)
-    set_incremental_initial_input!(cost, zero_ts_key)
+    if get_incremental_offer_curves(cost) isa IS.TimeSeriesKey
+        zero_ts = _make_deterministic_ts(sys, "initial_input", 0.0, 0.0, 0.0)
+        zero_ts_key = add_time_series!(sys, unit, zero_ts)
+        set_incremental_initial_input!(cost, zero_ts_key)
+    else
+        # set x coordinate and y coordinate of minimum power to 0.0
+        base_curve = get_value_curve(get_incremental_offer_curves(cost))
+        x_coords = deepcopy(get_x_coords(base_curve))
+        slopes = deepcopy(get_slopes(base_curve))
+        if x_coords[1] > 0.0
+            x_coords[1] = 0.0
+            new_curve = PiecewiseIncrementalCurve(0.0, x_coords, slopes)
+            set_incremental_offer_curves!(cost, CostCurve(new_curve))
+        end
+    end
     set_operation_cost!(unit, cost)
 end
 
@@ -271,18 +293,24 @@ end
     replace_with_renewable!(sys, unit1; use_thermal_max_power = true)
     rg1 = get_component(PSY.RenewableDispatch, sys, "RG1")
     zero_out_non_incremental_curve!(sys, rg1)
+    set_name!(sys, "sys_renewable")
     results_renewable = test_market_bid_cost_models(
         sys,
         rg1,
         0.0,
         0.0;
         skip_setting = true,
+        save_obj_fcn = true
     )
 
     sys_thermal = build_system(PSITestSystems, "c_$(sys_name)")
     unit1 = get_component(ThermalStandard, sys_thermal, "Test Unit1")
-    transfer_mbc_time_series!(unit1, rg1, sys_thermal)
-    set_operation_cost!(unit1, get_operation_cost(rg1))
+    set_active_power_limits!(
+        unit1,
+        (min = 0.0, max = get_active_power_limits(unit1).max),
+    )
+    set_operation_cost!(unit1, deepcopy(get_operation_cost(rg1)))
+    set_name!(sys_thermal, "sys_thermal")
 
     results_thermal = test_market_bid_cost_models(
         sys_thermal,
@@ -290,6 +318,7 @@ end
         0.0,
         0.0;
         skip_setting = true,
+        save_obj_fcn = true
     )
 
     # check that the operation costs are the same.
@@ -306,10 +335,8 @@ end
         IS.compare_values(load, get_component(PSY.PowerLoad, sys_thermal, get_name(load)))
     end
 
-    # TODO LK: failing, even though objective functions appear identical.
-    # check constraints.
-    # @test PSI.read_optimizer_stats(results_thermal)[!, "objective_value"] ==
-    #      PSI.read_optimizer_stats(results_renewable)[!, "objective_value"]
+    @test PSI.read_optimizer_stats(results_thermal)[!, "objective_value"] ==
+         PSI.read_optimizer_stats(results_renewable)[!, "objective_value"]
 end
 
 "Set the no_load_cost to `nothing` and the initial_input to the old no_load_cost. Not designed for time series"
@@ -1749,39 +1776,17 @@ end
 
 @testset "MarketBidCost decremental PowerLoadInterruption, no time series vs constant time series" begin
     sys_no_ts = load_sys_decr2()
-
-    sys_constant_ts = load_sys_decr2()
-    interruptible_load2 =
-        first(get_components(PSY.InterruptiblePowerLoad, sys_constant_ts))
-    selector2 = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load2))
-    extend_mbc!(sys_constant_ts, selector2)
-
-    test_generic_mbc_equivalence(
-        sys_no_ts,
-        sys_constant_ts,
-    )
+    sys_constant_ts = build_sys_decr2(false, false, false)
+    test_generic_mbc_equivalence(sys_no_ts, sys_constant_ts)
 end
 
 # TODO error if there's nonzero decremental initial input for PowerLoadDispatch.
-
 @testset "MarketBidCost decremental PowerLoadDispatch, no time series vs constant time series" begin
     device_to_formulation = Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}(
         PSY.InterruptiblePowerLoad => PowerLoadDispatch,
     )
-    sys_no_ts = load_sys_incr()
-    replace_load_with_interruptible!(sys_no_ts)
-    interruptible_load = first(get_components(PSY.InterruptiblePowerLoad, sys_no_ts))
-    selector = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load))
-    add_mbc!(sys_no_ts, selector; incremental = false, decremental = true)
-
-    sys_constant_ts = load_sys_incr()
-    replace_load_with_interruptible!(sys_constant_ts)
-    interruptible_load2 =
-        first(get_components(PSY.InterruptiblePowerLoad, sys_constant_ts))
-    selector2 = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load2))
-    add_mbc!(sys_constant_ts, selector2; incremental = false, decremental = true)
-    extend_mbc!(sys_constant_ts, selector2)
-
+    sys_no_ts = load_sys_decr2()
+    sys_constant_ts = build_sys_decr2(false, false, false)
     test_generic_mbc_equivalence(
         sys_no_ts,
         sys_constant_ts;

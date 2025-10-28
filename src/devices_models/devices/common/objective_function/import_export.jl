@@ -1,5 +1,5 @@
-_include_min_gen_power_in_constraint(::PSY.Source, ::ActivePowerOutVariable) = false
-_include_min_gen_power_in_constraint(::PSY.Source, ::ActivePowerInVariable) = false
+_include_min_gen_power_in_constraint(::PSY.Source, ::ActivePowerOutVariable, ::AbstractDeviceFormulation) = false
+_include_min_gen_power_in_constraint(::PSY.Source, ::ActivePowerInVariable, ::AbstractDeviceFormulation) = false
 
 function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
