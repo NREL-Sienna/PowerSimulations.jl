@@ -50,6 +50,7 @@ export VariableMaxInterfaceFlow
 export StaticBranch
 export StaticBranchBounds
 export StaticBranchUnbounded
+export SecurityConstrainedStaticBranch
 export HVDCTwoTerminalLossless
 export HVDCTwoTerminalDispatch
 export HVDCTwoTerminalUnbounded

@@ -146,6 +146,10 @@ Branch formulation for PhaseShiftingTransformer flow control
 """
 struct PhaseAngleControl <: AbstractBranchFormulation end
 
+abstract type AbstractSecurityConstrainedStaticBranch <: AbstractBranchFormulation end
+
+struct SecurityConstrainedStaticBranch <: AbstractSecurityConstrainedStaticBranch end
+
 ############################### DC Branch Formulations #####################################
 abstract type AbstractTwoTerminalDCLineFormulation <: AbstractBranchFormulation end
 """
