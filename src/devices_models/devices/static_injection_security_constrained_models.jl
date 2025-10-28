@@ -238,7 +238,7 @@ function construct_service!(
         network_model,
     )
 
-    add_to_expression!(#common
+    add_to_expression!(
         container,
         sys,
         PostContingencyBranchFlow,
@@ -1255,7 +1255,6 @@ function _add_expression_to_container!(
 ) where {T <: PSY.Component, U <: PSY.ACTransmission}
     name = PSY.get_name(entry)
     JuMP.add_to_expression!(expression_container[outage_id, name, t], expression)
-    #expression_container[outage_id, name, t] = expression
 end
 
 function _add_expression_to_container!(
@@ -1281,7 +1280,7 @@ function _add_expression_to_container!(
     t,
 ) where {T <: PSY.Component}
     for segment in series_chain
-        _add_expression_to_container!(#todo review this
+        _add_expression_to_container!(
             expression_container,
             expression,
             outage_id,
