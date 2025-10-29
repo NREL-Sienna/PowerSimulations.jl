@@ -1530,7 +1530,6 @@ end
     test_generic_mbc_equivalence(c_sys5_pglib0b, c_sys5_pglib1b; multistart = true)
 
     for use_simulation in (false, true)
-        # the following 3 tests all fail when use_simulation is false.
         (decisions1, decisions2) = run_startup_shutdown_obj_fun_test(
             c_sys5_pglib1a,
             c_sys5_pglib2a;
@@ -1574,7 +1573,7 @@ end
 
 # debugging option: change to true to save text files of objective functions for
 # certain tests that aren't passing.
-const SAVE_FILES = true
+const SAVE_FILES = false
 
 for decremental in (false, true)
     adj = decremental ? "decremental" : "incremental"
@@ -1585,10 +1584,10 @@ for decremental in (false, true)
     else
         [ThermalBasicUnitCommitment]
     end
-    @testset for dm in device_models
+    @testset for device_model in device_models
         device_to_formulation =
             Dict{Type{<:Device}, Type{<:PowerSimulations.AbstractDeviceFormulation}}(
-                comp_type => dm,
+                comp_type => device_model,
             )
         if has_initial_input(decremental, device_to_formulation)
             @testset "MarketBidCost $(adj) with time varying min gen cost" begin
