@@ -338,8 +338,6 @@ function construct_device!(
         network_model,
     )
 
-    process_market_bid_parameters!(container, devices, model, false, true)
-
     add_event_arguments!(container, devices, model, network_model)
     return
 end
@@ -367,8 +365,6 @@ function construct_device!(
         model,
         network_model,
     )
-
-    process_market_bid_parameters!(container, devices, model, false, true)
 
     add_event_arguments!(container, devices, model, network_model)
     return
