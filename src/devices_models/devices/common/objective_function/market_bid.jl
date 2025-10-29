@@ -178,7 +178,6 @@ end
 function validate_mbc_component(
     ::StartupCostParameter,
     device::PSY.ThermalMultiStart,
-    model,
 )
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     _validate_eltype(
@@ -189,7 +188,7 @@ function validate_mbc_component(
     )
 end
 
-function validate_mbc_component(::StartupCostParameter, device::PSY.StaticInjection, model)
+function validate_mbc_component(::StartupCostParameter, device::PSY.StaticInjection)
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     contains_multistart = false
     apply_maybe_across_time_series(device, startup) do x
@@ -215,7 +214,7 @@ function validate_mbc_component(::StartupCostParameter, device::PSY.StaticInject
 end
 
 # Validate eltype of shutdown costs
-function validate_mbc_component(::ShutdownCostParameter, device::PSY.StaticInjection, model)
+function validate_mbc_component(::ShutdownCostParameter, device::PSY.StaticInjection)
     shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
     _validate_eltype(Float64, device, shutdown, " for shutdown cost")
 end
@@ -225,7 +224,6 @@ end
 function validate_mbc_component(
     ::StartupCostParameter,
     device::Union{PSY.RenewableDispatch, PSY.Storage},
-    model,
 )
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, startup) do x
@@ -240,7 +238,6 @@ end
 function validate_mbc_component(
     ::ShutdownCostParameter,
     device::Union{PSY.RenewableDispatch, PSY.Storage},
-    model,
 )
     shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, shutdown) do x
@@ -255,7 +252,6 @@ end
 function validate_mbc_component(
     ::IncrementalCostAtMinParameter,
     device::Union{PSY.RenewableDispatch, PSY.Storage},
-    model,
 )
     no_load_cost = PSY.get_no_load_cost(PSY.get_operation_cost(device))
     if !isnothing(no_load_cost)
@@ -272,7 +268,6 @@ end
 function validate_mbc_component(
     ::DecrementalCostAtMinParameter,
     device::PSY.Storage,
-    model,
 )
     no_load_cost = PSY.get_no_load_cost(PSY.get_operation_cost(device))
     if !isnothing(no_load_cost)
@@ -290,13 +285,11 @@ end
 validate_mbc_component(
     ::IncrementalCostAtMinParameter,
     device::PSY.StaticInjection,
-    model,
 ) =
     validate_initial_input_time_series(device, false)
 validate_mbc_component(
     ::DecrementalCostAtMinParameter,
     device::PSY.StaticInjection,
-    model,
 ) =
     validate_initial_input_time_series(device, true)
 
@@ -304,13 +297,11 @@ validate_mbc_component(
 validate_mbc_component(
     ::IncrementalPiecewiseLinearBreakpointParameter,
     device::PSY.StaticInjection,
-    model,
 ) =
     validate_mbc_breakpoints_slopes(device, false)
 validate_mbc_component(
     ::DecrementalPiecewiseLinearBreakpointParameter,
     device::PSY.StaticInjection,
-    model,
 ) =
     validate_mbc_breakpoints_slopes(device, true)
 
@@ -318,7 +309,6 @@ validate_mbc_component(
 validate_mbc_component(
     ::AbstractPiecewiseLinearSlopeParameter,
     device::PSY.StaticInjection,
-    model,
 ) = nothing
 
 function _process_market_bid_parameters_helper(
@@ -327,7 +317,7 @@ function _process_market_bid_parameters_helper(
     model,
     devices,
 ) where {P <: ParameterType}
-    validate_mbc_component.(Ref(P()), devices, Ref(model))
+    validate_mbc_component.(Ref(P()), devices)
     if _consider_parameter(P(), container, model)
         ts_devices = filter(device -> _has_parameter_time_series(P(), device), devices)
         (length(ts_devices) > 0) && add_parameters!(container, P, ts_devices, model)
@@ -431,6 +421,22 @@ _include_min_gen_power_in_constraint(
     ::AbstractDeviceFormulation,
 ) = false
 
+_include_constant_min_gen_power_in_constraint(
+    ::PSY.ControllableLoad,
+    ::ActivePowerVariable,
+    ::PowerLoadDispatch,
+) = true
+_include_constant_min_gen_power_in_constraint(
+    ::PSY.ControllableLoad,
+    ::ActivePowerVariable,
+    ::PowerLoadInterruption,
+) = false
+_include_constant_min_gen_power_in_constraint(
+    ::Any,
+    ::VariableType,
+    ::AbstractDeviceFormulation,
+) = false
+
 """
 Implement the constraints for PWL Block Offer variables. That is:
 
@@ -469,7 +475,10 @@ function _add_pwl_constraint!(
     # time-variable P1 is problematic, so for now we require P1 to be constant. Thus we can
     # just look up what it is currently fixed to and use that here without worrying about
     # updating.
-    if _include_min_gen_power_in_constraint(component, U(), D())
+
+    if _include_constant_min_gen_power_in_constraint(component, U(), D())
+        sum_pwl_vars += jump_fixed_value(first(break_points))::Float64
+    elseif _include_min_gen_power_in_constraint(component, U(), D())
         on_vars = get_variable(container, OnVariable(), T)
         p1::Float64 = jump_fixed_value(first(break_points))
         sum_pwl_vars += p1 * on_vars[name, period]

@@ -132,7 +132,6 @@ function analyze_results(results)
         elseif name == "early_steep"
             # The early steep curve should affect behavior differently depending on curtailment levels
         end
-        println()
     end
 end
 
