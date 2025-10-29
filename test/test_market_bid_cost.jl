@@ -117,8 +117,17 @@ function test_market_bid_cost_models(sys::PSY.System,
         save_loc = joinpath(DOWNLOADS, "thermal_vs_renewable")
         @assert isdir(save_loc)
 
-        save_objective_function(model, joinpath(save_loc, "objective_function_$(get_name(sys))_$(get_name(test_unit)).txt"))
-        save_constraints(model, joinpath(save_loc, "constraints_$(get_name(sys))_$(get_name(test_unit)).txt"))
+        save_objective_function(
+            model,
+            joinpath(
+                save_loc,
+                "objective_function_$(get_name(sys))_$(get_name(test_unit)).txt",
+            ),
+        )
+        save_constraints(
+            model,
+            joinpath(save_loc, "constraints_$(get_name(sys))_$(get_name(test_unit)).txt"),
+        )
     end
 
     return OptimizationProblemResults(model)
@@ -300,7 +309,7 @@ end
         0.0,
         0.0;
         skip_setting = true,
-        save_obj_fcn = true
+        save_obj_fcn = true,
     )
 
     sys_thermal = build_system(PSITestSystems, "c_$(sys_name)")
@@ -318,7 +327,7 @@ end
         0.0,
         0.0;
         skip_setting = true,
-        save_obj_fcn = true
+        save_obj_fcn = true,
     )
 
     # check that the operation costs are the same.
@@ -336,7 +345,7 @@ end
     end
 
     @test PSI.read_optimizer_stats(results_thermal)[!, "objective_value"] ==
-         PSI.read_optimizer_stats(results_renewable)[!, "objective_value"]
+          PSI.read_optimizer_stats(results_renewable)[!, "objective_value"]
 end
 
 "Set the no_load_cost to `nothing` and the initial_input to the old no_load_cost. Not designed for time series"
