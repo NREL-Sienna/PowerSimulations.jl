@@ -803,7 +803,7 @@ function _add_variable_cost_to_objective!(
         error("Component $(component_name) is not allowed to participate as a demand.")
     end
     add_pwl_term!(
-        false,
+        false, # I suspect this is a problem. could very well be decremental, storage
         container,
         component,
         cost_function,
