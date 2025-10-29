@@ -319,14 +319,21 @@ _get_time_series_name(::StartupCostParameter, device::PSY.Component, ::DeviceMod
 _get_time_series_name(::ShutdownCostParameter, device::PSY.Component, ::DeviceModel) =
     get_name(PSY.get_shut_down(PSY.get_operation_cost(device)))
 
-_get_time_series_name(  # TODO decremental
+_get_time_series_name(
     ::IncrementalCostAtMinParameter,
     device::PSY.Device,
     ::DeviceModel,
 ) =
     get_name(PSY.get_incremental_initial_input(PSY.get_operation_cost(device)))
 
-_get_time_series_name(  # TODO decremental
+_get_time_series_name(
+    ::DecrementalCostAtMinParameter,
+    device::PSY.Device,
+    ::DeviceModel,
+) =
+    get_name(PSY.get_decremental_initial_input(PSY.get_operation_cost(device)))
+
+_get_time_series_name(
     ::Union{
         IncrementalPiecewiseLinearSlopeParameter,
         IncrementalPiecewiseLinearBreakpointParameter,
@@ -335,6 +342,16 @@ _get_time_series_name(  # TODO decremental
     ::DeviceModel,
 ) =
     get_name(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
+
+_get_time_series_name(
+    ::Union{
+        DecrementalPiecewiseLinearSlopeParameter,
+        DecrementalPiecewiseLinearBreakpointParameter,
+    },
+    device::PSY.Device,
+    ::DeviceModel,
+) =
+    get_name(PSY.get_decremental_offer_curves(PSY.get_operation_cost(device)))
 
 # Layer of indirection to figure out what eltype we expect to find in various time series
 # (we could just read the time series and figure it out dynamically if this becomes too brittle)
@@ -348,7 +365,7 @@ _param_to_vars(::StartupCostParameter, ::ThermalMultiStartUnitCommitment) =
     MULTI_START_VARIABLES
 _param_to_vars(::ShutdownCostParameter, ::AbstractThermalFormulation) = (StopVariable,)
 _param_to_vars(::AbstractCostAtMinParameter, ::AbstractDeviceFormulation) = (OnVariable,)
-_param_to_vars(  # TODO decremental
+_param_to_vars(
     ::Union{
         IncrementalPiecewiseLinearSlopeParameter,
         IncrementalPiecewiseLinearBreakpointParameter,
@@ -356,6 +373,14 @@ _param_to_vars(  # TODO decremental
     ::AbstractDeviceFormulation,
 ) =
     (PiecewiseLinearBlockIncrementalOffer,)
+_param_to_vars(
+    ::Union{
+        DecrementalPiecewiseLinearSlopeParameter,
+        DecrementalPiecewiseLinearBreakpointParameter,
+    },
+    ::AbstractDeviceFormulation,
+) =
+    (PiecewiseLinearBlockDecrementalOffer,)
 
 # Layer of indirection to handle possible additional axes. Most parameters have just the two
 # usual axes (device, timestamp), but some have a third (e.g., piecewise tranche)
@@ -386,31 +411,32 @@ end
 make_tranche_axis(n_tranches) = "tranche_" .* string.(1:n_tranches)
 
 # Find the global maximum number of tranches we'll have to handle and create the parameter with an axis of that length
-# TODO decremental case
 function calc_additional_axes(
     ::OptimizationContainer,
-    ::IncrementalPiecewiseLinearSlopeParameter,
+    ::P,
     devices::U,
     ::DeviceModel{D, W},
 ) where {
+    P <: AbstractPiecewiseLinearSlopeParameter,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
-    curves = PSY.get_incremental_offer_curves.(PSY.get_operation_cost.(devices))
+    curves = _get_parameter_field.((P(),), PSY.get_operation_cost.(devices))
     max_tranches = maximum(get_max_tranches.(devices, curves))
     return (make_tranche_axis(max_tranches),)
 end
 
 function calc_additional_axes(
     ::OptimizationContainer,
-    ::IncrementalPiecewiseLinearBreakpointParameter,
+    ::P,
     devices::U,
     ::DeviceModel{D, W},
 ) where {
+    P <: AbstractPiecewiseLinearBreakpointParameter,
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component}
-    curves = PSY.get_incremental_offer_curves.(PSY.get_operation_cost.(devices))
+    curves = _get_parameter_field.((P(),), PSY.get_operation_cost.(devices))
     max_tranches = maximum(get_max_tranches.(devices, curves))
     return (make_tranche_axis(max_tranches + 1),)  # one more breakpoint than tranches
 end

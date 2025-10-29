@@ -48,8 +48,9 @@ _consider_parameter(
     ::DeviceModel{T, D},
 ) where {T, D} = has_container_key(container, StopVariable, T)
 
+# FIXME storage doesn't currently have an OnVariable. should it have one?
 _consider_parameter(
-    ::IncrementalCostAtMinParameter,
+    ::AbstractCostAtMinParameter,
     container::OptimizationContainer,
     ::DeviceModel{T, D},
 ) where {T, D} = has_container_key(container, OnVariable, T)
@@ -57,13 +58,13 @@ _consider_parameter(
 # For slopes and breakpoints, the relevant variables won't have been created yet, so we'll
 # just check all components for the presence of the relevant time series
 _consider_parameter(
-    ::IncrementalPiecewiseLinearSlopeParameter,
+    ::AbstractPiecewiseLinearSlopeParameter,
     ::OptimizationContainer,
     ::DeviceModel{T, D},
 ) where {T, D} = true
 
 _consider_parameter(
-    ::IncrementalPiecewiseLinearBreakpointParameter,
+    ::AbstractPiecewiseLinearBreakpointParameter,
     ::OptimizationContainer,
     ::DeviceModel{T, D},
 ) where {T, D} = true
@@ -79,23 +80,26 @@ _has_parameter_time_series(::StartupCostParameter, device::PSY.StaticInjection) 
 _has_parameter_time_series(::ShutdownCostParameter, device::PSY.StaticInjection) =
     is_time_variant(PSY.get_shut_down(PSY.get_operation_cost(device)))
 
-_has_parameter_time_series(::IncrementalCostAtMinParameter, device::PSY.StaticInjection) =
+_has_parameter_time_series(
+    ::T,
+    device::PSY.StaticInjection,
+) where {T <: AbstractCostAtMinParameter} =
     _has_market_bid_cost(device) &&
-    is_time_variant(PSY.get_incremental_initial_input(PSY.get_operation_cost(device)))
+    is_time_variant(_get_parameter_field(T(), PSY.get_operation_cost(device)))
 
 _has_parameter_time_series(
-    ::IncrementalPiecewiseLinearSlopeParameter,
+    ::T,
     device::PSY.StaticInjection,
-) =
+) where {T <: AbstractPiecewiseLinearSlopeParameter} =
     _has_market_bid_cost(device) &&
-    is_time_variant(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
+    is_time_variant(_get_parameter_field(T(), PSY.get_operation_cost(device)))
 
 _has_parameter_time_series(
-    ::IncrementalPiecewiseLinearBreakpointParameter,
+    ::T,
     device::PSY.StaticInjection,
-) =
+) where {T <: AbstractPiecewiseLinearBreakpointParameter} =
     _has_market_bid_cost(device) &&
-    is_time_variant(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
+    is_time_variant(_get_parameter_field(T(), PSY.get_operation_cost(device)))
 
 function validate_initial_input_time_series(device::PSY.StaticInjection, decremental::Bool)
     initial_input = get_initial_input_maybe_decremental(Val(decremental), device)
@@ -216,43 +220,63 @@ end
 # There warnings are captured by the with_logger, though, so we don't actually see them.
 function validate_mbc_component(
     ::StartupCostParameter,
-    device::PSY.RenewableDispatch,
+    device::Union{PSY.RenewableDispatch, PSY.Storage},
     model,
 )
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, startup) do x
         if x != PSY.single_start_up_to_stages(0.0)
-            @warn "Nonzero startup cost detected for renewable generation $(get_name(device))." maxlog =
-                1
+            println(
+                "Nonzero startup cost detected for renewable generation or storage device $(get_name(device)).",
+            )
         end
     end
 end
 
 function validate_mbc_component(
     ::ShutdownCostParameter,
-    device::PSY.RenewableDispatch,
+    device::Union{PSY.RenewableDispatch, PSY.Storage},
     model,
 )
     shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, shutdown) do x
         if x != 0.0
-            @warn "Nonzero shutdown cost detected for renewable generation $(get_name(device))." maxlog =
-                1
+            println(
+                "Nonzero shutdown cost detected for renewable generation or storage device $(get_name(device)).",
+            )
         end
     end
 end
 
 function validate_mbc_component(
     ::IncrementalCostAtMinParameter,
-    device::PSY.RenewableDispatch,
+    device::Union{PSY.RenewableDispatch, PSY.Storage},
     model,
 )
     no_load_cost = PSY.get_no_load_cost(PSY.get_operation_cost(device))
     if !isnothing(no_load_cost)
         apply_maybe_across_time_series(device, no_load_cost) do x
             if x != 0.0
-                @warn "Nonzero no-load cost detected for renewable generation $(get_name(device))." maxlog =
-                    1
+                println(
+                    "Nonzero no-load cost detected for renewable generation or storage device $(get_name(device)).",
+                )
+            end
+        end
+    end
+end
+
+function validate_mbc_component(
+    ::DecrementalCostAtMinParameter,
+    device::PSY.Storage,
+    model,
+)
+    no_load_cost = PSY.get_no_load_cost(PSY.get_operation_cost(device))
+    if !isnothing(no_load_cost)
+        apply_maybe_across_time_series(device, no_load_cost) do x
+            if x != 0.0
+                println(
+                    "Nonzero no-load cost detected for storage device $(get_name(device)).",
+                )
             end
         end
     end
@@ -742,7 +766,7 @@ function _add_variable_cost_to_objective!(
         error("Component $(component_name) is not allowed to participate as a demand.")
     end
     add_pwl_term!(
-        false,
+        false, # I suspect this is a problem. could very well be decremental, storage
         container,
         component,
         cost_function,
