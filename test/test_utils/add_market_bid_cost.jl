@@ -193,7 +193,7 @@ details about the arguments.
 """
 function _make_deterministic_ts(
     name::String,
-    ini_val::Union{Number, Tuple},
+    ini_val::T,
     res_incr::Number,
     interval_incr::Number,
     init_time::DateTime,
@@ -201,11 +201,18 @@ function _make_deterministic_ts(
     interval::Period,
     window_count::Int,
     resolution::Period,
-)
+) where {T <: Union{Number, Tuple}}
     horizon_count = IS.get_horizon_count(horizon, resolution)
-    ts_data = OrderedDict{DateTime, Vector{Float64}}()
+    ts_data = OrderedDict{DateTime, Vector{T}}()
     for i in 0:(window_count - 1)
-        series = ini_val .+ res_incr .* (0:(horizon_count - 1)) .+ i * interval_incr
+        if ini_val isa Tuple
+            series = [
+                ini_val .+ (res_incr * j + i * interval_incr) for
+                j in 0:(horizon_count - 1)
+            ]
+        else
+            series = ini_val .+ res_incr .* (0:(horizon_count - 1)) .+ i * interval_incr
+        end
         ts_data[init_time + i * interval] = series
     end
     return Deterministic(;
