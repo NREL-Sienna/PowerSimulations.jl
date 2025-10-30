@@ -84,6 +84,7 @@ ignores_branch_filtering(::Type{<:PM.AbstractPowerModel}) = false
 ignores_branch_filtering(::Type{CopperPlatePowerModel}) = true
 ignores_branch_filtering(::Type{AreaBalancePowerModel}) = true
 
-requires_branch_models(::Type{<:PM.AbstractPowerModel}) = true
-requires_branch_models(::Type{CopperPlatePowerModel}) = false
-requires_branch_models(::Type{AreaBalancePowerModel}) = false
+requires_all_branch_models(::Type{<:PM.AbstractPowerModel}) = true
+requires_all_branch_models(::Type{<:AbstractPTDFModel}) = false
+requires_all_branch_models(::Type{CopperPlatePowerModel}) = false
+requires_all_branch_models(::Type{AreaBalancePowerModel}) = false
