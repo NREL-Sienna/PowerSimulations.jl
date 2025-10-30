@@ -1,161 +1,84 @@
 # TODO - series network reduction elements are currently Vector{Any} (https://github.com/NREL-Sienna/PowerNetworkMatrices.jl/issues/189)
 # When this design changes, type signatures should be updated from ::Vector{Any} throughout PSI
-const NETWORK_REDUCTION_MAPS =
-    ["direct_branch_map", "series_branch_map", "parallel_branch_map"]
+const NETWORK_REDUCTION_MAPS = Dict{String, String}(
+    "direct_branch_map" => "reverse_direct_branch_map",
+    "series_branch_map" => "reverse_series_branch_map",
+    "parallel_branch_map" => "reverse_parallel_branch_map",
+)
 
-struct BranchReductionOptimizationTracker
+mutable struct BranchReductionOptimizationTracker
     variable_dict::Dict{
         Type{<:PSY.ACTransmission},
-        Dict{Type{<:ISOPT.VariableType}, Dict{String, Dict{Int, JuMP.VariableRef}}},
+        Dict{Type{<:ISOPT.VariableType}, Dict},
     }
     constraint_dict::Dict{
         Type{<:PSY.ACTransmission},
         Dict{Type{<:ISOPT.ConstraintType}, Vector{String}},
     }
+    number_of_steps::Int
 end
 
 get_variable_dict(reduction_tracker::BranchReductionOptimizationTracker) =
     reduction_tracker.variable_dict
 get_constraint_dict(reduction_tracker::BranchReductionOptimizationTracker) =
     reduction_tracker.constraint_dict
+get_number_of_steps(reduction_tracker::BranchReductionOptimizationTracker) =
+    reduction_tracker.number_of_steps
+set_number_of_steps!(reduction_tracker, number_of_steps) =
+    reduction_tracker.number_of_steps = number_of_steps
+
+Base.isempty(
+    reduction_tracker::BranchReductionOptimizationTracker,
+) = isempty(reduction_tracker.variable_dict) &&
+isempty(reduction_tracker.constraint_dict)
+
+Base.empty!(
+    reduction_tracker::BranchReductionOptimizationTracker,
+) = begin
+    empty!(reduction_tracker.variable_dict)
+    empty!(reduction_tracker.constraint_dict)
+end
 
 function BranchReductionOptimizationTracker()
-    return BranchReductionOptimizationTracker(Dict(), Dict())
+    return BranchReductionOptimizationTracker(Dict(), Dict(), 0)
 end
 
-# TODO: get rid of this function and implement something more efficient without the
-# mixed type vector
-function _has_keys_nested(nested_dict::Dict, keys::Vector)
-    for key in keys
-        if haskey(nested_dict, key)
-            nested_dict = nested_dict[key]
-        else
-            return false
-        end
-    end
-    return true
-end
-
-function _search_for_reduced_branch_variable(
-    ::BranchReductionOptimizationTracker,
-    ::Set{PSY.ACTransmission},
-    ::Type{T},
-    ::Type{U},
-    t,
-) where {
-    T <: AbstractACActivePowerFlow,
-    U <: PSY.ACTransmission}
-    return (false, EMPTY_BRANCH_NAME_MATCH)
-end
-
-function _search_for_reduced_branch_variable(
-    ::BranchReductionOptimizationTracker,
-    ::PSY.ACTransmission,
-    ::Type{T},
-    ::Type{U},
-    t,
-) where {
-    T <: AbstractACActivePowerFlow,
-    U <: PSY.ACTransmission}
-    return (false, EMPTY_BRANCH_NAME_MATCH)
-end
-
-function _search_for_reduced_branch_variable(
-    reduction_tracker::BranchReductionOptimizationTracker,
-    series_chain::Vector{Any},
-    ::Type{T},
-    ::Type{U},
-    t::Int,
-) where {
-    T <: AbstractACActivePowerFlow,
-    U <: PSY.ACTransmission}
-    reduced_branch_variable_tracker = get_variable_dict(reduction_tracker)
-    for segment in series_chain
-        segment_type = _get_segment_type(segment)
-        segment_names = _get_branch_names(segment)
-        if segment_type == U
-            if _has_keys_nested(
-                reduced_branch_variable_tracker,
-                [U, T, first(segment_names), t],
-            )
-                return (true, first(segment_names))
-            end
-        end
-    end
-    return (false, EMPTY_BRANCH_NAME_MATCH)
-end
-
-function _add_variable_to_tracker!(
-    ::BranchReductionOptimizationTracker,
-    variable::JuMP.VariableRef,
-    reduction_entry::Set{PSY.ACTransmission},
-    ::Type{U},
-    t,
-) where {
-    U <: AbstractACActivePowerFlow,
-}
-    return
-end
-function _add_variable_to_tracker!(
-    ::BranchReductionOptimizationTracker,
-    variable::JuMP.VariableRef,
-    reduction_entry::PSY.ACTransmission,
-    ::Type{U},
-    t,
-) where {U <: AbstractACActivePowerFlow}
-    return
-end
-
-function _add_variable_to_tracker!(
-    reduction_tracker::BranchReductionOptimizationTracker,
-    variable::JuMP.VariableRef,
-    series_chain::Vector{Any},
-    variable_type::Type{<:AbstractACActivePowerFlow},
-    t::Int,
-)
-    for segment in series_chain
-        segment_type = _get_segment_type(segment)
-        segment_names = _get_branch_names(segment)
-        for segment_name in segment_names
-            _add_to_variable_tracker!(
-                reduction_tracker,
-                segment_type,
-                variable_type,
-                segment_name,
-                variable,
-                t,
-            )
-        end
-    end
-    return
-end
-
-function _add_to_variable_tracker!(
-    reduction_tracker::BranchReductionOptimizationTracker,
-    segment_type::Type{T},
-    variable_type::Type{U},
-    segment_name::String,
-    variable::JuMP.VariableRef,
-    t::Int,
-) where {
-    T <: PSY.ACTransmission,
-    U <: AbstractACActivePowerFlow,
-}
-    reduced_branch_variable_tracker = get_variable_dict(reduction_tracker)
-    level_1_map = get!(
-        reduced_branch_variable_tracker,
-        segment_type,
-        Dict{
-            Type{<:ISOPT.VariableType},
-            Dict{String, Dict{Int, JuMP.VariableRef}},
-        }(),
+function _make_empty_tracker_dict(arc_tuple::Tuple{Int, Int}, num_steps::Int)
+    return Dict{Tuple{Int, Int}, Vector{JuMP.VariableRef}}(
+        arc_tuple => Vector{JuMP.VariableRef}(undef, num_steps),
     )
-    level_2_map =
-        get!(level_1_map, variable_type, Dict{String, Dict{Int, JuMP.VariableRef}}())
-    level_3_map = get!(level_2_map, segment_name, Dict{Int, JuMP.VariableRef}())
-    level_3_map[t] = variable
-    return
 end
+
+function _search_for_reduced_branch_variable(
+    tracker::BranchReductionOptimizationTracker,
+    arc_tuple::Tuple{Int, Int},
+    ::Type{T},
+    ::Type{U},
+) where {
+    T <: AbstractACActivePowerFlow,
+    U <: PSY.ACTransmission}
+    time_steps = get_number_of_steps(tracker)
+    if haskey(tracker.variable_dict, U)
+        type_tracker = tracker.variable_dict[U]
+        if haskey(type_tracker, T)
+            if haskey(type_tracker[T], arc_tuple)
+                return (true, type_tracker[T][arc_tuple])
+            else
+                type_tracker[T][arc_tuple] = Vector{JuMP.VariableRef}(undef, time_steps)
+                return (false, type_tracker[T][arc_tuple])
+            end
+        else
+            type_tracker[T] = _make_empty_tracker_dict(arc_tuple, time_steps)
+            return (false, type_tracker[T][arc_tuple])
+        end
+    else
+        tracker.variable_dict[U] = Dict{T, Dict}()
+        tracker.variable_dict[U][T] = _make_empty_tracker_dict(arc_tuple, time_steps)
+        return (false, tracker.variable_dict[U][T][arc_tuple])
+    end
+    error("condition for reduced branch variable search not met")
+end
+
 _get_segment_type(::T) where {T <: PSY.ACTransmission} = T
 _get_segment_type(tfw_tuple::Tuple{PSY.ThreeWindingTransformer, Int}) =
     typeof(first(tfw_tuple))
@@ -163,12 +86,12 @@ _get_segment_type(x::Set) = typeof(first(x))
 
 function get_branch_name_constraint_axis(
     all_branch_maps_by_type::Dict,
-    ::Type{T},
+    modeled_devices::IS.FlattenIteratorWrapper{T},
     ::Type{U},
     reduction_tracker::BranchReductionOptimizationTracker,
 ) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
     name_axis = Vector{String}()
-    for map_name in NETWORK_REDUCTION_MAPS
+    for (map_name, reverse_map_name) in NETWORK_REDUCTION_MAPS
         map = all_branch_maps_by_type[map_name]
         !haskey(map, T) && continue
         for entry in values(map[T])
@@ -178,18 +101,12 @@ function get_branch_name_constraint_axis(
     return name_axis
 end
 
-function get_branch_name_variable_axis(
-    all_branch_maps_by_type::Dict,
-    ::Type{T},
+function get_branch_argument_axis(
+    network_reduction_data::PNM.NetworkReductionData,
+    ::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ACTransmission}
-    name_axis = Vector{String}()
-    for map_name in NETWORK_REDUCTION_MAPS
-        !(_has_keys_nested(all_branch_maps_by_type, [map_name, T])) && continue
-        for entry in values(all_branch_maps_by_type[map_name][T])
-            _add_names_to_axis!(name_axis, entry, T)
-        end
-    end
-    return name_axis
+    name_axis = network_reduction_data.name_to_arc_map[T]
+    return sort!(collect(keys(name_axis)))
 end
 
 function _add_names_to_axis!(name_axis::Vector{String}, name_override::String)
@@ -207,7 +124,7 @@ function _add_names_to_axis!(
 end
 
 function _add_names_to_axis!(
-    name_axis,
+    name_axis::Vector{String},
     entry::Set,
     ::Type{T},
 ) where {T <: PSY.ACTransmission}
@@ -219,14 +136,14 @@ function _add_names_to_axis!(
 end
 
 function _add_names_to_axis!(
-    name_axis,
+    name_axis::Vector{String},
     entry::Vector{Any},
     ::Type{T},
 ) where {T <: PSY.ACTransmission}
     for segment in entry
         # Need to check type because a series chain could have elements of different types:
-        if _get_segment_type(segment) == T
-            _add_names_to_axis!(name_axis, segment, T)
+        if _get_segment_type(segment) == T &&
+           _add_names_to_axis!(name_axis, segment, T)
         end
     end
     return
