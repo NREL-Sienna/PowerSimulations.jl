@@ -435,7 +435,13 @@ function instantiate_network_model!(model::OperationModel)
     template = get_template(model)
     network_model = get_network_model(template)
     branch_models = get_branch_models(template)
-    instantiate_network_model!(network_model, branch_models, get_system(model))
+    number_of_steps = get_time_steps(get_optimization_container(model))[end]
+    instantiate_network_model!(
+        network_model,
+        branch_models,
+        number_of_steps,
+        get_system(model),
+    )
     return
 end
 
