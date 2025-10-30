@@ -402,7 +402,7 @@ _get_max_tranches(data::AbstractDict) = maximum(_get_max_tranches.(values(data))
 # Iterate through all periods of a piecewise time series and return the maximum number of tranches
 function get_max_tranches(device::PSY.Device, piecewise_ts::IS.TimeSeriesKey)
     data = PSY.get_data(
-        PSY.get_time_series(device, piecewise_ts; start_time = nothing, len = nothing),
+        PSY.get_time_series(device, piecewise_ts),
     )
     max_tranches = _get_max_tranches(data)
     return max_tranches
