@@ -471,7 +471,7 @@ function add_pm_variable_refs!(
                 var_type = getfield(ps_v, direction)
                 var_type === nothing && continue
                 branch_names =
-                    get_branch_name_variable_axis(all_branch_maps_by_type, d_type)
+                    get_branch_argument_axis(all_branch_maps_by_type, d_type)
                 var_container = add_variable_container!(
                     container,
                     var_type,
@@ -479,7 +479,7 @@ function add_pm_variable_refs!(
                     branch_names,
                     time_steps,
                 )
-                for t in time_steps, map in NETWORK_REDUCTION_MAPS
+                for t in time_steps, (map, reverse_map) in NETWORK_REDUCTION_MAPS
                     network_reduction_map = all_branch_maps_by_type[map]
                     !haskey(network_reduction_map, d_type) && continue
                     for (arc_tuple, reduction_entry) in network_reduction_map[d_type]
