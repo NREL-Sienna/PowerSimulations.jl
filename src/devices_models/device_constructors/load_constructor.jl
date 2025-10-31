@@ -35,7 +35,9 @@ function construct_device!(
         network_model,
     )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_expressions!(container, ProductionCostExpression, devices, model)
     add_event_arguments!(container, devices, model, network_model)
@@ -105,7 +107,9 @@ function construct_device!(
         network_model,
     )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_expressions!(container, ProductionCostExpression, devices, model)
     add_event_arguments!(container, devices, model, network_model)
@@ -175,7 +179,9 @@ function construct_device!(
         network_model,
     )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_expressions!(container, ProductionCostExpression, devices, model)
     add_event_arguments!(container, devices, model, network_model)
@@ -251,7 +257,9 @@ function construct_device!(
         network_model,
     )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_expressions!(container, ProductionCostExpression, devices, model)
     add_event_arguments!(container, devices, model, network_model)
@@ -306,8 +314,12 @@ function construct_device!(
             sys,
         )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
-    add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), ReactivePowerTimeSeriesParameter)
+        add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_to_expression!(
         container,
@@ -341,7 +353,9 @@ function construct_device!(
             sys,
         )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_to_expression!(
         container,
@@ -371,6 +385,71 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
+    model::DeviceModel{L, StaticMotorLoad},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+) where {L <: PSY.MotorLoad}
+    devices =
+        get_available_components(model,
+            sys,
+        )
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        devices,
+        model,
+        network_model,
+    )
+    add_event_arguments!(container, devices, model, network_model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{L, StaticMotorLoad},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+) where {L <: PSY.MotorLoad}
+    devices =
+        get_available_components(model,
+            sys,
+        )
+
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        devices,
+        model,
+        network_model,
+    )
+    add_event_arguments!(container, devices, model, network_model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{<:PSY.MotorLoad, StaticMotorLoad},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+)
+    # StaticMotorLoad doesn't add any constraints to the model. This function covers
+    # AbstractPowerModel and AbstractActivePowerModel
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
     model::DeviceModel{L, <:AbstractControllablePowerLoadFormulation},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {L <: PSY.StaticLoad}
@@ -379,8 +458,12 @@ function construct_device!(
             sys,
         )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
-    add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), ReactivePowerTimeSeriesParameter)
+        add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
+    end
 
     add_to_expression!(
         container,
@@ -414,7 +497,9 @@ function construct_device!(
             sys,
         )
 
-    add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
     add_to_expression!(
         container,
         ActivePowerBalance,
