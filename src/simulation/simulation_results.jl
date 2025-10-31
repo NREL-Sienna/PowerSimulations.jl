@@ -248,8 +248,36 @@ function get_decision_problem_results(
     return results
 end
 
-function get_emulation_problem_results(results::SimulationResults)
-    return results.emulation_problem_results
+function get_emulation_problem_results(
+    results::SimulationResults;
+    populate_system::Bool = false,
+    populate_units::Union{IS.UnitSystem, String, Nothing} = nothing,
+)
+    results = results.emulation_problem_results
+
+    if populate_system
+        try
+            get_system!(results)
+        catch e
+            error("Can't find the system file or retrieve the system error=$e")
+        end
+
+        if populate_units !== nothing
+            PSY.set_units_base_system!(PSI.get_system(results), populate_units)
+        else
+            PSY.set_units_base_system!(PSI.get_system(results), IS.UnitSystem.NATURAL_UNITS)
+        end
+
+    else
+        (populate_units === nothing) ||
+            throw(
+                ArgumentError(
+                    "populate_units=$populate_units is unaccepted when populate_system=$populate_system",
+                ),
+            )
+    end
+
+    return results
 end
 
 """
