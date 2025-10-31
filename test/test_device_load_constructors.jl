@@ -147,3 +147,80 @@ end
         moi_tests(model, 72, 0, 72, 0, 24, true), 24
     end
 end
+
+@testset "Loads without TimeSeries" begin
+    sys = build_system(PSITestSystems, "c_sys5_uc"; force_build = true)
+    load = get_component(PowerLoad, sys, "Bus2")
+    remove_time_series!(sys, Deterministic, load, "max_active_power")
+
+    networks = [CopperPlatePowerModel, PTDFPowerModel, DCPPowerModel, ACPPowerModel]
+    solvers = [HiGHS_optimizer, HiGHS_optimizer, HiGHS_optimizer, ipopt_optimizer]
+    for (ix, net) in enumerate(networks)
+        template = ProblemTemplate(
+            NetworkModel(
+                net;
+            ),
+        )
+        set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+        set_device_model!(template, PowerLoad, StaticPowerLoad)
+        set_device_model!(template, Line, StaticBranch)
+
+        model = DecisionModel(
+            template,
+            sys;
+            name = "UC",
+            store_variable_names = true,
+            optimizer = solvers[ix],
+            system_to_file = false,
+        )
+
+        @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+        @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    end
+end
+
+@testset "Loads with MotorLoad" begin
+    sys = build_system(PSITestSystems, "c_sys5_uc"; force_build = true)
+    load = get_component(PowerLoad, sys, "Bus2")
+
+    mload = MotorLoad(;
+        name = "MotorLoadBus2",
+        available = true,
+        bus = load.bus,
+        active_power = load.active_power / 10.0,
+        reactive_power = load.reactive_power / 10.0,
+        base_power = load.base_power,
+        rating = load.max_active_power / 10.0,
+        max_active_power = load.max_active_power / 10.0,
+        reactive_power_limits = nothing,
+    )
+    add_component!(sys, mload)
+
+    networks = [CopperPlatePowerModel, PTDFPowerModel, DCPPowerModel, ACPPowerModel]
+    solvers = [HiGHS_optimizer, HiGHS_optimizer, HiGHS_optimizer, ipopt_optimizer]
+    for (ix, net) in enumerate(networks)
+        template = ProblemTemplate(
+            NetworkModel(
+                net;
+            ),
+        )
+        set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+        set_device_model!(template, PowerLoad, StaticPowerLoad)
+        set_device_model!(template, MotorLoad, StaticMotorLoad)
+        set_device_model!(template, Line, StaticBranch)
+
+        model = DecisionModel(
+            template,
+            sys;
+            name = "UC",
+            store_variable_names = true,
+            optimizer = solvers[ix],
+            system_to_file = false,
+        )
+
+        @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+        @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    end
+end
