@@ -1,3 +1,5 @@
+# WARNING: included in HydroPowerSimulations's tests as well.
+# If you make changes, run those tests too!
 """
 Add a MarketBidCost object to the selected components, with specified incremental and/or decremental cost curves.
 """
@@ -107,7 +109,7 @@ function extend_mbc!(
     variable_cost_names_vary::Bool = false,
     zero_cost_at_min::Bool = false,
     create_extra_tranches::Bool = false,
-    do_override_min_x::Bool = false, # gah I want this to default to false...
+    do_override_min_x::Bool = false,
 )
     @assert !isempty(get_components(active_components, sys)) "No components selected"
     # incremental_initial_input is cost at minimum generation, NOT cost at zero generation

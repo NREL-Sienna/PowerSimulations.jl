@@ -1,3 +1,5 @@
+# WARNING: included in HydroPowerSimulations's tests as well.
+# If you make changes, run those tests too!
 const SEL_INCR = make_selector(ThermalStandard, "Test Unit1")
 const SEL_DECR = make_selector(InterruptiblePowerLoad, "Bus1_interruptible")
 const SEL_MULTISTART = make_selector(ThermalMultiStart, "115_STEAM_1")
@@ -28,6 +30,7 @@ function replace_with_renewable!(
     add_component!(sys, rg1)
     transfer_mbc!(rg1, unit1, sys)
     remove_component!(sys, unit1)
+    zero_out_startup_shutdown_costs!(rg1)
 
     # add a max_active_power time series to the component
     load = first(PSY.get_components(PSY.PowerLoad, sys))
@@ -147,27 +150,29 @@ function transfer_mbc!(
     return
 end
 
+function zero_out_startup_shutdown_costs!(comp::PSY.Device)
+    op_cost = get_operation_cost(comp)::MarketBidCost
+    set_start_up!(op_cost, (hot = 0.0, warm = 0.0, cold = 0.0))
+    set_shut_down!(op_cost, 0.0)
+end
+
 """Set everything except the incremental_offer_curves to zero on the MarketBidCost attached to the unit."""
 function zero_out_non_incremental_curve!(sys::PSY.System, unit::PSY.Component)
     cost = deepcopy(get_operation_cost(unit)::MarketBidCost)
     set_no_load_cost!(cost, 0.0)
     set_start_up!(cost, (hot = 0.0, warm = 0.0, cold = 0.0))
     set_shut_down!(cost, 0.0)
+    # set minimum generation cost (but not min gen power) to zero.
     if get_incremental_offer_curves(cost) isa IS.TimeSeriesKey
         zero_ts = _make_deterministic_ts(sys, "initial_input", 0.0, 0.0, 0.0)
         zero_ts_key = add_time_series!(sys, unit, zero_ts)
         set_incremental_initial_input!(cost, zero_ts_key)
     else
-        # set x coordinate and y coordinate of minimum power to 0.0
-        # NOTE: differs from the time series behavior above, which only sets the y coordinate to 0.0.
         base_curve = get_value_curve(get_incremental_offer_curves(cost))
-        x_coords = deepcopy(get_x_coords(base_curve))
-        slopes = deepcopy(get_slopes(base_curve))
-        if x_coords[1] > 0.0
-            x_coords[1] = 0.0
-            new_curve = PiecewiseIncrementalCurve(0.0, x_coords, slopes)
-            set_incremental_offer_curves!(cost, CostCurve(new_curve))
-        end
+        x_coords = get_x_coords(base_curve)
+        slopes = get_slopes(base_curve)
+        new_curve = PiecewiseIncrementalCurve(0.0, x_coords, slopes)
+        set_incremental_offer_curves!(cost, CostCurve(new_curve))
     end
     set_operation_cost!(unit, cost)
 end
@@ -340,18 +345,7 @@ function build_sys_incr(
     return sys
 end
 
-const ZERO_OUT_THERMAL_COST = true
-"""Like `load_sys_incr` but for decremental MarketBidCost on ControllableLoad components."""
-function load_sys_decr2()
-    sys = load_and_fix_system(
-        PSITestSystems,
-        "c_fixed_market_bid_cost",
-    )
-    replace_load_with_interruptible!(sys)
-    interruptible_load = first(get_components(PSY.InterruptiblePowerLoad, sys))
-    selector = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load))
-    add_mbc!(sys, selector; incremental = false, decremental = true)
-    # replace the MBCs on the thermals with ThermalCost objects.
+function remove_thermal_mbcs!(sys::PSY.System)
     for comp in get_components(ThermalStandard, sys)
         old_cost = get_operation_cost(comp)
         old_cost isa MarketBidCost || continue
@@ -363,21 +357,39 @@ function load_sys_decr2()
         )
         set_operation_cost!(comp, new_op_cost)
     end
-    if ZERO_OUT_THERMAL_COST
-        for comp in get_components(ThermalGen, sys)
-            set_operation_cost!(
-                comp,
-                ThermalGenerationCost(;
-                    variable = CostCurve(
-                        LinearCurve(0.0),
-                    ),
-                    start_up = (hot = 0.0, warm = 0.0, cold = 0.0),
-                    shut_down = 0.0,
-                    fixed = 0.0,
+end
+
+function zero_out_thermal_costs!(sys)
+    for comp in get_components(ThermalStandard, sys)
+        set_operation_cost!(
+            comp,
+            ThermalGenerationCost(;
+                variable = CostCurve(
+                    LinearCurve(0.0),
                 ),
-            )
-        end
+                start_up = (hot = 0.0, warm = 0.0, cold = 0.0),
+                shut_down = 0.0,
+                fixed = 0.0,
+            ),
+        )
     end
+end
+
+"""Like `load_sys_incr` but for decremental MarketBidCost on ControllableLoad components."""
+function load_sys_decr2()
+    sys = load_and_fix_system(
+        PSITestSystems,
+        "c_fixed_market_bid_cost",
+    )
+    replace_load_with_interruptible!(sys)
+    interruptible_load = first(get_components(PSY.InterruptiblePowerLoad, sys))
+    selector = make_selector(PSY.InterruptiblePowerLoad, get_name(interruptible_load))
+    add_mbc!(sys, selector; incremental = false, decremental = true)
+    # replace the MBCs on the thermals with ThermalCost objects.
+    remove_thermal_mbcs!(sys)
+    # makes the objective function/constraints simpler, easier to track down issues,
+    # but not actually needed.
+    zero_out_thermal_costs!(sys)
     return sys
 end
 

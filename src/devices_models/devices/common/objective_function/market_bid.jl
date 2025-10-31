@@ -395,6 +395,8 @@ end
 ##################################################
 
 # without this, you get "variable OnVariable__RenewableDispatch is not stored"
+# TODO: really this falls along the divide of 
+# commitment (OnVariable + ActivePower) vs dispatch (ActivePower only)
 _include_min_gen_power_in_constraint(
     ::PSY.RenewableDispatch,
     ::ActivePowerVariable,
@@ -421,6 +423,9 @@ _include_min_gen_power_in_constraint(
     ::AbstractDeviceFormulation,
 ) = false
 
+# add the minimum generation power to the PWL constraint, as a constant. Returns true for 
+# formulations where there's nonzero minimum power (first breakpoint), but no OnVariable.
+# TODO: cleaner way? e.g. can we just do this whenever there's no OnVariable?
 _include_constant_min_gen_power_in_constraint(
     ::PSY.ControllableLoad,
     ::ActivePowerVariable,
@@ -431,6 +436,11 @@ _include_constant_min_gen_power_in_constraint(
     ::ActivePowerVariable,
     ::PowerLoadInterruption,
 ) = false
+_include_constant_min_gen_power_in_constraint(
+    ::PSY.RenewableGen,
+    ::ActivePowerVariable,
+    ::AbstractRenewableDispatchFormulation,
+) = true
 _include_constant_min_gen_power_in_constraint(
     ::Any,
     ::VariableType,
@@ -475,8 +485,8 @@ function _add_pwl_constraint!(
     # time-variable P1 is problematic, so for now we require P1 to be constant. Thus we can
     # just look up what it is currently fixed to and use that here without worrying about
     # updating.
-
     if _include_constant_min_gen_power_in_constraint(component, U(), D())
+        # TODO this seems kind of redundant with the 
         sum_pwl_vars += jump_fixed_value(first(break_points))::Float64
     elseif _include_min_gen_power_in_constraint(component, U(), D())
         on_vars = get_variable(container, OnVariable(), T)
