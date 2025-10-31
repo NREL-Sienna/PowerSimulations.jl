@@ -275,6 +275,15 @@ function construct_device!(
         devices,
         StaticBranch(),
     )
+
+    add_expressions!(
+        container,
+        PTDFBranchFlow,
+        devices,
+        model,
+        network_model,
+    )
+
     if haskey(get_time_series_names(model), DynamicBranchRatingTimeSeriesParameter)
         add_parameters!(container, DynamicBranchRatingTimeSeriesParameter, devices, model)
     end
@@ -1544,7 +1553,7 @@ function _get_branch_map(
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
     inter_area_branch_map =
         Dict{Tuple{PSY.Area, PSY.Area}, Dict{DataType, Vector{<:PSY.ACBranch}}}()
-    for map in NETWORK_REDUCTION_MAPS
+    for (map, reverse_map) in NETWORK_REDUCTION_MAPS
         network_reduction_map = all_branch_maps_by_type[map]
         for branch_type in network_model.modeled_branch_types
             !haskey(network_reduction_map, branch_type) && continue
