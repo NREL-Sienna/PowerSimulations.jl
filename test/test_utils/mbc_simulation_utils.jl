@@ -2,9 +2,10 @@
 # If you make changes, run those tests too!
 const TIME1 = DateTime("2024-01-01T00:00:00")
 test_path = mktempdir()
+const FormulationDict = Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}
 # TODO could replace with PSI's defaults, template_unit_commitment
 const DEFAULT_FORMULATIONS =
-    Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}(
+    FormulationDict(
         ThermalStandard => ThermalBasicUnitCommitment,
         PowerLoad => StaticPowerLoad,
         InterruptiblePowerLoad => PowerLoadInterruption,
@@ -56,7 +57,7 @@ end
 
 function set_formulations!(template::ProblemTemplate,
     sys::PSY.System,
-    device_to_formulation::Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}},
+    device_to_formulation::FormulationDict,
 )
     for (device, formulation) in device_to_formulation
         if !isempty(get_components(device, sys))

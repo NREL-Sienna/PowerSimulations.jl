@@ -163,7 +163,7 @@ function extend_mbc!(
             initial_name =
                 "initial_input $(incr_or_decr)" *
                 (initial_input_names_vary ? name_modifier : "")
-            my_initial_ts = _make_deterministic_ts(
+            my_initial_ts = make_deterministic_ts(
                 sys,
                 initial_name,
                 baseline_initial,
@@ -172,7 +172,7 @@ function extend_mbc!(
             variable_name =
                 "variable_cost $(incr_or_decr)" *
                 (variable_cost_names_vary ? name_modifier : "")
-            my_pwl_ts = _make_deterministic_ts(
+            my_pwl_ts = make_deterministic_ts(
                 sys,
                 variable_name,
                 baseline_pwl,
@@ -193,7 +193,7 @@ end
 Make a deterministic time series from a tuple or a float value. See below function for
 details about the arguments.
 """
-function _make_deterministic_ts(
+function make_deterministic_ts(
     name::String,
     ini_val::T,
     res_incr::Number,
@@ -237,7 +237,7 @@ Here, the elements of `incrs_x` and `incrs_y` are tuples of three values, corres
 `create_extra_tranches`: if true, split the first tranche of the first timestep into two;
 split the last tranche of the last timestep of into three.
 """
-function _make_deterministic_ts(
+function make_deterministic_ts(
     name::String,
     ini_val::PiecewiseStepData,
     incrs_x::NTuple{3, Float64},
@@ -299,7 +299,7 @@ end
 """
 Create a deterministic time series as above, with the same horizon, count, and interval as an existing time series.
 """
-function _make_deterministic_ts(
+function make_deterministic_ts(
     sys::PSY.System,
     args...;
     kwargs...,
@@ -308,7 +308,7 @@ function _make_deterministic_ts(
         PSY.get_time_series_resolutions(sys) .==
         first(PSY.get_time_series_resolutions(sys)),
     )
-    return _make_deterministic_ts(
+    return make_deterministic_ts(
         args...,
         first(PSY.get_forecast_initial_times(sys)),
         PSY.get_forecast_horizon(sys),
