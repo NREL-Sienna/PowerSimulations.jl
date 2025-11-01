@@ -1,3 +1,5 @@
+# See also test_import_export_cost.jl
+
 @testset "ImportExportSource Source With CopperPlate" begin
     constraint_keys = [
         PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "import"),
@@ -8,7 +10,7 @@
         PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
     ]
 
-    sys = _make_5_bus_with_import_export(; add_single_time_series = false)
+    sys = make_5_bus_with_import_export(; add_single_time_series = false)
 
     model = DecisionModel(MockOperationProblem, CopperPlatePowerModel, sys)
     device_model = DeviceModel(Source, ImportExportSourceModel)
@@ -28,7 +30,7 @@ end
         PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
     ]
 
-    sys = _make_5_bus_with_import_export(; add_single_time_series = false)
+    sys = make_5_bus_with_import_export(; add_single_time_series = false)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, sys)
     device_model = DeviceModel(Source, ImportExportSourceModel)
     mock_construct_device!(model, device_model)
@@ -47,7 +49,7 @@ end
         PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
     ]
 
-    sys = _make_5_bus_with_import_export(; add_single_time_series = true)
+    sys = make_5_bus_with_import_export(; add_single_time_series = true)
     source = get_component(Source, sys, "source")
 
     load = first(get_components(PowerLoad, sys))
@@ -137,7 +139,7 @@ end
         PSI.ConstraintKey(ActivePowerInVariableTimeSeriesLimitsConstraint, Source, "ub"),
     ]
 
-    sys = _make_5_bus_with_import_export(; add_single_time_series = true)
+    sys = make_5_bus_with_import_export(; add_single_time_series = true)
     source = get_component(Source, sys, "source")
 
     load = first(get_components(PowerLoad, sys))
