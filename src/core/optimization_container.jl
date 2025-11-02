@@ -2102,8 +2102,8 @@ function get_time_series_initial_values!(
     )
     ts_values = IS.get_time_series_values(
         component,
-        forecast,
-        initial_time;
+        forecast;
+        start_time = initial_time,
         len = length(time_steps),
         ignore_scaling_factors = true,
     )

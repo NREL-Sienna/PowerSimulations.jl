@@ -464,7 +464,7 @@ function get_branches_to_pm(
             continue
         end
         !(comp_type <: T) && continue
-        for map in NETWORK_REDUCTION_MAPS
+        for (map, reverse_map) in NETWORK_REDUCTION_MAPS
             network_reduction_map = all_branch_maps_by_type[map]
             !haskey(network_reduction_map, comp_type) && continue
             for (arc_tuple, reduction_entry) in network_reduction_map[comp_type]

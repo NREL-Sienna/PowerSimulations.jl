@@ -1639,7 +1639,7 @@ function add_to_expression!(
     service_name = get_service_name(model)
     direction_map = PSY.get_direction_mapping(service)
     contributing_devices_map = get_contributing_devices_map(model)
-    for map in NETWORK_REDUCTION_MAPS
+    for (map, reverse_map) in NETWORK_REDUCTION_MAPS
         network_reduction_map = all_branch_maps_by_type[map]
         for branch_type in network_model.modeled_branch_types
             if !haskey(contributing_devices_map, branch_type) ||

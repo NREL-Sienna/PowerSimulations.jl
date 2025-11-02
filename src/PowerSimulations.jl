@@ -534,22 +534,22 @@ using DocStringExtensions
                     $(DOCSTRING)
                     """
 # Includes
-
 include("core/definitions.jl")
 
 # Core components
 include("core/formulations.jl")
+include("core/network_formulations.jl")
 include("core/abstract_simulation_store.jl")
 include("core/operation_model_abstract_types.jl")
 include("core/abstract_feedforward.jl")
 include("core/variables.jl")
 include("core/network_reductions.jl")
-include("core/network_model.jl")
 include("core/parameters.jl")
 include("core/service_model.jl")
 include("core/event_keys.jl")
 include("core/event_model.jl")
 include("core/device_model.jl")
+include("core/network_model.jl")
 include("core/auxiliary_variables.jl")
 include("core/constraints.jl")
 include("core/expressions.jl")

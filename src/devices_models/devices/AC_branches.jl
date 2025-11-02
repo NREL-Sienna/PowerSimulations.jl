@@ -76,11 +76,12 @@ function add_variables!(
     U <: PSY.ACTransmission}
     time_steps = get_time_steps(container)
     network_reduction_data = network_model.network_reduction
-    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
-    branch_names = get_branch_name_variable_axis(all_branch_maps_by_type, U)
+
+    branch_names = get_branch_argument_axis(network_reduction_data, devices)
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
-    reduced_branch_variable_tracker = get_variable_dict(reduced_branch_tracker)
-    variable = add_variable_container!(
+    all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(network_reduction_data)
+
+    variable_container = add_variable_container!(
         container,
         T(),
         U,
@@ -88,48 +89,32 @@ function add_variables!(
         time_steps,
     )
 
-    for t in time_steps
-        for map in NETWORK_REDUCTION_MAPS
-            network_reduction_map = all_branch_maps_by_type[map]
-            !haskey(network_reduction_map, U) && continue
-            for (arc_tuple, reduction_entry) in network_reduction_map[U]
-                has_entry, entry_name = _search_for_reduced_branch_variable(
-                    reduced_branch_tracker,
-                    reduction_entry,
-                    T,
-                    U,
-                    t,
+    for (name, (arc, reduction)) in PNM.get_name_to_arc_map(network_reduction_data)[U]
+        reduction_entry = all_branch_maps_by_type[reduction][U][arc] # TODO: entry is not type stable here. It might have performance implications
+        has_entry, tracker_container = _search_for_reduced_branch_variable(
+            reduced_branch_tracker,
+            arc,
+            T,
+            U,
+        )
+        if has_entry
+            @assert !isempty(tracker_container) name arc reduction
+        end
+        ub = get_variable_upper_bound(T(), reduction_entry, formulation)
+        lb = get_variable_lower_bound(T(), reduction_entry, formulation)
+        for t in time_steps
+            if !has_entry
+                tracker_container[t] = JuMP.@variable(
+                    get_jump_model(container),
+                    base_name = "$(T)_$(U)_$(reduction)_{$(name), $(t)}",
                 )
-                if has_entry
-                    equivalent_branch_variable =
-                        reduced_branch_variable_tracker[U][T][entry_name][t]
-                else
-                    equivalent_branch_variable = JuMP.@variable(
-                        get_jump_model(container),
-                    )
-                    _add_variable_to_tracker!(
-                        reduced_branch_tracker,
-                        equivalent_branch_variable,
-                        reduction_entry,
-                        T,
-                        t,
-                    )
-                end
-                ub = get_variable_upper_bound(T(), reduction_entry, formulation)
-                ub !== nothing && JuMP.set_upper_bound(equivalent_branch_variable, ub)
-                lb = get_variable_lower_bound(T(), reduction_entry, formulation)
-                lb !== nothing && JuMP.set_lower_bound(equivalent_branch_variable, lb)
-
-                _add_variable_to_container!(
-                    variable,
-                    equivalent_branch_variable,
-                    reduction_entry,
-                    U,
-                    t,
-                )
+                ub !== nothing && JuMP.set_upper_bound(tracker_container[t], ub)
+                lb !== nothing && JuMP.set_lower_bound(tracker_container[t], lb)
             end
+            variable_container[name, t] = tracker_container[t]
         end
     end
+    error()
     return
 end
 
@@ -149,7 +134,7 @@ end
 function _add_variable_to_container!(
     variable_container::JuMPVariableArray,
     variable::JuMP.VariableRef,
-    double_circuit::Set{PSY.ACTransmission},
+    double_circuit::Set{T},
     ::Type{T},
     t,
 ) where {T <: PSY.ACTransmission}
@@ -159,6 +144,7 @@ function _add_variable_to_container!(
             variable_container[name, t] = variable
         end
     end
+    return
 end
 
 function _add_variable_to_container!(
@@ -188,7 +174,7 @@ function add_variables!(
             push!(inter_network_branches, d)
         else
             @warn(
-                "HVDC Line $(PSY.get_name(d)) is in the same subnetwork, so the line will not be modeled."
+                "Line $(PSY.get_name(d)) is in the same subnetwork, so the line will not be modeled."
             )
         end
     end
@@ -207,8 +193,8 @@ function branch_rate_bounds!(
     var = get_variable(container, FlowActivePowerVariable(), B)
     network_reduction_data = get_network_reduction(network_model)
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
-    branch_names = get_branch_name_variable_axis(all_branch_maps_by_type, B)
-    for map in NETWORK_REDUCTION_MAPS
+    branch_names = get_branch_argument_axis(all_branch_maps_by_type, devices)
+    for (map, reverse_map) in NETWORK_REDUCTION_MAPS
         network_reduction_map = all_branch_maps_by_type[map]
         !haskey(network_reduction_map, B) && continue
         for reduction_entry in values(network_reduction_map[B])
@@ -239,8 +225,8 @@ function branch_rate_bounds!(
     time_steps = get_time_steps(container)
     network_reduction_data = get_network_reduction(network_model)
     all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
-    branch_names = get_branch_name_variable_axis(all_branch_maps_by_type, B)
-    for map in NETWORK_REDUCTION_MAPS
+    branch_names = get_branch_argument_axis(all_branch_maps_by_type, devices)
+    for (map, reverse_map) in NETWORK_REDUCTION_MAPS
         network_reduction_map = all_branch_maps_by_type[map]
         !haskey(network_reduction_map, B) && continue
         for reduction_entry in values(network_reduction_map[B])
@@ -557,7 +543,7 @@ function add_constraints!(
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
-    for map in NETWORK_REDUCTION_MAPS
+    for (map, reverse_map) in NETWORK_REDUCTION_MAPS
         network_reduction_map = all_branch_maps_by_type[map]
         !haskey(network_reduction_map, T) && continue
         for (arc_tuple, reduction_entry) in network_reduction_map[T]
@@ -650,7 +636,7 @@ function add_constraints!(
     if use_slacks
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), B)
     end
-    for map in NETWORK_REDUCTION_MAPS
+    for (map, reverse_map) in NETWORK_REDUCTION_MAPS
         network_reduction_map = all_branch_maps_by_type[map]
         !haskey(network_reduction_map, B) && continue
         for reduction_entry in values(network_reduction_map[B])
@@ -706,7 +692,7 @@ function add_constraints!(
     )
     constraint = get_constraint(container, cons_type(), B)
 
-    for map in NETWORK_REDUCTION_MAPS
+    for (map, reverse_map) in NETWORK_REDUCTION_MAPS
         network_reduction_map = all_branch_maps_by_type[map]
         !haskey(network_reduction_map, B) && continue
         for reduction_entry in values(network_reduction_map[B])
@@ -726,18 +712,6 @@ function add_constraints!(
     end
     return
 end
-
-const ValidPTDFS = Union{
-    PNM.PTDF{
-        Tuple{Vector{Int}, Vector{Tuple{Int, Int}}},
-        Tuple{Dict{Int64, Int64}, Dict{Tuple{Int, Int}, Int64}},
-        Matrix{Float64},
-    },
-    PNM.VirtualPTDF{
-        Tuple{Vector{Tuple{Int, Int}}, Vector{Int64}},
-        Tuple{Dict{Tuple{Int, Int}, Int64}, Dict{Int64, Int64}},
-    },
-}
 
 function _make_flow_expressions!(
     jump_model::JuMP.Model,
@@ -760,58 +734,6 @@ function _make_flow_expressions!(
     #return name, expressions
     # change when using the not concurrent version
     return expressions
-end
-
-function _make_flow_expressions!(
-    container::OptimizationContainer,
-    branches::Vector{String},
-    time_steps::UnitRange{Int},
-    ptdf::ValidPTDFS,
-    nodal_balance_expressions::JuMPAffineExpressionDArrayIntInt,
-    branch_Type::DataType,
-    all_branch_maps_by_type::Dict,
-)
-    branch_flow_expr = add_expression_container!(container,
-        PTDFBranchFlow(),
-        branch_Type,
-        branches,
-        time_steps,
-    )
-    jump_model = get_jump_model(container)
-    # TODO - translate new loop to parallel construction of expressions
-    #=     tasks = map(branches) do name
-            ptdf_col = ptdf[name, :]
-            Threads.@spawn _make_flow_expressions!(
-                jump_model,
-                name,
-                time_steps,
-                ptdf_col,
-                nodal_balance_expressions.data,
-            )
-        end
-        for task in tasks
-            name, expressions = fetch(task)
-            branch_flow_expr[name, :] .= expressions
-        end
-     =#
-    # Leaving serial code commented out for debugging purposes in the future
-    for map in NETWORK_REDUCTION_MAPS
-        network_reduction_map = all_branch_maps_by_type[map]
-        !haskey(network_reduction_map, branch_Type) && continue
-        for (arc_tuple, reduction_entry) in network_reduction_map[branch_Type]
-            ptdf_col = ptdf[arc_tuple, :]
-            _add_expression_to_container!(
-                branch_flow_expr,
-                jump_model,
-                time_steps,
-                ptdf_col,
-                nodal_balance_expressions,
-                reduction_entry,
-                branches,
-            )
-        end
-    end
-    return branch_flow_expr
 end
 
 function _add_expression_to_container!(
@@ -886,6 +808,75 @@ function _add_expression_to_container!(
     end
 end
 
+function add_expressions!(
+    container::OptimizationContainer,
+    ::Type{PTDFBranchFlow},
+    devices::IS.FlattenIteratorWrapper{B},
+    model::DeviceModel{B, <:AbstractBranchFormulation},
+    network_model::NetworkModel{<:AbstractPTDFModel},
+) where {B <: PSY.ACTransmission}
+    time_steps = get_time_steps(container)
+    ptdf = get_PTDF_matrix(network_model)
+    network_reduction_data = network_model.network_reduction
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    # This might need to be changed to something else
+    @show branch_names = get_branch_argument_axis(network_reduction_data, devices)
+
+    nodal_balance_expressions = get_expression(
+        container,
+        ActivePowerBalance(),
+        PSY.ACBus,
+    )
+
+    branch_flow_expr = add_expression_container!(container,
+        PTDFBranchFlow(),
+        B,
+        branch_names,
+        time_steps,
+    )
+
+    for b in branch_names
+        ptdf_col = ptdf[b, :]
+    end
+
+    error("here")
+
+    jump_model = get_jump_model(container)
+
+    tasks = map(branch_names) do name
+        ptdf_col = ptdf[name, :]
+        Threads.@spawn _make_flow_expressions!(
+            jump_model,
+            name,
+            time_steps,
+            ptdf_col,
+            nodal_balance_expressions.data,
+        )
+    end
+    for task in tasks
+        name, expressions = fetch(task)
+        branch_flow_expr[name, :] .= expressions
+    end
+    # Leaving serial code commented out for debugging purposes in the future
+    for (map, reverse_map) in NETWORK_REDUCTION_MAPS
+        network_reduction_map = all_branch_maps_by_type[map]
+        !haskey(network_reduction_map, branch_Type) && continue
+        for (arc_tuple, reduction_entry) in network_reduction_map[branch_Type]
+            ptdf_col = ptdf[arc_tuple, :]
+            _add_expression_to_container!(
+                branch_flow_expr,
+                jump_model,
+                time_steps,
+                ptdf_col,
+                nodal_balance_expressions,
+                reduction_entry,
+                branches,
+            )
+        end
+    end
+    return
+end
+
 """
 Add network flow constraints for ACBranch and NetworkModel with <: AbstractPTDFModel
 """
@@ -896,39 +887,17 @@ function add_constraints!(
     model::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {B <: PSY.ACTransmission}
-    ptdf = get_PTDF_matrix(network_model)
-    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
-    network_reduction_data = network_model.network_reduction
-    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
-    branches = get_branch_name_constraint_axis(
-        all_branch_maps_by_type,
-        B,
-        NetworkFlowConstraint,
-        reduced_branch_tracker,
-    )
-
-    # Possible that all constraints are handled by other types:
-    isempty(branches) && return
-
     time_steps = get_time_steps(container)
+    branch_flow_expr = get_expression(container, PTDFBranchFlow(), B)
+    flow_variables = get_variable(container, FlowActivePowerVariable(), B)
+    branches = axes(flow_variables)[1]
+    @assert_op branches == axes(branch_flow_expr)[1]
     branch_flow = add_constraints_container!(
         container,
         NetworkFlowConstraint(),
         B,
         branches,
         time_steps,
-    )
-    nodal_balance_expressions =
-        get_expression(container, ActivePowerBalance(), PSY.ACBus)
-    flow_variables = get_variable(container, FlowActivePowerVariable(), B)
-    branch_flow_expr = _make_flow_expressions!(
-        container,
-        branches,
-        time_steps,
-        ptdf,
-        nodal_balance_expressions,
-        B,
-        all_branch_maps_by_type,
     )
     jump_model = get_jump_model(container)
     for name in branches
