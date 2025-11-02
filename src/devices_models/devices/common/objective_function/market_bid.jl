@@ -83,7 +83,7 @@ _has_import_export_cost(device::PSY.Source) =
 
 _has_import_export_cost(::PSY.StaticInjection) = false
 
-_has_mbc_or_iec(device::PSY.Component) =
+_has_offer_curve_cost(device::PSY.Component) =
     _has_market_bid_cost(device) || _has_import_export_cost(device)
 
 _has_parameter_time_series(::StartupCostParameter, device::PSY.StaticInjection) =
@@ -96,21 +96,21 @@ _has_parameter_time_series(
     ::T,
     device::PSY.StaticInjection,
 ) where {T <: AbstractCostAtMinParameter} =
-    _has_mbc_or_iec(device) &&
+    _has_offer_curve_cost(device) &&
     is_time_variant(_get_parameter_field(T(), PSY.get_operation_cost(device)))
 
 _has_parameter_time_series(
     ::T,
     device::PSY.StaticInjection,
 ) where {T <: AbstractPiecewiseLinearSlopeParameter} =
-    _has_mbc_or_iec(device) &&
+    _has_offer_curve_cost(device) &&
     is_time_variant(_get_parameter_field(T(), PSY.get_operation_cost(device)))
 
 _has_parameter_time_series(
     ::T,
     device::PSY.StaticInjection,
 ) where {T <: AbstractPiecewiseLinearBreakpointParameter} =
-    _has_mbc_or_iec(device) &&
+    _has_offer_curve_cost(device) &&
     is_time_variant(_get_parameter_field(T(), PSY.get_operation_cost(device)))
 
 function validate_initial_input_time_series(device::PSY.StaticInjection, decremental::Bool)
@@ -140,7 +140,7 @@ function validate_initial_input_time_series(device::PSY.StaticInjection, decreme
     end
 end
 
-function validate_mbc_iec_breakpoints_slopes(device::PSY.StaticInjection, decremental::Bool)
+function validate_occ_breakpoints_slopes(device::PSY.StaticInjection, decremental::Bool)
     offer_curves = get_offer_curves_maybe_decremental(Val(decremental), device)
     device_name = get_name(device)
     is_ts = is_time_variant(offer_curves)
@@ -169,7 +169,7 @@ function validate_mbc_iec_breakpoints_slopes(device::PSY.StaticInjection, decrem
         end
 
         # Different specific validations for MBC versus IEC
-        p1 = _do_specific_mbc_iec_validation(
+        p1 = _do_specific_occ_validation(
             PSY.get_operation_cost(device),
             decremental,
             is_ts,
@@ -180,7 +180,7 @@ function validate_mbc_iec_breakpoints_slopes(device::PSY.StaticInjection, decrem
     end
 end
 
-function _do_specific_mbc_iec_validation(
+function _do_specific_occ_validation(
     ::PSY.MarketBidCost,
     decremental,
     is_ts,
@@ -202,7 +202,7 @@ function _do_specific_mbc_iec_validation(
     return p1
 end
 
-_do_specific_mbc_iec_validation(
+_do_specific_occ_validation(
     ::PSY.MarketBidCost,
     decremental,
     is_ts,
@@ -211,7 +211,7 @@ _do_specific_mbc_iec_validation(
 ) =
     @assert !is_ts
 
-function _do_specific_mbc_iec_validation(
+function _do_specific_occ_validation(
     cost::PSY.ImportExportCost,
     decremental,
     is_ts,
@@ -231,10 +231,10 @@ function _do_specific_mbc_iec_validation(
             "For ImportExportCost, initial input must be zero.",
         ),
     )
-    _do_specific_mbc_iec_validation(cost, decremental, true, PSY.get_function_data(vc))  # also do the FunctionData validations
+    _do_specific_occ_validation(cost, decremental, true, PSY.get_function_data(vc))  # also do the FunctionData validations
 end
 
-function _do_specific_mbc_iec_validation(
+function _do_specific_occ_validation(
     ::PSY.ImportExportCost,
     decremental,
     is_ts,
@@ -253,7 +253,7 @@ function _do_specific_mbc_iec_validation(
 end
 
 # Warn if hot/warm/cold startup costs are given for non-`ThermalMultiStart`
-function validate_mbc_iec_component(
+function validate_occ_component(
     ::StartupCostParameter,
     device::PSY.ThermalMultiStart,
 )
@@ -266,7 +266,7 @@ function validate_mbc_iec_component(
     )
 end
 
-function validate_mbc_iec_component(::StartupCostParameter, device::PSY.StaticInjection)
+function validate_occ_component(::StartupCostParameter, device::PSY.StaticInjection)
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     contains_multistart = false
     apply_maybe_across_time_series(device, startup) do x
@@ -292,14 +292,14 @@ function validate_mbc_iec_component(::StartupCostParameter, device::PSY.StaticIn
 end
 
 # Validate eltype of shutdown costs
-function validate_mbc_iec_component(::ShutdownCostParameter, device::PSY.StaticInjection)
+function validate_occ_component(::ShutdownCostParameter, device::PSY.StaticInjection)
     shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
     _validate_eltype(Float64, device, shutdown, " for shutdown cost")
 end
 
 # Renewable-specific validations that warn when costs are nonzero.
 # There warnings are captured by the with_logger, though, so we don't actually see them.
-function validate_mbc_iec_component(
+function validate_occ_component(
     ::StartupCostParameter,
     device::Union{PSY.RenewableDispatch, PSY.Storage},
 )
@@ -313,7 +313,7 @@ function validate_mbc_iec_component(
     end
 end
 
-function validate_mbc_iec_component(
+function validate_occ_component(
     ::ShutdownCostParameter,
     device::Union{PSY.RenewableDispatch, PSY.Storage},
 )
@@ -327,7 +327,7 @@ function validate_mbc_iec_component(
     end
 end
 
-function validate_mbc_iec_component(
+function validate_occ_component(
     ::IncrementalCostAtMinParameter,
     device::Union{PSY.RenewableDispatch, PSY.Storage},
 )
@@ -343,7 +343,7 @@ function validate_mbc_iec_component(
     end
 end
 
-function validate_mbc_iec_component(
+function validate_occ_component(
     ::DecrementalCostAtMinParameter,
     device::PSY.Storage,
 )
@@ -360,42 +360,42 @@ function validate_mbc_iec_component(
 end
 
 # Validate that initial input ts always appears if variable ts appears, warn if initial input ts appears without variable ts
-validate_mbc_iec_component(
+validate_occ_component(
     ::IncrementalCostAtMinParameter,
     device::PSY.StaticInjection,
 ) =
     validate_initial_input_time_series(device, false)
-validate_mbc_iec_component(
+validate_occ_component(
     ::DecrementalCostAtMinParameter,
     device::PSY.StaticInjection,
 ) =
     validate_initial_input_time_series(device, true)
 
 # Validate convexity/concavity of cost curves as appropriate, verify P1 = min gen power
-validate_mbc_iec_component(
+validate_occ_component(
     ::IncrementalPiecewiseLinearBreakpointParameter,
     device::PSY.StaticInjection,
 ) =
-    validate_mbc_iec_breakpoints_slopes(device, false)
-validate_mbc_iec_component(
+    validate_occ_breakpoints_slopes(device, false)
+validate_occ_component(
     ::DecrementalPiecewiseLinearBreakpointParameter,
     device::PSY.StaticInjection,
 ) =
-    validate_mbc_iec_breakpoints_slopes(device, true)
+    validate_occ_breakpoints_slopes(device, true)
 
 # Slope and breakpoint validations are done together, nothing to do here
-validate_mbc_iec_component(
+validate_occ_component(
     ::AbstractPiecewiseLinearSlopeParameter,
     device::PSY.StaticInjection,
 ) = nothing
 
-function _process_mbc_iec_parameters_helper(
+function _process_occ_parameters_helper(
     ::P,
     container::OptimizationContainer,
     model,
     devices,
 ) where {P <: ParameterType}
-    validate_mbc_iec_component.(Ref(P()), devices)
+    validate_occ_component.(Ref(P()), devices)
     if _consider_parameter(P(), container, model)
         ts_devices = filter(device -> _has_parameter_time_series(P(), device), devices)
         (length(ts_devices) > 0) && add_parameters!(container, P, ts_devices, model)
@@ -416,7 +416,7 @@ function process_market_bid_parameters!(
         StartupCostParameter(),
         ShutdownCostParameter(),
     )
-        _process_mbc_iec_parameters_helper(param, container, model, devices)
+        _process_occ_parameters_helper(param, container, model, devices)
     end
     if incremental
         for param in (
@@ -424,7 +424,7 @@ function process_market_bid_parameters!(
             IncrementalPiecewiseLinearSlopeParameter(),
             IncrementalPiecewiseLinearBreakpointParameter(),
         )
-            _process_mbc_iec_parameters_helper(param, container, model, devices)
+            _process_occ_parameters_helper(param, container, model, devices)
         end
     end
     if decremental
@@ -433,7 +433,7 @@ function process_market_bid_parameters!(
             DecrementalPiecewiseLinearSlopeParameter(),
             DecrementalPiecewiseLinearBreakpointParameter(),
         )
-            _process_mbc_iec_parameters_helper(param, container, model, devices)
+            _process_occ_parameters_helper(param, container, model, devices)
         end
     end
 end

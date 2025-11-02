@@ -61,7 +61,7 @@ function _add_variable_cost_to_objective!(
     return
 end
 
-# _process_mbc_iec_parameters_helper and the helpers it depends on (even purely IEC ones) are in objective_function/market_bid.jl
+# _process_occ_parameters_helper and the helpers it depends on (even purely IEC ones) are in objective_function/market_bid.jl
 function process_import_export_parameters!(
     container::OptimizationContainer,
     devices_in,
@@ -75,6 +75,6 @@ function process_import_export_parameters!(
         DecrementalPiecewiseLinearSlopeParameter(),
         DecrementalPiecewiseLinearBreakpointParameter(),
     )
-        _process_mbc_iec_parameters_helper(param, container, model, devices)
+        _process_occ_parameters_helper(param, container, model, devices)
     end
 end
