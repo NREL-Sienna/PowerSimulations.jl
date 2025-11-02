@@ -108,3 +108,21 @@ function PSI._add_vom_cost_to_objective!(
     end
     return
 end
+
+# _process_mbc_iec_parameters_helper and the helpers it depends on (even purely IEC ones) are in objective_function/market_bid.jl
+function process_import_export_parameters!(
+    container::OptimizationContainer,
+    devices_in,
+    model::DeviceModel,
+)
+    devices = filter(_has_import_export_cost, collect(devices_in))
+
+    for param in (
+        IncrementalPiecewiseLinearSlopeParameter(),
+        IncrementalPiecewiseLinearBreakpointParameter(),
+        DecrementalPiecewiseLinearSlopeParameter(),
+        DecrementalPiecewiseLinearBreakpointParameter(),
+    )
+        _process_mbc_iec_parameters_helper(param, container, model, devices)
+    end
+end

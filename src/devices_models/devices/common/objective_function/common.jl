@@ -2,10 +2,44 @@
 ######## Helper Functions ########
 ##################################
 
-get_output_offer_curves(cost::PSY.ImportExportCost) = PSY.get_import_offer_curves(cost)
-get_output_offer_curves(cost::PSY.MarketBidCost) = PSY.get_incremental_offer_curves(cost)
-get_input_offer_curves(cost::PSY.ImportExportCost) = PSY.get_export_offer_curves(cost)
-get_input_offer_curves(cost::PSY.MarketBidCost) = PSY.get_decremental_offer_curves(cost)
+get_output_offer_curves(cost::PSY.ImportExportCost, args...; kwargs...) =
+    PSY.get_import_offer_curves(cost, args...; kwargs...)
+get_output_offer_curves(cost::PSY.MarketBidCost, args...; kwargs...) =
+    PSY.get_incremental_offer_curves(cost, args...; kwargs...)
+get_input_offer_curves(cost::PSY.ImportExportCost, args...; kwargs...) =
+    PSY.get_export_offer_curves(cost, args...; kwargs...)
+get_input_offer_curves(cost::PSY.MarketBidCost, args...; kwargs...) =
+    PSY.get_decremental_offer_curves(cost, args...; kwargs...)
+
+# TODO deduplicate, these signatures are getting out of hand
+get_output_offer_curves(
+    component::PSY.Component,
+    cost::PSY.ImportExportCost,
+    args...;
+    kwargs...,
+) =
+    PSY.get_import_offer_curves(component, cost, args...; kwargs...)
+get_output_offer_curves(
+    component::PSY.Component,
+    cost::PSY.MarketBidCost,
+    args...;
+    kwargs...,
+) =
+    PSY.get_incremental_offer_curves(component, cost, args...; kwargs...)
+get_input_offer_curves(
+    component::PSY.Component,
+    cost::PSY.ImportExportCost,
+    args...;
+    kwargs...,
+) =
+    PSY.get_export_offer_curves(component, cost, args...; kwargs...)
+get_input_offer_curves(
+    component::PSY.Component,
+    cost::PSY.MarketBidCost,
+    args...;
+    kwargs...,
+) =
+    PSY.get_decremental_offer_curves(component, cost, args...; kwargs...)
 
 """
 Either looks up a value in the component using `getter_func` or fetches the value from the

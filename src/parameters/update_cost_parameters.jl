@@ -62,7 +62,7 @@ _get_parameter_field(
     args...;
     kwargs...,
 ) =
-    PSY.get_incremental_offer_curves(args...; kwargs...)
+    get_output_offer_curves(args...; kwargs...)
 _get_parameter_field(
     ::Union{
         DecrementalPiecewiseLinearSlopeParameter,
@@ -71,7 +71,7 @@ _get_parameter_field(
     args...;
     kwargs...,
 ) =
-    PSY.get_decremental_offer_curves(args...; kwargs...)
+    get_input_offer_curves(args...; kwargs...)
 
 _maybe_tuple(::StartupCostParameter, value) = Tuple(value)
 _maybe_tuple(::ShutdownCostParameter, value) = value

@@ -341,7 +341,7 @@ _get_time_series_name(
     device::PSY.Device,
     ::DeviceModel,
 ) =
-    get_name(PSY.get_incremental_offer_curves(PSY.get_operation_cost(device)))
+    get_name(get_output_offer_curves(PSY.get_operation_cost(device)))
 
 _get_time_series_name(
     ::Union{
@@ -351,7 +351,7 @@ _get_time_series_name(
     device::PSY.Device,
     ::DeviceModel,
 ) =
-    get_name(PSY.get_decremental_offer_curves(PSY.get_operation_cost(device)))
+    get_name(get_input_offer_curves(PSY.get_operation_cost(device)))
 
 # Layer of indirection to figure out what eltype we expect to find in various time series
 # (we could just read the time series and figure it out dynamically if this becomes too brittle)
