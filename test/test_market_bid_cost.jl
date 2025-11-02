@@ -441,14 +441,18 @@ end
     # enough to change the decisions that form the correct solution
 
     # Scenario 1: hot and warm starts
-    c_sys5_pglib0a = create_multistart_sys(false, 1.0, 7.45; add_ts = false)
-    c_sys5_pglib1a = create_multistart_sys(false, 1.0, 7.45)
-    c_sys5_pglib2a = create_multistart_sys(true, 1.0, 7.45)
+    load_mult_a = 1.0
+    therm_mult_a = 7.4
+    c_sys5_pglib0a = create_multistart_sys(false, load_mult_a, therm_mult_a; add_ts = false)
+    c_sys5_pglib1a = create_multistart_sys(false, load_mult_a, therm_mult_a)
+    c_sys5_pglib2a = create_multistart_sys(true, load_mult_a, therm_mult_a)
 
     # Scenario 2: hot and cold starts
-    c_sys5_pglib0b = create_multistart_sys(false, 1.05, 7.4; add_ts = false)
-    c_sys5_pglib1b = create_multistart_sys(false, 1.05, 7.4)
-    c_sys5_pglib2b = create_multistart_sys(true, 1.05, 7.4)
+    load_mult_b = 1.05
+    therm_mult_b = 7.4
+    c_sys5_pglib0b = create_multistart_sys(false, load_mult_b, therm_mult_b; add_ts = false)
+    c_sys5_pglib1b = create_multistart_sys(false, load_mult_b, therm_mult_b)
+    c_sys5_pglib2b = create_multistart_sys(true, load_mult_b, therm_mult_b)
 
     test_generic_mbc_equivalence(c_sys5_pglib0a, c_sys5_pglib1a; multistart = true)
     test_generic_mbc_equivalence(c_sys5_pglib0b, c_sys5_pglib1b; multistart = true)
