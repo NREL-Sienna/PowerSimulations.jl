@@ -66,6 +66,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     reduce_degree_two_branches::Bool
     power_flow_evaluation::Vector{PFS.PowerFlowEvaluationModel}
     subsystem::Union{Nothing, String}
+    hvdc_network_model::Union{Nothing, AbstractHVDCNetworkModel}
     modeled_branch_types::Vector{DataType}
     reduced_branch_tracker::BranchReductionOptimizationTracker
 
@@ -82,6 +83,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             PFS.PowerFlowEvaluationModel,
             Vector{PFS.PowerFlowEvaluationModel},
         } = PFS.PowerFlowEvaluationModel[],
+        hvdc_network_model = nothing,
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
         new{T}(
@@ -96,6 +98,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             reduce_degree_two_branches,
             _maybe_flatten_pfem(power_flow_evaluation),
             nothing,
+            hvdc_network_model,
             Vector{DataType}(),
             BranchReductionOptimizationTracker(),
         )
@@ -117,8 +120,11 @@ get_bus_area_map(m::NetworkModel) = m.bus_area_map
 get_power_flow_evaluation(m::NetworkModel) = m.power_flow_evaluation
 has_subnetworks(m::NetworkModel) = !isempty(m.bus_area_map)
 get_subsystem(m::NetworkModel) = m.subsystem
+get_hvdc_network_model(m::NetworkModel) = m.hvdc_network_model
 
 set_subsystem!(m::NetworkModel, id::String) = m.subsystem = id
+set_hvdc_network_model!(m::NetworkModel, val::AbstractHVDCNetworkModel) =
+    m.hvdc_network_model = val
 
 function add_dual!(model::NetworkModel, dual)
     dual in model.duals && error("dual = $dual is already stored")

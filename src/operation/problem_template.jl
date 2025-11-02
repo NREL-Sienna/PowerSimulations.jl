@@ -54,6 +54,8 @@ get_service_models(template::ProblemTemplate) = template.services
 get_network_model(template::ProblemTemplate) = template.network_model
 get_network_formulation(template::ProblemTemplate) =
     get_network_formulation(get_network_model(template))
+get_hvdc_network_model(template::ProblemTemplate) =
+    template.network_model.hvdc_network_model
 
 function get_component_types(template::ProblemTemplate)::Vector{DataType}
     return vcat(
@@ -95,6 +97,28 @@ function set_network_model!(
     model::NetworkModel{<:PM.AbstractPowerModel},
 )
     template.network_model = model
+    return
+end
+
+"""
+Sets the network model in a template.
+"""
+function set_hvdc_network_model!(
+    template::ProblemTemplate,
+    model::Union{Nothing, AbstractHVDCNetworkModel},
+)
+    set_hvdc_network_model!(template.network_model, model)
+    return
+end
+
+"""
+Sets the network model in a template.
+"""
+function set_hvdc_network_model!(
+    template::ProblemTemplate,
+    model::Type{U},
+) where {U <: AbstractHVDCNetworkModel}
+    set_hvdc_network_model!(template.network_model, model())
     return
 end
 

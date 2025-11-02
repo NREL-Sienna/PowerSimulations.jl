@@ -416,7 +416,7 @@ end
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
-    dc_bus_numbers::Vector{Int},
+    ::Vector{Int},
     ::Type{<:PM.AbstractPowerModel},
     bus_reduction_map::Dict{Int64, Set{Int64}},
 )
@@ -432,18 +432,13 @@ function _make_system_expressions!(
         ExpressionKey(ReactivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
     )
-
-    if !isempty(dc_bus_numbers)
-        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
-            _make_container_array(dc_bus_numbers, time_steps)
-    end
     return
 end
 
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
-    dc_bus_numbers::Vector{Int},
+    ::Vector{Int},
     ::Type{<:PM.AbstractActivePowerModel},
     bus_reduction_map::Dict{Int64, Set{Int64}},
 )
@@ -457,10 +452,6 @@ function _make_system_expressions!(
         ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
             _make_container_array(ac_bus_numbers, time_steps),
     )
-    if !isempty(dc_bus_numbers)
-        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
-            _make_container_array(dc_bus_numbers, time_steps)
-    end
     return
 end
 
@@ -483,7 +474,7 @@ end
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
-    dc_bus_numbers::Vector{Int},
+    ::Vector{Int},
     ::Type{T},
     bus_reduction_map::Dict{Int64, Set{Int64}},
 ) where {(T <: Union{PTDFPowerModel, SecurityConstrainedPTDFPowerModel})}
@@ -502,11 +493,6 @@ function _make_system_expressions!(
         # containers
             _make_container_array(sort!(ac_bus_numbers), time_steps),
     )
-
-    if !isempty(dc_bus_numbers)
-        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
-            _make_container_array(dc_bus_numbers, time_steps)
-    end
     return
 end
 
@@ -527,7 +513,7 @@ end
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
-    dc_bus_numbers::Vector{Int},
+    ::Vector{Int},
     ::Type{AreaPTDFPowerModel},
     areas::IS.FlattenIteratorWrapper{PSY.Area},
     bus_reduction_map::Dict{Int64, Set{Int64}},
@@ -558,11 +544,6 @@ function _make_system_expressions!(
             _make_container_array(subnetworks_ref_buses, time_steps)
     end
 
-    if !isempty(dc_bus_numbers)
-        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
-            _make_container_array(dc_bus_numbers, time_steps)
-    end
-
     return
 end
 
@@ -570,7 +551,7 @@ end
 function _make_system_expressions!(
     container::OptimizationContainer,
     subnetworks::Dict{Int, Set{Int}},
-    dc_bus_numbers::Vector{Int},
+    ::Vector{Int},
     ::Type{SecurityConstrainedAreaPTDFPowerModel},
     areas::IS.FlattenIteratorWrapper{PSY.Area},
     bus_reduction_map::Dict{Int64, Set{Int64}},
@@ -598,11 +579,6 @@ function _make_system_expressions!(
         subnetworks_ref_buses = collect(keys(subnetworks))
         container.expressions[ExpressionKey(ActivePowerBalance, PSY.System)] =
             _make_container_array(subnetworks_ref_buses, time_steps)
-    end
-
-    if !isempty(dc_bus_numbers)
-        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
-            _make_container_array(dc_bus_numbers, time_steps)
     end
 
     return
@@ -714,6 +690,45 @@ function initialize_system_expressions!(
     return
 end
 
+function initialize_hvdc_system_expressions!(
+    container::OptimizationContainer,
+    network_model::NetworkModel{T},
+    dc_model::Nothing,
+    system::PSY.System,
+) where {T <: PM.AbstractPowerModel}
+    return
+end
+
+function initialize_hvdc_system_expressions!(
+    container::OptimizationContainer,
+    network_model::NetworkModel{T},
+    dc_model::U,
+    system::PSY.System,
+) where {T <: PM.AbstractPowerModel, U <: TransportHVDCNetworkModel}
+    dc_buses = get_available_components(network_model, PSY.DCBus, system)
+    dc_bus_numbers = sort(PSY.get_number.(dc_buses))
+    if !isempty(dc_bus_numbers)
+        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
+            _make_container_array(dc_bus_numbers, get_time_steps(container))
+    end
+    return
+end
+
+function initialize_hvdc_system_expressions!(
+    container::OptimizationContainer,
+    network_model::NetworkModel{T},
+    dc_model::U,
+    system::PSY.System,
+) where {T <: PM.AbstractPowerModel, U <: VoltageDispatchHVDCNetworkModel}
+    dc_buses = get_available_components(network_model, PSY.DCBus, system)
+    dc_bus_numbers = sort(PSY.get_number.(dc_buses))
+    if !isempty(dc_bus_numbers)
+        container.expressions[ExpressionKey(DCCurrentBalance, PSY.DCBus)] =
+            _make_container_array(dc_bus_numbers, get_time_steps(container))
+    end
+    return
+end
+
 function build_impl!(
     container::OptimizationContainer,
     template::ProblemTemplate,
@@ -721,6 +736,7 @@ function build_impl!(
 )
     transmission = get_network_formulation(template)
     transmission_model = get_network_model(template)
+    hvdc_model = get_hvdc_network_model(template)
 
     initialize_system_expressions!(
         container,
@@ -728,6 +744,13 @@ function build_impl!(
         transmission_model.subnetworks,
         sys,
         transmission_model.network_reduction.bus_reduction_map)
+
+    initialize_hvdc_system_expressions!(
+        container,
+        transmission_model,
+        hvdc_model,
+        sys,
+    )
 
     # Order is required
     for device_model in values(template.devices)
@@ -799,6 +822,7 @@ function build_impl!(
         @debug "Building $(transmission) network formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
         construct_network!(container, sys, transmission_model, template)
+        construct_hvdc_network!(container, sys, transmission_model, hvdc_model, template)
         @debug "Problem size:" get_problem_size(container) _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
     end

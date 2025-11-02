@@ -566,3 +566,62 @@ struct LineFlowBoundConstraint <: ConstraintType end
 abstract type EventConstraint <: ConstraintType end
 struct ActivePowerOutageConstraint <: EventConstraint end
 struct ReactivePowerOutageConstraint <: EventConstraint end
+
+############################################################
+########## Multi-Terminal Converter Constraints ############
+############################################################
+
+struct NodalBalanceCurrentConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that set the losses through a lossy Interconnecting Power Converter.
+For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+The specified constraint is formulated as:
+```math
+\\begin{align*}
+& i_c^{dc} = \\sum_{j \\in \\mathcal{B}^{DC}} \\frac{1}{r_{i,j}} (v_i - v_j), \\quad \\forall t \\in \\{1,\\dots, T\\} 
+\\end{align*}
+```
+"""
+struct ConverterCurrentBalanceConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that compute the converter DC power based on current and voltage.
+For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& p_c = 0.5 * (γ^sq - v^sq - i^sq), \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& γ_c = v_c + i_c, \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+\\end{align*}
+```
+"""
+struct ConverterPowerCalculationConstraint <: ConstraintType end
+
+"""
+Struct to create the constraints that decide the operation direction of the converter.
+For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& I_c^{min} (1 - κ_c) <= i_c <= κ_c * I_c^{max},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& P_c^{min} (1 - κ_c) <= p_c <= κ_c * P_c^{max}, \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+\\end{align*}
+```
+"""
+struct ConverterDirectionConstraint <: ConstraintType end
+
+"""
+Struct to create the McCormick envelopes constraints that decide the bounds on the DC active power.
+For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+The specified constraints are formulated as:
+```math
+\\begin{align*}
+& p_c >= V^{min} i_c + v_c I^{min} - I^{min}V^{min},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& p_c >= V^{max} i_c + v_c I^{max} - I^{max}V^{max},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& p_c <= V^{max} i_c + v_c I^{min} - I^{min}V^{max},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+& p_c <= V^{min} i_c + v_c I^{max} - I^{max}V^{min},  \\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+\\end{align*}
+```
+"""
+struct ConverterMcCormickEnvelopes <: ConstraintType end

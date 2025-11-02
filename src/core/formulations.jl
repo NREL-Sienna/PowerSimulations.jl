@@ -182,9 +182,31 @@ LossLess InterconnectingConverter Model
 struct LossLessConverter <: AbstractConverterFormulation end
 
 """
+Linear Loss InterconnectingConverter Model
+"""
+struct LinearLossConverter <: AbstractConverterFormulation end
+
+"""
+Quadratic Loss InterconnectingConverter Model
+"""
+struct QuadraticLossConverter <: AbstractConverterFormulation end
+
+"""
 LossLess Line Abstract Model
 """
 struct LossLessLine <: AbstractBranchFormulation end
+
+############################## HVDC Network Model Formulations ##################################
+abstract type AbstractHVDCNetworkModel end
+
+"""
+Transport Lossless HVDC network model. No DC voltage variables are added and DC lines are modeled as lossless power transport elements
+"""
+struct TransportHVDCNetworkModel <: AbstractHVDCNetworkModel end
+"""
+DC Voltage HVDC network model, where currents are solved based on DC voltage difference between DC buses
+"""
+struct VoltageDispatchHVDCNetworkModel <: AbstractHVDCNetworkModel end
 
 """
 Abstract type for Service Formulations (a.k.a Models)

@@ -285,11 +285,11 @@ function add_to_expression!(
 end
 
 function add_to_expression!(
-    ::OptimizationContainer,
+    container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
-    ::IS.FlattenIteratorWrapper{V},
-    devices::DeviceModel{V, W},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
     network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: ActivePowerBalance,
@@ -301,7 +301,7 @@ function add_to_expression!(
     variable = get_variable(container, U(), V)
     expression_dc = get_expression(container, T(), PSY.DCBus)
     sys_expr = get_expression(container, T(), PSY.System)
-    for d in devices, t in get_time_steps(container)
+    for d in devices
         name = PSY.get_name(d)
         device_bus = PSY.get_bus(d)
         ref_bus = get_reference_bus(network_model, device_bus)
