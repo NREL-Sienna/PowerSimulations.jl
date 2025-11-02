@@ -11,6 +11,10 @@ function get_initial_conditions_template(model::OperationModel)
             get_network_model(model.template),
         ),
     )
+    set_hvdc_network_model!(
+        network_model,
+        deepcopy(get_hvdc_network_model(model.template)),
+    )
     network_model.network_reduction =
         get_network_reduction(get_network_model(model.template))
     network_model.subnetworks = get_subnetworks(get_network_model(model.template))

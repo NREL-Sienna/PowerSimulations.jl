@@ -690,42 +690,46 @@ function initialize_system_expressions!(
     return
 end
 
-function initialize_hvdc_system_expressions!(
+function initialize_hvdc_system!(
     container::OptimizationContainer,
     network_model::NetworkModel{T},
     dc_model::Nothing,
     system::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
+    dc_buses = get_available_components(network_model, PSY.DCBus, system)
+    if !isempty(dc_buses)
+        @warn "HVDC Network Model is set to 'Nothing' but DC Buses are present in the system. \
+               Consider adding an HVDC Network Model or removing DC Buses from the system."
+    end
     return
 end
 
-function initialize_hvdc_system_expressions!(
+function initialize_hvdc_system!(
     container::OptimizationContainer,
     network_model::NetworkModel{T},
     dc_model::U,
     system::PSY.System,
 ) where {T <: PM.AbstractPowerModel, U <: TransportHVDCNetworkModel}
     dc_buses = get_available_components(network_model, PSY.DCBus, system)
+    @assert !isempty(dc_buses) "No DC buses found in the system. Consider adding DC Buses or removing HVDC network model."
     dc_bus_numbers = sort(PSY.get_number.(dc_buses))
-    if !isempty(dc_bus_numbers)
-        container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
-            _make_container_array(dc_bus_numbers, get_time_steps(container))
-    end
+    container.expressions[ExpressionKey(ActivePowerBalance, PSY.DCBus)] =
+        _make_container_array(dc_bus_numbers, get_time_steps(container))
     return
 end
 
-function initialize_hvdc_system_expressions!(
+function initialize_hvdc_system!(
     container::OptimizationContainer,
     network_model::NetworkModel{T},
     dc_model::U,
     system::PSY.System,
 ) where {T <: PM.AbstractPowerModel, U <: VoltageDispatchHVDCNetworkModel}
     dc_buses = get_available_components(network_model, PSY.DCBus, system)
+    @assert !isempty(dc_buses) "No DC buses found in the system. Consider adding DC Buses or removing HVDC network model."
     dc_bus_numbers = sort(PSY.get_number.(dc_buses))
-    if !isempty(dc_bus_numbers)
-        container.expressions[ExpressionKey(DCCurrentBalance, PSY.DCBus)] =
-            _make_container_array(dc_bus_numbers, get_time_steps(container))
-    end
+    container.expressions[ExpressionKey(DCCurrentBalance, PSY.DCBus)] =
+        _make_container_array(dc_bus_numbers, get_time_steps(container))
+    add_variable!(container, DCVoltage(), dc_buses, dc_model)
     return
 end
 
@@ -745,7 +749,7 @@ function build_impl!(
         sys,
         transmission_model.network_reduction.bus_reduction_map)
 
-    initialize_hvdc_system_expressions!(
+    initialize_hvdc_system!(
         container,
         transmission_model,
         hvdc_model,

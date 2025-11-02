@@ -61,7 +61,9 @@ export PhaseAngleControl
 
 ######## HVDC models ########
 export LossLessConverter
+export QuadraticLossConverter
 export LossLessLine
+export DCLossyLine
 ######## Load Models ########
 export StaticPowerLoad
 export PowerLoadInterruption
@@ -138,6 +140,8 @@ export set_device_model!
 export set_service_model!
 export set_network_model!
 export get_network_formulation
+export get_hvdc_network_model
+export set_hvdc_network_model!
 ## Results interfaces
 export SimulationResultsExport
 export export_results
@@ -254,6 +258,22 @@ export RateofChangeConstraintSlackUp
 export RateofChangeConstraintSlackDown
 export PostContingencyActivePowerChangeVariable
 export PostContingencyActivePowerReserveDeploymentVariable
+export DCVoltage
+export DCLineCurrent
+export ConverterPowerDirection
+export ConverterCurrent
+export SquaredConverterCurrent
+export InterpolationSquaredCurrentVariable
+export InterpolationBinarySquaredCurrentVariable
+export ConverterPositiveCurrent
+export ConverterNegativeCurrent
+export SquaredDCVoltage
+export InterpolationSquaredVoltageVariable
+export InterpolationBinarySquaredVoltageVariable
+export AuxBilinearConverterVariable
+export AuxBilinearSquaredConverterVariable
+export InterpolationSquaredBilinearVariable
+export InterpolationBinarySquaredBilinearVariable
 
 # Auxiliary variables
 export TimeDurationOn
@@ -331,6 +351,15 @@ export PostContingencyRampConstraint
 export ImportExportBudgetConstraint
 export PiecewiseLinearBlockIncrementalOfferConstraint
 export PiecewiseLinearBlockDecrementalOfferConstraint
+export NodalBalanceCurrentConstraint
+export DCLineCurrentConstraint
+export ConverterPowerCalculationConstraint
+export ConverterMcCormickEnvelopes
+export InterpolationVoltageConstraints
+export InterpolationCurrentConstraints
+export InterpolationBilinearConstraints
+export ConverterLossConstraint
+export CurrentAbsoluteValueConstraint
 
 # Parameters
 # Time Series Parameters
@@ -378,6 +407,7 @@ export PostContingencyBranchFlow
 export PostContingencyActivePowerGeneration
 export PostContingencyActivePowerBalance
 export NetActivePower
+export DCCurrentBalance
 
 #################################################################################
 # Imports
@@ -634,6 +664,7 @@ include("devices_models/devices/common/add_constraint_dual.jl")
 include("devices_models/devices/common/rateofchange_constraints.jl")
 include("devices_models/devices/common/duration_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
+include("devices_models/devices/common/add_pwl_methods.jl")
 
 # Device Modeling components
 include("devices_models/devices/default_interface_methods.jl")
