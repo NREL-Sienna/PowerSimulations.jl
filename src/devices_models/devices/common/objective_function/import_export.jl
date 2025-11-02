@@ -61,54 +61,6 @@ function _add_variable_cost_to_objective!(
     return
 end
 
-function _add_vom_cost_to_objective!(
-    container::OptimizationContainer,
-    ::T,
-    component::PSY.Component,
-    op_cost::PSY.ImportExportCost,
-    ::U,
-) where {
-    T <: ActivePowerOutVariable,
-    U <: AbstractSourceFormulation,
-}
-    import_cost_curves = PSY.get_import_offer_curves(op_cost)
-    if !(isnothing(import_cost_curves))
-        _add_vom_cost_to_objective_helper!(
-            container,
-            T(),
-            component,
-            op_cost,
-            import_cost_curves,
-            U(),
-        )
-    end
-    return
-end
-
-function PSI._add_vom_cost_to_objective!(
-    container::PSI.OptimizationContainer,
-    ::T,
-    component::PSY.Source,
-    op_cost::PSY.ImportExportCost,
-    ::U,
-) where {
-    T <: ActivePowerInVariable,
-    U <: AbstractSourceFormulation,
-}
-    export_cost_curves = PSY.get_export_offer_curves(op_cost)
-    if !(isnothing(export_cost_curves))
-        _add_vom_cost_to_objective_helper!(
-            container,
-            T(),
-            component,
-            op_cost,
-            export_cost_curves,
-            U(),
-        )
-    end
-    return
-end
-
 # _process_mbc_iec_parameters_helper and the helpers it depends on (even purely IEC ones) are in objective_function/market_bid.jl
 function process_import_export_parameters!(
     container::OptimizationContainer,
