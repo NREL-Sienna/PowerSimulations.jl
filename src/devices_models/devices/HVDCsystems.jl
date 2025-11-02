@@ -80,7 +80,7 @@ end
 function get_initial_conditions_device_model(
     ::OperationModel,
     model::DeviceModel{PSY.TModelHVDCLine, D},
-) where {D <: Union{LossLessLine, DCLossyLine}}
+) where {D <: AbstractDCLineFormulation}
     return model
 end
 
@@ -196,7 +196,7 @@ function add_to_expression!(
     T <: Union{ActivePowerBalance, DCCurrentBalance},
     U <: Union{FlowActivePowerVariable, DCLineCurrent},
     V <: PSY.TModelHVDCLine,
-    W <: Union{LossLessLine, DCLossyLine},
+    W <: AbstractDCLineFormulation,
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)

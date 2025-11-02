@@ -191,10 +191,20 @@ Quadratic Loss InterconnectingConverter Model
 """
 struct QuadraticLossConverter <: AbstractConverterFormulation end
 
+############################## HVDC Lines Formulations ##################################
+abstract type AbstractDCLineFormulation <: AbstractBranchFormulation end
+
 """
 LossLess Line Abstract Model
 """
-struct LossLessLine <: AbstractBranchFormulation end
+struct DCLossLessLine <: AbstractDCLineFormulation end
+
+"""
+Lossy Line Abstract Model
+"""
+struct DCLossyLine <: AbstractDCLineFormulation end
+
+struct LossLessLine <: AbstractDCLineFormulation end
 
 ############################## HVDC Network Model Formulations ##################################
 abstract type AbstractHVDCNetworkModel end
