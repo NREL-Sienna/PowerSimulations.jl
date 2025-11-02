@@ -101,10 +101,7 @@ end
 function build_generic_mbc_model(sys::System;
     multistart::Bool = false,
     standard::Bool = false,
-    device_to_formulation = Dict{
-        Type{<:PSY.Device},
-        Type{<:PSI.AbstractDeviceFormulation},
-    }(),
+    device_to_formulation = FormulationDict(),
 )
     template = ProblemTemplate(
         NetworkModel(
@@ -143,11 +140,9 @@ function run_generic_mbc_prob(
     test_success = true,
     filename::Union{String, Nothing} = nothing,
     is_decremental::Bool = false,
-    device_to_formulation = Dict{
-        Type{<:PSY.Device},
-        Type{<:PSI.AbstractDeviceFormulation},
-    }(),
+    device_to_formulation = FormulationDict(),
 )
+    @show device_to_formulation
     model = build_generic_mbc_model(
         sys;
         multistart = multistart,
@@ -182,10 +177,7 @@ function run_generic_mbc_sim(
     test_success = true,
     filename::Union{String, Nothing} = nothing,
     is_decremental::Bool = false,
-    device_to_formulation = Dict{
-        Type{<:PSY.Device},
-        Type{<:PSI.AbstractDeviceFormulation},
-    }(),
+    device_to_formulation = FormulationDict(),
 )
     model = build_generic_mbc_model(
         sys;
@@ -250,10 +242,7 @@ function run_mbc_sim(
     in_memory_store = false,
     standard = false,
     filename::Union{String, Nothing} = nothing,
-    device_to_formulation = Dict{
-        Type{<:PSY.Device},
-        Type{<:PSI.AbstractDeviceFormulation},
-    }(),
+    device_to_formulation = FormulationDict(),
 ) where {T <: PSY.Component}
     model, res = if simulation
         run_generic_mbc_sim(
@@ -393,7 +382,7 @@ function cost_due_to_time_varying_mbc(
                     _calc_pwi_cost.(
                         @rsubset(power_df, :name == gen_name).value,
                         TimeSeries.values(vc_ts),
-                    ) # could replace with direct evaluation, now that it is implemented in IS.
+                    ) # could replace with direct evaluation, now that it is implemented in IS. (https://github.com/NREL-Sienna/PowerSimulations.jl/issues/1430)
             end
         end
         measure_vars = [x for x in names(step_df) if x != "DateTime"]
@@ -410,7 +399,7 @@ function cost_due_to_time_varying_mbc(
 end
 
 # See run_startup_shutdown_obj_fun_test for explanation
-function _obj_fun_test_helper(
+function obj_fun_test_helper(
     ground_truth_1,
     ground_truth_2,
     res1,
@@ -462,10 +451,7 @@ function run_mbc_obj_fun_test(
     simulation = true,
     in_memory_store = false,
     filename::Union{String, Nothing} = nothing,
-    device_to_formulation = Dict{
-        Type{<:PSY.Device},
-        Type{<:PSI.AbstractDeviceFormulation},
-    }(),
+    device_to_formulation = FormulationDict(),
 ) where {T <: PSY.Component}
     # at the moment, nullable_decisions are empty tuples, but keep them for future-proofing.
     # look at run_startup_shutdown_test for explanation: non-nullable should be approx_geq_1.
@@ -515,7 +501,7 @@ function run_mbc_obj_fun_test(
             has_initial_input = has_initial_input,
             device_to_formulation = device_to_formulation)
 
-    success = _obj_fun_test_helper(
+    success = obj_fun_test_helper(
         ground_truth_1,
         ground_truth_2,
         res1,
@@ -534,6 +520,9 @@ function run_mbc_obj_fun_test(
     return decisions1, decisions2
 end
 
+# TODO for https://github.com/NREL-Sienna/PowerSimulations.jl/issues/1430, reimplement this
+# by converting the implied IncrementalCurve into an InputOutputCurve and then evaluating
+# *its* `FunctionData`
 function _calc_pwi_cost(active_power::Float64, pwi::PiecewiseStepData)
     isapprox(active_power, 0.0) && return 0.0
     breakpoints = get_x_coords(pwi)
