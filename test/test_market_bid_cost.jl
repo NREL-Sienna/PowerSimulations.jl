@@ -143,7 +143,6 @@ end
         0.0,
         0.0;
         skip_setting = true,
-        filename = get_name(sys),
     )
 
     sys_thermal = build_system(PSITestSystems, "c_$(sys_name)")
@@ -161,7 +160,6 @@ end
         0.0,
         0.0;
         skip_setting = true,
-        filename = get_name(sys_thermal),
     )
 
     # check that the operation costs are the same.
