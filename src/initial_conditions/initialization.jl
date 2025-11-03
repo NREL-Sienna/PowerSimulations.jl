@@ -2,7 +2,7 @@ function get_initial_conditions_template(model::OperationModel)
     # This is done to avoid passing the duals but also not re-allocating the PTDF when it
     # exists
 
-    @info "code is in get_initial_conditions_template() from innitialization.jl \n$(get_network_formulation(model.template)) "
+    @info "code is in get_initial_conditions_template() from initialization.jl \n$(get_network_formulation(model.template)) "
     network_model = NetworkModel(
         get_network_formulation(model.template);
         use_slacks = get_use_slacks(get_network_model(model.template)),
@@ -16,7 +16,7 @@ function get_initial_conditions_template(model::OperationModel)
         deepcopy(get_hvdc_network_model(model.template)),
     )
     network_model.network_reduction =
-        get_network_reduction(get_network_model(model.template))
+        deepcopy(get_network_reduction(get_network_model(model.template)))
     network_model.subnetworks = get_subnetworks(get_network_model(model.template))
     # Initialization does not support PowerFlow evaluation
     network_model.power_flow_evaluation = Vector{PFS.PowerFlowEvaluationModel}[]
