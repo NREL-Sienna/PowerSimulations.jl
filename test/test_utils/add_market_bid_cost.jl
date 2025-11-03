@@ -248,6 +248,7 @@ function make_deterministic_ts(
     count::Int,
     resolution::Period;
     override_min_x = nothing,
+    override_max_x = nothing,
     create_extra_tranches = false,
 )
     (tranche_incr_x, res_incr_x, interval_incr_x) = incrs_x
@@ -271,6 +272,11 @@ function make_deterministic_ts(
         if !isnothing(override_min_x)
             for j in 1:horizon_count
                 xs[j][1] = override_min_x
+            end
+        end
+        if !isnothing(override_max_x)
+            for j in 1:horizon_count
+                xs[j][end] = override_max_x
             end
         end
         if i == 0 && create_extra_tranches

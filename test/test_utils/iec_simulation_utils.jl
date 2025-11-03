@@ -34,7 +34,7 @@ function make_5_bus_with_import_export(;
 
     export_curve = make_export_curve(
         [0.0, 100.0, 105.0, 120.0, 200.0],
-        [12.0, 8.0, 4.0, 0.0],
+        [12.0, 8.0, 4.0, 1.0],  # elsewhere the final slope is 0.0 but that's problematic here
     )
 
     ie_cost = ImportExportCost(;
@@ -57,8 +57,9 @@ function make_5_bus_with_ie_ts(
     import_breakpoints_vary::Bool,
     import_slopes_vary::Bool,
     export_breakpoints_vary::Bool,
-    export_slopes_vary::Bool,
-    zero_min_power::Bool = true;
+    export_slopes_vary::Bool;
+    zero_min_power::Bool = true,
+    unperturb_max_power::Bool = false,
     add_single_time_series::Bool = false,
     import_scalar = 1.0,
     export_scalar = 1.0,
@@ -88,6 +89,7 @@ function make_5_bus_with_ie_ts(
         im_incr_x,
         im_incr_y;
         override_min_x = zero_min_power ? 0.0 : nothing,
+        override_max_x = unperturb_max_power ? last(get_x_coords(im_fd)) : nothing,
     )
     ex_ts = make_deterministic_ts(
         sys,
@@ -96,6 +98,7 @@ function make_5_bus_with_ie_ts(
         ex_incr_x,
         ex_incr_y;
         override_min_x = zero_min_power ? 0.0 : nothing,
+        override_max_x = unperturb_max_power ? last(get_x_coords(ex_fd)) : nothing,
     )
 
     im_key = add_time_series!(sys, source, im_ts)
@@ -121,7 +124,7 @@ function run_iec_obj_fun_test(sys1, sys2, comp_name::String, ::Type{T};
 
     all_decisions1 = (decisions1..., nullable_decisions1...)
     all_decisions2 = (decisions2..., nullable_decisions2...)
-    if !all(isapprox.(all_decisions1, all_decisions2)) || true  # TODO restore selective shows
+    if !all(isapprox.(all_decisions1, all_decisions2))
         @show all_decisions1
         @show all_decisions2
     end
@@ -220,4 +223,25 @@ function cost_due_to_time_varying_iec(
             )
     end
     return result
+end
+
+function iec_obj_fun_test_wrapper(sys_constant, sys_varying)
+    for use_simulation in (false, true)
+        for in_memory_store in (use_simulation ? (false, true) : (false,))
+            decisions1, decisions2 = run_iec_obj_fun_test(
+                sys_constant,
+                sys_varying,
+                IEC_COMPONENT_NAME,
+                IECComponentType;
+                simulation = use_simulation,
+                in_memory_store = in_memory_store,
+            )
+
+            if !all(isapprox.(decisions1, decisions2))
+                @show decisions1
+                @show decisions2
+            end
+            @assert all(approx_geq_1.(decisions1))
+        end
+    end
 end

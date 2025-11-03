@@ -9,31 +9,49 @@
 end
 
 @testset "ImportExportCost with time varying import slopes" begin
-    import_scalar = 0.5  # ultimately affects ActivePowerOutVariable
-    export_scalar = 2.0  # ultimately affects ActivePowerInVariable
+    import_scalar = 0.5  # ultimately multiplies ActivePowerOutVariable objective function coefficient
+    export_scalar = 2.0  # ultimately multiplies ActivePowerInVariable objective function coefficient
     sys_constant = make_5_bus_with_ie_ts(false, false, false, false;
         import_scalar = import_scalar, export_scalar = export_scalar,
         name = "sys_constant")
     sys_varying_import_slopes = make_5_bus_with_ie_ts(false, true, false, false;
         import_scalar = import_scalar, export_scalar = export_scalar,
         name = "sys_varying_import_slopes")
+    iec_obj_fun_test_wrapper(sys_constant, sys_varying_import_slopes)
+end
 
-    for use_simulation in (false, true)
-        for in_memory_store in (use_simulation ? (false, true) : (false,))
-            decisions1, decisions2 = run_iec_obj_fun_test(
-                sys_constant,
-                sys_varying_import_slopes,
-                IEC_COMPONENT_NAME,
-                IECComponentType;
-                simulation = use_simulation,
-                in_memory_store = in_memory_store,
-            )
+@testset "ImportExportCost with time varying import breakpoints" begin
+    import_scalar = 0.2  # NOTE this maxes out ActivePowerOutVariable
+    export_scalar = 2.0
+    sys_constant = make_5_bus_with_ie_ts(false, false, false, false;
+        import_scalar = import_scalar, export_scalar = export_scalar,
+        name = "sys_constant")
+    sys_varying_import_breakpoints = make_5_bus_with_ie_ts(true, false, false, false;
+        import_scalar = import_scalar, export_scalar = export_scalar,
+        name = "sys_varying_import_breakpoints")
+    iec_obj_fun_test_wrapper(sys_constant, sys_varying_import_breakpoints)
+end
 
-            if !all(isapprox.(decisions1, decisions2))
-                @show decisions1
-                @show decisions2
-            end
-            @assert all(approx_geq_1.(decisions1))
-        end
-    end
+@testset "ImportExportCost with time varying export slopes" begin
+    import_scalar = 0.5
+    export_scalar = 2.0
+    sys_constant = make_5_bus_with_ie_ts(false, false, false, false;
+        import_scalar = import_scalar, export_scalar = export_scalar,
+        name = "sys_constant")
+    sys_varying_export_slopes = make_5_bus_with_ie_ts(false, false, false, true;
+        import_scalar = import_scalar, export_scalar = export_scalar,
+        name = "sys_varying_export_slopes")
+    iec_obj_fun_test_wrapper(sys_constant, sys_varying_export_slopes)
+end
+
+@testset "ImportExportCost with time varying export breakpoints" begin
+    import_scalar = 1.0
+    export_scalar = 40.0  # NOTE this maxes out ActivePowerInVariable
+    sys_constant = make_5_bus_with_ie_ts(false, false, false, false;
+        import_scalar = import_scalar, export_scalar = export_scalar,
+        name = "sys_constant")
+    sys_varying_export_breakpoints = make_5_bus_with_ie_ts(false, false, true, false;
+        import_scalar = import_scalar, export_scalar = export_scalar,
+        name = "sys_varying_export_breakpoints")
+    iec_obj_fun_test_wrapper(sys_constant, sys_varying_export_breakpoints)
 end

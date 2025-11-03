@@ -438,7 +438,7 @@ function obj_fun_test_helper(
     # comparison isn't passing, one reason could be that this assumption is violated. In
     # that case, we want an `AssertionError` rather than a test failure.
     if !comparison_passes
-        @assert isapprox(obj1, obj2; atol = 10, rtol = 0.01) "obj1 ($obj1) and obj2 ($obj2) are supposed to differ, but they differ by an improbably large amount ($obj_diff) -- the perturbations are likely affecting the decisions. Ground truth difference is $ground_truth_diff; the test would fail, but we have reason to believe it is instead broken."
+        @assert isapprox(obj1, obj2; atol = 10, rtol = 0.01) "obj1 ($obj1) and obj2 ($obj2) are supposed to differ, but they differ by an improbably large amount ($obj_diff) -- the perturbations are likely affecting the decisions. Ground truth difference is $ground_truth_diff; the test would fail, but we have some reason to believe it is instead broken."
     end
 
     # At this point, we've eliminiated many 'innocent' sources of error, so if the
