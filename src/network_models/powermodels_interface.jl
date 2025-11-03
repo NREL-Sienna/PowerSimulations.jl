@@ -479,19 +479,24 @@ function add_pm_variable_refs!(
                     branch_names,
                     time_steps,
                 )
-                for t in time_steps, (map, reverse_map) in NETWORK_REDUCTION_MAPS
-                    network_reduction_map = all_branch_maps_by_type[map]
-                    !haskey(network_reduction_map, d_type) && continue
-                    for (arc_tuple, reduction_entry) in network_reduction_map[d_type]
-                        pm_d = pm_map[arc_tuple]
-                        var = PM.var(container.pm, t, pm_v, getfield(pm_d, direction))
-                        _add_variable_to_container!(
-                            var_container,
-                            var,
-                            reduction_entry,
-                            d_type,
-                            t,
-                        )
+                for (name, (arc_tuple, reduction)) in
+                    PNM.get_name_to_arc_map(network_reduction_data)[d_type]
+                    has_entry, tracker_container = _search_for_reduced_branch_variable!(
+                        reduced_branch_tracker,
+                        arc,
+                        var_type,
+                        d_type,
+                    )
+                    if has_entry
+                        @assert !isempty(tracker_container) name arc reduction
+                    end
+                    for t in time_steps
+                        if !has_entry
+                            pm_d = pm_map[arc_tuple]
+                            var = PM.var(container.pm, t, pm_v, getfield(pm_d, direction))
+                            tracker_container[t] = var
+                        end
+                        var_container[name, t] = tracker_container[t]
                     end
                 end
             end

@@ -1639,38 +1639,26 @@ function add_to_expression!(
     service_name = get_service_name(model)
     direction_map = PSY.get_direction_mapping(service)
     contributing_devices_map = get_contributing_devices_map(model)
-    for (map, reverse_map) in NETWORK_REDUCTION_MAPS
-        network_reduction_map = all_branch_maps_by_type[map]
-        for branch_type in network_model.modeled_branch_types
-            if !haskey(contributing_devices_map, branch_type) ||
-               !haskey(network_reduction_map, branch_type)
-                continue
-            end
-            variable = get_variable(container, FlowActivePowerVariable(), branch_type)
-            contributing_devices = contributing_devices_map[branch_type]
-            for (arc_tuple, reduction_entry) in network_reduction_map[branch_type]
-                if _reduced_entry_in_interface(
-                    reduction_entry,
-                    contributing_devices,
-                )
-                    name = first(_get_branch_names(reduction_entry))
-                    if isempty(direction_map)
-                        direction = 1.0
-                    else
-                        direction = _get_direction(
-                            arc_tuple,
-                            reduction_entry,
-                            direction_map,
-                            network_reduction_data,
-                        )
-                    end
-                    for t in get_time_steps(container)
-                        _add_to_jump_expression!(
-                            expression[service_name, t],
-                            variable[name, t],
-                            Float64(direction),
-                        )
-                    end
+    for (br_type, contributing_devices) in contributing_devices_map
+        variable = get_variable(container, FlowActivePowerVariable(), br_type)
+        for (name, (arc, _)) in PNM.get_name_to_arc_map(network_reduction_data)[br_type]
+            if _reduced_entry_in_interface(reduction_entry, contributing_devices)
+                if isempty(direction_map)
+                    direction = 1.0
+                else
+                    direction = _get_direction(
+                        arc_tuple,
+                        reduction_entry,
+                        direction_map,
+                        network_reduction_data,
+                    )
+                end
+                for t in get_time_steps(container)
+                    _add_to_jump_expression!(
+                        expression[service_name, t],
+                        variable[name, t],
+                        Float64(direction),
+                    )
                 end
             end
         end
@@ -1695,7 +1683,7 @@ end
 
 function _get_direction(
     arc_tuple::Tuple{Int, Int},
-    reduction_entry::Set{PSY.ACTransmission},
+    reduction_entry::PNM.BranchesParallel,
     direction_map::Dict{String, Int},
     network_reduction_data::PNM.NetworkReductionData,
 )
@@ -1717,7 +1705,7 @@ end
 
 function _get_direction(
     arc_tuple::Tuple{Int, Int},
-    reduction_entry::Vector{Any},
+    reduction_entry::PNM.BranchesSeries,
     direction_map::Dict{String, Int},
     network_reduction_data,
 )
@@ -1742,56 +1730,50 @@ function _get_direction(
     end
 end
 
+# These checks can be moved to happen at the service template check level
 function _reduced_entry_in_interface(
     reduction_entry::PSY.ACTransmission,
     contributing_devices::Vector{<:PSY.ACTransmission},
 )
-    if PSY.get_name(reduction_entry) in PSY.get_name.(contributing_devices)
-        return true
-    end
-    return false
+    return reduction_entry ∈ contributing_devices
 end
 
 function _reduced_entry_in_interface(
-    reduction_entry::Set{PSY.ACTransmission},
+    reduction_entry::PNM.BranchesParallel,
     contributing_devices::Vector{<:PSY.ACTransmission},
 )
     in_interface = [
         _reduced_entry_in_interface(x, contributing_devices) for
         x in reduction_entry
     ]
-    if all(in_interface .== false)
-        return false
-    elseif all(in_interface .== true)
-        return true
-    else
+
+    if !allequal(in_interface)
         throw(
             ArgumentError(
-                "An interface is specified with only portion of a double-circuit that is automatically reduced. Modify the data to include all parallel segements.",
+                "An interface is specified with only portion of a double-circuit that has not been reduced. Modify the data to include all parallel segements.",
             ),
         )
     end
+    return first(in_interface)
 end
 
 function _reduced_entry_in_interface(
-    reduction_entry::Vector{Any},
+    reduction_entry::PNM.BranchesSeries,
     contributing_devices::Vector{<:PSY.ACTransmission},
 )
     in_interface = [
         _reduced_entry_in_interface(x, contributing_devices) for
         x in reduction_entry
     ]
-    if all(in_interface .== false)
-        return false
-    elseif all(in_interface .== true)
-        return true
-    else
+
+    if !allequal(in_interface)
         throw(
             ArgumentError(
                 "An interface is specified with only portion of a degree two chain reduction that has been reduced. Modify the data to include all segments of the reduced chain",
             ),
         )
     end
+    return first(in_interface)
 end
 
 function add_to_expression!(
