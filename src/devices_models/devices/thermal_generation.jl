@@ -95,7 +95,6 @@ function proportional_cost(container::OptimizationContainer, cost::PSY.ThermalGe
 end
 is_time_variant_term(::OptimizationContainer, ::PSY.ThermalGenerationCost, ::OnVariable, ::PSY.ThermalGen, ::AbstractThermalFormulation, t::Int) = false
 
-# TODO decremental case
 proportional_cost(container::OptimizationContainer, cost::PSY.MarketBidCost, ::OnVariable, comp::PSY.ThermalGen, ::AbstractThermalFormulation, t::Int) =
     _lookup_maybe_time_variant_param(container, comp, t,
     Val(is_time_variant(PSY.get_incremental_initial_input(cost))),
@@ -152,26 +151,8 @@ variable_cost(cost::PSY.OperationalCost, ::PowerAboveMinimumVariable, ::PSY.Ther
 """
 Theoretical Cost at power output zero. Mathematically is the intercept with the y-axis
 """
-function onvar_cost(container::OptimizationContainer, cost::PSY.ThermalGenerationCost, S::OnVariable, d::PSY.ThermalGen, U::AbstractThermalFormulation, t::Int)
+function onvar_cost(container::OptimizationContainer, cost::PSY.ThermalGenerationCost, ::OnVariable, d::PSY.ThermalGen, ::AbstractThermalFormulation, t::Int)
     return _onvar_cost(container, PSY.get_variable(cost), d, t)
-end
-
-function _onvar_cost(::OptimizationContainer, cost_function::PSY.CostCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen, ::Int)
-    # OnVariableCost is included in the Point itself for PiecewisePointCurve
-    return 0.0
-end
-
-function _onvar_cost(::OptimizationContainer, cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.CostCurve{PSY.QuadraticCurve}}, d::PSY.ThermalGen, ::Int)
-    value_curve = PSY.get_value_curve(cost_function)
-    cost_component = PSY.get_function_data(value_curve)
-    # Always in \$/h
-    constant_term = PSY.get_constant_term(cost_component)
-    return constant_term
-end
-
-function _onvar_cost(::OptimizationContainer, cost_function::PSY.CostCurve{PSY.PiecewiseIncrementalCurve}, d::PSY.ThermalGen, ::Int)
-    # Input at min is used to transform to InputOutputCurve
-    return 0.0
 end
 
 function _onvar_cost(::OptimizationContainer, cost_function::PSY.FuelCurve{PSY.PiecewisePointCurve}, d::PSY.ThermalGen, ::Int)
@@ -184,6 +165,7 @@ function _onvar_cost(::OptimizationContainer, cost_function::PSY.FuelCurve{PSY.P
     return 0.0
 end
 
+# this one implementation is thermal-specific, and requires the component.
 function _onvar_cost(container::OptimizationContainer, cost_function::Union{PSY.FuelCurve{PSY.LinearCurve}, PSY.FuelCurve{PSY.QuadraticCurve}}, d::T, t::Int) where {T <: PSY.ThermalGen}
     value_curve = PSY.get_value_curve(cost_function)
     cost_component = PSY.get_function_data(value_curve)
