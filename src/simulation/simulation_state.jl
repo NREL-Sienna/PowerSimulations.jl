@@ -78,7 +78,7 @@ function _get_state_params(models::SimulationModels, simulation_step::Dates.Mill
             for key in keys(field_containers)
                 !should_write_resulting_value(key) && continue
                 if !haskey(params, key)
-                    @warn "New parameter $key found in emulator"
+                    @debug "New parameter $key found in emulator only"
                 else
                     params[key] = (
                         horizon = params[key].horizon,
@@ -190,7 +190,8 @@ function _initialize_system_states!(
             end
             if !isempty(symdiff(first(dm_cols), first(em_cols)))
                 error(
-                    "Mismatch in column names for dataset $key: $(symdiff(dm_cols, em_cols))",
+                    "Mismatch in column names for dataset $key: $(symdiff(dm_cols, em_cols)) \
+                    This issue is common when filters are applied to the decision model but not to the emulator model.",
                 )
             end
             continue
