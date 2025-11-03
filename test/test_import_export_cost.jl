@@ -55,3 +55,15 @@ end
         name = "sys_varying_export_breakpoints")
     iec_obj_fun_test_wrapper(sys_constant, sys_varying_export_breakpoints)
 end
+
+@testset "ImportExportCost with time varying everything" begin
+    import_scalar = 0.2
+    export_scalar = 40.0  # NOTE this maxes out ActivePowerInVariable
+    sys_constant = make_5_bus_with_ie_ts(false, false, false, false;
+        import_scalar = import_scalar, export_scalar = export_scalar,
+        name = "sys_constant")
+    sys_varying_everything = make_5_bus_with_ie_ts(true, true, true, true;
+        import_scalar = import_scalar, export_scalar = export_scalar,
+        name = "sys_varying_everything")
+    iec_obj_fun_test_wrapper(sys_constant, sys_varying_everything)
+end

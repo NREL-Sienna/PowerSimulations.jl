@@ -398,7 +398,7 @@ function run_startup_shutdown_obj_fun_test(
     ground_truth_2 =
         cost_due_to_time_varying_startup_shutdown(sys2, res2; multistart = multistart)
 
-    _obj_fun_test_helper(ground_truth_1, ground_truth_2, res1, res2)
+    obj_fun_test_helper(ground_truth_1, ground_truth_2, res1, res2)
     return decisions1, decisions2
 end
 
