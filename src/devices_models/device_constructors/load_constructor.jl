@@ -1,3 +1,4 @@
+# AbstractPowerModel + ControllableLoad device model
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -15,6 +16,8 @@ function construct_device!(
 
     add_variables!(container, ActivePowerVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
+
+    process_market_bid_parameters!(container, devices, model, false, true)
 
     # Add Variables to expressions
     add_to_expression!(
@@ -78,6 +81,7 @@ function construct_device!(
     return
 end
 
+# AbstractActivePowerModel + ControllableLoad device model
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -106,6 +110,8 @@ function construct_device!(
     )
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+
+    process_market_bid_parameters!(container, devices, model, false, true)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
     add_event_arguments!(container, devices, model, network_model)
@@ -140,6 +146,7 @@ function construct_device!(
     return
 end
 
+# AbstractPowerModel + PowerLoadInterruption device model
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -177,6 +184,8 @@ function construct_device!(
 
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
 
+    process_market_bid_parameters!(container, devices, model, false, true)
+
     add_expressions!(container, ProductionCostExpression, devices, model)
     add_event_arguments!(container, devices, model, network_model)
     return
@@ -226,6 +235,7 @@ function construct_device!(
     return
 end
 
+# AbstractActivePowerModel + PowerLoadInterruption device model
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -241,6 +251,7 @@ function construct_device!(
     add_variables!(container, ActivePowerVariable, devices, PowerLoadInterruption())
     add_variables!(container, OnVariable, devices, PowerLoadInterruption())
 
+    process_market_bid_parameters!(container, devices, model, false, true)
     # Add Variables to expressions
     add_to_expression!(
         container,
@@ -294,6 +305,7 @@ function construct_device!(
     return
 end
 
+# AbstractPowerModel + StaticPowerLoad device model
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -325,10 +337,12 @@ function construct_device!(
         model,
         network_model,
     )
+
     add_event_arguments!(container, devices, model, network_model)
     return
 end
 
+# AbstractActivePowerModel + StaticPowerLoad device model
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -351,6 +365,7 @@ function construct_device!(
         model,
         network_model,
     )
+
     add_event_arguments!(container, devices, model, network_model)
     return
 end
@@ -367,6 +382,7 @@ function construct_device!(
     return
 end
 
+# AbstractPowerModel + StaticLoad, but with non-StaticPowerLoad device models
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -382,6 +398,7 @@ function construct_device!(
     add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     add_parameters!(container, ReactivePowerTimeSeriesParameter, devices, model)
 
+    process_market_bid_parameters!(container, devices, model, false, true)
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -402,6 +419,7 @@ function construct_device!(
     return
 end
 
+# AbstractActivePowerModel + StaticLoad, but with non-StaticPowerLoad device models
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -423,6 +441,8 @@ function construct_device!(
         model,
         network_model,
     )
+
+    process_market_bid_parameters!(container, devices, model, false, true)
     add_event_arguments!(container, devices, model, network_model)
     return
 end

@@ -47,6 +47,8 @@ _validate_eltype(
         )
     end
 
+# FIXME this is messing with test_device_load_constructors.jl:72
+# the offer curves are nothing, so an error gets thrown here, when it expects a later error.
 function _validate_eltype(::Type{T}, component::PSY.Component, element, msg = "") where {T}
     component_name = get_name(component)
     result = _validate_eltype_helper(T, element)
