@@ -112,6 +112,7 @@ function add_proportional_cost!(
     devices::IS.FlattenIteratorWrapper{T},
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+    # NOTE: anything time-varying should implement its own method.
     multiplier = objective_function_multiplier(U(), V())
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
@@ -189,6 +190,44 @@ function add_proportional_cost!(
                 _add_proportional_term_maybe_variant!(
                     Val(add_as_time_variant), container, U(), d, cost_term, t)
             end
+            add_to_expression!(container, ProductionCostExpression, exp, d, t)
+        end
+    end
+    return
+end
+
+# code repetition: same as above, just change types and remove must_run check.
+function add_proportional_cost!(
+    container::OptimizationContainer,
+    ::U,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::PowerLoadInterruption,
+) where {T <: PSY.ControllableLoad, U <: OnVariable}
+    multiplier = objective_function_multiplier(U(), PowerLoadInterruption())
+    for d in devices
+        op_cost_data = PSY.get_operation_cost(d)
+        for t in get_time_steps(container)
+            cost_term = proportional_cost(
+                container,
+                op_cost_data,
+                U(),
+                d,
+                PowerLoadInterruption(),
+                t,
+            )
+            add_as_time_variant =
+                is_time_variant_term(
+                    container,
+                    op_cost_data,
+                    U(),
+                    d,
+                    PowerLoadInterruption(),
+                    t,
+                )
+            iszero(cost_term) && continue
+            cost_term *= multiplier
+            exp = _add_proportional_term_maybe_variant!(
+                Val(add_as_time_variant), container, U(), d, cost_term, t)
             add_to_expression!(container, ProductionCostExpression, exp, d, t)
         end
     end
@@ -422,4 +461,35 @@ function _add_time_varying_fuel_variable_cost!(
         add_to_objective_variant_expression!(container, cost_expr)
     end
     return
+end
+
+# Used for dispatch (on/off decision) for devices where operation_cost::Union{MarketBidCost, FooCost}
+# currently: ThermalGen, ControllableLoad subtypes.
+function _onvar_cost(::PSY.CostCurve{PSY.PiecewisePointCurve})
+    # OnVariableCost is included in the Point itself for PiecewisePointCurve
+    return 0.0
+end
+
+function _onvar_cost(
+    cost_function::Union{PSY.CostCurve{PSY.LinearCurve}, PSY.CostCurve{PSY.QuadraticCurve}},
+)
+    value_curve = PSY.get_value_curve(cost_function)
+    cost_component = PSY.get_function_data(value_curve)
+    # Always in \$/h
+    constant_term = PSY.get_constant_term(cost_component)
+    return constant_term
+end
+
+function _onvar_cost(::PSY.CostCurve{PSY.PiecewiseIncrementalCurve})
+    # Input at min is used to transform to InputOutputCurve
+    return 0.0
+end
+
+function _onvar_cost(
+    ::OptimizationContainer,
+    cost_function::PSY.CostCurve{T},
+    ::PSY.Component,
+    ::Int,
+) where {T <: IS.ValueCurve}
+    return _onvar_cost(cost_function)
 end

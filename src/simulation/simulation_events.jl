@@ -131,13 +131,7 @@ function apply_affect!(
     sim_time = get_current_time(simulation)
     rng = get_rng(simulation)
     for (dtype, device_names) in device_type_maps
-        if !(
-            dtype <: Union{
-                PSY.ThermalGen,
-                PSY.RenewableGen,
-                PSY.ElectricLoad,
-            }
-        )     #TODO - extend to Hydro once outages are made in HydroPowerSimulations
+        if !(dtype <: EVENTS_COMPATIBLE_INJECTORS)
             continue
         end
         em_model = get_emulation_model(get_models(simulation))
@@ -296,5 +290,5 @@ function apply_affect!(
             )
         end
     end
-    # Put a StateUpdateEvent here
+    IS.@record :execution StateUpdateEvent(sim_time, "Emulator", "SystemState")
 end
