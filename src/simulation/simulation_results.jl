@@ -222,39 +222,37 @@ function get_decision_problem_results(
     end
 
     results = results.decision_problem_results[problem]
-
-    if populate_system
-        try
-            get_system!(results)
-        catch e
-            error("Can't find the system file or retrieve the system error=$e")
-        end
-
-        if populate_units !== nothing
-            PSY.set_units_base_system!(PSI.get_system(results), populate_units)
-        else
-            PSY.set_units_base_system!(PSI.get_system(results), IS.UnitSystem.NATURAL_UNITS)
-        end
-
-    else
-        (populate_units === nothing) ||
-            throw(
-                ArgumentError(
-                    "populate_units=$populate_units is unaccepted when populate_system=$populate_system",
-                ),
-            )
-    end
+    _populate_system_in_results!(results, populate_system, populate_units)
 
     return results
 end
 
+"""
+Return SimulationProblemResults corresponding to a SimulationResults
+
+# Arguments
+ - `sim_results::PSI.SimulationResults`: the simulation results to read from
+ - `populate_system::Bool = true`: whether to set the results' system as if using
+   [`get_system!`](@ref)
+ - `populate_units::Union{IS.UnitSystem, String, Nothing} = IS.UnitSystem.NATURAL_UNITS`:
+   the units system with which to populate the results' system, if any (requires
+   `populate_system=true`)
+"""
 function get_emulation_problem_results(
     results::SimulationResults;
     populate_system::Bool = false,
     populate_units::Union{IS.UnitSystem, String, Nothing} = nothing,
 )
     results = results.emulation_problem_results
+    _populate_system_in_results!(results, populate_system, populate_units)
+    return results
+end
 
+function _populate_system_in_results!(
+    results::SimulationResults,
+    populate_system::Bool,
+    populate_units::Union{IS.UnitSystem, String, Nothing},
+)
     if populate_system
         try
             get_system!(results)
@@ -276,8 +274,7 @@ function get_emulation_problem_results(
                 ),
             )
     end
-
-    return results
+    return
 end
 
 """
