@@ -60,6 +60,8 @@ function make_5_bus_with_ie_ts(
     export_slopes_vary::Bool,
     zero_min_power::Bool = true;
     add_single_time_series::Bool = false,
+    import_scalar = 1.0,
+    export_scalar = 1.0,
     name = nothing)
     im_incr_x = import_breakpoints_vary ? (0.02, 0.11, 0.05) : (0.0, 0.0, 0.0)
     im_incr_y = import_slopes_vary ? (0.02, 0.11, 0.05) : (0.0, 0.0, 0.0)
@@ -76,8 +78,8 @@ function make_5_bus_with_ie_ts(
     oc = get_operation_cost(source)::ImportExportCost
     im_oc = get_import_offer_curves(oc)
     ex_oc = get_export_offer_curves(oc)
-    im_fd = get_function_data(im_oc)
-    ex_fd = get_function_data(ex_oc)
+    im_fd = get_function_data(im_oc) * import_scalar
+    ex_fd = get_function_data(ex_oc) * export_scalar
 
     im_ts = make_deterministic_ts(
         sys,
@@ -119,7 +121,7 @@ function run_iec_obj_fun_test(sys1, sys2, comp_name::String, ::Type{T};
 
     all_decisions1 = (decisions1..., nullable_decisions1...)
     all_decisions2 = (decisions2..., nullable_decisions2...)
-    if !all(isapprox.(all_decisions1, all_decisions2))
+    if !all(isapprox.(all_decisions1, all_decisions2)) || true  # TODO restore selective shows
         @show all_decisions1
         @show all_decisions2
     end
@@ -143,7 +145,6 @@ function run_iec_sim(sys::System, comp_name::String, ::Type{T};
             device_to_formulation = device_to_formulation,
         )
     else
-        @show device_to_formulation
         run_generic_mbc_prob(sys; device_to_formulation = device_to_formulation)
     end
 
@@ -151,8 +152,8 @@ function run_iec_sim(sys::System, comp_name::String, ::Type{T};
     # (https://github.com/NREL-Sienna/PowerSimulations.jl/issues/1429)
 
     decisions = (
-        _read_one_value(res, PSI.ActivePowerInVariable, T, comp_name),
         _read_one_value(res, PSI.ActivePowerOutVariable, T, comp_name),
+        _read_one_value(res, PSI.ActivePowerInVariable, T, comp_name),
     )
 
     return model, res, decisions, ()  # return format follows the MBC run_startup_shutdown_test convention
@@ -195,7 +196,7 @@ function cost_due_to_time_varying_iec(
                 (-1.0, power_in_df, PSY.get_export_offer_curves),
             )
                 offer_curves = getter(cost)
-                if is_time_variant(offer_curves)
+                if PSI.is_time_variant(offer_curves)
                     vc_ts = getter(comp, cost; start_time = step_dt)
                     @assert all(unique(power_df.DateTime) .== TimeSeries.timestamp(vc_ts))
                     step_df[!, gen_name] .+=

@@ -9,9 +9,14 @@
 end
 
 @testset "ImportExportCost with time varying import slopes" begin
-    sys_constant = make_5_bus_with_ie_ts(false, false, false, false)
-    set_name!(sys_constant, "sys_constant")
-    sys_varying_import_slopes = make_5_bus_with_ie_ts(false, true, false, false)
+    import_scalar = 0.5  # ultimately affects ActivePowerOutVariable
+    export_scalar = 2.0  # ultimately affects ActivePowerInVariable
+    sys_constant = make_5_bus_with_ie_ts(false, false, false, false;
+        import_scalar = import_scalar, export_scalar = export_scalar,
+        name = "sys_constant")
+    sys_varying_import_slopes = make_5_bus_with_ie_ts(false, true, false, false;
+        import_scalar = import_scalar, export_scalar = export_scalar,
+        name = "sys_varying_import_slopes")
 
     for use_simulation in (false, true)
         for in_memory_store in (use_simulation ? (false, true) : (false,))

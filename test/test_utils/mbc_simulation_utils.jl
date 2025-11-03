@@ -142,7 +142,6 @@ function run_generic_mbc_prob(
     is_decremental::Bool = false,
     device_to_formulation = FormulationDict(),
 )
-    @show device_to_formulation
     model = build_generic_mbc_model(
         sys;
         multistart = multistart,
@@ -424,11 +423,6 @@ function obj_fun_test_helper(
     obj2 = PSI.read_optimizer_stats(res2)[!, "objective_value"]
     obj_diff = obj2 .- obj1
 
-    # An assumption in this line of testing is that our perturbations are small enough that
-    # they don't actually change the decisions, just slightly alter the cost. If this assert
-    # triggers, that assumption is likely violated.
-    @assert isapprox(obj1, obj2; atol = 10, rtol = 0.01) "obj1 ($obj1) and obj2 ($obj2) are supposed to differ, but they differ by an improbably large amount ($obj_diff) -- the perturbations are likely affecting the decisions"
-
     # Make sure there is some real difference between the two scenarios
     @assert !any(isapprox.(ground_truth_diff, 0.0; atol = 0.0001))
     # Make sure the difference is reflected correctly in the objective value
@@ -436,8 +430,22 @@ function obj_fun_test_helper(
         @show obj_diff
         @show ground_truth_diff
     end
-    @test all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))
-    return all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))
+
+    comparison_passes = all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))
+
+    # An assumption in this line of testing is that our perturbations are small enough that
+    # they don't actually change the decisions, just slightly alter the cost. If the
+    # comparison isn't passing, one reason could be that this assumption is violated. In
+    # that case, we want an `AssertionError` rather than a test failure.
+    if !comparison_passes
+        @assert isapprox(obj1, obj2; atol = 10, rtol = 0.01) "obj1 ($obj1) and obj2 ($obj2) are supposed to differ, but they differ by an improbably large amount ($obj_diff) -- the perturbations are likely affecting the decisions. Ground truth difference is $ground_truth_diff; the test would fail, but we have reason to believe it is instead broken."
+    end
+
+    # At this point, we've eliminiated many 'innocent' sources of error, so if the
+    # comparison isn't passing here we can have some confidence that it's actually pointing
+    # to a bug in the implementation
+    @test comparison_passes
+    return comparison_passes
 end
 
 # See run_startup_shutdown_obj_fun_test for explanation
