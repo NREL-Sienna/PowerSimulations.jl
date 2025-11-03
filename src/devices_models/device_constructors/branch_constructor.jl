@@ -276,14 +276,6 @@ function construct_device!(
         StaticBranch(),
     )
 
-    add_expressions!(
-        container,
-        PTDFBranchFlow,
-        devices,
-        model,
-        network_model,
-    )
-
     if haskey(get_time_series_names(model), DynamicBranchRatingTimeSeriesParameter)
         add_parameters!(container, DynamicBranchRatingTimeSeriesParameter, devices, model)
     end
@@ -312,6 +304,16 @@ function construct_device!(
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACTransmission}
     devices = get_available_components(model, sys)
+
+    # The order of these methods is important. The add_expressions! must be before the constraints
+    add_expressions!(
+        container,
+        PTDFBranchFlow,
+        devices,
+        model,
+        network_model,
+    )
+
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, FlowRateConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
@@ -401,14 +403,6 @@ function construct_device!(
         StaticBranchBounds(),
     )
 
-    add_expressions!(
-        container,
-        PTDFBranchFlow,
-        devices,
-        model,
-        network_model,
-    )
-
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -421,6 +415,15 @@ function construct_device!(
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACTransmission}
     devices = get_available_components(model, sys)
+    # The order of these methods is important. The add_expressions! must be before the constraints
+    add_expressions!(
+        container,
+        PTDFBranchFlow,
+        devices,
+        model,
+        network_model,
+    )
+
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     branch_rate_bounds!(
         container,
@@ -448,14 +451,6 @@ function construct_device!(
         devices,
         StaticBranchUnbounded(),
     )
-
-    add_expressions!(
-        container,
-        PTDFBranchFlow,
-        devices,
-        model,
-        network_model,
-    )
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -468,6 +463,14 @@ function construct_device!(
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACTransmission}
     devices = get_available_components(model, sys)
+    # The order of these methods is important. The add_expressions! must be before the constraints
+    add_expressions!(
+        container,
+        PTDFBranchFlow,
+        devices,
+        model,
+        network_model,
+    )
     add_feedforward_constraints!(container, model, devices)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
@@ -849,6 +852,14 @@ function construct_device!(
     T <: PSY.TwoTerminalHVDC,
 }
     devices = get_available_components(model, sys)
+    # The order of these methods is important. The add_expressions! must be before the constraints
+    add_expressions!(
+        container,
+        PTDFBranchFlow,
+        devices,
+        model,
+        network_model,
+    )
     add_constraints!(container, FlowRateConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
     add_feedforward_constraints!(container, model, devices)
