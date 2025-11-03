@@ -2,7 +2,6 @@ function get_initial_conditions_template(model::OperationModel, number_of_steps:
     # This is done to avoid passing the duals but also not re-allocating the PTDF when it
     # exists
 
-    @info "code is in get_initial_conditions_template() from initialization.jl \n$(get_network_formulation(model.template)) "
     network_model = NetworkModel(
         get_network_formulation(model.template);
         use_slacks = get_use_slacks(get_network_model(model.template)),
