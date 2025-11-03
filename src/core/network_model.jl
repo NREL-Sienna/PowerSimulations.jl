@@ -237,12 +237,12 @@ function instantiate_network_model!(
     else
         ybus = PNM.Ybus(sys)
     end
-    model.network_reduction = ybus.network_reduction_data
-    if !isempty(model.network_reduction)
-        # TODO: Network reimplement this when it becomes necessary. We don't have any
-        # reductions that are incompatible right now.
-        # check_network_reduction_compatibility(T)
-    end
+    model.network_reduction = deepcopy(PNM.get_network_reduction_data(ybus))
+    #if !isempty(model.network_reduction)
+    # TODO: Network reimplement this when it becomes necessary. We don't have any
+    # reductions that are incompatible right now.
+    # check_network_reduction_compatibility(T)
+    #end
     PNM.populate_branch_maps_by_type!(model.network_reduction, _get_filters(branch_models))
     empty!(model.reduced_branch_tracker)
     set_number_of_steps!(model.reduced_branch_tracker, number_of_steps)
@@ -272,7 +272,7 @@ function instantiate_network_model!(
     end
     if length(model.subnetworks) > 1
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
-        model.network_reduction = PNM.get_network_reduction_data(PNM.Ybus(sys))
+        model.network_reduction = deepcopy(PNM.get_network_reduction_data(PNM.Ybus(sys)))
         _assign_subnetworks_to_buses(model, sys)
     end
     empty!(model.reduced_branch_tracker)
@@ -314,9 +314,9 @@ function instantiate_network_model!(
             ptdf = PNM.VirtualPTDF(sys)
         end
         model.PTDF_matrix = ptdf
-        model.network_reduction = ptdf.network_reduction_data
+        model.network_reduction = deepcopy(ptdf.network_reduction_data)
     else
-        model.network_reduction = model.PTDF_matrix.network_reduction_data
+        model.network_reduction = deepcopy(model.PTDF_matrix.network_reduction_data)
     end
 
     if !model.reduce_radial_branches && PNM.has_radial_reduction(
@@ -397,9 +397,9 @@ function instantiate_network_model!(
             ptdf = PNM.VirtualPTDF(sys)
         end
         model.PTDF_matrix = ptdf
-        model.network_reduction = ptdf.network_reduction_data
+        model.network_reduction = deepcopy(ptdf.network_reduction_data)
     else
-        model.network_reduction = model.PTDF_matrix.network_reduction_data
+        model.network_reduction = deepcopy(model.PTDF_matrix.network_reduction_data)
     end
 
     if !model.reduce_radial_branches && PNM.has_radial_reduction(
