@@ -639,3 +639,8 @@ function solve!(
     end
     return get_run_status(model)
 end
+
+function handle_initial_conditions!(::EmulationModel{<:EmulationProblem})
+    # Emulation models do not require initial conditions handling
+    return
+end
