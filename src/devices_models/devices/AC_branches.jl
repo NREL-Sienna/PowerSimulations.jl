@@ -40,16 +40,13 @@ get_variable_upper_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACTransmission,
 get_variable_lower_bound(::FlowActivePowerSlackUpperBound, ::PSY.ACTransmission, ::AbstractBranchFormulation) = 0.0
 get_variable_upper_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACTransmission, ::AbstractBranchFormulation) = nothing
 get_variable_lower_bound(::FlowActivePowerSlackLowerBound, ::PSY.ACTransmission, ::AbstractBranchFormulation) = 0.0
-get_variable_upper_bound(_, ::PNM.BranchesSeries, ::AbstractBranchFormulation) = nothing
-get_variable_lower_bound(_, ::PNM.BranchesSeries, ::AbstractBranchFormulation) = nothing
-get_variable_upper_bound(_, ::PNM.BranchesParallel, ::AbstractBranchFormulation) = nothing
-get_variable_lower_bound(_, ::PNM.BranchesParallel, ::AbstractBranchFormulation) = nothing
-get_variable_upper_bound(_, ::PNM.ThreeWindingTransformerWinding, ::AbstractBranchFormulation) = nothing
-get_variable_lower_bound(_, ::PNM.ThreeWindingTransformerWinding, ::AbstractBranchFormulation) = nothing
-get_variable_lower_bound(::FlowActivePowerSlackUpperBound, ::Vector{Any}, ::AbstractBranchFormulation) = 0.0
-get_variable_lower_bound(::FlowActivePowerSlackLowerBound, ::Vector{Any}, ::AbstractBranchFormulation) = 0.0
-get_variable_lower_bound(::FlowActivePowerSlackUpperBound, ::Set{PSY.ACTransmission}, ::AbstractBranchFormulation) = 0.0
-get_variable_lower_bound(::FlowActivePowerSlackLowerBound, ::Set{PSY.ACTransmission}, ::AbstractBranchFormulation) = 0.0
+get_variable_upper_bound(::FlowActivePowerVariable, ::PNM.BranchesSeries, ::AbstractBranchFormulation) = nothing
+get_variable_lower_bound(::FlowActivePowerVariable, ::PNM.BranchesSeries, ::AbstractBranchFormulation) = nothing
+get_variable_upper_bound(::FlowActivePowerVariable, ::PNM.BranchesParallel, ::AbstractBranchFormulation) = nothing
+get_variable_lower_bound(::FlowActivePowerVariable, ::PNM.BranchesParallel, ::AbstractBranchFormulation) = nothing
+get_variable_upper_bound(::FlowActivePowerVariable, ::PNM.ThreeWindingTransformerWinding, ::AbstractBranchFormulation) = nothing
+get_variable_lower_bound(::FlowActivePowerVariable, ::PNM.ThreeWindingTransformerWinding, ::AbstractBranchFormulation) = nothing
+
 #! format: on
 function get_default_time_series_names(
     ::Type{U},

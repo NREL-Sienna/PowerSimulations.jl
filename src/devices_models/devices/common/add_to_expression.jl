@@ -1707,7 +1707,7 @@ function _get_direction(
     arc_tuple::Tuple{Int, Int},
     reduction_entry::PNM.BranchesSeries,
     direction_map::Dict{String, Int},
-    network_reduction_data,
+    network_reduction_data::PNM.NetworkReductionData,
 )
     # direction of segments from the user provided mapping:
     mapping_directions = [
