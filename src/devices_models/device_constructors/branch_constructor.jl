@@ -1595,7 +1595,7 @@ end
 function _add_to_branch_map!(
     branch_typed_dict::Dict{DataType, Vector{<:PSY.ACBranch}},
     reduction_entry::T,
-) where {T <: PSY.ACTransmission}
+) where {T <: PSY.ACBranch}
     if !haskey(branch_typed_dict, T)
         branch_typed_dict[T] = [reduction_entry]
     else
