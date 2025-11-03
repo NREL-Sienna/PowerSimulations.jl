@@ -1575,6 +1575,7 @@ function _get_branch_map(
     # This method uses ACBranch to support HVDC
         Dict{Tuple{PSY.Area, PSY.Area}, Dict{DataType, Vector{<:PSY.ACBranch}}}()
     for br_type in network_model.modeled_branch_types
+        !haskey(PNM.get_name_to_arc_map(net_reduction_data), br_type) && continue 
         for (name, (arc, reduction)) in PNM.get_name_to_arc_map(net_reduction_data)[br_type]
             reduction_entry = all_branch_maps_by_type[reduction][br_type][arc]
             area_from, area_to = _get_area_from_to(reduction_entry)
@@ -1593,12 +1594,12 @@ end
 
 function _add_to_branch_map!(
     branch_typed_dict::Dict{DataType, Vector{<:PSY.ACBranch}},
-    reduction_entry::PSY.ACTransmission,
-)
-    if !haskey(branch_typed_dict, branch_type)
-        branch_typed_dict[branch_type] = [reduction_entry]
+    reduction_entry::T,
+) where {T <: PSY.ACTransmission}
+    if !haskey(branch_typed_dict, T)
+        branch_typed_dict[T] = [reduction_entry]
     else
-        push!(branch_typed_dict[branch_type], reduction_entry)
+        push!(branch_typed_dict[T], reduction_entry)
     end
 end
 
