@@ -1567,7 +1567,7 @@ function _get_branch_map(
 )
     @assert !isempty(network_model.modeled_branch_types)
     net_reduction_data = get_network_reduction(network_model)
-    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    all_branch_maps_by_type = net_reduction_data.all_branch_maps_by_type
     inter_area_branch_map =
     # This method uses ACBranch to support HVDC
         Dict{Tuple{PSY.Area, PSY.Area}, Dict{DataType, Vector{<:PSY.ACBranch}}}()
@@ -1581,7 +1581,7 @@ function _get_branch_map(
                     (area_from, area_to),
                     Dict{DataType, Vector{<:PSY.ACBranch}}(),
                 )
-                _add_to_branch_map!(branch_typed_dict, branch_type, reduction_entry)
+                _add_to_branch_map!(branch_typed_dict, br_type, reduction_entry)
             end
         end
     end

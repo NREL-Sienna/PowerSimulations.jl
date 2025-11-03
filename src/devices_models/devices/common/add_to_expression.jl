@@ -1641,7 +1641,10 @@ function add_to_expression!(
     contributing_devices_map = get_contributing_devices_map(model)
     for (br_type, contributing_devices) in contributing_devices_map
         variable = get_variable(container, FlowActivePowerVariable(), br_type)
-        for (name, (arc, _)) in PNM.get_name_to_arc_map(network_reduction_data)[br_type]
+        for (name, (arc, reduction)) in
+            PNM.get_name_to_arc_map(network_reduction_data)[br_type]
+            reduction_entry =
+                network_reduction_data.all_branch_maps_by_type[reduction][br_type][arc]
             if _reduced_entry_in_interface(reduction_entry, contributing_devices)
                 if isempty(direction_map)
                     direction = 1.0
