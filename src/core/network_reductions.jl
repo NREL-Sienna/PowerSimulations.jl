@@ -41,13 +41,13 @@ function _make_empty_tracker_dict(arc_tuple::Tuple{Int, Int}, num_steps::Int)
     )
 end
 
-function _search_for_reduced_branch_variable!(
+function search_for_reduced_branch_variable!(
     tracker::BranchReductionOptimizationTracker,
     arc_tuple::Tuple{Int, Int},
     ::Type{T},
     ::Type{U},
 ) where {
-    T <: AbstractACActivePowerFlow,
+    T <: VariableType,
     U <: PSY.ACTransmission}
     time_steps = get_number_of_steps(tracker)
     if haskey(tracker.variable_dict, U)
@@ -75,11 +75,18 @@ function get_branch_argument_axis(
     network_reduction_data::PNM.NetworkReductionData,
     ::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ACTransmission}
+    return get_branch_argument_axis(network_reduction_data, T)
+end
+
+function get_branch_argument_axis(
+    network_reduction_data::PNM.NetworkReductionData,
+    ::Type{T},
+) where {T <: PSY.ACTransmission}
     name_axis = network_reduction_data.name_to_arc_map[T]
     return sort!(collect(keys(name_axis)))
 end
 
-function _search_for_reduced_branch_constraint!(
+function search_for_reduced_branch_constraint!(
     tracker::BranchReductionOptimizationTracker,
     arc_tuple::Tuple{Int, Int},
     ::Type{T},

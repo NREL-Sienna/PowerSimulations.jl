@@ -458,14 +458,16 @@ function get_branches_to_pm(
     all_branch_maps_by_type = net_reduction_data.all_branch_maps_by_type
     ix = 1
     @assert !isempty(branch_template)
+    name_to_arc_map = PNM.get_name_to_arc_map(net_reduction_data)
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
-        if comp_type <: PSY.TwoTerminalHVDC
+        if comp_type <: PSY.TwoTerminalHVDC || !(comp_type <: T) ||
+           !haskey(name_to_arc_map, comp_type)
+            @info "No $d Branches to process in PowerModels data."
             continue
         end
-        !(comp_type <: T) && continue
-        for (_, (arc_tuple, reduction)) in PNM.get_name_to_arc_map(net_reduction_data)[T]
-            reduction_entry = all_branch_maps_by_type[reduction][T][arc_tuple]
+        for (_, (arc_tuple, reduction)) in name_to_arc_map[comp_type]
+            reduction_entry = all_branch_maps_by_type[reduction][comp_type][arc_tuple]
             PM_branches["$(ix)"] = get_branch_to_pm(
                 ix,
                 arc_tuple,

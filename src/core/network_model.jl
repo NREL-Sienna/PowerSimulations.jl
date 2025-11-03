@@ -145,7 +145,7 @@ end
 =#
 
 function _model_has_branch_filters(branch_models::BranchModelContainer)
-    for (_, bm) in branch_models.branch_models
+    for (_, bm) in branch_models
         if get_attribute(bm, "filter_function") !== nothing
             return true
         end
@@ -160,10 +160,10 @@ function _check_branch_network_compatibility(
 ) where {T <: PM.AbstractPowerModel}
     if requires_all_branch_models(T)
         for d in PSY.get_existing_device_types(sys)
-            if d <: PSY.ACTransmission && !haskey(branch_models, d)
+            if d <: PSY.ACTransmission && !haskey(branch_models, Symbol(d))
                 throw(
                     IS.ConflictingInputsError(
-                        "Network model $(T) requires all AC Transmission devices have a model \\
+                        "Network model $(T) requires all AC Transmission devices have a model \
                         The system has a branch branch type $(d) but the DeviceModel is not included in the Template.",
                     ),
                 )
@@ -171,7 +171,7 @@ function _check_branch_network_compatibility(
         end
     end
 
-    if supports_branch_filtering(T)
+    if supports_branch_filtering(T) || !_model_has_branch_filters(branch_models)
         return
     elseif _model_has_branch_filters(branch_models)
         if ignores_branch_filtering(T)
@@ -257,6 +257,8 @@ function instantiate_network_model!(
 )
     _check_branch_network_compatibility(model, branch_models, sys)
     PNM.populate_branch_maps_by_type!(model.network_reduction)
+    empty!(model.reduced_branch_tracker)
+    set_number_of_steps!(model.reduced_branch_tracker, number_of_steps)
     return
 end
 

@@ -1,4 +1,4 @@
-function get_initial_conditions_template(model::OperationModel)
+function get_initial_conditions_template(model::OperationModel, number_of_steps::Int)
     # This is done to avoid passing the duals but also not re-allocating the PTDF when it
     # exists
 
@@ -51,7 +51,7 @@ function get_initial_conditions_template(model::OperationModel)
         base_model.attributes = service_model.attributes
         set_service_model!(ic_template, get_service_name(service_model), base_model)
     end
-
+    set_number_of_steps!(network_model.reduced_branch_tracker, number_of_steps)
     return ic_template
 end
 
@@ -82,11 +82,13 @@ function build_initial_conditions_model!(model::T) where {T <: OperationModel}
     main_problem_horizon = get_horizon(ic_settings)
     # TODO: add an interface to allow user to configure initial_conditions problem
     ic_container.JuMPmodel = _make_init_jump_model(ic_settings)
-    template = get_initial_conditions_template(model)
+    resolution = get_resolution(ic_settings)
+    init_horizon = INITIALIZATION_PROBLEM_HORIZON_COUNT * resolution
+    number_of_steps = min(init_horizon, main_problem_horizon)
+    template = get_initial_conditions_template(model, number_of_steps ÷ resolution)
     ic_container.settings = ic_settings
     ic_container.built_for_recurrent_solves = false
-    init_horizon = INITIALIZATION_PROBLEM_HORIZON_COUNT * get_resolution(ic_settings)
-    set_horizon!(ic_settings, min(init_horizon, main_problem_horizon))
+    set_horizon!(ic_settings, number_of_steps)
     init_optimization_container!(
         ISOPT.get_initial_conditions_model_container(internal),
         get_network_model(get_template(model)),
