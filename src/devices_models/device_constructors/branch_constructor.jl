@@ -1581,7 +1581,7 @@ function _get_branch_map(
                     (area_from, area_to),
                     Dict{DataType, Vector{<:PSY.ACBranch}}(),
                 )
-                _add_to_branch_map!(branch_typed_dict, br_type, reduction_entry)
+                _add_to_branch_map!(branch_typed_dict, reduction_entry)
             end
         end
     end
@@ -1590,23 +1590,12 @@ end
 
 function _add_to_branch_map!(
     branch_typed_dict::Dict{DataType, Vector{<:PSY.ACBranch}},
-    branch_type::Type{<:PSY.ACTransmission},
     reduction_entry::PSY.ACTransmission,
 )
     if !haskey(branch_typed_dict, branch_type)
         branch_typed_dict[branch_type] = [reduction_entry]
     else
         push!(branch_typed_dict[branch_type], reduction_entry)
-    end
-end
-
-function _add_to_branch_map!(
-    branch_typed_dict::Dict{DataType, Vector{<:PSY.ACBranch}},
-    branch_type::Type{<:PSY.ACTransmission},
-    reduction_entry::Set{PSY.ACTransmission},
-)
-    for branch in reduction_entry
-        _add_to_branch_map!(branch_typed_dict, branch_type, branch)
     end
 end
 
