@@ -3,10 +3,7 @@ function test_market_bid_cost_models(sys::PSY.System,
     my_no_load::Float64,
     my_initial_input::Float64;
     skip_setting = false,
-    device_to_formulation = Dict{
-        Type{<:PSY.Device},
-        Type{<:PSI.AbstractDeviceFormulation},
-    }(),
+    device_to_formulation = FormulationDict(),
     filename::Union{String, Nothing} = nothing,
 )
     fcn_data = get_function_data(
@@ -514,10 +511,7 @@ for decremental in (false, true)
         [ThermalBasicUnitCommitment]
     end
     @testset for device_model in device_models
-        device_to_formulation =
-            Dict{Type{<:Device}, Type{<:PowerSimulations.AbstractDeviceFormulation}}(
-                comp_type => device_model,
-            )
+        device_to_formulation = FormulationDict(comp_type => device_model)
         init_input_bool = !decremental || device_model != PowerLoadDispatch
         if init_input_bool
             @testset "MarketBidCost $(adj) with time varying min gen cost" begin

@@ -1,5 +1,14 @@
 ######## CONSTRAINTS ############
 
+_add_lb(::RangeConstraintLBExpressions) = true
+_add_ub(::RangeConstraintLBExpressions) = false
+
+_add_lb(::RangeConstraintUBExpressions) = false
+_add_ub(::RangeConstraintUBExpressions) = true
+
+_add_lb(::ExpressionType) = true
+_add_ub(::ExpressionType) = false
+
 # Generic fallback functions
 function get_startup_shutdown(
     device,
@@ -385,8 +394,8 @@ function add_reserve_range_constraints!(
     X <: PM.AbstractPowerModel,
 }
     array = get_variable(container, U(), V)
-    _add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model)
-    _add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    _add_reserve_upper_bound_range_constraints!(container, T, array, devices, model)
+    _add_reserve_lower_bound_range_constraints!(container, T, array, devices, model)
     return
 end
 
@@ -405,12 +414,14 @@ function add_reserve_range_constraints!(
     X <: PM.AbstractPowerModel,
 }
     array = get_expression(container, U(), W)
-    _add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model)
-    _add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    _add_ub(U()) &&
+        _add_reserve_upper_bound_range_constraints!(container, T, array, devices, model)
+    _add_lb(U()) &&
+        _add_reserve_lower_bound_range_constraints!(container, T, array, devices, model)
     return
 end
 
-function _add_reserve_lower_bound_range_constraints_impl!(
+function _add_reserve_lower_bound_range_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     array,
@@ -444,7 +455,7 @@ function _add_reserve_lower_bound_range_constraints_impl!(
     return
 end
 
-function _add_reserve_upper_bound_range_constraints_impl!(
+function _add_reserve_upper_bound_range_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     array,
@@ -502,15 +513,19 @@ function add_reserve_range_constraints!(
     ::Type{Y},
 ) where {
     T <:
-    Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+    Union{
+        ReactivePowerVariableLimitsConstraint,
+        ActivePowerVariableLimitsConstraint,
+        OutputActivePowerVariableLimitsConstraint,
+    },
     U <: VariableType,
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
     Y <: PM.AbstractPowerModel,
 }
     array = get_variable(container, U(), W)
-    _add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model)
-    _add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    _add_reserve_upper_bound_range_constraints!(container, T, array, devices, model)
+    _add_reserve_lower_bound_range_constraints!(container, T, array, devices, model)
     return
 end
 
@@ -538,19 +553,25 @@ function add_reserve_range_constraints!(
     ::Type{Y},
 ) where {
     T <:
-    Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+    Union{
+        ReactivePowerVariableLimitsConstraint,
+        ActivePowerVariableLimitsConstraint,
+        OutputActivePowerVariableLimitsConstraint,
+    },
     U <: ExpressionType,
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
     Y <: PM.AbstractPowerModel,
 }
     array = get_expression(container, U(), W)
-    _add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model)
-    _add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    _add_ub(U()) &&
+        _add_reserve_upper_bound_range_constraints!(container, T, array, devices, model)
+    _add_lb(U()) &&
+        _add_reserve_lower_bound_range_constraints!(container, T, array, devices, model)
     return
 end
 
-function _add_reserve_lower_bound_range_constraints_impl!(
+function _add_reserve_lower_bound_range_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     array,
@@ -558,7 +579,11 @@ function _add_reserve_lower_bound_range_constraints_impl!(
     ::DeviceModel{W, X},
 ) where {
     T <:
-    Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+    Union{
+        ReactivePowerVariableLimitsConstraint,
+        ActivePowerVariableLimitsConstraint,
+        OutputActivePowerVariableLimitsConstraint,
+    },
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
 }
@@ -582,7 +607,7 @@ function _add_reserve_lower_bound_range_constraints_impl!(
     return
 end
 
-function _add_reserve_upper_bound_range_constraints_impl!(
+function _add_reserve_upper_bound_range_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     array,
@@ -590,7 +615,11 @@ function _add_reserve_upper_bound_range_constraints_impl!(
     ::DeviceModel{W, X},
 ) where {
     T <:
-    Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+    Union{
+        ReactivePowerVariableLimitsConstraint,
+        ActivePowerVariableLimitsConstraint,
+        OutputActivePowerVariableLimitsConstraint,
+    },
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
 }

@@ -112,14 +112,17 @@ end
 
 # Analogous to run_mbc_obj_fun_test in test_utils/mbc_simulation_utils.jl
 function run_iec_obj_fun_test(sys1, sys2, comp_name::String, ::Type{T};
-    simulation = true, in_memory_store = false) where {T <: PSY.Component}
+    simulation = true, in_memory_store = false, reservation = false,
+) where {T <: PSY.Component}
     _, res1, decisions1, nullable_decisions1 = run_iec_sim(sys1, comp_name, T;
         simulation = simulation,
         in_memory_store = in_memory_store,
+        reservation = reservation,
     )
     _, res2, decisions2, nullable_decisions2 = run_iec_sim(sys2, comp_name, T;
         simulation = simulation,
         in_memory_store = in_memory_store,
+        reservation = reservation,
     )
 
     all_decisions1 = (decisions1..., nullable_decisions1...)
@@ -138,9 +141,15 @@ function run_iec_obj_fun_test(sys1, sys2, comp_name::String, ::Type{T};
 end
 
 function run_iec_sim(sys::System, comp_name::String, ::Type{T};
-    simulation = true, in_memory_store = false,
-    device_to_formulation = FormulationDict(Source => ImportExportSourceModel),
+    simulation = true, in_memory_store = false, reservation = false,
 ) where {T <: PSY.Component}
+    device_to_formulation = FormulationDict(
+        Source => DeviceModel(
+            Source,
+            ImportExportSourceModel;
+            attributes = Dict("reservation" => reservation),
+        ),
+    )
     model, res = if simulation
         run_generic_mbc_sim(
             sys;
@@ -158,6 +167,19 @@ function run_iec_sim(sys::System, comp_name::String, ::Type{T};
         _read_one_value(res, PSI.ActivePowerOutVariable, T, comp_name),
         _read_one_value(res, PSI.ActivePowerInVariable, T, comp_name),
     )
+
+    output_var = read_variable_dict(res, PSI.ActivePowerOutVariable, T)
+    input_var = read_variable_dict(res, PSI.ActivePowerInVariable, T)
+
+    for key in keys(output_var)
+        output_on = output_var[key][!, "value"] .> PSI.COST_EPSILON
+        input_on = input_var[key][!, "value"] .> PSI.COST_EPSILON
+        if reservation
+            @test all(.~(output_on .& input_on))  # no simultaneous import/export
+        else
+            @test any(output_on .& input_on)  # some simultaneous import/export
+        end
+    end
 
     return model, res, decisions, ()  # return format follows the MBC run_startup_shutdown_test convention
 end
@@ -225,7 +247,7 @@ function cost_due_to_time_varying_iec(
     return result
 end
 
-function iec_obj_fun_test_wrapper(sys_constant, sys_varying)
+function iec_obj_fun_test_wrapper(sys_constant, sys_varying; reservation = false)
     for use_simulation in (false, true)
         for in_memory_store in (use_simulation ? (false, true) : (false,))
             decisions1, decisions2 = run_iec_obj_fun_test(
@@ -235,6 +257,7 @@ function iec_obj_fun_test_wrapper(sys_constant, sys_varying)
                 IECComponentType;
                 simulation = use_simulation,
                 in_memory_store = in_memory_store,
+                reservation = reservation,
             )
 
             if !all(isapprox.(decisions1, decisions2))

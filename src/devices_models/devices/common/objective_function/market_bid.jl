@@ -169,7 +169,7 @@ function validate_occ_breakpoints_slopes(device::PSY.StaticInjection, decrementa
         end
 
         # Different specific validations for MBC versus IEC
-        p1 = _do_specific_occ_validation(
+        p1 = _validate_occ_subtype(
             PSY.get_operation_cost(device),
             decremental,
             is_ts,
@@ -180,7 +180,7 @@ function validate_occ_breakpoints_slopes(device::PSY.StaticInjection, decrementa
     end
 end
 
-function _do_specific_occ_validation(
+function _validate_occ_subtype(
     ::PSY.MarketBidCost,
     decremental,
     is_ts,
@@ -202,7 +202,7 @@ function _do_specific_occ_validation(
     return p1
 end
 
-_do_specific_occ_validation(
+_validate_occ_subtype(
     ::PSY.MarketBidCost,
     decremental,
     is_ts,
@@ -211,7 +211,7 @@ _do_specific_occ_validation(
 ) =
     @assert !is_ts
 
-function _do_specific_occ_validation(
+function _validate_occ_subtype(
     cost::PSY.ImportExportCost,
     decremental,
     is_ts,
@@ -231,10 +231,10 @@ function _do_specific_occ_validation(
             "For ImportExportCost, initial input must be zero.",
         ),
     )
-    _do_specific_occ_validation(cost, decremental, true, PSY.get_function_data(vc))  # also do the FunctionData validations
+    _validate_occ_subtype(cost, decremental, true, PSY.get_function_data(vc))  # also do the FunctionData validations
 end
 
-function _do_specific_occ_validation(
+function _validate_occ_subtype(
     ::PSY.ImportExportCost,
     decremental,
     is_ts,
@@ -389,6 +389,7 @@ validate_occ_component(
     device::PSY.StaticInjection,
 ) = nothing
 
+# Validates and adds parameters for a given OfferCurveCost-related ParameterType
 function _process_occ_parameters_helper(
     ::P,
     container::OptimizationContainer,
@@ -412,6 +413,8 @@ function process_market_bid_parameters!(
 )
     devices = filter(_has_market_bid_cost, collect(devices_in))  # https://github.com/NREL-Sienna/InfrastructureSystems.jl/issues/460
     isempty(devices) && return
+
+    # Validate and add the parameters:
     for param in (
         StartupCostParameter(),
         ShutdownCostParameter(),
