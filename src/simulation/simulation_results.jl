@@ -249,7 +249,7 @@ function get_emulation_problem_results(
 end
 
 function _populate_system_in_results!(
-    results::SimulationResults,
+    results::SimulationProblemResults,
     populate_system::Bool,
     populate_units::Union{IS.UnitSystem, String, Nothing},
 )
