@@ -611,7 +611,8 @@ function add_constraints!(
     if use_slacks
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), B)
     end
-    for (name, (arc, reduction)) in PNM.get_name_to_arc_map(network_reduction_data)[B]
+    for name in device_names
+        arc, reduction = PNM.get_name_to_arc_map(network_reduction_data)[B][name]
         # TODO: entry is not type stable here, it can return any type ACTransmission.
         # It might have performance implications. Possibly separate this into other functions
         reduction_entry = all_branch_maps_by_type[reduction][B][arc]
@@ -661,7 +662,8 @@ function add_constraints!(
     if use_slacks
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), B)
     end
-    for (name, (arc, reduction)) in PNM.get_name_to_arc_map(network_reduction_data)[B]
+    for name in device_names
+        arc, reduction = PNM.get_name_to_arc_map(network_reduction_data)[B][name]
         # TODO: entry is not type stable here, it can return any type ACTransmission.
         # It might have performance implications. Possibly separate this into other functions
         reduction_entry = all_branch_maps_by_type[reduction][B][arc]
