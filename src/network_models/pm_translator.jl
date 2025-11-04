@@ -306,6 +306,19 @@ end
 function get_branch_to_pm(
     ix::Int,
     arc_tuple::Tuple{Int, Int},
+    double_circuit::PNM.BranchesParallel,
+    T::Type{StaticBranchUnbounded},
+    U::Type{<:PM.AbstractPowerModel},
+)
+    branch_pm_dicts =
+        [get_branch_to_pm(ix, arc_tuple, branch, T, U) for branch in double_circuit]
+    PM_branch = branch_pm_dicts[1]
+    return PM_branch
+end
+
+function get_branch_to_pm(
+    ix::Int,
+    arc_tuple::Tuple{Int, Int},
     series_chain::PNM.BranchesSeries,
     T::Type{<:AbstractBranchFormulation},
     U::Type{<:PM.AbstractPowerModel},
@@ -321,6 +334,20 @@ function get_branch_to_pm(
     return PM_branch
 end
 
+function get_branch_to_pm(
+    ix::Int,
+    arc_tuple::Tuple{Int, Int},
+    series_chain::PNM.BranchesSeries,
+    T::Type{StaticBranchUnbounded},
+    U::Type{<:PM.AbstractPowerModel},
+)
+    branch_pm_dicts =
+        [get_branch_to_pm(ix, arc_tuple, segment, T, U) for segment in series_chain]
+    PM_branch = branch_pm_dicts[1]
+    PM_branch["f_bus"] = arc_tuple[1]
+    PM_branch["t_bus"] = arc_tuple[2]
+    return PM_branch
+end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.TwoTerminalGenericHVDCLine,
