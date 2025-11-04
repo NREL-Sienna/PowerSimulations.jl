@@ -36,14 +36,14 @@ function _update_parameter_values!(
     return
 end
 
-# We only support certain time series costs for OfferCurveCost, nothing to do for all the others
+# We only support certain time series costs for PSY.OfferCurveCost, nothing to do for all the others
 # We group them this way because we implement them that way: avoids method ambiguity issues
 handle_variable_cost_parameter(
     ::Union{StartupCostParameter, ShutdownCostParameter, AbstractCostAtMinParameter},
-    op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa OfferCurveCost)
+    op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.OfferCurveCost)
 handle_variable_cost_parameter(
     ::AbstractPiecewiseLinearSlopeParameter,
-    op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa OfferCurveCost)
+    op_cost::PSY.OperationalCost, args...) = @assert !(op_cost isa PSY.OfferCurveCost)
 
 # typically used just with 1 arg, _get_parameter_field(T(), operation_cost).
 _get_parameter_field(::StartupCostParameter, args...; kwargs...) =
@@ -79,7 +79,7 @@ _maybe_tuple(::AbstractCostAtMinParameter, value) = value
 
 function handle_variable_cost_parameter(
     param::Union{StartupCostParameter, ShutdownCostParameter, AbstractCostAtMinParameter},
-    op_cost::OfferCurveCost,
+    op_cost::PSY.OfferCurveCost,
     component,
     name,
     parameter_array,
@@ -112,7 +112,7 @@ end
 
 function handle_variable_cost_parameter(
     slope_param::T,
-    op_cost::OfferCurveCost,
+    op_cost::PSY.OfferCurveCost,
     component,
     name,
     parameter_array,

@@ -473,7 +473,7 @@ end
 ##################################################
 
 # without this, you get "variable OnVariable__RenewableDispatch is not stored"
-# TODO: really this falls along the divide of 
+# TODO: really this falls along the divide of
 # commitment (OnVariable + ActivePower) vs dispatch (ActivePower only)
 _include_min_gen_power_in_constraint(
     ::PSY.RenewableDispatch,
@@ -501,7 +501,7 @@ _include_min_gen_power_in_constraint(
     ::AbstractDeviceFormulation,
 ) = false
 
-# add the minimum generation power to the PWL constraint, as a constant. Returns true for 
+# add the minimum generation power to the PWL constraint, as a constant. Returns true for
 # formulations where there's nonzero minimum power (first breakpoint), but no OnVariable.
 # TODO: cleaner way? e.g. can we just do this whenever there's no OnVariable?
 _include_constant_min_gen_power_in_constraint(
@@ -564,7 +564,7 @@ function _add_pwl_constraint!(
     # just look up what it is currently fixed to and use that here without worrying about
     # updating.
     if _include_constant_min_gen_power_in_constraint(component, U(), D())
-        # TODO this seems kind of redundant with the 
+        # TODO this seems kind of redundant with the
         sum_pwl_vars += jump_fixed_value(first(break_points))::Float64
     elseif _include_min_gen_power_in_constraint(component, U(), D())
         on_vars = get_variable(container, OnVariable(), T)
@@ -759,7 +759,7 @@ function add_pwl_term!(
     is_decremental::Bool,
     container::OptimizationContainer,
     component::T,
-    ::OfferCurveCost,
+    ::PSY.OfferCurveCost,
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
@@ -882,7 +882,7 @@ function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    cost_function::OfferCurveCost,
+    cost_function::PSY.OfferCurveCost,
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     component_name = PSY.get_name(component)
@@ -905,7 +905,7 @@ function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    cost_function::OfferCurveCost,
+    cost_function::PSY.OfferCurveCost,
     ::U,
 ) where {T <: VariableType,
     U <: AbstractControllablePowerLoadFormulation}
@@ -970,7 +970,7 @@ function _add_vom_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    op_cost::OfferCurveCost,
+    op_cost::PSY.OfferCurveCost,
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     incremental_cost_curves = get_output_offer_curves(op_cost)
@@ -994,7 +994,7 @@ function _add_vom_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    op_cost::OfferCurveCost,
+    op_cost::PSY.OfferCurveCost,
     ::U,
 ) where {T <: VariableType,
     U <: AbstractControllablePowerLoadFormulation}
@@ -1019,7 +1019,7 @@ function _add_vom_cost_to_objective_helper!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    ::OfferCurveCost,
+    ::PSY.OfferCurveCost,
     cost_data::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     ::U,
 ) where {T <: VariableType,
