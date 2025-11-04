@@ -75,6 +75,7 @@ const OBJECTIVE_FUNCTION_NEGATIVE = -1.0
 const INITIALIZATION_PROBLEM_HORIZON_COUNT = 3
 # The DEFAULT_RESERVE_COST value is used to avoid degeneracy of the solutions, reserve cost isn't provided.
 const DEFAULT_RESERVE_COST = 1.0
+const DEFAULT_INTERPOLATION_LENGTH = 4
 const KiB = 1024
 const MiB = KiB * KiB
 const GiB = MiB * KiB
@@ -84,7 +85,6 @@ const PSI_NAME_DELIMITER = "__"
 const M_VALUE = 1e6
 
 const NO_SERVICE_NAME_PROVIDED = ""
-const EMPTY_BRANCH_NAME_MATCH = ""
 const UPPER_BOUND = "ub"
 const LOWER_BOUND = "lb"
 const MAX_OPTIMIZE_TRIES = 2

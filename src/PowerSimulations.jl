@@ -26,6 +26,10 @@ export AreaPTDFPowerModel
 export SecurityConstrainedPTDFPowerModel
 export SecurityConstrainedAreaPTDFPowerModel
 
+# HVDC Network Relevant exports
+export TransportHVDCNetworkModel
+export VoltageDispatchHVDCNetworkModel
+
 ######## Device Models ########
 export DeviceModel
 export FixedOutput
@@ -57,7 +61,9 @@ export PhaseAngleControl
 
 ######## HVDC models ########
 export LossLessConverter
+export QuadraticLossConverter
 export LossLessLine
+export DCLossyLine
 ######## Load Models ########
 export StaticPowerLoad
 export PowerLoadInterruption
@@ -134,6 +140,8 @@ export set_device_model!
 export set_service_model!
 export set_network_model!
 export get_network_formulation
+export get_hvdc_network_model
+export set_hvdc_network_model!
 ## Results interfaces
 export SimulationResultsExport
 export export_results
@@ -250,6 +258,22 @@ export RateofChangeConstraintSlackUp
 export RateofChangeConstraintSlackDown
 export PostContingencyActivePowerChangeVariable
 export PostContingencyActivePowerReserveDeploymentVariable
+export DCVoltage
+export DCLineCurrent
+export ConverterPowerDirection
+export ConverterCurrent
+export SquaredConverterCurrent
+export InterpolationSquaredCurrentVariable
+export InterpolationBinarySquaredCurrentVariable
+export ConverterPositiveCurrent
+export ConverterNegativeCurrent
+export SquaredDCVoltage
+export InterpolationSquaredVoltageVariable
+export InterpolationBinarySquaredVoltageVariable
+export AuxBilinearConverterVariable
+export AuxBilinearSquaredConverterVariable
+export InterpolationSquaredBilinearVariable
+export InterpolationBinarySquaredBilinearVariable
 
 # Auxiliary variables
 export TimeDurationOn
@@ -327,6 +351,15 @@ export PostContingencyRampConstraint
 export ImportExportBudgetConstraint
 export PiecewiseLinearBlockIncrementalOfferConstraint
 export PiecewiseLinearBlockDecrementalOfferConstraint
+export NodalBalanceCurrentConstraint
+export DCLineCurrentConstraint
+export ConverterPowerCalculationConstraint
+export ConverterMcCormickEnvelopes
+export InterpolationVoltageConstraints
+export InterpolationCurrentConstraints
+export InterpolationBilinearConstraints
+export ConverterLossConstraint
+export CurrentAbsoluteValueConstraint
 
 # Parameters
 # Time Series Parameters
@@ -374,6 +407,7 @@ export PostContingencyBranchFlow
 export PostContingencyActivePowerGeneration
 export PostContingencyActivePowerBalance
 export NetActivePower
+export DCCurrentBalance
 
 #################################################################################
 # Imports
@@ -530,22 +564,22 @@ using DocStringExtensions
                     $(DOCSTRING)
                     """
 # Includes
-
 include("core/definitions.jl")
 
 # Core components
 include("core/formulations.jl")
+include("core/network_formulations.jl")
 include("core/abstract_simulation_store.jl")
 include("core/operation_model_abstract_types.jl")
 include("core/abstract_feedforward.jl")
 include("core/variables.jl")
 include("core/network_reductions.jl")
-include("core/network_model.jl")
 include("core/parameters.jl")
 include("core/service_model.jl")
 include("core/event_keys.jl")
 include("core/event_model.jl")
 include("core/device_model.jl")
+include("core/network_model.jl")
 include("core/auxiliary_variables.jl")
 include("core/constraints.jl")
 include("core/expressions.jl")
@@ -630,6 +664,7 @@ include("devices_models/devices/common/add_constraint_dual.jl")
 include("devices_models/devices/common/rateofchange_constraints.jl")
 include("devices_models/devices/common/duration_constraints.jl")
 include("devices_models/devices/common/get_time_series.jl")
+include("devices_models/devices/common/add_pwl_methods.jl")
 
 # Device Modeling components
 include("devices_models/devices/default_interface_methods.jl")
@@ -678,6 +713,7 @@ include("devices_models/device_constructors/source_constructor.jl")
 
 # Network constructors
 include("network_models/network_constructor.jl")
+include("network_models/hvdc_network_constructor.jl")
 
 # Templates for Operation Problems
 include("operation/operation_problem_templates.jl")

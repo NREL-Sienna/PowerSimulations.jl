@@ -69,7 +69,6 @@ function construct_network!(
         objective_function!(container, sys, model)
     end
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
-    add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     add_constraint_dual!(container, sys, model)
     return
 end
@@ -105,8 +104,6 @@ function construct_network!(
     @debug "Building the $T network with instantiate_nip_expr_model method" _group =
         LOG_GROUP_NETWORK_CONSTRUCTION
     powermodels_network!(container, T, sys, template, instantiate_nip_expr_model)
-    #Constraints in case the model has DC Buses
-    add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     add_pm_variable_refs!(container, T, sys, model)
     add_pm_constraint_refs!(container, T, sys)
 
@@ -158,8 +155,6 @@ function construct_network!(
 
     @debug "Building the $T network with instantiate_nip_expr_model method" _group =
         LOG_GROUP_NETWORK_CONSTRUCTION
-    #Constraints in case the model has DC Buses
-    add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     powermodels_network!(container, T, sys, template, instantiate_nip_expr_model)
     add_pm_variable_refs!(container, T, sys, model)
     add_pm_constraint_refs!(container, T, sys)
@@ -218,8 +213,6 @@ function construct_network!(
 
     @debug "Building the $T network with instantiate_bfp_expr_model method" _group =
         LOG_GROUP_NETWORK_CONSTRUCTION
-    #Constraints in case the model has DC Buses
-    add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     powermodels_network!(container, T, sys, template, instantiate_bfp_expr_model)
     add_pm_variable_refs!(container, T, sys, model)
     add_pm_constraint_refs!(container, T, sys)
@@ -248,7 +241,6 @@ function construct_network!(
     end
 
     add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
-    add_constraints!(container, NodalBalanceActiveConstraint, sys, model)
     add_constraint_dual!(container, sys, model)
     return
 end

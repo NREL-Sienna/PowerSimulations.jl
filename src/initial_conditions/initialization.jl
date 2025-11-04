@@ -1,8 +1,7 @@
-function get_initial_conditions_template(model::OperationModel)
+function get_initial_conditions_template(model::OperationModel, number_of_steps::Int)
     # This is done to avoid passing the duals but also not re-allocating the PTDF when it
     # exists
 
-    @info "code is in get_initial_conditions_template() from innitialization.jl \n$(get_network_formulation(model.template)) "
     network_model = NetworkModel(
         get_network_formulation(model.template);
         use_slacks = get_use_slacks(get_network_model(model.template)),
@@ -11,8 +10,12 @@ function get_initial_conditions_template(model::OperationModel)
             get_network_model(model.template),
         ),
     )
+    set_hvdc_network_model!(
+        network_model,
+        deepcopy(get_hvdc_network_model(model.template)),
+    )
     network_model.network_reduction =
-        get_network_reduction(get_network_model(model.template))
+        deepcopy(get_network_reduction(get_network_model(model.template)))
     network_model.subnetworks = get_subnetworks(get_network_model(model.template))
     # Initialization does not support PowerFlow evaluation
     network_model.power_flow_evaluation = Vector{PFS.PowerFlowEvaluationModel}[]
@@ -47,7 +50,7 @@ function get_initial_conditions_template(model::OperationModel)
         base_model.attributes = service_model.attributes
         set_service_model!(ic_template, get_service_name(service_model), base_model)
     end
-
+    set_number_of_steps!(network_model.reduced_branch_tracker, number_of_steps)
     return ic_template
 end
 
@@ -78,11 +81,13 @@ function build_initial_conditions_model!(model::T) where {T <: OperationModel}
     main_problem_horizon = get_horizon(ic_settings)
     # TODO: add an interface to allow user to configure initial_conditions problem
     ic_container.JuMPmodel = _make_init_jump_model(ic_settings)
-    template = get_initial_conditions_template(model)
+    resolution = get_resolution(ic_settings)
+    init_horizon = INITIALIZATION_PROBLEM_HORIZON_COUNT * resolution
+    number_of_steps = min(init_horizon, main_problem_horizon)
+    template = get_initial_conditions_template(model, number_of_steps ÷ resolution)
     ic_container.settings = ic_settings
     ic_container.built_for_recurrent_solves = false
-    init_horizon = INITIALIZATION_PROBLEM_HORIZON_COUNT * get_resolution(ic_settings)
-    set_horizon!(ic_settings, min(init_horizon, main_problem_horizon))
+    set_horizon!(ic_settings, number_of_steps)
     init_optimization_container!(
         ISOPT.get_initial_conditions_model_container(internal),
         get_network_model(get_template(model)),

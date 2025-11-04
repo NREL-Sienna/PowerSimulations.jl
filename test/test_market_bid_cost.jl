@@ -140,7 +140,6 @@ end
         0.0,
         0.0;
         skip_setting = true,
-        filename = get_name(sys),
     )
 
     sys_thermal = build_system(PSITestSystems, "c_$(sys_name)")
@@ -158,7 +157,6 @@ end
         0.0,
         0.0;
         skip_setting = true,
-        filename = get_name(sys_thermal),
     )
 
     # check that the operation costs are the same.
@@ -385,8 +383,8 @@ function run_startup_shutdown_obj_fun_test(
     all_decisions2 = (decisions2..., nullable_decisions2...)
 
     if !all(isapprox.(all_decisions1, all_decisions2))
-        @show all_decisions1
-        @show all_decisions2
+        @error all_decisions1
+        @error all_decisions2
     end
     @assert all(isapprox.(all_decisions1, all_decisions2))
 
@@ -537,8 +535,8 @@ for decremental in (false, true)
                                 device_to_formulation = device_to_formulation,
                             )
                         if !all(isapprox.(decisions1, decisions2))
-                            @show decisions1
-                            @show decisions2
+                            @error decisions1
+                            @error decisions2
                         end
                         @assert all(approx_geq_1.(decisions1))
                     end
@@ -570,8 +568,8 @@ for decremental in (false, true)
                             device_to_formulation = device_to_formulation,
                         )
                     if !all(isapprox.(decisions1, decisions2))
-                        @show decisions1
-                        @show decisions2
+                        @error decisions1
+                        @error decisions2
                     end
                     @assert all(approx_geq_1.(decisions1))
                 end
@@ -601,8 +599,8 @@ for decremental in (false, true)
                             device_to_formulation = device_to_formulation,
                         )
                     if !all(isapprox.(decisions1, decisions2))
-                        @show decisions1
-                        @show decisions2
+                        @error decisions1
+                        @error decisions2
                     end
                     @assert all(approx_geq_1.(decisions1))
                 end
@@ -628,8 +626,8 @@ for decremental in (false, true)
                         device_to_formulation = device_to_formulation,
                     )
                 if !all(isapprox.(decisions1, decisions2))
-                    @show decisions1
-                    @show decisions2
+                    @error decisions1
+                    @error decisions2
                 end
                 @assert all(approx_geq_1.(decisions1))
             end

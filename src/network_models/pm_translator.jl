@@ -290,7 +290,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     arc_tuple::Tuple{Int, Int},
-    double_circuit::Set{PSY.ACTransmission},
+    double_circuit::PNM.BranchesParallel,
     T::Type{<:AbstractBranchFormulation},
     U::Type{<:PM.AbstractPowerModel},
 )
@@ -306,7 +306,20 @@ end
 function get_branch_to_pm(
     ix::Int,
     arc_tuple::Tuple{Int, Int},
-    series_chain::Vector{Any},
+    double_circuit::PNM.BranchesParallel,
+    T::Type{StaticBranchUnbounded},
+    U::Type{<:PM.AbstractPowerModel},
+)
+    branch_pm_dicts =
+        [get_branch_to_pm(ix, arc_tuple, branch, T, U) for branch in double_circuit]
+    PM_branch = branch_pm_dicts[1]
+    return PM_branch
+end
+
+function get_branch_to_pm(
+    ix::Int,
+    arc_tuple::Tuple{Int, Int},
+    series_chain::PNM.BranchesSeries,
     T::Type{<:AbstractBranchFormulation},
     U::Type{<:PM.AbstractPowerModel},
 )
@@ -321,6 +334,20 @@ function get_branch_to_pm(
     return PM_branch
 end
 
+function get_branch_to_pm(
+    ix::Int,
+    arc_tuple::Tuple{Int, Int},
+    series_chain::PNM.BranchesSeries,
+    T::Type{StaticBranchUnbounded},
+    U::Type{<:PM.AbstractPowerModel},
+)
+    branch_pm_dicts =
+        [get_branch_to_pm(ix, arc_tuple, segment, T, U) for segment in series_chain]
+    PM_branch = branch_pm_dicts[1]
+    PM_branch["f_bus"] = arc_tuple[1]
+    PM_branch["t_bus"] = arc_tuple[2]
+    return PM_branch
+end
 function get_branch_to_pm(
     ix::Int,
     branch::PSY.TwoTerminalGenericHVDCLine,
@@ -454,34 +481,36 @@ function get_branches_to_pm(
 ) where {T <: PSY.ACTransmission, S <: PM.AbstractPowerModel}
     PM_branches = Dict{String, Any}()
     PMmap_br = Dict{Tuple{Int, Int}, PM_MAP_TUPLE}()
-    network_reduction_data = get_network_reduction(network_model)
-    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    net_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = net_reduction_data.all_branch_maps_by_type
     ix = 1
     @assert !isempty(branch_template)
+    name_to_arc_map = PNM.get_name_to_arc_map(net_reduction_data)
+    modeled_arc_tuples = Set{Tuple{Int, Int}}()
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
-        if comp_type <: PSY.TwoTerminalHVDC
+        if comp_type <: PSY.TwoTerminalHVDC || !(comp_type <: T) ||
+           !haskey(name_to_arc_map, comp_type)
+            @info "No $d Branches to process in PowerModels data."
             continue
         end
-        !(comp_type <: T) && continue
-        for map in NETWORK_REDUCTION_MAPS
-            network_reduction_map = all_branch_maps_by_type[map]
-            !haskey(network_reduction_map, comp_type) && continue
-            for (arc_tuple, reduction_entry) in network_reduction_map[comp_type]
-                PM_branches["$(ix)"] = get_branch_to_pm(
-                    ix,
-                    arc_tuple,
-                    reduction_entry,
-                    get_formulation(device_model),
-                    S,
-                )
-                if PM_branches["$(ix)"]["br_status"] == true
-                    f = PM_branches["$(ix)"]["f_bus"]
-                    t = PM_branches["$(ix)"]["t_bus"]
-                    PMmap_br[arc_tuple] = (from_to = (ix, f, t), to_from = (ix, t, f))
-                end
-                ix += 1
+        for (_, (arc_tuple, reduction)) in name_to_arc_map[comp_type]
+            arc_tuple ∈ modeled_arc_tuples && continue # This is the PowerModels equivalent of the branch and constraint tracker.
+            reduction_entry = all_branch_maps_by_type[reduction][comp_type][arc_tuple]
+            PM_branches["$(ix)"] = get_branch_to_pm(
+                ix,
+                arc_tuple,
+                reduction_entry,
+                get_formulation(device_model),
+                S,
+            )
+            if PM_branches["$(ix)"]["br_status"] == true
+                f = PM_branches["$(ix)"]["f_bus"]
+                t = PM_branches["$(ix)"]["t_bus"]
+                PMmap_br[arc_tuple] = (from_to = (ix, f, t), to_from = (ix, t, f))
             end
+            push!(modeled_arc_tuples, arc_tuple)
+            ix += 1
         end
     end
     return PM_branches, PMmap_br

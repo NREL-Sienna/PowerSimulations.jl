@@ -164,7 +164,7 @@ function add_constraints!(
     model::DeviceModel{PSY.AreaInterchange, <:AbstractBranchFormulation},
     network_model::NetworkModel{T},
     inter_area_branch_map::Dict{
-        Tuple{PSY.Area, PSY.Area},
+        Tuple{String, String},
         Dict{DataType, Vector{<:PSY.ACBranch}},
     },
 ) where {T <: AbstractPTDFModel}
@@ -195,16 +195,18 @@ function add_constraints!(
     jm = get_jump_model(container)
     for area_interchange in devices
         inter_change_name = PSY.get_name(area_interchange)
-        area_from = PSY.get_from_area(area_interchange)
-        area_to = PSY.get_to_area(area_interchange)
+        area_from_name = PSY.get_name(PSY.get_from_area(area_interchange))
+        area_to_name = PSY.get_name(PSY.get_to_area(area_interchange))
         direction_branch_map = Dict{Float64, Dict{DataType, Vector{<:PSY.ACBranch}}}()
-        if haskey(inter_area_branch_map, (area_from, area_to))
+        if haskey(inter_area_branch_map, (area_from_name, area_to_name))
             # 1 is the multiplier
-            direction_branch_map[1.0] = inter_area_branch_map[(area_from, area_to)]
+            direction_branch_map[1.0] =
+                inter_area_branch_map[(area_from_name, area_to_name)]
         end
-        if haskey(inter_area_branch_map, (area_to, area_from))
+        if haskey(inter_area_branch_map, (area_to_name, area_from_name))
             # -1 is the multiplier because the direction is reversed
-            direction_branch_map[-1.0] = inter_area_branch_map[(area_to, area_from)]
+            direction_branch_map[-1.0] =
+                inter_area_branch_map[(area_to_name, area_from_name)]
         end
         if isempty(direction_branch_map)
             @warn(

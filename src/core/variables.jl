@@ -1,4 +1,7 @@
 abstract type AbstractContingencyVariableType <: VariableType end
+abstract type SparseVariableType <: VariableType end
+abstract type InterpolationVariableType <: SparseVariableType end
+abstract type BinaryInterpolationVariableType <: SparseVariableType end
 
 """
 Struct to dispatch the creation of Active Power Variables
@@ -173,6 +176,128 @@ Struct to dispatch the creation of Voltage Angle Variables for AC/DC formulation
 Docs abbreviation: ``\\theta``
 """
 struct VoltageAngle <: VariableType end
+
+#########################################
+####### DC Converter Variables ##########
+#########################################
+
+"""
+Struct to dispatch the variable of DC Current Variables for DC Lines formulations
+Docs abbreviation: ``i_l^{dc}``
+"""
+struct DCLineCurrent <: VariableType end
+
+"""
+Struct to dispatch the creation of Voltage Variables for DC formulations
+Docs abbreviation: ``v^{dc}``
+"""
+struct DCVoltage <: VariableType end
+
+"""
+Struct to dispatch the creation of Squared Voltage Variables for DC formulations
+Docs abbreviation: ``v^{sq,dc}``
+"""
+struct SquaredDCVoltage <: VariableType end
+
+"""
+Struct to dispatch the creation of DC Converter Current Variables for DC formulations
+Docs abbreviation: ``i_c^{dc}``
+"""
+struct ConverterCurrent <: VariableType end
+
+"""
+Struct to dispatch the creation of DC Converter Power Variables for DC formulations
+Docs abbreviation: ``p_c^{dc}``
+"""
+struct ConverterDCPower <: VariableType end
+
+"""
+Struct to dispatch the creation of Squared DC Converter Current Variables for DC formulations
+Docs abbreviation: ``i_c^{sq,dc}``
+"""
+struct SquaredConverterCurrent <: VariableType end
+
+"""
+Struct to dispatch the creation of DC Converter Positive Term Current Variables for DC formulations
+Docs abbreviation: ``i_c^{+,dc}``
+"""
+struct ConverterPositiveCurrent <: VariableType end
+
+"""
+Struct to dispatch the creation of DC Converter Negative Term Current Variables for DC formulations
+Docs abbreviation: ``i_c^{-,dc}``
+"""
+struct ConverterNegativeCurrent <: VariableType end
+
+"""
+Struct to dispatch the creation of DC Converter Binary for Absolute Value Current Variables for DC formulations
+Docs abbreviation: `\\nu_c``
+"""
+struct ConverterCurrentDirection <: VariableType end
+
+"""
+Struct to dispatch the creation of Binary Variable for Converter Power Direction
+Docs abbreviation: ``\\kappa_c^{dc}``
+"""
+struct ConverterPowerDirection <: VariableType end
+
+"""
+Struct to dispatch the creation of Auxiliary Variable for Converter Bilinear term: v * i
+Docs abbreviation: ``\\gamma_c^{dc}``
+"""
+struct AuxBilinearConverterVariable <: VariableType end
+
+"""
+Struct to dispatch the creation of Auxiliary Variable for Squared Converter Bilinear term: v * i
+    
+Docs abbreviation: ``\\gamma_c^{sq,dc}``
+"""
+struct AuxBilinearSquaredConverterVariable <: VariableType end
+
+"""
+Struct to dispatch the creation of Continuous Interpolation Variable for Squared Converter Voltage
+    
+Docs abbreviation: ``\\delta_c^{v}``
+"""
+struct InterpolationSquaredVoltageVariable <: InterpolationVariableType end
+
+"""
+Struct to dispatch the creation of Binary Interpolation Variable for Squared Converter Voltage
+    
+Docs abbreviation: ``z_c^{v}``
+"""
+struct InterpolationBinarySquaredVoltageVariable <: BinaryInterpolationVariableType end
+
+"""
+Struct to dispatch the creation of Continuous Interpolation Variable for Squared Converter Current
+    
+Docs abbreviation: ``\\delta_c^{i}``
+"""
+struct InterpolationSquaredCurrentVariable <: InterpolationVariableType end
+
+"""
+Struct to dispatch the creation of Binary Interpolation Variable for Squared Converter Current
+    
+Docs abbreviation: ``z_c^{i}``
+"""
+struct InterpolationBinarySquaredCurrentVariable <: BinaryInterpolationVariableType end
+
+"""
+Struct to dispatch the creation of Continuous Interpolation Variable for Squared Converter AuxVar
+    
+Docs abbreviation: ``\\delta_c^{\\gamma}``
+"""
+struct InterpolationSquaredBilinearVariable <: InterpolationVariableType end
+
+"""
+Struct to dispatch the creation of Binary Interpolation Variable for Squared Converter AuxVar
+    
+Docs abbreviation: ``z_c^{\\gamma}``
+"""
+struct InterpolationBinarySquaredBilinearVariable <: BinaryInterpolationVariableType end
+
+#########################################################
+#########################################################
 
 abstract type AbstractACActivePowerFlow <: VariableType end
 
@@ -371,8 +496,6 @@ Docs abbreviation: ``\\t^i``
 """
 struct HVDCInverterTapSettingVariable <: VariableType end
 
-abstract type SparseVariableType <: VariableType end
-
 """
 Struct to dispatch the creation of HVDC Piecewise Loss Variables
 
@@ -456,6 +579,11 @@ should_write_resulting_value(::Type{PiecewiseLinearBlockIncrementalOffer}) = fal
 should_write_resulting_value(::Type{PiecewiseLinearBlockDecrementalOffer}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseLossVariable}) = false
 should_write_resulting_value(::Type{HVDCPiecewiseBinaryLossVariable}) = false
+function should_write_resulting_value(
+    ::Type{T},
+) where {T <: Union{InterpolationVariableType, BinaryInterpolationVariableType}}
+    return false
+end
 convert_result_to_natural_units(::Type{ActivePowerVariable}) = true
 convert_result_to_natural_units(::Type{PostContingencyActivePowerChangeVariable}) = true
 convert_result_to_natural_units(::Type{PowerAboveMinimumVariable}) = true

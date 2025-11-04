@@ -563,3 +563,57 @@ function solve!(
     end
     return get_run_status(model)
 end
+
+function handle_initial_conditions!(model::DecisionModel{<:DecisionProblem})
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Model Initialization" begin
+        if isempty(get_template(model))
+            return
+        end
+        settings = get_settings(model)
+        initialize_model = get_initialize_model(settings)
+        deserialize_initial_conditions = get_deserialize_initial_conditions(settings)
+        serialized_initial_conditions_file = get_initial_conditions_file(model)
+        custom_init_file = get_initialization_file(settings)
+
+        if !initialize_model && deserialize_initial_conditions
+            throw(
+                IS.ConflictingInputsError(
+                    "!initialize_model && deserialize_initial_conditions",
+                ),
+            )
+        elseif !initialize_model && !isempty(custom_init_file)
+            throw(IS.ConflictingInputsError("!initialize_model && initialization_file"))
+        end
+
+        if !initialize_model
+            @info "Skip build of initial conditions"
+            return
+        end
+
+        if !isempty(custom_init_file)
+            if !isfile(custom_init_file)
+                error("initialization_file = $custom_init_file does not exist")
+            end
+            if abspath(custom_init_file) != abspath(serialized_initial_conditions_file)
+                cp(custom_init_file, serialized_initial_conditions_file; force = true)
+            end
+        end
+
+        if deserialize_initial_conditions && isfile(serialized_initial_conditions_file)
+            set_initial_conditions_data!(
+                get_optimization_container(model),
+                Serialization.deserialize(serialized_initial_conditions_file),
+            )
+            @info "Deserialized initial_conditions_data"
+        else
+            @info "Make Initial Conditions Model"
+            build_initial_conditions!(model)
+            initialize!(model)
+        end
+        ISOPT.set_initial_conditions_model_container!(
+            get_internal(model),
+            nothing,
+        )
+    end
+    return
+end

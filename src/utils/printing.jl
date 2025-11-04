@@ -170,6 +170,7 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
         "Slacks" get_use_slacks(template.network_model)
         "PTDF" !isnothing(get_PTDF_matrix(template.network_model))
         "Duals" isempty(get_duals(template.network_model)) ? "None" : string.(get_duals(template.network_model))
+        "HVDC Network Model" isnothing(get_hvdc_network_model(template.network_model)) ? "None" : replace(string(get_hvdc_network_model(template.network_model)), r"[()]" => "")
     ]
 
     PrettyTables.pretty_table(

@@ -1,3 +1,6 @@
+const DeviceModelForBranches = DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation}
+const BranchModelContainer = Dict{Symbol, DeviceModelForBranches}
+
 function _check_pm_formulation(::Type{T}) where {T <: PM.AbstractPowerModel}
     if !isconcretetype(T)
         throw(
@@ -63,6 +66,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     reduce_degree_two_branches::Bool
     power_flow_evaluation::Vector{PFS.PowerFlowEvaluationModel}
     subsystem::Union{Nothing, String}
+    hvdc_network_model::Union{Nothing, AbstractHVDCNetworkModel}
     modeled_branch_types::Vector{DataType}
     reduced_branch_tracker::BranchReductionOptimizationTracker
 
@@ -79,6 +83,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             PFS.PowerFlowEvaluationModel,
             Vector{PFS.PowerFlowEvaluationModel},
         } = PFS.PowerFlowEvaluationModel[],
+        hvdc_network_model = nothing,
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
         new{T}(
@@ -93,6 +98,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             reduce_degree_two_branches,
             _maybe_flatten_pfem(power_flow_evaluation),
             nothing,
+            hvdc_network_model,
             Vector{DataType}(),
             BranchReductionOptimizationTracker(),
         )
@@ -114,8 +120,11 @@ get_bus_area_map(m::NetworkModel) = m.bus_area_map
 get_power_flow_evaluation(m::NetworkModel) = m.power_flow_evaluation
 has_subnetworks(m::NetworkModel) = !isempty(m.bus_area_map)
 get_subsystem(m::NetworkModel) = m.subsystem
+get_hvdc_network_model(m::NetworkModel) = m.hvdc_network_model
 
 set_subsystem!(m::NetworkModel, id::String) = m.subsystem = id
+set_hvdc_network_model!(m::NetworkModel, val::Union{Nothing, AbstractHVDCNetworkModel}) =
+    m.hvdc_network_model = val
 
 function add_dual!(model::NetworkModel, dual)
     dual in model.duals && error("dual = $dual is already stored")
@@ -135,10 +144,74 @@ function check_network_reduction_compatibility(
 end
 =#
 
-function instantiate_network_model!(
-    model::NetworkModel{T},
+function _model_has_branch_filters(branch_models::BranchModelContainer)
+    for (_, bm) in branch_models
+        if get_attribute(bm, "filter_function") !== nothing
+            return true
+        end
+    end
+    return false
+end
+
+function _check_branch_network_compatibility(
+    ::NetworkModel{T},
+    branch_models::BranchModelContainer,
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
+    if requires_all_branch_models(T)
+        for d in PSY.get_existing_device_types(sys)
+            if d <: PSY.ACTransmission && !haskey(branch_models, Symbol(d))
+                throw(
+                    IS.ConflictingInputsError(
+                        "Network model $(T) requires all AC Transmission devices have a model \
+                        The system has a branch branch type $(d) but the DeviceModel is not included in the Template.",
+                    ),
+                )
+            end
+        end
+    end
+
+    if supports_branch_filtering(T) || !_model_has_branch_filters(branch_models)
+        return
+    elseif _model_has_branch_filters(branch_models)
+        if ignores_branch_filtering(T)
+            @warn "Branch filtering is ignored for network model $(T)"
+        else
+            throw(
+                IS.ConflictingInputsError(
+                    "Branch filtering is not supported for network model $(T). Remove branch \\
+                    filter functions from branch models or use a different network model.",
+                ),
+            )
+        end
+    else
+        throw(
+            IS.ConflictingInputsError(
+                "Network model $(T) can't be validated against branch models",
+            ),
+        )
+    end
+    return
+end
+
+function _get_filters(branch_models::BranchModelContainer)
+    filters = Dict{DataType, Function}()
+    for v in values(branch_models)
+        filter_func = get_attribute(v, "filter_function")
+        if filter_func !== nothing
+            filters[get_component_type(v)] = filter_func
+        end
+    end
+    return filters
+end
+
+function instantiate_network_model!(
+    model::NetworkModel{T},
+    branch_models::BranchModelContainer,
+    number_of_steps::Int,
+    sys::PSY.System,
+) where {T <: PM.AbstractPowerModel}
+    _check_branch_network_compatibility(model, branch_models, sys)
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
@@ -164,42 +237,58 @@ function instantiate_network_model!(
     else
         ybus = PNM.Ybus(sys)
     end
-    model.network_reduction = ybus.network_reduction_data
-    if !isempty(model.network_reduction)
-        # TODO: Network reimplement this
-        # check_network_reduction_compatibility(T)
-    end
-    PNM.populate_branch_maps_by_type!(model.network_reduction)
+    model.network_reduction = deepcopy(PNM.get_network_reduction_data(ybus))
+    #if !isempty(model.network_reduction)
+    # TODO: Network reimplement this when it becomes necessary. We don't have any
+    # reductions that are incompatible right now.
+    # check_network_reduction_compatibility(T)
+    #end
+    PNM.populate_branch_maps_by_type!(model.network_reduction, _get_filters(branch_models))
+    empty!(model.reduced_branch_tracker)
+    set_number_of_steps!(model.reduced_branch_tracker, number_of_steps)
     return
 end
 
 function instantiate_network_model!(
     model::NetworkModel{AreaBalancePowerModel},
+    branch_models::BranchModelContainer,
+    number_of_steps::Int,
     sys::PSY.System,
 )
+    _check_branch_network_compatibility(model, branch_models, sys)
     PNM.populate_branch_maps_by_type!(model.network_reduction)
+    empty!(model.reduced_branch_tracker)
+    set_number_of_steps!(model.reduced_branch_tracker, number_of_steps)
     return
 end
 
 function instantiate_network_model!(
     model::NetworkModel{CopperPlatePowerModel},
+    branch_models::BranchModelContainer,
+    number_of_steps::Int,
     sys::PSY.System,
 )
+    _check_branch_network_compatibility(model, branch_models, sys)
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
     if length(model.subnetworks) > 1
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
-        model.network_reduction = PNM.get_network_reduction_data(PNM.Ybus(sys))
+        model.network_reduction = deepcopy(PNM.get_network_reduction_data(PNM.Ybus(sys)))
         _assign_subnetworks_to_buses(model, sys)
     end
+    empty!(model.reduced_branch_tracker)
+    set_number_of_steps!(model.reduced_branch_tracker, number_of_steps)
     return
 end
 
 function instantiate_network_model!(
     model::NetworkModel{<:AbstractPTDFModel},
+    branch_models::BranchModelContainer,
+    number_of_steps::Int,
     sys::PSY.System,
 )
+    _check_branch_network_compatibility(model, branch_models, sys)
     if get_PTDF_matrix(model) === nothing
         @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
         if model.reduce_radial_branches && model.reduce_degree_two_branches
@@ -227,9 +316,9 @@ function instantiate_network_model!(
             ptdf = PNM.VirtualPTDF(sys)
         end
         model.PTDF_matrix = ptdf
-        model.network_reduction = ptdf.network_reduction_data
+        model.network_reduction = deepcopy(ptdf.network_reduction_data)
     else
-        model.network_reduction = model.PTDF_matrix.network_reduction_data
+        model.network_reduction = deepcopy(model.PTDF_matrix.network_reduction_data)
     end
 
     if !model.reduce_radial_branches && PNM.has_radial_reduction(
@@ -237,8 +326,8 @@ function instantiate_network_model!(
     )
         throw(
             IS.ConflictingInputsError(
-                "The provided PTDF Matrix has reduced radial branches and mismatches the network \\
-                model specification reduce_radial_branches = false. Set the keyword argument \\
+                "The provided PTDF Matrix has reduced radial branches and mismatches the network \
+                model specification reduce_radial_branches = false. Set the keyword argument \
                 reduce_radial_branches = true in your network model"),
         )
     end
@@ -247,8 +336,8 @@ function instantiate_network_model!(
     )
         throw(
             IS.ConflictingInputsError(
-                "The provided PTDF Matrix has reduced degree two branches and mismatches the network \\
-                model specification reduce_degree_two_branches = false. Set the keyword argument \\
+                "The provided PTDF Matrix has reduced degree two branches and mismatches the network \
+                model specification reduce_degree_two_branches = false. Set the keyword argument \
                 reduce_degree_two_branches = true in your network model"),
         )
     end
@@ -270,14 +359,19 @@ function instantiate_network_model!(
         @debug "System Contains Multiple Subnetworks. Assigning buses to subnetworks."
         _assign_subnetworks_to_buses(model, sys)
     end
-    PNM.populate_branch_maps_by_type!(model.network_reduction)
+    PNM.populate_branch_maps_by_type!(model.network_reduction, _get_filters(branch_models))
+    empty!(model.reduced_branch_tracker)
+    set_number_of_steps!(model.reduced_branch_tracker, number_of_steps)
     return
 end
 
 function instantiate_network_model!(
     model::NetworkModel{<:AbstractSecurityConstrainedPTDFModel},
+    branch_models::BranchModelContainer,
+    number_of_steps::Int,
     sys::PSY.System,
 )
+    _check_branch_network_compatibility(model, branch_models, sys)
     if get_PTDF_matrix(model) === nothing
         @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
         if model.reduce_radial_branches && model.reduce_degree_two_branches
@@ -305,9 +399,9 @@ function instantiate_network_model!(
             ptdf = PNM.VirtualPTDF(sys)
         end
         model.PTDF_matrix = ptdf
-        model.network_reduction = ptdf.network_reduction_data
+        model.network_reduction = deepcopy(ptdf.network_reduction_data)
     else
-        model.network_reduction = model.PTDF_matrix.network_reduction_data
+        model.network_reduction = deepcopy(model.PTDF_matrix.network_reduction_data)
     end
 
     if !model.reduce_radial_branches && PNM.has_radial_reduction(
@@ -382,8 +476,9 @@ function instantiate_network_model!(
                 or provide a modified LODF Matrix without the Ward reduction."),
         )
     end
-
-    PNM.populate_branch_maps_by_type!(model.network_reduction)
+    PNM.populate_branch_maps_by_type!(model.network_reduction, _get_filters(branch_models))
+    empty!(model.reduced_branch_tracker)
+    set_number_of_steps!(model.reduced_branch_tracker, number_of_steps)
     return
 end
 
@@ -435,6 +530,7 @@ function _assign_subnetworks_to_buses(
     end
     return
 end
+
 _assign_subnetworks_to_buses(
     ::NetworkModel{T},
     ::PSY.System,

@@ -275,6 +275,7 @@ function construct_device!(
         devices,
         StaticBranch(),
     )
+
     if haskey(get_time_series_names(model), DynamicBranchRatingTimeSeriesParameter)
         add_parameters!(container, DynamicBranchRatingTimeSeriesParameter, devices, model)
     end
@@ -303,6 +304,16 @@ function construct_device!(
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACTransmission}
     devices = get_available_components(model, sys)
+
+    # The order of these methods is important. The add_expressions! must be before the constraints
+    add_expressions!(
+        container,
+        PTDFBranchFlow,
+        devices,
+        model,
+        network_model,
+    )
+
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, FlowRateConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
@@ -391,6 +402,7 @@ function construct_device!(
         devices,
         StaticBranchBounds(),
     )
+
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -403,6 +415,15 @@ function construct_device!(
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACTransmission}
     devices = get_available_components(model, sys)
+    # The order of these methods is important. The add_expressions! must be before the constraints
+    add_expressions!(
+        container,
+        PTDFBranchFlow,
+        devices,
+        model,
+        network_model,
+    )
+
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     branch_rate_bounds!(
         container,
@@ -442,6 +463,14 @@ function construct_device!(
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACTransmission}
     devices = get_available_components(model, sys)
+    # The order of these methods is important. The add_expressions! must be before the constraints
+    add_expressions!(
+        container,
+        PTDFBranchFlow,
+        devices,
+        model,
+        network_model,
+    )
     add_feedforward_constraints!(container, model, devices)
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraint_dual!(container, sys, model)
@@ -1540,26 +1569,26 @@ function _get_branch_map(
     sys::PSY.System,
 )
     @assert !isempty(network_model.modeled_branch_types)
-    network_reduction_data = get_network_reduction(network_model)
-    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    net_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = net_reduction_data.all_branch_maps_by_type
     inter_area_branch_map =
-        Dict{Tuple{PSY.Area, PSY.Area}, Dict{DataType, Vector{<:PSY.ACBranch}}}()
-    for map in NETWORK_REDUCTION_MAPS
-        network_reduction_map = all_branch_maps_by_type[map]
-        for branch_type in network_model.modeled_branch_types
-            !haskey(network_reduction_map, branch_type) && continue
-            branch_type == PSY.AreaInterchange && continue
-            !has_container_key(container, FlowActivePowerVariable, branch_type) && continue
-            for reduction_entry in values(network_reduction_map[branch_type])
-                area_from, area_to = _get_area_from_to(reduction_entry)
-                if area_from != area_to
-                    branch_typed_dict = get!(
-                        inter_area_branch_map,
-                        (area_from, area_to),
-                        Dict{DataType, Vector{<:PSY.ACBranch}}(),
-                    )
-                    _add_to_branch_map!(branch_typed_dict, branch_type, reduction_entry)
-                end
+    # This method uses ACBranch to support HVDC
+        Dict{Tuple{String, String}, Dict{DataType, Vector{<:PSY.ACBranch}}}()
+    name_to_arc_map = PNM.get_name_to_arc_map(net_reduction_data)
+    for br_type in network_model.modeled_branch_types
+        if !haskey(name_to_arc_map, br_type)
+            continue
+        end
+        for (name, (arc, reduction)) in name_to_arc_map[br_type]
+            reduction_entry = all_branch_maps_by_type[reduction][br_type][arc]
+            area_from, area_to = _get_area_from_to(reduction_entry)
+            if area_from != area_to
+                branch_typed_dict = get!(
+                    inter_area_branch_map,
+                    (PSY.get_name(area_from), PSY.get_name(area_to)),
+                    Dict{DataType, Vector{<:PSY.ACBranch}}(),
+                )
+                _add_to_branch_map!(branch_typed_dict, reduction_entry)
             end
         end
     end
@@ -1568,37 +1597,27 @@ end
 
 function _add_to_branch_map!(
     branch_typed_dict::Dict{DataType, Vector{<:PSY.ACBranch}},
-    branch_type::Type{<:PSY.ACTransmission},
-    reduction_entry::PSY.ACTransmission,
-)
-    if !haskey(branch_typed_dict, branch_type)
-        branch_typed_dict[branch_type] = [reduction_entry]
+    reduction_entry::T,
+) where {T <: PSY.ACBranch}
+    if !haskey(branch_typed_dict, T)
+        branch_typed_dict[T] = [reduction_entry]
     else
-        push!(branch_typed_dict[branch_type], reduction_entry)
+        push!(branch_typed_dict[T], reduction_entry)
     end
 end
 
-function _add_to_branch_map!(
-    branch_typed_dict::Dict{DataType, Vector{<:PSY.ACBranch}},
-    branch_type::Type{<:PSY.ACTransmission},
-    reduction_entry::Set{PSY.ACTransmission},
-)
-    for branch in reduction_entry
-        _add_to_branch_map!(branch_typed_dict, branch_type, branch)
-    end
-end
-
-function _get_area_from_to(reduction_entry::PSY.ACTransmission)
+# This method uses ACBranch to support 2T - HVDC
+function _get_area_from_to(reduction_entry::PSY.ACBranch)
     area_from = PSY.get_area(PSY.get_arc(reduction_entry).from)
     area_to = PSY.get_area(PSY.get_arc(reduction_entry).to)
     return area_from, area_to
 end
 
-function _get_area_from_to(reduction_entry::Set{PSY.ACTransmission})
+function _get_area_from_to(reduction_entry::PNM.BranchesParallel)
     return _get_area_from_to(first(reduction_entry))
 end
 
-function _get_area_from_to(reduction_entry::Vector{Any})
+function _get_area_from_to(reduction_entry::PNM.BranchesSeries)
     area_froms = [_get_area_from_to(x)[1] for x in reduction_entry]
     area_tos = [_get_area_from_to(x)[2] for x in reduction_entry]
     all_areas = vcat(area_froms, area_tos)

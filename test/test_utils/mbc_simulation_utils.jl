@@ -277,8 +277,8 @@ function run_mbc_sim(
 
     # TODO test slopes, breakpoints too once we are able to write those
     # Determine parameter type and getter based on comp_type
-    # the PowerLoadDispatch device formulation doesn't have 
-    # DecrementalCostAtMinParameter nor OnVariable. 
+    # the PowerLoadDispatch device formulation doesn't have
+    # DecrementalCostAtMinParameter nor OnVariable.
 
     if has_initial_input
         if is_decremental
@@ -437,8 +437,8 @@ function obj_fun_test_helper(
     @assert !any(isapprox.(ground_truth_diff, 0.0; atol = 0.0001))
     # Make sure the difference is reflected correctly in the objective value
     if !all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))
-        @show obj_diff
-        @show ground_truth_diff
+        @error obj_diff
+        @error ground_truth_diff
     end
 
     comparison_passes = all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))
@@ -505,8 +505,8 @@ function run_mbc_obj_fun_test(
     all_decisions1 = (decisions1..., nullable_decisions1...)
     all_decisions2 = (decisions2..., nullable_decisions2...)
     if !all(isapprox.(all_decisions1, all_decisions2))
-        @show all_decisions1
-        @show all_decisions2
+        @error all_decisions1
+        @error all_decisions2
     end
     @assert all(isapprox.(all_decisions1, all_decisions2))
 
@@ -528,12 +528,12 @@ function run_mbc_obj_fun_test(
     )
     #=
     if !success
-        @show ground_truth_1
-        @show ground_truth_2
+        @error ground_truth_1
+        @error ground_truth_2
         obj1 = PSI.read_optimizer_stats(res1)[!, "objective_value"]
         obj2 = PSI.read_optimizer_stats(res2)[!, "objective_value"]
-        @show obj1
-        @show obj2
+        @error obj1
+        @error obj2
     end=#
     return decisions1, decisions2
 end

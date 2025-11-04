@@ -464,14 +464,15 @@ function add_pm_variable_refs!(
     pm_variable_types::Base.KeySet,
     time_steps::UnitRange{Int},
 )
-    all_branch_maps_by_type = model.network_reduction.all_branch_maps_by_type
+    network_reduction_data = get_network_reduction(model)
+    reduced_branch_tracker = get_reduced_branch_tracker(model)
     for d_type in device_types, (pm_v, ps_v) in pm_variable_map[d_class]
         if pm_v in pm_variable_types
             for direction in fieldnames(typeof(ps_v))
                 var_type = getfield(ps_v, direction)
                 var_type === nothing && continue
                 branch_names =
-                    get_branch_name_variable_axis(all_branch_maps_by_type, d_type)
+                    get_branch_argument_variable_axis(network_reduction_data, d_type)
                 var_container = add_variable_container!(
                     container,
                     var_type,
@@ -479,19 +480,23 @@ function add_pm_variable_refs!(
                     branch_names,
                     time_steps,
                 )
-                for t in time_steps, map in NETWORK_REDUCTION_MAPS
-                    network_reduction_map = all_branch_maps_by_type[map]
-                    !haskey(network_reduction_map, d_type) && continue
-                    for (arc_tuple, reduction_entry) in network_reduction_map[d_type]
-                        pm_d = pm_map[arc_tuple]
-                        var = PM.var(container.pm, t, pm_v, getfield(pm_d, direction))
-                        _add_variable_to_container!(
-                            var_container,
-                            var,
-                            reduction_entry,
-                            d_type,
-                            t,
-                        )
+                for (name, (arc_tuple, reduction)) in
+                    PNM.get_name_to_arc_map(network_reduction_data)[d_type]
+                    has_entry, tracker_container = search_for_reduced_branch_variable!(
+                        reduced_branch_tracker,
+                        arc_tuple,
+                        typeof(var_type), # TODO: Make the mapping not rely on instances but types
+                    )
+                    if has_entry
+                        @assert !isempty(tracker_container) name arc_tuple reduction
+                    end
+                    for t in time_steps
+                        if !has_entry
+                            pm_d = pm_map[arc_tuple]
+                            var = PM.var(container.pm, t, pm_v, getfield(pm_d, direction))
+                            tracker_container[t] = var
+                        end
+                        var_container[name, t] = tracker_container[t]
                     end
                 end
             end
