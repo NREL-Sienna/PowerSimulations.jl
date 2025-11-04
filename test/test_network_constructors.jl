@@ -1424,7 +1424,7 @@ end
             "1-4-i_double_circuit",
             1,
         ],
-    ) == l1_parallel + l2_parallel
+    ) == minimum([l1_parallel, l2_parallel])
     l1_series = PSY.get_rating(PSY.get_component(ACTransmission, sys, "9-5-i_1"))
     l2_series = PSY.get_rating(PSY.get_component(ACTransmission, sys, "1-9-i_1"))
     @test JuMP.upper_bound(
