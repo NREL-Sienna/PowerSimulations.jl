@@ -492,25 +492,26 @@ function update_pf_data!(
     return
 end
 
-_update_component!(comp::PSY.Component, ::Val{:active_power}, value) =
-    (comp.active_power = value)
+# PERF we use direct dot access here, and implement our own unit conversions, for performance and convenience
+_update_component!(comp::PSY.Component, ::Val{:active_power}, value, sys_base) =
+    (comp.active_power = value * sys_base / PSY.get_base_power(comp))
 # Sign is flipped for loads (TODO can we rely on some existing function that encodes this information?)
-_update_component!(comp::PSY.ElectricLoad, ::Val{:active_power}, value) =
-    (comp.active_power = -value)
-_update_component!(comp::PSY.Component, ::Val{:reactive_power}, value) =
-    (comp.reactive_power = value)
-_update_component!(comp::PSY.ElectricLoad, ::Val{:reactive_power}, value) =
-    (comp.reactive_power = -value)
+_update_component!(comp::PSY.ElectricLoad, ::Val{:active_power}, value, sys_base) =
+    (comp.active_power = -value * sys_base / PSY.get_base_power(comp))
+_update_component!(comp::PSY.Component, ::Val{:reactive_power}, value, sys_base) =
+    (comp.reactive_power = value * sys_base / PSY.get_base_power(comp))
+_update_component!(comp::PSY.ElectricLoad, ::Val{:reactive_power}, value, sys_base) =
+    (comp.reactive_power = -value * sys_base / PSY.get_base_power(comp))
 _update_component!(
     comp::PSY.ACBus,
     ::Union{Val{:voltage_angle_export}, Val{:voltage_angle_opf}},
-    value,
+    value, sys_base,
 ) =
     comp.angle = value
 _update_component!(
     comp::PSY.ACBus,
     ::Union{Val{:voltage_magnitude_export}, Val{:voltage_magnitude_opf}},
-    value,
+    value, sys_base,
 ) =
     comp.magnitude = value
 
@@ -528,7 +529,7 @@ function update_pf_system!(
                 injection_values = result[device_id, :]
                 comp = PSY.get_component(get_component_type(key), sys, device_name)
                 val = jump_value(injection_values[time_step])
-                _update_component!(comp, Val(category), val)
+                _update_component!(comp, Val(category), val, get_base_power(container))
             end
         end
     end
