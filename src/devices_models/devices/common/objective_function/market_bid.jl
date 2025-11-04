@@ -143,7 +143,8 @@ function validate_mbc_breakpoints_slopes(device::PSY.StaticInjection, decrementa
     end
     p1 = nothing
     apply_maybe_across_time_series(device, offer_curves) do x
-        _validate_eltype(expected_type, device, x, " offer curves")
+        curve_type = decremental ? "decremental" : "incremental"
+        _validate_eltype(expected_type, device, x, " $curve_type offer curves")
         if decremental
             PSY.is_concave(x) ||
                 throw(
