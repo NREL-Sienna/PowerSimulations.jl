@@ -459,6 +459,7 @@ function get_branches_to_pm(
     ix = 1
     @assert !isempty(branch_template)
     name_to_arc_map = PNM.get_name_to_arc_map(net_reduction_data)
+    modeled_arc_tuples = Set{Tuple{Int, Int}}()
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
         if comp_type <: PSY.TwoTerminalHVDC || !(comp_type <: T) ||
@@ -467,6 +468,7 @@ function get_branches_to_pm(
             continue
         end
         for (_, (arc_tuple, reduction)) in name_to_arc_map[comp_type]
+            arc_tuple ∈ modeled_arc_tuples && continue # This is the PowerModels equivalent of the branch and constraint tracker.
             reduction_entry = all_branch_maps_by_type[reduction][comp_type][arc_tuple]
             PM_branches["$(ix)"] = get_branch_to_pm(
                 ix,
@@ -480,6 +482,7 @@ function get_branches_to_pm(
                 t = PM_branches["$(ix)"]["t_bus"]
                 PMmap_br[arc_tuple] = (from_to = (ix, f, t), to_from = (ix, t, f))
             end
+            push!(modeled_arc_tuples, arc_tuple)
             ix += 1
         end
     end
