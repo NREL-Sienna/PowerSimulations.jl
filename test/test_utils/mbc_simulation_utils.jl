@@ -2,9 +2,10 @@
 # If you make changes, run those tests too!
 const TIME1 = DateTime("2024-01-01T00:00:00")
 test_path = mktempdir()
+const FormulationDict = Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}
 # TODO could replace with PSI's defaults, template_unit_commitment
 const DEFAULT_FORMULATIONS =
-    Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}(
+    FormulationDict(
         ThermalStandard => ThermalBasicUnitCommitment,
         PowerLoad => StaticPowerLoad,
         InterruptiblePowerLoad => PowerLoadInterruption,
@@ -56,7 +57,7 @@ end
 
 function set_formulations!(template::ProblemTemplate,
     sys::PSY.System,
-    device_to_formulation::Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}},
+    device_to_formulation::FormulationDict,
 )
     for (device, formulation) in device_to_formulation
         if !isempty(get_components(device, sys))
@@ -100,10 +101,7 @@ end
 function build_generic_mbc_model(sys::System;
     multistart::Bool = false,
     standard::Bool = false,
-    device_to_formulation = Dict{
-        Type{<:PSY.Device},
-        Type{<:PSI.AbstractDeviceFormulation},
-    }(),
+    device_to_formulation = FormulationDict(),
 )
     template = ProblemTemplate(
         NetworkModel(
@@ -142,10 +140,7 @@ function run_generic_mbc_prob(
     test_success = true,
     filename::Union{String, Nothing} = nothing,
     is_decremental::Bool = false,
-    device_to_formulation = Dict{
-        Type{<:PSY.Device},
-        Type{<:PSI.AbstractDeviceFormulation},
-    }(),
+    device_to_formulation = FormulationDict(),
 )
     model = build_generic_mbc_model(
         sys;
@@ -181,10 +176,7 @@ function run_generic_mbc_sim(
     test_success = true,
     filename::Union{String, Nothing} = nothing,
     is_decremental::Bool = false,
-    device_to_formulation = Dict{
-        Type{<:PSY.Device},
-        Type{<:PSI.AbstractDeviceFormulation},
-    }(),
+    device_to_formulation = FormulationDict(),
 )
     model = build_generic_mbc_model(
         sys;
@@ -249,10 +241,7 @@ function run_mbc_sim(
     in_memory_store = false,
     standard = false,
     filename::Union{String, Nothing} = nothing,
-    device_to_formulation = Dict{
-        Type{<:PSY.Device},
-        Type{<:PSI.AbstractDeviceFormulation},
-    }(),
+    device_to_formulation = FormulationDict(),
 ) where {T <: PSY.Component}
     model, res = if simulation
         run_generic_mbc_sim(
@@ -392,7 +381,7 @@ function cost_due_to_time_varying_mbc(
                     _calc_pwi_cost.(
                         @rsubset(power_df, :name == gen_name).value,
                         TimeSeries.values(vc_ts),
-                    ) # could replace with direct evaluation, now that it is implemented in IS.
+                    ) # could replace with direct evaluation, now that it is implemented in IS. (https://github.com/NREL-Sienna/PowerSimulations.jl/issues/1430)
             end
         end
         measure_vars = [x for x in names(step_df) if x != "DateTime"]
@@ -409,7 +398,7 @@ function cost_due_to_time_varying_mbc(
 end
 
 # See run_startup_shutdown_obj_fun_test for explanation
-function _obj_fun_test_helper(
+function obj_fun_test_helper(
     ground_truth_1,
     ground_truth_2,
     res1,
@@ -434,11 +423,6 @@ function _obj_fun_test_helper(
     obj2 = PSI.read_optimizer_stats(res2)[!, "objective_value"]
     obj_diff = obj2 .- obj1
 
-    # An assumption in this line of testing is that our perturbations are small enough that
-    # they don't actually change the decisions, just slightly alter the cost. If this assert
-    # triggers, that assumption is likely violated.
-    @assert isapprox(obj1, obj2; atol = 10, rtol = 0.01) "obj1 ($obj1) and obj2 ($obj2) are supposed to differ, but they differ by an improbably large amount ($obj_diff) -- the perturbations are likely affecting the decisions"
-
     # Make sure there is some real difference between the two scenarios
     @assert !any(isapprox.(ground_truth_diff, 0.0; atol = 0.0001))
     # Make sure the difference is reflected correctly in the objective value
@@ -446,8 +430,22 @@ function _obj_fun_test_helper(
         @show obj_diff
         @show ground_truth_diff
     end
-    @test all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))
-    return all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))
+
+    comparison_passes = all(isapprox.(obj_diff, ground_truth_diff; atol = 0.0001))
+
+    # An assumption in this line of testing is that our perturbations are small enough that
+    # they don't actually change the decisions, just slightly alter the cost. If the
+    # comparison isn't passing, one reason could be that this assumption is violated. In
+    # that case, we want an `AssertionError` rather than a test failure.
+    if !comparison_passes
+        @assert isapprox(obj1, obj2; atol = 10, rtol = 0.01) "obj1 ($obj1) and obj2 ($obj2) are supposed to differ, but they differ by an improbably large amount ($obj_diff) -- the perturbations are likely affecting the decisions. Ground truth difference is $ground_truth_diff; the test would fail, but we have some reason to believe it is instead broken."
+    end
+
+    # At this point, we've eliminiated many 'innocent' sources of error, so if the
+    # comparison isn't passing here we can have some confidence that it's actually pointing
+    # to a bug in the implementation
+    @test comparison_passes
+    return comparison_passes
 end
 
 # See run_startup_shutdown_obj_fun_test for explanation
@@ -461,10 +459,7 @@ function run_mbc_obj_fun_test(
     simulation = true,
     in_memory_store = false,
     filename::Union{String, Nothing} = nothing,
-    device_to_formulation = Dict{
-        Type{<:PSY.Device},
-        Type{<:PSI.AbstractDeviceFormulation},
-    }(),
+    device_to_formulation = FormulationDict(),
 ) where {T <: PSY.Component}
     # at the moment, nullable_decisions are empty tuples, but keep them for future-proofing.
     # look at run_startup_shutdown_test for explanation: non-nullable should be approx_geq_1.
@@ -514,7 +509,7 @@ function run_mbc_obj_fun_test(
             has_initial_input = has_initial_input,
             device_to_formulation = device_to_formulation)
 
-    success = _obj_fun_test_helper(
+    success = obj_fun_test_helper(
         ground_truth_1,
         ground_truth_2,
         res1,
@@ -533,6 +528,9 @@ function run_mbc_obj_fun_test(
     return decisions1, decisions2
 end
 
+# TODO for https://github.com/NREL-Sienna/PowerSimulations.jl/issues/1430, reimplement this
+# by converting the implied IncrementalCurve into an InputOutputCurve and then evaluating
+# *its* `FunctionData`
 function _calc_pwi_cost(active_power::Float64, pwi::PiecewiseStepData)
     isapprox(active_power, 0.0) && return 0.0
     breakpoints = get_x_coords(pwi)

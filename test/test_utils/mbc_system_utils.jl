@@ -164,7 +164,7 @@ function zero_out_non_incremental_curve!(sys::PSY.System, unit::PSY.Component)
     set_shut_down!(cost, 0.0)
     # set minimum generation cost (but not min gen power) to zero.
     if get_incremental_offer_curves(cost) isa IS.TimeSeriesKey
-        zero_ts = _make_deterministic_ts(sys, "initial_input", 0.0, 0.0, 0.0)
+        zero_ts = make_deterministic_ts(sys, "initial_input", 0.0, 0.0, 0.0)
         zero_ts_key = add_time_series!(sys, unit, zero_ts)
         set_incremental_initial_input!(cost, zero_ts_key)
     else
@@ -219,7 +219,7 @@ function add_startup_shutdown_ts_a!(sys::System, with_increments::Bool)
     interval_incr = with_increments ? 0.01 : 0.0
     unit1 = get_component(ThermalStandard, sys, "Test Unit1")
     @assert get_operation_cost(unit1) isa MarketBidCost
-    startup_ts_1 = _make_deterministic_ts(
+    startup_ts_1 = make_deterministic_ts(
         sys,
         "start_up",
         (1.0, 1.5, 2.0),
@@ -228,7 +228,7 @@ function add_startup_shutdown_ts_a!(sys::System, with_increments::Bool)
     )
     set_start_up!(sys, unit1, startup_ts_1)
     shutdown_ts_1 =
-        _make_deterministic_ts(sys, "shut_down", 0.5, res_incr, interval_incr)
+        make_deterministic_ts(sys, "shut_down", 0.5, res_incr, interval_incr)
     set_shut_down!(sys, unit1, shutdown_ts_1)
     return startup_ts_1, shutdown_ts_1
 end
@@ -244,7 +244,7 @@ function add_startup_shutdown_ts_b!(sys::System, with_increments::Bool)
     base_startup = Tuple(get_start_up(get_operation_cost(unit1)))
     base_shutdown = get_shut_down(get_operation_cost(unit1))
     @assert get_operation_cost(unit1) isa MarketBidCost
-    startup_ts_1 = _make_deterministic_ts(
+    startup_ts_1 = make_deterministic_ts(
         sys,
         "start_up",
         base_startup,
@@ -253,7 +253,7 @@ function add_startup_shutdown_ts_b!(sys::System, with_increments::Bool)
     )
     set_start_up!(sys, unit1, startup_ts_1)
     shutdown_ts_1 =
-        _make_deterministic_ts(
+        make_deterministic_ts(
             sys,
             "shut_down",
             base_shutdown,
@@ -430,7 +430,7 @@ function build_sys_decr2(
             )
             max_max_active_power = maximum(maximum(values(max_active_power_ts.data)))
             remove_time_series!(sys, Deterministic, il, "max_active_power")
-            new_ts = _make_deterministic_ts(
+            new_ts = make_deterministic_ts(
                 sys,
                 "max_active_power",
                 max_max_active_power,

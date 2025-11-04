@@ -25,6 +25,8 @@ function construct_device!(
         add_parameters!(container, ActivePowerInTimeSeriesParameter, devices, model)
     end
 
+    process_import_export_parameters!(container, devices, model)
+
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -167,6 +169,8 @@ function construct_device!(
     if haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
         add_parameters!(container, ActivePowerInTimeSeriesParameter, devices, model)
     end
+
+    process_import_export_parameters!(container, devices, model)
 
     add_to_expression!(
         container,

@@ -78,6 +78,14 @@ _has_market_bid_cost(::PSY.PowerLoad) = false # PowerLoads don't even have opera
 _has_market_bid_cost(device::PSY.ControllableLoad) =
     PSY.get_operation_cost(device) isa PSY.MarketBidCost
 
+_has_import_export_cost(device::PSY.Source) =
+    PSY.get_operation_cost(device) isa PSY.ImportExportCost
+
+_has_import_export_cost(::PSY.StaticInjection) = false
+
+_has_offer_curve_cost(device::PSY.Component) =
+    _has_market_bid_cost(device) || _has_import_export_cost(device)
+
 _has_parameter_time_series(::StartupCostParameter, device::PSY.StaticInjection) =
     is_time_variant(PSY.get_start_up(PSY.get_operation_cost(device)))
 
@@ -88,21 +96,21 @@ _has_parameter_time_series(
     ::T,
     device::PSY.StaticInjection,
 ) where {T <: AbstractCostAtMinParameter} =
-    _has_market_bid_cost(device) &&
+    _has_offer_curve_cost(device) &&
     is_time_variant(_get_parameter_field(T(), PSY.get_operation_cost(device)))
 
 _has_parameter_time_series(
     ::T,
     device::PSY.StaticInjection,
 ) where {T <: AbstractPiecewiseLinearSlopeParameter} =
-    _has_market_bid_cost(device) &&
+    _has_offer_curve_cost(device) &&
     is_time_variant(_get_parameter_field(T(), PSY.get_operation_cost(device)))
 
 _has_parameter_time_series(
     ::T,
     device::PSY.StaticInjection,
 ) where {T <: AbstractPiecewiseLinearBreakpointParameter} =
-    _has_market_bid_cost(device) &&
+    _has_offer_curve_cost(device) &&
     is_time_variant(_get_parameter_field(T(), PSY.get_operation_cost(device)))
 
 function validate_initial_input_time_series(device::PSY.StaticInjection, decremental::Bool)
@@ -132,7 +140,7 @@ function validate_initial_input_time_series(device::PSY.StaticInjection, decreme
     end
 end
 
-function validate_mbc_breakpoints_slopes(device::PSY.StaticInjection, decremental::Bool)
+function validate_occ_breakpoints_slopes(device::PSY.StaticInjection, decremental::Bool)
     offer_curves = get_offer_curves_maybe_decremental(Val(decremental), device)
     device_name = get_name(device)
     is_ts = is_time_variant(offer_curves)
@@ -149,34 +157,104 @@ function validate_mbc_breakpoints_slopes(device::PSY.StaticInjection, decrementa
             PSY.is_concave(x) ||
                 throw(
                     ArgumentError(
-                        "Decremental MarketBidCost for component $(device_name) is non-concave",
+                        "Decremental $(nameof(typeof(PSY.get_operation_cost(device)))) for component $(device_name) is non-concave",
                     ),
                 )
         else
             PSY.is_convex(x) ||
                 throw(
                     ArgumentError(
-                        "Incremental MarketBidCost for component $(device_name) is non-convex",
+                        "Incremental $(nameof(typeof(PSY.get_operation_cost(device)))) for component $(device_name) is non-convex",
                     ),
                 )
         end
-        if is_ts
-            my_p1 = first(PSY.get_x_coords(x))
-            if isnothing(p1)
-                p1 = my_p1
-            elseif !isapprox(p1, my_p1)
-                throw(
-                    ArgumentError(
-                        "Inconsistent minimum breakpoint values in time series $(get_name(offer_curves)) for $(device_name) offer curves. For time-variable MarketBidCost, all first x-coordinates must be equal across the entire time series.",
-                    ),
-                )
-            end
-        end
+
+        # Different specific validations for MBC versus IEC
+        p1 = _do_specific_occ_validation(
+            PSY.get_operation_cost(device),
+            decremental,
+            is_ts,
+            x,
+            device_name,
+            p1,
+        )
+    end
+end
+
+function _do_specific_occ_validation(
+    ::PSY.MarketBidCost,
+    decremental,
+    is_ts,
+    curve::PSY.PiecewiseStepData,
+    device_name::String,
+    p1::Union{Nothing, Float64},
+)
+    @assert is_ts
+    my_p1 = first(PSY.get_x_coords(curve))
+    if isnothing(p1)
+        p1 = my_p1
+    elseif !isapprox(p1, my_p1)
+        throw(
+            ArgumentError(
+                "Inconsistent minimum breakpoint values in time series MarketBidCost for $(device_name) offer curves. For time-variable MarketBidCost, all first x-coordinates must be equal across the entire time series.",
+            ),
+        )
+    end
+    return p1
+end
+
+_do_specific_occ_validation(
+    ::PSY.MarketBidCost,
+    decremental,
+    is_ts,
+    ::PSY.CostCurve,
+    args...,
+) =
+    @assert !is_ts
+
+function _do_specific_occ_validation(
+    cost::PSY.ImportExportCost,
+    decremental,
+    is_ts,
+    curve::PSY.CostCurve,
+    args...,
+)
+    # In the non-time-variable case, a VOM cost and initial input are represented; these must be zero
+    @assert !is_ts
+    !iszero(PSY.get_vom_cost(curve)) && throw(
+        ArgumentError(
+            "For ImportExportCost, VOM cost must be zero.",
+        ),
+    )
+    vc = PSY.get_value_curve(curve)
+    !iszero(PSY.get_initial_input(curve)) && throw(
+        ArgumentError(
+            "For ImportExportCost, initial input must be zero.",
+        ),
+    )
+    _do_specific_occ_validation(cost, decremental, true, PSY.get_function_data(vc))  # also do the FunctionData validations
+end
+
+function _do_specific_occ_validation(
+    ::PSY.ImportExportCost,
+    decremental,
+    is_ts,
+    curve::PSY.PiecewiseStepData,
+    args...,
+)
+    # In the time-variable case, VOM cost and initial input cannot be represented, so they cannot be nonzero
+    @assert is_ts
+    if !iszero(first(PSY.get_x_coords(curve)))
+        throw(
+            ArgumentError(
+                "For ImportExportCost, the first breakpoint must be zero.",
+            ),
+        )
     end
 end
 
 # Warn if hot/warm/cold startup costs are given for non-`ThermalMultiStart`
-function validate_mbc_component(
+function validate_occ_component(
     ::StartupCostParameter,
     device::PSY.ThermalMultiStart,
 )
@@ -189,7 +267,7 @@ function validate_mbc_component(
     )
 end
 
-function validate_mbc_component(::StartupCostParameter, device::PSY.StaticInjection)
+function validate_occ_component(::StartupCostParameter, device::PSY.StaticInjection)
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     contains_multistart = false
     apply_maybe_across_time_series(device, startup) do x
@@ -215,14 +293,14 @@ function validate_mbc_component(::StartupCostParameter, device::PSY.StaticInject
 end
 
 # Validate eltype of shutdown costs
-function validate_mbc_component(::ShutdownCostParameter, device::PSY.StaticInjection)
+function validate_occ_component(::ShutdownCostParameter, device::PSY.StaticInjection)
     shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
     _validate_eltype(Float64, device, shutdown, " for shutdown cost")
 end
 
 # Renewable-specific validations that warn when costs are nonzero.
 # There warnings are captured by the with_logger, though, so we don't actually see them.
-function validate_mbc_component(
+function validate_occ_component(
     ::StartupCostParameter,
     device::Union{PSY.RenewableDispatch, PSY.Storage},
 )
@@ -236,7 +314,7 @@ function validate_mbc_component(
     end
 end
 
-function validate_mbc_component(
+function validate_occ_component(
     ::ShutdownCostParameter,
     device::Union{PSY.RenewableDispatch, PSY.Storage},
 )
@@ -250,7 +328,7 @@ function validate_mbc_component(
     end
 end
 
-function validate_mbc_component(
+function validate_occ_component(
     ::IncrementalCostAtMinParameter,
     device::Union{PSY.RenewableDispatch, PSY.Storage},
 )
@@ -266,7 +344,7 @@ function validate_mbc_component(
     end
 end
 
-function validate_mbc_component(
+function validate_occ_component(
     ::DecrementalCostAtMinParameter,
     device::PSY.Storage,
 )
@@ -283,42 +361,42 @@ function validate_mbc_component(
 end
 
 # Validate that initial input ts always appears if variable ts appears, warn if initial input ts appears without variable ts
-validate_mbc_component(
+validate_occ_component(
     ::IncrementalCostAtMinParameter,
     device::PSY.StaticInjection,
 ) =
     validate_initial_input_time_series(device, false)
-validate_mbc_component(
+validate_occ_component(
     ::DecrementalCostAtMinParameter,
     device::PSY.StaticInjection,
 ) =
     validate_initial_input_time_series(device, true)
 
 # Validate convexity/concavity of cost curves as appropriate, verify P1 = min gen power
-validate_mbc_component(
+validate_occ_component(
     ::IncrementalPiecewiseLinearBreakpointParameter,
     device::PSY.StaticInjection,
 ) =
-    validate_mbc_breakpoints_slopes(device, false)
-validate_mbc_component(
+    validate_occ_breakpoints_slopes(device, false)
+validate_occ_component(
     ::DecrementalPiecewiseLinearBreakpointParameter,
     device::PSY.StaticInjection,
 ) =
-    validate_mbc_breakpoints_slopes(device, true)
+    validate_occ_breakpoints_slopes(device, true)
 
 # Slope and breakpoint validations are done together, nothing to do here
-validate_mbc_component(
+validate_occ_component(
     ::AbstractPiecewiseLinearSlopeParameter,
     device::PSY.StaticInjection,
 ) = nothing
 
-function _process_market_bid_parameters_helper(
+function _process_occ_parameters_helper(
     ::P,
     container::OptimizationContainer,
     model,
     devices,
 ) where {P <: ParameterType}
-    validate_mbc_component.(Ref(P()), devices)
+    validate_occ_component.(Ref(P()), devices)
     if _consider_parameter(P(), container, model)
         ts_devices = filter(device -> _has_parameter_time_series(P(), device), devices)
         (length(ts_devices) > 0) && add_parameters!(container, P, ts_devices, model)
@@ -339,7 +417,7 @@ function process_market_bid_parameters!(
         StartupCostParameter(),
         ShutdownCostParameter(),
     )
-        _process_market_bid_parameters_helper(param, container, model, devices)
+        _process_occ_parameters_helper(param, container, model, devices)
     end
     if incremental
         for param in (
@@ -347,7 +425,7 @@ function process_market_bid_parameters!(
             IncrementalPiecewiseLinearSlopeParameter(),
             IncrementalPiecewiseLinearBreakpointParameter(),
         )
-            _process_market_bid_parameters_helper(param, container, model, devices)
+            _process_occ_parameters_helper(param, container, model, devices)
         end
     end
     if decremental
@@ -356,7 +434,7 @@ function process_market_bid_parameters!(
             DecrementalPiecewiseLinearSlopeParameter(),
             DecrementalPiecewiseLinearBreakpointParameter(),
         )
-            _process_market_bid_parameters_helper(param, container, model, devices)
+            _process_occ_parameters_helper(param, container, model, devices)
         end
     end
 end
@@ -396,7 +474,7 @@ end
 ##################################################
 
 # without this, you get "variable OnVariable__RenewableDispatch is not stored"
-# TODO: really this falls along the divide of 
+# TODO: really this falls along the divide of
 # commitment (OnVariable + ActivePower) vs dispatch (ActivePower only)
 _include_min_gen_power_in_constraint(
     ::PSY.RenewableDispatch,
@@ -424,7 +502,7 @@ _include_min_gen_power_in_constraint(
     ::AbstractDeviceFormulation,
 ) = false
 
-# add the minimum generation power to the PWL constraint, as a constant. Returns true for 
+# add the minimum generation power to the PWL constraint, as a constant. Returns true for
 # formulations where there's nonzero minimum power (first breakpoint), but no OnVariable.
 # TODO: cleaner way? e.g. can we just do this whenever there's no OnVariable?
 _include_constant_min_gen_power_in_constraint(
@@ -487,7 +565,7 @@ function _add_pwl_constraint!(
     # just look up what it is currently fixed to and use that here without worrying about
     # updating.
     if _include_constant_min_gen_power_in_constraint(component, U(), D())
-        # TODO this seems kind of redundant with the 
+        # TODO this seems kind of redundant with the
         sum_pwl_vars += jump_fixed_value(first(break_points))::Float64
     elseif _include_min_gen_power_in_constraint(component, U(), D())
         on_vars = get_variable(container, OnVariable(), T)
@@ -682,7 +760,7 @@ function add_pwl_term!(
     is_decremental::Bool,
     container::OptimizationContainer,
     component::T,
-    ::OfferCurveCost,
+    ::PSY.OfferCurveCost,
     ::U,
     ::V,
 ) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
@@ -805,7 +883,7 @@ function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    cost_function::OfferCurveCost,
+    cost_function::PSY.OfferCurveCost,
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     component_name = PSY.get_name(component)
@@ -828,7 +906,7 @@ function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    cost_function::OfferCurveCost,
+    cost_function::PSY.OfferCurveCost,
     ::U,
 ) where {T <: VariableType,
     U <: AbstractControllablePowerLoadFormulation}
@@ -893,7 +971,7 @@ function _add_vom_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    op_cost::OfferCurveCost,
+    op_cost::PSY.OfferCurveCost,
     ::U,
 ) where {T <: VariableType, U <: AbstractDeviceFormulation}
     incremental_cost_curves = get_output_offer_curves(op_cost)
@@ -917,7 +995,7 @@ function _add_vom_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    op_cost::OfferCurveCost,
+    op_cost::PSY.OfferCurveCost,
     ::U,
 ) where {T <: VariableType,
     U <: AbstractControllablePowerLoadFormulation}
@@ -942,7 +1020,7 @@ function _add_vom_cost_to_objective_helper!(
     container::OptimizationContainer,
     ::T,
     component::PSY.Component,
-    ::OfferCurveCost,
+    ::PSY.OfferCurveCost,
     cost_data::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
     ::U,
 ) where {T <: VariableType,

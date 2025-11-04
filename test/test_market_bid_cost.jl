@@ -396,7 +396,7 @@ function run_startup_shutdown_obj_fun_test(
     ground_truth_2 =
         cost_due_to_time_varying_startup_shutdown(sys2, res2; multistart = multistart)
 
-    _obj_fun_test_helper(ground_truth_1, ground_truth_2, res1, res2)
+    obj_fun_test_helper(ground_truth_1, ground_truth_2, res1, res2)
     return decisions1, decisions2
 end
 
@@ -798,9 +798,7 @@ end
 
 # TODO error if there's nonzero decremental initial input for PowerLoadDispatch.
 @testset "MarketBidCost decremental PowerLoadDispatch, no time series vs constant time series" begin
-    device_to_formulation = Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}(
-        PSY.InterruptiblePowerLoad => PowerLoadDispatch,
-    )
+    device_to_formulation = FormulationDict(PSY.InterruptiblePowerLoad => PowerLoadDispatch)
     sys_no_ts = load_sys_decr2()
     sys_constant_ts = build_sys_decr2(false, false, false)
     test_generic_mbc_equivalence(
