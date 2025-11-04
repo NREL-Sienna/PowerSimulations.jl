@@ -74,6 +74,10 @@ _has_market_bid_cost(device::PSY.StaticInjection) =
 
 _has_market_bid_cost(::PSY.RenewableNonDispatch) = false
 
+_has_market_bid_cost(::PSY.PowerLoad) = false # PowerLoads don't even have operation cost.
+_has_market_bid_cost(device::PSY.ControllableLoad) =
+    PSY.get_operation_cost(device) isa PSY.MarketBidCost
+
 _has_parameter_time_series(::StartupCostParameter, device::PSY.StaticInjection) =
     is_time_variant(PSY.get_start_up(PSY.get_operation_cost(device)))
 
@@ -174,7 +178,6 @@ end
 function validate_mbc_component(
     ::StartupCostParameter,
     device::PSY.ThermalMultiStart,
-    model,
 )
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     _validate_eltype(
@@ -185,7 +188,7 @@ function validate_mbc_component(
     )
 end
 
-function validate_mbc_component(::StartupCostParameter, device::PSY.StaticInjection, model)
+function validate_mbc_component(::StartupCostParameter, device::PSY.StaticInjection)
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     contains_multistart = false
     apply_maybe_across_time_series(device, startup) do x
@@ -211,7 +214,7 @@ function validate_mbc_component(::StartupCostParameter, device::PSY.StaticInject
 end
 
 # Validate eltype of shutdown costs
-function validate_mbc_component(::ShutdownCostParameter, device::PSY.StaticInjection, model)
+function validate_mbc_component(::ShutdownCostParameter, device::PSY.StaticInjection)
     shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
     _validate_eltype(Float64, device, shutdown, " for shutdown cost")
 end
@@ -221,14 +224,13 @@ end
 function validate_mbc_component(
     ::StartupCostParameter,
     device::Union{PSY.RenewableDispatch, PSY.Storage},
-    model,
 )
     startup = PSY.get_start_up(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, startup) do x
         if x != PSY.single_start_up_to_stages(0.0)
-            println(
-                "Nonzero startup cost detected for renewable generation or storage device $(get_name(device)).",
-            )
+            #println(
+            @warn "Nonzero startup cost detected for renewable generation or storage device $(get_name(device))."
+            # )
         end
     end
 end
@@ -236,14 +238,13 @@ end
 function validate_mbc_component(
     ::ShutdownCostParameter,
     device::Union{PSY.RenewableDispatch, PSY.Storage},
-    model,
 )
     shutdown = PSY.get_shut_down(PSY.get_operation_cost(device))
     apply_maybe_across_time_series(device, shutdown) do x
         if x != 0.0
-            println(
-                "Nonzero shutdown cost detected for renewable generation or storage device $(get_name(device)).",
-            )
+            #println(
+            @warn "Nonzero shutdown cost detected for renewable generation or storage device $(get_name(device))."
+            #)
         end
     end
 end
@@ -251,15 +252,14 @@ end
 function validate_mbc_component(
     ::IncrementalCostAtMinParameter,
     device::Union{PSY.RenewableDispatch, PSY.Storage},
-    model,
 )
     no_load_cost = PSY.get_no_load_cost(PSY.get_operation_cost(device))
     if !isnothing(no_load_cost)
         apply_maybe_across_time_series(device, no_load_cost) do x
             if x != 0.0
-                println(
-                    "Nonzero no-load cost detected for renewable generation or storage device $(get_name(device)).",
-                )
+                #println(
+                @warn "Nonzero no-load cost detected for renewable generation or storage device $(get_name(device))."
+                #)
             end
         end
     end
@@ -268,15 +268,14 @@ end
 function validate_mbc_component(
     ::DecrementalCostAtMinParameter,
     device::PSY.Storage,
-    model,
 )
     no_load_cost = PSY.get_no_load_cost(PSY.get_operation_cost(device))
     if !isnothing(no_load_cost)
         apply_maybe_across_time_series(device, no_load_cost) do x
             if x != 0.0
-                println(
-                    "Nonzero no-load cost detected for storage device $(get_name(device)).",
-                )
+                #println(
+                @warn "Nonzero no-load cost detected for storage device $(get_name(device))."
+                #)
             end
         end
     end
@@ -286,13 +285,11 @@ end
 validate_mbc_component(
     ::IncrementalCostAtMinParameter,
     device::PSY.StaticInjection,
-    model,
 ) =
     validate_initial_input_time_series(device, false)
 validate_mbc_component(
     ::DecrementalCostAtMinParameter,
     device::PSY.StaticInjection,
-    model,
 ) =
     validate_initial_input_time_series(device, true)
 
@@ -300,13 +297,11 @@ validate_mbc_component(
 validate_mbc_component(
     ::IncrementalPiecewiseLinearBreakpointParameter,
     device::PSY.StaticInjection,
-    model,
 ) =
     validate_mbc_breakpoints_slopes(device, false)
 validate_mbc_component(
     ::DecrementalPiecewiseLinearBreakpointParameter,
     device::PSY.StaticInjection,
-    model,
 ) =
     validate_mbc_breakpoints_slopes(device, true)
 
@@ -314,7 +309,6 @@ validate_mbc_component(
 validate_mbc_component(
     ::AbstractPiecewiseLinearSlopeParameter,
     device::PSY.StaticInjection,
-    model,
 ) = nothing
 
 function _process_market_bid_parameters_helper(
@@ -323,7 +317,7 @@ function _process_market_bid_parameters_helper(
     model,
     devices,
 ) where {P <: ParameterType}
-    validate_mbc_component.(Ref(P()), devices, Ref(model))
+    validate_mbc_component.(Ref(P()), devices)
     if _consider_parameter(P(), container, model)
         ts_devices = filter(device -> _has_parameter_time_series(P(), device), devices)
         (length(ts_devices) > 0) && add_parameters!(container, P, ts_devices, model)
@@ -333,12 +327,13 @@ end
 "Validate MarketBidCosts and add the appropriate parameters"
 function process_market_bid_parameters!(
     container::OptimizationContainer,
-    devices,
+    devices_in,
     model::DeviceModel,
     incremental::Bool = true,
     decremental::Bool = false,
 )
-    devices = filter(_has_market_bid_cost, collect(devices))  # https://github.com/NREL-Sienna/InfrastructureSystems.jl/issues/460
+    devices = filter(_has_market_bid_cost, collect(devices_in))  # https://github.com/NREL-Sienna/InfrastructureSystems.jl/issues/460
+    isempty(devices) && return
     for param in (
         StartupCostParameter(),
         ShutdownCostParameter(),
@@ -400,11 +395,57 @@ end
 ##################################################
 
 # without this, you get "variable OnVariable__RenewableDispatch is not stored"
-_include_min_gen_power_in_constraint(::PSY.RenewableDispatch, ::ActivePowerVariable) = false
-_include_min_gen_power_in_constraint(::PSY.Generator, ::ActivePowerVariable) = true
-_include_min_gen_power_in_constraint(::PSY.InterruptiblePowerLoad, ::ActivePowerVariable) =
-    false
-_include_min_gen_power_in_constraint(::Any, ::PowerAboveMinimumVariable) = false
+# TODO: really this falls along the divide of 
+# commitment (OnVariable + ActivePower) vs dispatch (ActivePower only)
+_include_min_gen_power_in_constraint(
+    ::PSY.RenewableDispatch,
+    ::ActivePowerVariable,
+    ::AbstractDeviceFormulation,
+) = false
+_include_min_gen_power_in_constraint(
+    ::PSY.Generator,
+    ::ActivePowerVariable,
+    ::AbstractDeviceFormulation,
+) = true
+_include_min_gen_power_in_constraint(
+    ::PSY.ControllableLoad,
+    ::ActivePowerVariable,
+    ::PowerLoadInterruption,
+) = true
+_include_min_gen_power_in_constraint(
+    ::PSY.ControllableLoad,
+    ::ActivePowerVariable,
+    ::PowerLoadDispatch,
+) = false
+_include_min_gen_power_in_constraint(
+    ::Any,
+    ::PowerAboveMinimumVariable,
+    ::AbstractDeviceFormulation,
+) = false
+
+# add the minimum generation power to the PWL constraint, as a constant. Returns true for 
+# formulations where there's nonzero minimum power (first breakpoint), but no OnVariable.
+# TODO: cleaner way? e.g. can we just do this whenever there's no OnVariable?
+_include_constant_min_gen_power_in_constraint(
+    ::PSY.ControllableLoad,
+    ::ActivePowerVariable,
+    ::PowerLoadDispatch,
+) = true
+_include_constant_min_gen_power_in_constraint(
+    ::PSY.ControllableLoad,
+    ::ActivePowerVariable,
+    ::PowerLoadInterruption,
+) = false
+_include_constant_min_gen_power_in_constraint(
+    ::PSY.RenewableGen,
+    ::ActivePowerVariable,
+    ::AbstractRenewableDispatchFormulation,
+) = true
+_include_constant_min_gen_power_in_constraint(
+    ::Any,
+    ::VariableType,
+    ::AbstractDeviceFormulation,
+) = false
 
 """
 Implement the constraints for PWL Block Offer variables. That is:
@@ -418,11 +459,13 @@ function _add_pwl_constraint!(
     container::OptimizationContainer,
     component::T,
     ::U,
+    ::D,
     break_points::Vector{<:JuMPOrFloat},
     period::Int,
     ::Type{V},
     ::Type{W},
 ) where {T <: PSY.Component, U <: VariableType,
+    D <: AbstractDeviceFormulation,
     V <: AbstractPiecewiseLinearBlockOffer,
     W <: AbstractPiecewiseLinearBlockOfferConstraint}
     variables = get_variable(container, U(), T)
@@ -442,7 +485,10 @@ function _add_pwl_constraint!(
     # time-variable P1 is problematic, so for now we require P1 to be constant. Thus we can
     # just look up what it is currently fixed to and use that here without worrying about
     # updating.
-    if _include_min_gen_power_in_constraint(component, U())
+    if _include_constant_min_gen_power_in_constraint(component, U(), D())
+        # TODO this seems kind of redundant with the 
+        sum_pwl_vars += jump_fixed_value(first(break_points))::Float64
+    elseif _include_min_gen_power_in_constraint(component, U(), D())
         on_vars = get_variable(container, OnVariable(), T)
         p1::Float64 = jump_fixed_value(first(break_points))
         sum_pwl_vars += p1 * on_vars[name, period]
@@ -616,7 +662,7 @@ function _get_pwl_data(
         unit_system = PSY.get_power_units(cost_data)
     end
 
-    breakpoints, slopes = get_piecewise_incrementalcurve_per_system_unit(
+    breakpoints, slopes = get_piecewise_curve_per_system_unit(
         breakpoint_cost_component,
         slope_cost_component,
         unit_system,
@@ -652,6 +698,7 @@ function add_pwl_term!(
             container,
             component,
             U(),
+            V(),
             breakpoints,
             t,
             W,
@@ -705,7 +752,7 @@ function _add_pwl_term!(
     power_units = PSY.get_power_units(cost_data)
     cost_component = PSY.get_function_data(value_curve)
     device_base_power = PSY.get_base_power(component)
-    data = get_piecewise_incrementalcurve_per_system_unit(
+    data = get_piecewise_curve_per_system_unit(
         cost_component,
         power_units,
         base_power,
@@ -840,6 +887,7 @@ end
 
 function _add_service_bid_cost!(::OptimizationContainer, ::PSY.Component, ::PSY.Service) end
 
+# "copy-paste and change incremental to decremental" here. Refactor?
 function _add_vom_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
@@ -873,6 +921,11 @@ function _add_vom_cost_to_objective!(
 ) where {T <: VariableType,
     U <: AbstractControllablePowerLoadFormulation}
     decremental_cost_curves = get_input_offer_curves(op_cost)
+    if is_time_variant(decremental_cost_curves)
+        # TODO this might imply a change to the MBC struct?
+        @warn "Decremental curves are time variant, there is no VOM cost source. Skipping VOM cost."
+        return
+    end
     _add_vom_cost_to_objective_helper!(
         container,
         T(),
