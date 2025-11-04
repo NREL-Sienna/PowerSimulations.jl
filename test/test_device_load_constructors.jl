@@ -207,7 +207,7 @@ end
         )
         set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
         set_device_model!(template, PowerLoad, StaticPowerLoad)
-        set_device_model!(template, MotorLoad, StaticMotorLoad)
+        set_device_model!(template, MotorLoad, StaticPowerLoad)
         set_device_model!(template, Line, StaticBranch)
 
         model = DecisionModel(

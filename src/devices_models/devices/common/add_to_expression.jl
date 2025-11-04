@@ -193,7 +193,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     V <: PSY.MotorLoad,
-    W <: StaticMotorLoad,
+    W <: StaticPowerLoad,
     X <: PM.AbstractPowerModel,
 }
     network_reduction = get_network_reduction(network_model)
@@ -222,7 +222,7 @@ function add_to_expression!(
 ) where {
     T <: ReactivePowerBalance,
     V <: PSY.MotorLoad,
-    W <: StaticMotorLoad,
+    W <: StaticPowerLoad,
     X <: PM.AbstractPowerModel,
 }
     network_reduction = get_network_reduction(network_model)
@@ -1172,7 +1172,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     V <: PSY.MotorLoad,
-    W <: StaticMotorLoad,
+    W <: StaticPowerLoad,
     X <: CopperPlatePowerModel,
 }
     expression = get_expression(container, T(), PSY.System)
@@ -1417,7 +1417,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     V <: PSY.MotorLoad,
-    W <: StaticMotorLoad,
+    W <: StaticPowerLoad,
     X <: PTDFPowerModel,
 }
     sys_expr = get_expression(container, T(), PSY.System)

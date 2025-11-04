@@ -73,11 +73,6 @@ Formulation type to add a time series parameter for non-dispatchable `ElectricLo
 struct StaticPowerLoad <: AbstractLoadFormulation end
 
 """
-Formulation type to add a constant non-dispatchable `MotorLoad` withdrawals to power balance constraints
-"""
-struct StaticMotorLoad <: AbstractLoadFormulation end
-
-"""
 Formulation type to enable (binary) load interruptions
 """
 struct PowerLoadInterruption <: AbstractControllablePowerLoadFormulation end

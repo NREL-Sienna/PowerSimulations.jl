@@ -62,7 +62,6 @@ export LossLessLine
 export StaticPowerLoad
 export PowerLoadInterruption
 export PowerLoadDispatch
-export StaticMotorLoad
 ######## Renewable Formulations ########
 export RenewableFullDispatch
 export RenewableConstantPowerFactor
