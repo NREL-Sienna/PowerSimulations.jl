@@ -74,7 +74,7 @@ function get_branch_argument_variable_axis(
     ::Type{T},
 ) where {T <: PSY.ACTransmission}
     name_axis = network_reduction_data.name_to_arc_map[T]
-    return sort!(collect(keys(name_axis)))
+    return collect(keys(name_axis))
 end
 
 function get_branch_argument_constraint_axis(
