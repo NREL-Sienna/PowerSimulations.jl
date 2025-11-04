@@ -2,7 +2,8 @@
 # If you make changes, run those tests too!
 const TIME1 = DateTime("2024-01-01T00:00:00")
 test_path = mktempdir()
-const FormulationDict = Dict{Type{<:PSY.Device}, Type{<:PSI.AbstractDeviceFormulation}}
+const FormulationDict =
+    Dict{Type{<:PSY.Device}, Union{DeviceModel, Type{<:PSI.AbstractDeviceFormulation}}}
 # TODO could replace with PSI's defaults, template_unit_commitment
 const DEFAULT_FORMULATIONS =
     FormulationDict(
@@ -61,15 +62,24 @@ function set_formulations!(template::ProblemTemplate,
 )
     for (device, formulation) in device_to_formulation
         if !isempty(get_components(device, sys))
-            set_device_model!(template, device, formulation)
+            _set_formulations_helper(template, device, formulation)
         end
     end
     for (device, formulation) in DEFAULT_FORMULATIONS
         if !haskey(device_to_formulation, device) && !isempty(get_components(device, sys))
-            set_device_model!(template, device, formulation)
+            _set_formulations_helper(template, device, formulation)
         end
     end
 end
+
+_set_formulations_helper(
+    template::ProblemTemplate,
+    device::Type{<:PSY.Device},
+    formulation::Type{<:PSI.AbstractDeviceFormulation},
+) =
+    set_device_model!(template, device, formulation)
+_set_formulations_helper(template::ProblemTemplate, _, device_model::DeviceModel) =
+    set_device_model!(template, device_model)
 
 # Layer of indirection to upgrade problem results to look like simulation results
 _maybe_upgrade_to_dict(input::AbstractDict) = input
