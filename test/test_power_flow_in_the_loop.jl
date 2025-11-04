@@ -344,7 +344,8 @@ end
             voltage_stability = first(
                 values(
                     PSI.read_results_with_keys(results_ed,
-                        [voltage_stability_aux_var_key]),
+                        [voltage_stability_aux_var_key];
+                        table_format = TableFormat.LONG),
                 ),
             )
             @test !isnothing(voltage_stability)
@@ -373,55 +374,3 @@ end
         end
     end
 end
-
-#=
-# PowerFlows.jl objects to the bus types. But it's a DC power flow, so non-slack bus types
-# don't matter. Fix back in PowerFlows.jl, or pass correct_bustypes = true here in PSI.
-@testset "Test DC power flow in the loop setup: RTS ED, PTDF, no export" begin
-    sys_rts_rt = PSB.build_system(PSISystems, "modified_RTS_GMLC_RT_sys")
-    template_ed = get_template_nomin_ed_simulation()
-    set_device_model!(template_ed, Line, StaticBranchUnbounded)
-    set_network_model!(
-        template_ed,
-        NetworkModel(
-            PTDFPowerModel;
-            use_slacks = true,
-            PTDF_matrix = PTDF(sys_rts_rt),
-            power_flow_evaluation = DCPowerFlow(),
-        ),
-    )
-    model = DecisionModel(template_ed, sys_rts_rt; name = "ED", optimizer = HiGHS_optimizer)
-    output_dir = mktempdir(; cleanup = true)
-    build_out = build!(model; output_dir = output_dir, console_level = Logging.Error)
-    @test build_out == PSI.ModelBuildStatus.BUILT
-    execute_out = solve!(model; in_memory = true)
-    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-    results = OptimizationProblemResults(model)
-
-    # Test correspondence between buses in system and buses in power flow in the loop
-    sys_buses = Set(string.(get_number.(get_components(ACBus, sys_rts_rt))))
-    pfe_buses = read_result_names(results, PSI.AuxVarKey(PowerFlowVoltageAngle, ACBus))
-    @test sys_buses == pfe_buses
-
-    # Test correspondence between system and branches in power flow in the loop
-    branch_sel = rebuild_selector(make_selector(
-            make_selector.(PNM.get_ac_branches(sys_rts_rt))...); groupby = typeof)
-    for group in get_groups(branch_sel, sys_rts_rt)
-        sys_branches = Set(get_name.(get_components(group, sys_rts_rt)))
-        pfe_branches = read_result_names(
-            results,
-            PSI.AuxVarKey(
-                PowerFlowLineActivePowerFromTo,
-                getproperty(PSY, Symbol(get_name(group)))),
-        )
-        @test length(sys_branches) == length(pfe_branches)
-        @test sys_branches == pfe_branches
-    end
-
-    # Test correspondence between lines in optimization problem and lines in power flow in the loop
-    opt_names = read_result_names(results, PSI.VariableKey(FlowActivePowerVariable, Line))
-    pfe_names = read_result_names(results,
-        PSI.AuxVarKey(PowerFlowLineActivePowerFromTo, Line))
-    @test opt_names == pfe_names
-end
-=#
