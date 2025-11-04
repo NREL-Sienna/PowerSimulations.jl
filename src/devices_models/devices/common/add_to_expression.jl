@@ -154,14 +154,122 @@ function add_to_expression!(
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
     network_reduction = get_network_reduction(network_model)
-    for d in devices, t in get_time_steps(container)
+    ts_name = get_time_series_names(model)[U]
+    ts_type = get_default_time_series_type(container)
+    for d in devices
         bus_no = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(d))
         name = PSY.get_name(d)
-        _add_to_jump_expression!(
-            get_expression(container, T(), PSY.ACBus)[bus_no, t],
-            get_parameter_column_refs(param_container, name)[t],
-            multiplier[name, t],
-        )
+        has_ts = PSY.has_time_series(d, ts_type, ts_name)
+        if !has_ts
+            @warn "Device $(name) does not have time series of type $(ts_type) with name $(ts_name). Using default value of 1.0 for all time steps."
+        end
+        for t in get_time_steps(container)
+            if has_ts
+                param_value = get_parameter_column_refs(param_container, name)[t]
+                mult = multiplier[name, t]
+            else
+                param_value = 1.0
+                mult = get_multiplier_value(U(), d, W())
+            end
+            _add_to_jump_expression!(
+                get_expression(container, T(), PSY.ACBus)[bus_no, t],
+                param_value,
+                mult,
+            )
+        end
+    end
+    return
+end
+
+"""
+Motor load implementation to add constant power to ActivePowerBalance expression
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: ActivePowerTimeSeriesParameter,
+    V <: PSY.MotorLoad,
+    W <: StaticPowerLoad,
+    X <: PM.AbstractPowerModel,
+}
+    network_reduction = get_network_reduction(network_model)
+    for d in devices
+        bus_no = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(d))
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                get_expression(container, T(), PSY.ACBus)[bus_no, t],
+                PSY.get_active_power(d),
+                -1.0,
+            )
+        end
+    end
+    return
+end
+
+"""
+Motor load implementation to add constant power to ActivePowerBalance expression for AreaBalancePowerModel
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    network_model::NetworkModel{AreaBalancePowerModel},
+) where {
+    T <: ActivePowerBalance,
+    U <: ActivePowerTimeSeriesParameter,
+    V <: PSY.MotorLoad,
+    W <: StaticPowerLoad,
+}
+    network_reduction = get_network_reduction(network_model)
+    for d in devices
+        bus = PSY.get_bus(d)
+        area_name = PSY.get_name(PSY.get_area(bus))
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                get_expression(container, T(), PSY.Area)[area_name, t],
+                PSY.get_active_power(d),
+                -1.0,
+            )
+        end
+    end
+    return
+end
+
+"""
+Motor load implementation to add constant power to ActivePowerBalance expression
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ReactivePowerBalance,
+    U <: ReactivePowerTimeSeriesParameter,
+    V <: PSY.MotorLoad,
+    W <: StaticPowerLoad,
+    X <: PM.ACPPowerModel,
+}
+    network_reduction = get_network_reduction(network_model)
+    for d in devices
+        bus_no = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(d))
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                get_expression(container, T(), PSY.ACBus)[bus_no, t],
+                PSY.get_reactive_power(d),
+                -1.0,
+            )
+        end
     end
     return
 end
@@ -1059,15 +1167,60 @@ function add_to_expression!(
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
     expression = get_expression(container, T(), PSY.System)
+    ts_name = get_time_series_names(device_model)[U]
+    ts_type = get_default_time_series_type(container)
     for d in devices
         device_bus = PSY.get_bus(d)
         ref_bus = get_reference_bus(network_model, device_bus)
         name = PSY.get_name(d)
+        has_ts = PSY.has_time_series(d, ts_type, ts_name)
+        if !has_ts
+            @warn "Device $(name) does not have time series of type $(ts_type) with name $(ts_name). Using default value of 1.0 for all time steps."
+        end
+        for t in get_time_steps(container)
+            if has_ts
+                param_value = get_parameter_column_refs(param_container, name)[t]
+                mult = multiplier[name, t]
+            else
+                param_value = 1.0
+                mult = get_multiplier_value(U(), d, W())
+            end
+            _add_to_jump_expression!(
+                expression[ref_bus, t],
+                param_value,
+                mult,
+            )
+        end
+    end
+    return
+end
+
+"""
+Motor load implementation to add parameters to SystemBalanceExpressions CopperPlate
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    device_model::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: ActivePowerTimeSeriesParameter,
+    V <: PSY.MotorLoad,
+    W <: StaticPowerLoad,
+    X <: CopperPlatePowerModel,
+}
+    expression = get_expression(container, T(), PSY.System)
+    for d in devices
+        device_bus = PSY.get_bus(d)
+        ref_bus = get_reference_bus(network_model, device_bus)
         for t in get_time_steps(container)
             _add_to_jump_expression!(
                 expression[ref_bus, t],
-                get_parameter_column_refs(param_container, name)[t],
-                multiplier[name, t],
+                PSY.get_active_power(d),
+                -1.0,
             )
         end
     end
@@ -1187,16 +1340,28 @@ function add_to_expression!(
     sys_expr = get_expression(container, T(), _system_expression_type(X))
     nodal_expr = get_expression(container, T(), PSY.ACBus)
     network_reduction = get_network_reduction(network_model)
+    ts_name = get_time_series_names(device_model)[U]
+    ts_type = get_default_time_series_type(container)
     for d in devices
         name = PSY.get_name(d)
+        has_ts = PSY.has_time_series(d, ts_type, ts_name)
+        if !has_ts
+            @warn "Device $(name) does not have time series of type $(ts_type) with name $(ts_name). Using default value of 1.0 for all time steps."
+        end
         device_bus = PSY.get_bus(d)
         bus_no_ = PSY.get_number(device_bus)
         bus_no = PNM.get_mapped_bus_number(network_reduction, bus_no_)
         ref_index = _ref_index(network_model, device_bus)
-        param = get_parameter_column_refs(param_container, name)
         for t in get_time_steps(container)
-            _add_to_jump_expression!(sys_expr[ref_index, t], param[t], multiplier[name, t])
-            _add_to_jump_expression!(nodal_expr[bus_no, t], param[t], multiplier[name, t])
+            if has_ts
+                param = get_parameter_column_refs(param_container, name)[t]
+                mult = multiplier[name, t]
+            else
+                param = 1.0
+                mult = get_multiplier_value(U(), d, W())
+            end
+            _add_to_jump_expression!(sys_expr[ref_index, t], param, mult)
+            _add_to_jump_expression!(nodal_expr[bus_no, t], param, mult)
         end
     end
     return
@@ -1271,6 +1436,46 @@ function add_to_expression!(
                 nodal_expr[bus_no, t],
                 variable[name, t],
                 get_variable_multiplier(U(), V, W()),
+            )
+        end
+    end
+    return
+end
+
+"""
+Motor Load implementation to add constant motor power to PTDF SystemBalanceExpressions
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    device_model::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: ActivePowerBalance,
+    U <: ActivePowerTimeSeriesParameter,
+    V <: PSY.MotorLoad,
+    W <: StaticPowerLoad,
+    X <: AbstractPTDFModel,
+}
+    sys_expr = get_expression(container, T(), PSY.System)
+    nodal_expr = get_expression(container, T(), PSY.ACBus)
+    network_reduction = get_network_reduction(network_model)
+    for d in devices
+        device_bus = PSY.get_bus(d)
+        bus_no = PNM.get_mapped_bus_number(network_reduction, device_bus)
+        ref_index = _ref_index(network_model, device_bus)
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                sys_expr[ref_index, t],
+                PSY.get_active_power(d),
+                -1.0,
+            )
+            _add_to_jump_expression!(
+                nodal_expr[bus_no, t],
+                PSY.get_active_power(d),
+                -1.0,
             )
         end
     end

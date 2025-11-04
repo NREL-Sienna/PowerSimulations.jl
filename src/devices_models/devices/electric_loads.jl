@@ -62,6 +62,13 @@ get_initial_conditions_device_model(
     ::DeviceModel{T, <:AbstractLoadFormulation},
 ) where {T <: PSY.ElectricLoad} = DeviceModel(T, StaticPowerLoad)
 
+function get_default_time_series_names(
+    ::Type{<:PSY.MotorLoad},
+    ::Type{<:Union{FixedOutput, AbstractLoadFormulation}},
+)
+    return Dict{Type{<:TimeSeriesParameter}, String}()
+end
+
 ####################################### Reactive Power Constraints #########################
 """
 Reactive Power Constraints on Controllable Loads Assume Constant power_factor
