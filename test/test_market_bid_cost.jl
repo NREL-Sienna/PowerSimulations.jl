@@ -382,11 +382,15 @@ function run_startup_shutdown_obj_fun_test(
     all_decisions1 = (decisions1..., nullable_decisions1...)
     all_decisions2 = (decisions2..., nullable_decisions2...)
 
-    if !all(isapprox.(all_decisions1, all_decisions2))
+    if !all(isapprox.(all_decisions1, all_decisions2; atol = 1))
         @error all_decisions1
         @error all_decisions2
+        # Given the solver tolerance, this method can result in up to 1 change in the commitment result
+        @assert false "Decisions between constant and time-varying startup/shutdown do not match approximately"
     end
-    @assert all(isapprox.(all_decisions1, all_decisions2))
+
+    # The last decision is the objetive function we can test that with a smaller tolerance
+    @test (isapprox(all_decisions1[end], all_decisions2[end]; atol = 1e-3))
 
     ground_truth_1 =
         cost_due_to_time_varying_startup_shutdown(sys1, res1; multistart = multistart)
