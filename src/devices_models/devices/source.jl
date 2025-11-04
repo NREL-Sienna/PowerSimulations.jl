@@ -25,6 +25,9 @@ get_multiplier_value(::ActivePowerInTimeSeriesParameter, d::PSY.Source, ::Abstra
 # This additional method definition is used to avoid ambiguity with the method defined in default_interface_methods.jl
 get_multiplier_value(::AbstractPiecewiseLinearBreakpointParameter, d::PSY.Source, ::AbstractSourceFormulation) = 1.0
 
+############## ReservationVariable, Source ####################
+get_variable_binary(::ReservationVariable, ::Type{<:PSY.Source}, ::ImportExportSourceModel) = true
+
 
 #! format: on
 function get_default_time_series_names(
@@ -38,7 +41,9 @@ function get_default_attributes(
     ::Type{U},
     ::Type{V},
 ) where {U <: PSY.Source, V <: AbstractSourceFormulation}
-    return Dict{String, Any}()
+    return Dict{String, Any}(
+        "reservation" => true,
+    )
 end
 
 function get_min_max_limits(
@@ -47,6 +52,14 @@ function get_min_max_limits(
     ::Type{<:AbstractSourceFormulation},
 )
     return PSY.get_active_power_limits(device)
+end
+
+function get_min_max_limits(
+    device,
+    ::Type{InputActivePowerVariableLimitsConstraint},
+    ::Type{<:AbstractSourceFormulation},
+)
+    return PSY.get_active_power_limits(device)  # TODO do we need a new field in PSY for this -- input active power limits?
 end
 
 function get_min_max_limits(
@@ -71,7 +84,11 @@ function add_constraints!(
     W <: AbstractSourceFormulation,
     X <: PM.AbstractPowerModel,
 }
-    add_range_constraints!(container, T, U, devices, model, X)
+    if get_attribute(model, "reservation")
+        add_reserve_range_constraints!(container, T, U, devices, model, X)
+    else
+        add_range_constraints!(container, T, U, devices, model, X)
+    end
     return
 end
 

@@ -25,6 +25,10 @@ function construct_device!(
         add_parameters!(container, ActivePowerInTimeSeriesParameter, devices, model)
     end
 
+    if get_attribute(model, "reservation")
+        add_variables!(container, ReservationVariable, devices, D())
+    end
+
     process_import_export_parameters!(container, devices, model)
 
     add_to_expression!(
@@ -108,6 +112,14 @@ function construct_device!(
     )
     add_constraints!(
         container,
+        InputActivePowerVariableLimitsConstraint,
+        ActivePowerInVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
         ReactivePowerVariableLimitsConstraint,
         ReactivePowerVariable,
         devices,
@@ -168,6 +180,10 @@ function construct_device!(
     end
     if haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
         add_parameters!(container, ActivePowerInTimeSeriesParameter, devices, model)
+    end
+
+    if get_attribute(model, "reservation")
+        add_variables!(container, ReservationVariable, devices, D())
     end
 
     process_import_export_parameters!(container, devices, model)
@@ -254,6 +270,14 @@ function construct_device!(
         container,
         ActivePowerVariableLimitsConstraint,
         ActivePowerRangeExpressionUB,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        InputActivePowerVariableLimitsConstraint,
+        ActivePowerInVariable,
         devices,
         model,
         network_model,

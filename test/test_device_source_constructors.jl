@@ -1,54 +1,75 @@
 # See also test_import_export_cost.jl
 
-@testset "ImportExportSource Source With CopperPlate" begin
-    constraint_keys = [
-        PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "import"),
-        PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "export"),
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "ub"),
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "lb"),
-        PSI.ConstraintKey(PiecewiseLinearBlockIncrementalOfferConstraint, PSY.Source),
-        PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
-    ]
+const BASIC_SOURCE_CONSTRAINT_KEYS = [
+    PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "import"),
+    PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "export"),
+    PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "ub"),
+    PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "lb"),
+    PSI.ConstraintKey(InputActivePowerVariableLimitsConstraint, PSY.Source, "ub"),
+    PSI.ConstraintKey(InputActivePowerVariableLimitsConstraint, PSY.Source, "lb"),
+    PSI.ConstraintKey(PiecewiseLinearBlockIncrementalOfferConstraint, PSY.Source),
+    PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
+]
 
+const TS_SOURCE_CONSTRAINT_KEYS = [
+    BASIC_SOURCE_CONSTRAINT_KEYS...,
+    PSI.ConstraintKey(ActivePowerOutVariableTimeSeriesLimitsConstraint, Source, "ub"),
+    PSI.ConstraintKey(ActivePowerInVariableTimeSeriesLimitsConstraint, Source, "ub"),
+]
+
+@testset "ImportExportSource Source With CopperPlate" begin
     sys = make_5_bus_with_import_export(; add_single_time_series = false)
 
     model = DecisionModel(MockOperationProblem, CopperPlatePowerModel, sys)
-    device_model = DeviceModel(Source, ImportExportSourceModel)
+    device_model = DeviceModel(
+        Source,
+        ImportExportSourceModel;
+        attributes = Dict("reservation" => false),
+    )
     mock_construct_device!(model, device_model)
-    moi_tests(model, 240, 0, 218, 24, 48, false)
-    psi_constraint_test(model, constraint_keys)
+    moi_tests(model, 240, 0, 242, 48, 48, false)
+    psi_constraint_test(model, BASIC_SOURCE_CONSTRAINT_KEYS)
+    psi_checkobjfun_test(model, GAEVF)
+
+    model = DecisionModel(MockOperationProblem, CopperPlatePowerModel, sys)
+    device_model = DeviceModel(
+        Source,
+        ImportExportSourceModel;
+        attributes = Dict("reservation" => true),
+    )
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 264, 0, 242, 48, 48, true)
+    psi_constraint_test(model, BASIC_SOURCE_CONSTRAINT_KEYS)
     psi_checkobjfun_test(model, GAEVF)
 end
 
 @testset "ImportExportSource Source With ACPPowerModel" begin
-    constraint_keys = [
-        PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "import"),
-        PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "export"),
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "ub"),
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "lb"),
-        PSI.ConstraintKey(PiecewiseLinearBlockIncrementalOfferConstraint, PSY.Source),
-        PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
-    ]
-
     sys = make_5_bus_with_import_export(; add_single_time_series = false)
+
     model = DecisionModel(MockOperationProblem, ACPPowerModel, sys)
-    device_model = DeviceModel(Source, ImportExportSourceModel)
+    device_model = DeviceModel(
+        Source,
+        ImportExportSourceModel;
+        attributes = Dict("reservation" => false),
+    )
     mock_construct_device!(model, device_model)
-    moi_tests(model, 264, 0, 242, 48, 48, false)
-    psi_constraint_test(model, constraint_keys)
+    moi_tests(model, 264, 0, 266, 72, 48, false)
+    psi_constraint_test(model, BASIC_SOURCE_CONSTRAINT_KEYS)
+    psi_checkobjfun_test(model, GAEVF)
+
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, sys)
+    device_model = DeviceModel(
+        Source,
+        ImportExportSourceModel;
+        attributes = Dict("reservation" => true),
+    )
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 288, 0, 266, 72, 48, true)
+    psi_constraint_test(model, BASIC_SOURCE_CONSTRAINT_KEYS)
     psi_checkobjfun_test(model, GAEVF)
 end
 
 @testset "ImportExportSource Source With CopperPlate and TimeSeries" begin
-    constraint_keys = [
-        PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "import"),
-        PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "export"),
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "ub"),
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "lb"),
-        PSI.ConstraintKey(PiecewiseLinearBlockIncrementalOfferConstraint, PSY.Source),
-        PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
-    ]
-
     sys = make_5_bus_with_import_export(; add_single_time_series = true)
     source = get_component(Source, sys, "source")
 
@@ -86,6 +107,7 @@ end
     source_model = DeviceModel(
         Source,
         ImportExportSourceModel;
+        attributes = Dict("reservation" => false),
         time_series_names = Dict{Any, String}(
             ActivePowerInTimeSeriesParameter => "max_active_power_in",
             ActivePowerOutTimeSeriesParameter => "max_active_power_out",
@@ -128,17 +150,6 @@ end
 end
 
 @testset "ImportExportSource Source With CopperPlate and TimeSeries" begin
-    constraint_keys = [
-        PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "import"),
-        PSI.ConstraintKey(ImportExportBudgetConstraint, PSY.Source, "export"),
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "ub"),
-        PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.Source, "lb"),
-        PSI.ConstraintKey(PiecewiseLinearBlockIncrementalOfferConstraint, PSY.Source),
-        PSI.ConstraintKey(PiecewiseLinearBlockDecrementalOfferConstraint, PSY.Source),
-        PSI.ConstraintKey(ActivePowerOutVariableTimeSeriesLimitsConstraint, Source, "ub"),
-        PSI.ConstraintKey(ActivePowerInVariableTimeSeriesLimitsConstraint, Source, "ub"),
-    ]
-
     sys = make_5_bus_with_import_export(; add_single_time_series = true)
     source = get_component(Source, sys, "source")
 
@@ -174,13 +185,29 @@ end
     device_model = DeviceModel(
         Source,
         ImportExportSourceModel;
+        attributes = Dict("reservation" => false),
         time_series_names = Dict{Any, String}(
             ActivePowerInTimeSeriesParameter => "max_active_power_in",
             ActivePowerOutTimeSeriesParameter => "max_active_power_out",
         ),
     )
     mock_construct_device!(model, device_model)
-    moi_tests(model, 264, 0, 290, 48, 48, false)
-    psi_constraint_test(model, constraint_keys)
+    moi_tests(model, 264, 0, 314, 72, 48, false)
+    psi_constraint_test(model, TS_SOURCE_CONSTRAINT_KEYS)
+    psi_checkobjfun_test(model, GAEVF)
+
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, sys)
+    device_model = DeviceModel(
+        Source,
+        ImportExportSourceModel;
+        attributes = Dict("reservation" => true),
+        time_series_names = Dict{Any, String}(
+            ActivePowerInTimeSeriesParameter => "max_active_power_in",
+            ActivePowerOutTimeSeriesParameter => "max_active_power_out",
+        ),
+    )
+    mock_construct_device!(model, device_model)
+    moi_tests(model, 288, 0, 314, 72, 48, true)
+    psi_constraint_test(model, TS_SOURCE_CONSTRAINT_KEYS)
     psi_checkobjfun_test(model, GAEVF)
 end
