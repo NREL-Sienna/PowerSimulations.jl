@@ -187,11 +187,13 @@ Motor load implementation to add constant power to ActivePowerBalance expression
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
+    ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
+    U <: ActivePowerTimeSeriesParameter,
     V <: PSY.MotorLoad,
     W <: StaticPowerLoad,
     X <: PM.AbstractPowerModel,
@@ -211,19 +213,52 @@ function add_to_expression!(
 end
 
 """
+Motor load implementation to add constant power to ActivePowerBalance expression for AreaBalancePowerModel
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    network_model::NetworkModel{AreaBalancePowerModel},
+) where {
+    T <: ActivePowerBalance,
+    U <: ActivePowerTimeSeriesParameter,
+    V <: PSY.MotorLoad,
+    W <: StaticPowerLoad,
+}
+    network_reduction = get_network_reduction(network_model)
+    for d in devices
+        bus = PSY.get_bus(d)
+        area_name = PSY.get_name(PSY.get_area(bus))
+        for t in get_time_steps(container)
+            _add_to_jump_expression!(
+                get_expression(container, T(), PSY.Area)[area_name, t],
+                PSY.get_active_power(d),
+                -1.0,
+            )
+        end
+    end
+    return
+end
+
+"""
 Motor load implementation to add constant power to ActivePowerBalance expression
 """
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
+    ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
     T <: ReactivePowerBalance,
+    U <: ReactivePowerTimeSeriesParameter,
     V <: PSY.MotorLoad,
     W <: StaticPowerLoad,
-    X <: PM.AbstractPowerModel,
+    X <: PM.ACPPowerModel,
 }
     network_reduction = get_network_reduction(network_model)
     for d in devices
@@ -1166,11 +1201,13 @@ Motor load implementation to add parameters to SystemBalanceExpressions CopperPl
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
+    ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     device_model::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
+    U <: ActivePowerTimeSeriesParameter,
     V <: PSY.MotorLoad,
     W <: StaticPowerLoad,
     X <: CopperPlatePowerModel,
@@ -1411,14 +1448,16 @@ Motor Load implementation to add constant motor power to PTDF SystemBalanceExpre
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
+    ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     device_model::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
     T <: ActivePowerBalance,
+    U <: ActivePowerTimeSeriesParameter,
     V <: PSY.MotorLoad,
     W <: StaticPowerLoad,
-    X <: PTDFPowerModel,
+    X <: AbstractPTDFModel,
 }
     sys_expr = get_expression(container, T(), PSY.System)
     nodal_expr = get_expression(container, T(), PSY.ACBus)
