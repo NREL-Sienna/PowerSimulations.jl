@@ -128,8 +128,8 @@ function run_iec_obj_fun_test(sys1, sys2, comp_name::String, ::Type{T};
     all_decisions1 = (decisions1..., nullable_decisions1...)
     all_decisions2 = (decisions2..., nullable_decisions2...)
     if !all(isapprox.(all_decisions1, all_decisions2))
-        @show all_decisions1
-        @show all_decisions2
+        @error all_decisions1
+        @error all_decisions2
     end
     @assert all(isapprox.(all_decisions1, all_decisions2))
 
@@ -261,8 +261,8 @@ function iec_obj_fun_test_wrapper(sys_constant, sys_varying; reservation = false
             )
 
             if !all(isapprox.(decisions1, decisions2))
-                @show decisions1
-                @show decisions2
+                @error decisions1
+                @error decisions2
             end
             @assert all(approx_geq_1.(decisions1))
         end

@@ -750,6 +750,8 @@ end
     @test size(interchange_constraints_lb) == (1, 24)
 
     interchange_constraints_ub["interface1_2_3", 1]
+    # Obj Function test is disabled because with this constraints
+    # the model goes into the slacks and the cost is larger than 1e6
     # psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
 
     results = OptimizationProblemResults(ps_model)
@@ -811,7 +813,7 @@ end
         [interchange1, interchange2],
     )
 
-    #Add an interface on a double circuit: 
+    #Add an interface on a double circuit:
     double_circuit_1 = get_component(Line, sys_rts_da, "A33-1")
     double_circuit_2 = get_component(Line, sys_rts_da, "A33-2")
     interface2 = TransmissionInterface(;
@@ -871,6 +873,8 @@ end
     @test size(interchange_constraints_lb) == (2, 24)
 
     interchange_constraints_ub["interface1_2_3", 1]
+    # Obj Function test is disabled because with this constraints
+    # the model goes into the slacks and the cost is larger than 1e6
     # psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
 
     results = OptimizationProblemResults(ps_model)
@@ -889,7 +893,7 @@ end
     sys_rts_da = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
     transform_single_time_series!(sys_rts_da, Hour(24), Hour(1))
 
-    # Add an interface on a double circuit: 
+    # Add an interface on a double circuit:
     double_circuit_1 = get_component(Line, sys_rts_da, "A33-1")
     double_circuit_2 = get_component(Line, sys_rts_da, "A33-2")
     interface_double_circuit = TransmissionInterface(;
@@ -905,7 +909,7 @@ end
         [double_circuit_1, double_circuit_2],
     )
 
-    # Add interface on a series chain: 
+    # Add interface on a series chain:
     series_chain_1 = get_component(Line, sys_rts_da, "CA-1")
     series_chain_2 = get_component(Line, sys_rts_da, "C35")
     interface_series_chain = TransmissionInterface(;
@@ -956,7 +960,7 @@ end
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
 
-    # Test bad direction data for interface on double circuit: 
+    # Test bad direction data for interface on double circuit:
     set_direction_mapping!(interface_series_chain, Dict("CA-1" => 1, "C35" => -1))
     ps_model =
         DecisionModel(
@@ -973,7 +977,7 @@ end
         output_dir = mktempdir(; cleanup = true),
     ) == PSI.ModelBuildStatus.FAILED
 
-    # Test bad direction data for interface on series chain: 
+    # Test bad direction data for interface on series chain:
     set_direction_mapping!(interface_series_chain, Dict("CA-1" => 1, "C35" => 1))
     set_direction_mapping!(interface_double_circuit, Dict("A33-1" => 1, "A33-2" => -1))
     ps_model =
@@ -992,7 +996,7 @@ end
     ) == PSI.ModelBuildStatus.FAILED
     set_direction_mapping!(interface_double_circuit, Dict("A33-1" => 1, "A33-2" => 1))
 
-    # Test only including part of a double circuit in an interface: 
+    # Test only including part of a double circuit in an interface:
     pop!(get_services(double_circuit_1))
     ps_model =
         DecisionModel(
@@ -1009,7 +1013,7 @@ end
         output_dir = mktempdir(; cleanup = true),
     ) == PSI.ModelBuildStatus.FAILED
 
-    # Test only including part of a series chain in an interface: 
+    # Test only including part of a series chain in an interface:
     push!(get_services(double_circuit_1), interface_double_circuit)
     pop!(get_services(series_chain_1))
     ps_model =

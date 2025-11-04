@@ -1625,6 +1625,67 @@ function add_to_expression!(
     return
 end
 
+function _handle_nodal_or_zonal_interfaces(
+    br_type::Type{V},
+    network_reduction_data::PNM.NetworkReductionData,
+    direction_map::Dict{String, Int},
+    contributing_devices::Vector{V},
+    variable::JuMPVariableArray,
+    expression::DenseAxisArray, # There is no good type for a DenseAxisArray slice
+) where {V <: PSY.ACTransmission}
+    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    for (name, (arc, reduction)) in
+        PNM.get_name_to_arc_map(network_reduction_data)[br_type]
+        reduction_entry = all_branch_maps_by_type[reduction][br_type][arc]
+        if _reduced_entry_in_interface(reduction_entry, contributing_devices)
+            if isempty(direction_map)
+                direction = 1.0
+            else
+                direction = _get_direction(
+                    arc,
+                    reduction_entry,
+                    direction_map,
+                    network_reduction_data,
+                )
+            end
+            for t in axes(variable, 2)
+                _add_to_jump_expression!(
+                    expression[t],
+                    variable[name, t],
+                    Float64(direction),
+                )
+            end
+        end
+    end
+    return
+end
+
+function _handle_nodal_or_zonal_interfaces(
+    ::Type{PSY.AreaInterchange},
+    network_reduction_data::PNM.NetworkReductionData,
+    direction_map::Dict{String, Int},
+    contributing_devices::Vector{PSY.AreaInterchange},
+    variable::JuMPVariableArray,
+    expression::DenseAxisArray, # There is no good type for a DenseAxisArray slice
+)
+    for device in contributing_devices
+        name = PSY.get_name(device)
+        if isempty(direction_map)
+            direction = 1.0
+        else
+            direction = direction_map[name]
+        end
+        for t in axes(variable, 2)
+            _add_to_jump_expression!(
+                expression[t],
+                variable[name, t],
+                Float64(direction),
+            )
+        end
+    end
+    return
+end
+
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{InterfaceTotalFlow},
@@ -1634,37 +1695,20 @@ function add_to_expression!(
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {V <: Union{ConstantMaxInterfaceFlow, VariableMaxInterfaceFlow}}
     network_reduction_data = get_network_reduction(network_model)
-    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
     expression = get_expression(container, InterfaceTotalFlow(), PSY.TransmissionInterface)
     service_name = get_service_name(model)
     direction_map = PSY.get_direction_mapping(service)
     contributing_devices_map = get_contributing_devices_map(model)
     for (br_type, contributing_devices) in contributing_devices_map
         variable = get_variable(container, FlowActivePowerVariable(), br_type)
-        for (name, (arc, reduction)) in
-            PNM.get_name_to_arc_map(network_reduction_data)[br_type]
-            reduction_entry =
-                network_reduction_data.all_branch_maps_by_type[reduction][br_type][arc]
-            if _reduced_entry_in_interface(reduction_entry, contributing_devices)
-                if isempty(direction_map)
-                    direction = 1.0
-                else
-                    direction = _get_direction(
-                        arc_tuple,
-                        reduction_entry,
-                        direction_map,
-                        network_reduction_data,
-                    )
-                end
-                for t in get_time_steps(container)
-                    _add_to_jump_expression!(
-                        expression[service_name, t],
-                        variable[name, t],
-                        Float64(direction),
-                    )
-                end
-            end
-        end
+        _handle_nodal_or_zonal_interfaces(
+            br_type,
+            network_reduction_data,
+            direction_map,
+            contributing_devices,
+            variable,
+            expression[service_name, :],
+        )
     end
     return
 end
@@ -1677,7 +1721,7 @@ function _get_direction(
 )
     name = PSY.get_name(reduction_entry)
     if !haskey(direction_map, name)
-        @warn "Direction not found for $(summary(d)). Will use the default from -> to direction"
+        @error "Direction not found for $(summary(d)). Will use the default from -> to direction"
         return 1.0
     else
         return direction_map[name]
@@ -1738,7 +1782,16 @@ function _reduced_entry_in_interface(
     reduction_entry::PSY.ACTransmission,
     contributing_devices::Vector{<:PSY.ACTransmission},
 )
-    return reduction_entry ∈ contributing_devices
+    reduction_entry_name = PSY.get_name(reduction_entry)
+    # This is compared by name given that the reduction data uses copies of the devices
+    # so, simple comparisons will not work
+    for device in contributing_devices
+        device_name = PSY.get_name(device)
+        if reduction_entry_name == device_name
+            return true
+        end
+    end
+    return false
 end
 
 function _reduced_entry_in_interface(
