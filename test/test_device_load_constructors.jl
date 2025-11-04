@@ -69,7 +69,7 @@ end
     for m in models, n in networks
         device_model = DeviceModel(InterruptiblePowerLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_il)
-        @test_throws ErrorException mock_construct_device!(model, device_model)
+        @test_throws ArgumentError mock_construct_device!(model, device_model)
     end
 end
 
