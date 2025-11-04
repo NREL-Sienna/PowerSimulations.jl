@@ -1306,7 +1306,7 @@ end
           PSI.ModelBuildStatus.BUILT
     # (3 double circuits) x (5 timesteps) = 15 additional variables in container compared to JuMP model:
     moi_tests(ps_model, 60, 0, 60, 60, 65, false)
-    @test get_n_variables_in_container(ps_model) == 75
+    @test get_n_variables_in_container(ps_model) == 60
     @test get_n_constraints_in_container(ps_model) == 185
 
     # Radial Reduction :
@@ -1329,7 +1329,7 @@ end
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
     moi_tests(ps_model, 55, 0, 55, 55, 60, false)
-    @test get_n_variables_in_container(ps_model) == 70
+    @test get_n_variables_in_container(ps_model) == 55
     @test get_n_constraints_in_container(ps_model) == 170
 
     # Degree Two Reduction :
@@ -1352,7 +1352,7 @@ end
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
     moi_tests(ps_model, 35, 0, 35, 35, 40, false)
-    @test get_n_variables_in_container(ps_model) == 75
+    @test get_n_variables_in_container(ps_model) == 60
     @test get_n_constraints_in_container(ps_model) == 110
     vars = ps_model.internal.container.variables
     line_flow =
@@ -1366,14 +1366,11 @@ end
         "",
     )]
     # Parallel branch within chain to d2:
-    @test line_flow["2-10-i_2_double_circuit", :] ==
-          line_flow["2-10-i_1_double_circuit", :] ==
-          line_flow["10-3-i_1", :]
+    @test line_flow["2-10-i_double_circuit", :] == line_flow["10-3-i_1", :]
     # D2 chain with different component types:
     @test line_flow["1-9-i_1", :] == tfw_flow["9-5-i_1", :]
     # Parallel branch within chain to d2 with mixed types (parallel comes from tracker):
-    @test line_flow["3-11-i_1", :] == tfw_flow["11-4-i_1_double_circuit", :] ==
-          tfw_flow["11-4-i_2_double_circuit", :]
+    @test line_flow["3-11-i_1", :] == tfw_flow["11-4-i_double_circuit", :]
 
     # Radial + Degree Two Reduction :
     sys = build_system(PSITestSystems, "case11_network_reductions")
@@ -1395,7 +1392,7 @@ end
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
     moi_tests(ps_model, 30, 0, 30, 30, 35, false)
-    @test get_n_variables_in_container(ps_model) == 70
+    @test get_n_variables_in_container(ps_model) == 55
     @test get_n_constraints_in_container(ps_model) == 95
 end
 
@@ -1424,15 +1421,7 @@ end
         ps_model.internal.container.variables[PSI.VariableKey{FlowActivePowerVariable, Line}(
             "",
         )][
-            "1-4-i_1_double_circuit",
-            1,
-        ],
-    ) == l1_parallel + l2_parallel
-    @test JuMP.upper_bound(
-        ps_model.internal.container.variables[PSI.VariableKey{FlowActivePowerVariable, Line}(
-            "",
-        )][
-            "1-4-i_2_double_circuit",
+            "1-4-i_double_circuit",
             1,
         ],
     ) == l1_parallel + l2_parallel

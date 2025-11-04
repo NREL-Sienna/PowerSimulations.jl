@@ -290,7 +290,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     arc_tuple::Tuple{Int, Int},
-    double_circuit::Set{PSY.ACTransmission},
+    double_circuit::PNM.BranchesParallel,
     T::Type{<:AbstractBranchFormulation},
     U::Type{<:PM.AbstractPowerModel},
 )
@@ -306,7 +306,7 @@ end
 function get_branch_to_pm(
     ix::Int,
     arc_tuple::Tuple{Int, Int},
-    series_chain::Vector{Any},
+    series_chain::PNM.BranchesSeries,
     T::Type{<:AbstractBranchFormulation},
     U::Type{<:PM.AbstractPowerModel},
 )

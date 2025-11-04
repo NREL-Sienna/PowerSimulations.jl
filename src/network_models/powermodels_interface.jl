@@ -472,7 +472,7 @@ function add_pm_variable_refs!(
                 var_type = getfield(ps_v, direction)
                 var_type === nothing && continue
                 branch_names =
-                    get_branch_argument_axis(network_reduction_data, d_type)
+                    get_branch_argument_variable_axis(network_reduction_data, d_type)
                 var_container = add_variable_container!(
                     container,
                     var_type,
@@ -486,7 +486,6 @@ function add_pm_variable_refs!(
                         reduced_branch_tracker,
                         arc_tuple,
                         typeof(var_type), # TODO: Make the mapping not rely on instances but types
-                        d_type,
                     )
                     if has_entry
                         @assert !isempty(tracker_container) name arc_tuple reduction

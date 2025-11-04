@@ -1,12 +1,9 @@
 mutable struct BranchReductionOptimizationTracker
     variable_dict::Dict{
-        Type{<:PSY.ACTransmission},
-        Dict{Type{<:ISOPT.VariableType}, Dict{Tuple{Int, Int}, Vector{JuMP.VariableRef}}},
+        Type{<:ISOPT.VariableType},
+        Dict{Tuple{Int, Int}, Vector{JuMP.VariableRef}},
     }
-    constraint_dict::Dict{
-        Type{<:PSY.ACTransmission},
-        Dict{Type{<:ISOPT.ConstraintType}, Dict{Tuple{Int, Int}, Vector{String}}},
-    }
+    constraint_dict::Dict{Type{<:ISOPT.ConstraintType}, Set{Tuple{Int, Int}}}
     number_of_steps::Int
 end
 
@@ -45,40 +42,34 @@ function search_for_reduced_branch_variable!(
     tracker::BranchReductionOptimizationTracker,
     arc_tuple::Tuple{Int, Int},
     ::Type{T},
-    ::Type{U},
 ) where {
     T <: VariableType,
-    U <: PSY.ACTransmission}
+}
+    variable_dict = tracker.variable_dict
+
     time_steps = get_number_of_steps(tracker)
-    if haskey(tracker.variable_dict, U)
-        type_tracker = tracker.variable_dict[U]
-        if haskey(type_tracker, T)
-            if haskey(type_tracker[T], arc_tuple)
-                return (true, type_tracker[T][arc_tuple])
-            else
-                type_tracker[T][arc_tuple] = Vector{JuMP.VariableRef}(undef, time_steps)
-                return (false, type_tracker[T][arc_tuple])
-            end
-        else
-            type_tracker[T] = _make_empty_tracker_dict(arc_tuple, time_steps)
-            return (false, type_tracker[T][arc_tuple])
-        end
+    if !haskey(variable_dict, T)
+        variable_dict[T] = _make_empty_tracker_dict(arc_tuple, time_steps)
+        return (false, variable_dict[T][arc_tuple])
     else
-        tracker.variable_dict[U] = Dict{T, Dict}()
-        tracker.variable_dict[U][T] = _make_empty_tracker_dict(arc_tuple, time_steps)
-        return (false, tracker.variable_dict[U][T][arc_tuple])
+        if haskey(variable_dict[T], arc_tuple)
+            return (true, variable_dict[T][arc_tuple])
+        else
+            variable_dict[T][arc_tuple] = Vector{JuMP.VariableRef}(undef, time_steps)
+            return (false, variable_dict[T][arc_tuple])
+        end
     end
     error("condition for reduced branch variable search not met")
 end
 
-function get_branch_argument_axis(
+function get_branch_argument_variable_axis(
     network_reduction_data::PNM.NetworkReductionData,
     ::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ACTransmission}
-    return get_branch_argument_axis(network_reduction_data, T)
+    return get_branch_argument_variable_axis(network_reduction_data, T)
 end
 
-function get_branch_argument_axis(
+function get_branch_argument_variable_axis(
     network_reduction_data::PNM.NetworkReductionData,
     ::Type{T},
 ) where {T <: PSY.ACTransmission}
@@ -86,37 +77,36 @@ function get_branch_argument_axis(
     return sort!(collect(keys(name_axis)))
 end
 
-function search_for_reduced_branch_constraint!(
-    tracker::BranchReductionOptimizationTracker,
-    arc_tuple::Tuple{Int, Int},
+function get_branch_argument_constraint_axis(
+    network_reduction_data::PNM.NetworkReductionData,
+    reduced_branch_tracker::BranchReductionOptimizationTracker,
+    ::IS.FlattenIteratorWrapper{T},
+    ::Type{U},
+) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
+    return get_branch_argument_constraint_axis(
+        network_reduction_data,
+        reduced_branch_tracker,
+        T,
+        U,
+    )
+end
+
+function get_branch_argument_constraint_axis(
+    network_reduction_data::PNM.NetworkReductionData,
+    reduced_branch_tracker::BranchReductionOptimizationTracker,
     ::Type{T},
     ::Type{U},
-    name::String,
-) where {
-    T <: ConstraintType,
-    U <: PSY.ACTransmission}
-    time_steps = get_number_of_steps(tracker)
-    if haskey(tracker.constraint_dict, U)
-        type_tracker = tracker.constraint_dict[U]
-        if haskey(type_tracker, T)
-            if haskey(type_tracker[T], arc_tuple)
-                return true
-            else
-                type_tracker[T][arc_tuple] = push!(Vector{String}(), name)
-                return false
-            end
-        else
-            type_tracker[T] = Dict{Tuple{Int, Int}, Vector{String}}(
-                arc_tuple => push!(Vector{String}(), name),
-            )
-            return false
+) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
+    name_axis = network_reduction_data.name_to_arc_map[T]
+    constraint_name_axis = Vector{String}()
+    arc_tuples_with_constraints =
+        get!(reduced_branch_tracker.constraint_dict, U, Set{Tuple{Int, Int}}())
+    for (branch_name, name_axis_tuple) in name_axis
+        arc_tuple = name_axis_tuple[1]
+        if !(arc_tuple in arc_tuples_with_constraints)
+            push!(constraint_name_axis, branch_name)
+            push!(arc_tuples_with_constraints, arc_tuple)
         end
-    else
-        tracker.constraint_dict[U] = Dict{T, Dict}()
-        tracker.constraint_dict[U][T] = Dict{Tuple{Int, Int}, Vector{String}}(
-            arc_tuple => push!(Vector{String}(), name),
-        )
-        return false
     end
-    error("condition for reduced branch variable search not met")
+    return constraint_name_axis
 end
