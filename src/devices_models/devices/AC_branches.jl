@@ -159,6 +159,21 @@ end
 
 function add_variables!(
     container::OptimizationContainer,
+    ::Type{S},
+    network_model::NetworkModel{CopperPlatePowerModel},
+    devices::IS.FlattenIteratorWrapper{T},
+    formulation::U,
+) where {
+    S <: AbstractACActivePowerFlow,
+    T <: PSY.ACTransmission,
+    U <: AbstractBranchFormulation,
+}
+    @debug "AC Branches of type $(T) do not require flow variables $S in CopperPlatePowerModel."
+    return
+end
+
+function add_variables!(
+    container::OptimizationContainer,
     ::Type{FlowActivePowerVariable},
     network_model::NetworkModel{CopperPlatePowerModel},
     devices::IS.FlattenIteratorWrapper{T},
