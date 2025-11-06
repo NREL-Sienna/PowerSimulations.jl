@@ -172,31 +172,6 @@ function add_variables!(
     return
 end
 
-function add_variables!(
-    container::OptimizationContainer,
-    ::Type{FlowActivePowerVariable},
-    network_model::NetworkModel{CopperPlatePowerModel},
-    devices::IS.FlattenIteratorWrapper{T},
-    formulation::U,
-) where {T <: PSY.Branch, U <: AbstractBranchFormulation}
-    inter_network_branches = T[]
-    for d in devices
-        ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
-        ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
-        if ref_bus_from != ref_bus_to
-            push!(inter_network_branches, d)
-        else
-            @warn(
-                "Line $(PSY.get_name(d)) is in the same subnetwork, so the line will not be modeled."
-            )
-        end
-    end
-    if !isempty(inter_network_branches)
-        add_variables!(container, FlowActivePowerVariable, inter_network_branches, U())
-    end
-    return
-end
-
 function _get_flow_variable_vector(
     container::OptimizationContainer,
     ::NetworkModel{<:PM.AbstractDCPModel},
