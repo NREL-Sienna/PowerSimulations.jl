@@ -1606,18 +1606,17 @@ end
 
 function add_to_expression!(
     container::OptimizationContainer,
-    ::Type{T},
+    ::Type{ActivePowerBalance},
     ::Type{FlowActivePowerVariable},
     devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
     ::DeviceModel{PSY.AreaInterchange, W},
     network_model::NetworkModel{U},
 ) where {
-    T <: ActivePowerBalance,
-    U <: PM.AbstractActivePowerModel,
     W <: AbstractBranchFormulation,
+    U <: PM.AbstractActivePowerModel,
 }
     flow_variable = get_variable(container, FlowActivePowerVariable(), PSY.AreaInterchange)
-    expression = get_expression(container, T(), PSY.Area)
+    expression = get_expression(container, ActivePowerBalance(), PSY.Area)
     for d in devices
         area_from_name = PSY.get_name(PSY.get_from_area(d))
         area_to_name = PSY.get_name(PSY.get_to_area(d))
