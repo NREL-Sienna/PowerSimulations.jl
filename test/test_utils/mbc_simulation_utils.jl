@@ -17,8 +17,6 @@ const DEFAULT_FORMULATIONS =
     )
 
 # debugging code for inspecting objective functions -- ignore
-# TODO LK group by folders.
-const DOWNLOADS = joinpath(homedir(), "Downloads")
 function format_objective_function_file(filepath::String)
     if !isfile(filepath)
         println("Error: File '$filepath' does not exist.")
@@ -168,11 +166,11 @@ function run_generic_mbc_prob(
         adj = is_decremental ? "decr" : "incr"
         save_objective_function(
             model,
-            joinpath(DOWNLOADS, "$(filename)_$(adj)_prob_objective_function.txt"),
+            "$(filename)_$(adj)_prob_objective_function.txt",
         )
         save_constraints(
             model,
-            joinpath(DOWNLOADS, "$(filename)_$(adj)_prob_constraints.txt"),
+            "$(filename)_$(adj)_prob_constraints.txt",
         )
     end
     return model, res
@@ -226,11 +224,11 @@ function run_generic_mbc_sim(
         adj = is_decremental ? "decr" : "incr"
         save_objective_function(
             model,
-            joinpath(DOWNLOADS, "$(filename)_$(adj)_sim_objective_function.txt"),
+            "$(filename)_$(adj)_sim_objective_function.txt",
         )
         save_constraints(
             model,
-            joinpath(DOWNLOADS, "$(filename)_$(adj)_sim_constraints.txt"),
+            "$(filename)_$(adj)_sim_constraints.txt",
         )
     end
     return model, res
