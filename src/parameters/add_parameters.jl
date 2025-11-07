@@ -395,6 +395,17 @@ calc_additional_axes(
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.Component} = ()
 
+calc_additional_axes(
+    ::OptimizationContainer,
+    ::T,
+    ::U,
+    ::ServiceModel{D, W},
+) where {
+    T <: ParameterType,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractServiceFormulation,
+} where {D <: PSY.Service} = ()
+
 _get_max_tranches(data::Vector{IS.PiecewiseStepData}) = maximum(length.(data))
 _get_max_tranches(data::TimeSeries.TimeArray) = _get_max_tranches(values(data))
 _get_max_tranches(data::AbstractDict) = maximum(_get_max_tranches.(values(data)))
@@ -568,8 +579,7 @@ function _add_parameters!(
     name = PSY.get_name(service)
     ts_uuid = string(IS.get_time_series_uuid(ts_type, service, ts_name))
     @debug "adding" T U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
-    # TODO: MBC JD Implement this method when passing a service model
-    additional_axes = () #_additional_axes(container, T(), [service], model)
+    additional_axes = calc_additional_axes(container, T(), [service], model)
     parameter_container = add_param_container!(
         container,
         T(),
