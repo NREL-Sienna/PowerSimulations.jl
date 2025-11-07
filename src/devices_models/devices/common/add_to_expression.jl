@@ -1613,7 +1613,7 @@ function add_to_expression!(
     network_model::NetworkModel{U},
 ) where {
     W <: AbstractBranchFormulation,
-    U <: PM.AbstractActivePowerModel,
+    U <: Union{AreaBalancePowerModel, AreaPTDFPowerModel},
 }
     flow_variable = get_variable(container, FlowActivePowerVariable(), PSY.AreaInterchange)
     expression = get_expression(container, ActivePowerBalance(), PSY.Area)
@@ -1633,6 +1633,21 @@ function add_to_expression!(
             )
         end
     end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{ActivePowerBalance},
+    ::Type{FlowActivePowerVariable},
+    devices::IS.FlattenIteratorWrapper{PSY.AreaInterchange},
+    ::DeviceModel{PSY.AreaInterchange, W},
+    network_model::NetworkModel{U},
+) where {
+    W <: AbstractBranchFormulation,
+    U <: PM.AbstractActivePowerModel,
+}
+    @debug "AreaInterchanges do not contribute to ActivePowerBalance expressions in non-area models."
     return
 end
 
