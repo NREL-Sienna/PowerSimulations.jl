@@ -1,5 +1,3 @@
-# TODO call this for non-thermal generators too?
-
 # TODO: Security constrained models implement the correct functions for the model
 function has_security_arguments(device_model::DeviceModel)::Bool
     return true
