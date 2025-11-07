@@ -401,9 +401,6 @@ struct AvailableStatusChangeCountdownParameter <: EventParameter end
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 should_write_resulting_value(::Type{<:EventParameter}) = true
 
-# TODO in a future PR do this for all ObjectiveFunctionParameters, right now we don't
-# support 3D outputs (e.g., startup costs are 2D where eltype is 3-tuples, slopes and
-# breakpoints are fully three-dimensional)
 should_write_resulting_value(::Type{<:FuelCostParameter}) = true
 should_write_resulting_value(::Type{<:ShutdownCostParameter}) = true
 should_write_resulting_value(::Type{<:AbstractCostAtMinParameter}) = true
