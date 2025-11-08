@@ -508,6 +508,7 @@ function _assign_subnetworks_to_buses(
     for bus in PSI.get_available_components(model, PSY.ACBus, sys)
         bus_no = PSY.get_number(bus)
         mapped_bus_no = PNM.get_mapped_bus_number(network_reduction, bus)
+        mapped_bus_no ∈ network_reduction.removed_buses && continue
         if haskey(temp_bus_map, bus_no)
             model.bus_area_map[bus] = temp_bus_map[bus_no]
             continue
