@@ -238,7 +238,7 @@ function instantiate_network_model!(
         ybus = PNM.Ybus(sys)
     end
     model.network_reduction = deepcopy(PNM.get_network_reduction_data(ybus))
-    #if !isempty(model.network_reduction)
+    #if !isempty(model.network_reductionget_net_reduction_data)
     # TODO: Network reimplement this when it becomes necessary. We don't have any
     # reductions that are incompatible right now.
     # check_network_reduction_compatibility(T)
