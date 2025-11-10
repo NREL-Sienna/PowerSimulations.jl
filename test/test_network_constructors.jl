@@ -1293,9 +1293,9 @@ end
     template = ProblemTemplate(
         NetworkModel(PTDFPowerModel;
             PTDF_matrix = ptdf,
-            reduce_radial_branches = PNM.has_radial_reduction(ptdf.net_reduction_data),
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
             reduce_degree_two_branches = PNM.has_degree_two_reduction(
-                ptdf.net_reduction_data,
+                ptdf.network_reduction_data,
             ),
             use_slacks = false),
     )
@@ -1317,9 +1317,9 @@ end
     template = ProblemTemplate(
         NetworkModel(PTDFPowerModel;
             PTDF_matrix = ptdf,
-            reduce_radial_branches = PNM.has_radial_reduction(ptdf.net_reduction_data),
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
             reduce_degree_two_branches = PNM.has_degree_two_reduction(
-                ptdf.net_reduction_data,
+                ptdf.network_reduction_data,
             ),
             use_slacks = false),
     )
@@ -1340,9 +1340,9 @@ end
     template = ProblemTemplate(
         NetworkModel(PTDFPowerModel;
             PTDF_matrix = ptdf,
-            reduce_radial_branches = PNM.has_radial_reduction(ptdf.net_reduction_data),
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
             reduce_degree_two_branches = PNM.has_degree_two_reduction(
-                ptdf.net_reduction_data,
+                ptdf.network_reduction_data,
             ),
             use_slacks = false),
     )
@@ -1380,9 +1380,9 @@ end
     template = ProblemTemplate(
         NetworkModel(PTDFPowerModel;
             PTDF_matrix = ptdf,
-            reduce_radial_branches = PNM.has_radial_reduction(ptdf.net_reduction_data),
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
             reduce_degree_two_branches = PNM.has_degree_two_reduction(
-                ptdf.net_reduction_data,
+                ptdf.network_reduction_data,
             ),
             use_slacks = false),
     )
@@ -1403,9 +1403,9 @@ end
     template = ProblemTemplate(
         NetworkModel(PTDFPowerModel;
             PTDF_matrix = ptdf,
-            reduce_radial_branches = PNM.has_radial_reduction(ptdf.net_reduction_data),
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
             reduce_degree_two_branches = PNM.has_degree_two_reduction(
-                ptdf.net_reduction_data,
+                ptdf.network_reduction_data,
             ),
             use_slacks = false),
     )
@@ -1424,9 +1424,9 @@ end
     template = ProblemTemplate(
         NetworkModel(PTDFPowerModel;
             PTDF_matrix = ptdf,
-            reduce_radial_branches = PNM.has_radial_reduction(ptdf.net_reduction_data),
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
             reduce_degree_two_branches = PNM.has_degree_two_reduction(
-                ptdf.net_reduction_data,
+                ptdf.network_reduction_data,
             ),
             use_slacks = false),
     )
@@ -1472,51 +1472,53 @@ end
     sys = build_system(PSITestSystems, "case11_network_reductions")
     add_dummy_time_series_data!(sys)
     for (network_model, optimizer) in NETWORKS_FOR_TESTING
-        # Only default reductions:
-        template = ProblemTemplate(
-            NetworkModel(network_model;
-                reduce_radial_branches = false,
-                reduce_degree_two_branches = false,
-                use_slacks = false),
-        )
-        set_device_model!(template, Line, StaticBranch)
-        set_device_model!(template, Transformer2W, StaticBranch)
-        ps_model = DecisionModel(template, sys; optimizer = optimizer)
-        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.ModelBuildStatus.BUILT
-        JuMPmodel = PSI.get_jump_model(ps_model)
-        n_vars = JuMP.num_variables(JuMPmodel)
+        @testset "Network Model: $(network_model)" begin
+            # Only default reductions:
+            template = ProblemTemplate(
+                NetworkModel(network_model;
+                    reduce_radial_branches = false,
+                    reduce_degree_two_branches = false,
+                    use_slacks = false),
+            )
+            set_device_model!(template, Line, StaticBranch)
+            set_device_model!(template, Transformer2W, StaticBranch)
+            ps_model = DecisionModel(template, sys; optimizer = optimizer)
+            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
+            JuMPmodel = PSI.get_jump_model(ps_model)
+            n_vars = JuMP.num_variables(JuMPmodel)
 
-        # Radial reductions:
-        template = ProblemTemplate(
-            NetworkModel(network_model;
-                reduce_radial_branches = true,
-                reduce_degree_two_branches = false,
-                use_slacks = false),
-        )
-        set_device_model!(template, Line, StaticBranch)
-        set_device_model!(template, Transformer2W, StaticBranch)
-        ps_model = DecisionModel(template, sys; optimizer = optimizer)
-        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.ModelBuildStatus.BUILT
-        JuMPmodel = PSI.get_jump_model(ps_model)
-        n_vars_radial = JuMP.num_variables(JuMPmodel)
+            # Radial reductions:
+            template = ProblemTemplate(
+                NetworkModel(network_model;
+                    reduce_radial_branches = true,
+                    reduce_degree_two_branches = false,
+                    use_slacks = false),
+            )
+            set_device_model!(template, Line, StaticBranch)
+            set_device_model!(template, Transformer2W, StaticBranch)
+            ps_model = DecisionModel(template, sys; optimizer = optimizer)
+            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
+            JuMPmodel = PSI.get_jump_model(ps_model)
+            n_vars_radial = JuMP.num_variables(JuMPmodel)
 
-        # Radial + degree two reductions:
-        template = ProblemTemplate(
-            NetworkModel(network_model;
-                reduce_radial_branches = true,
-                reduce_degree_two_branches = true,
-                use_slacks = false),
-        )
-        set_device_model!(template, Line, StaticBranch)
-        set_device_model!(template, Transformer2W, StaticBranch)
-        ps_model = DecisionModel(template, sys; optimizer = optimizer)
-        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.ModelBuildStatus.BUILT
-        JuMPmodel = PSI.get_jump_model(ps_model)
-        n_vars_radial_d2 = JuMP.num_variables(JuMPmodel)
+            # Radial + degree two reductions:
+            template = ProblemTemplate(
+                NetworkModel(network_model;
+                    reduce_radial_branches = true,
+                    reduce_degree_two_branches = true,
+                    use_slacks = false),
+            )
+            set_device_model!(template, Line, StaticBranch)
+            set_device_model!(template, Transformer2W, StaticBranch)
+            ps_model = DecisionModel(template, sys; optimizer = optimizer)
+            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
+            JuMPmodel = PSI.get_jump_model(ps_model)
+            n_vars_radial_d2 = JuMP.num_variables(JuMPmodel)
 
-        @test n_vars_radial_d2 < n_vars_radial < n_vars
+            @test n_vars_radial_d2 < n_vars_radial < n_vars
+        end
     end
 end
