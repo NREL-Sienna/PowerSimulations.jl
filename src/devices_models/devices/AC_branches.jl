@@ -528,8 +528,6 @@ function add_constraints!(
         reduction_entry = all_branch_maps_by_type[reduction][T][arc]
         limits = get_min_max_limits(reduction_entry, FlowRateConstraint, U)
         for t in time_steps
-            con_ub[name, t]
-            array[name, t]
             con_ub[name, t] =
                 JuMP.@constraint(get_jump_model(container),
                     array[name, t] -
