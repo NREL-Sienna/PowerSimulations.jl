@@ -102,6 +102,43 @@ end
     moi_tests(model, 984, 0, 576, 216, 168, true)
 end
 
+@testset "Test Reserves with time varying cost" begin
+    template = get_thermal_standard_uc_template()
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve1"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve11"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve2"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
+    )
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
+    # replace fixed cost curve with constant time series
+    rdc = first(get_components(PSY.ReserveDemandCurve, c_sys5_uc))
+    cost_curve = get_variable(rdc)
+    cost_curve_ts = make_deterministic_ts(
+        c_sys5_uc,
+        "ordc_cost_curve",
+        get_function_data(cost_curve),
+        (0.0, 0.0, 0.0), # no change: cost curve at all timesteps is same
+        (0.0, 0.0, 0.0),
+    )
+    ts_key = add_time_series!(c_sys5_uc, rdc, cost_curve_ts)
+    set_variable!(rdc, ts_key)
+    # TODO LK: fails currently. yet to implement.
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+end
+
 @testset "Test Reserves from Thermal Standard UC with NonSpinningReserve" begin
     template = get_thermal_standard_uc_template()
     set_device_model!(

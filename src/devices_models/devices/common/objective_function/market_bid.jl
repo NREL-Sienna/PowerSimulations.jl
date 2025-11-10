@@ -568,7 +568,6 @@ function _add_pwl_constraint!(
     # just look up what it is currently fixed to and use that here without worrying about
     # updating.
     if _include_constant_min_gen_power_in_constraint(component, U(), D())
-        # TODO this seems kind of redundant with the
         sum_pwl_vars += jump_fixed_value(first(break_points))::Float64
     elseif _include_min_gen_power_in_constraint(component, U(), D())
         on_vars = get_variable(container, OnVariable(), T)
@@ -818,7 +817,7 @@ end
 ########## PWL for StepwiseCostReserve  ##########
 ##################################################
 
-# Not touching this in PR #1303, TODO figure it out later -GKS
+# TODO LK: implement time-varying ReserveDemandCurve.
 function _add_pwl_term!(
     container::OptimizationContainer,
     component::T,
