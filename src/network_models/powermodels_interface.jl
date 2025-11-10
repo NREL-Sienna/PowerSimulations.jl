@@ -464,7 +464,7 @@ function add_pm_variable_refs!(
     pm_variable_types::Base.KeySet,
     time_steps::UnitRange{Int},
 )
-    network_reduction_data = get_network_reduction(model)
+    net_reduction_data = get_network_reduction(model)
     reduced_branch_tracker = get_reduced_branch_tracker(model)
     for d_type in device_types, (pm_v, ps_v) in pm_variable_map[d_class]
         if pm_v in pm_variable_types
@@ -472,7 +472,7 @@ function add_pm_variable_refs!(
                 var_type = getfield(ps_v, direction)
                 var_type === nothing && continue
                 branch_names =
-                    get_branch_argument_variable_axis(network_reduction_data, d_type)
+                    get_branch_argument_variable_axis(net_reduction_data, d_type)
                 var_container = add_variable_container!(
                     container,
                     var_type,
@@ -481,7 +481,7 @@ function add_pm_variable_refs!(
                     time_steps,
                 )
                 for (name, (arc_tuple, reduction)) in
-                    PNM.get_name_to_arc_map(network_reduction_data)[d_type]
+                    PNM.get_name_to_arc_map(net_reduction_data, d_type)
                     has_entry, tracker_container = search_for_reduced_branch_variable!(
                         reduced_branch_tracker,
                         arc_tuple,

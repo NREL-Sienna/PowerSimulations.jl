@@ -262,11 +262,12 @@ end
 
 function get_branch_to_pm(
     ix::Int,
-    ::Tuple{Int, Int},
+    arc_tuple::Tuple{Int, Int},
     branch::PNM.ThreeWindingTransformerWinding{PSY.Transformer3W},
-    ::Type{<:AbstractBranchFormulation},
+    ::Type{StaticBranchUnbounded},
     ::Type{<:PM.AbstractPowerModel},
 )
+    arc_tuple
     PM_branch = Dict{String, Any}(
         "br_r" => PSY.get_r(branch),
         "rate_a" => PSY.get_rating(branch),
@@ -292,30 +293,60 @@ end
 
 function get_branch_to_pm(
     ix::Int,
-    ::Tuple{Int, Int},
-    branch::PNM.ThreeWindingTransformerWinding{PSY.PhaseShiftingTransformer3W},
-    ::Type{<:AbstractBranchFormulation},
+    arc_tuple::Tuple{Int, Int},
+    branch::PNM.ThreeWindingTransformerWinding{PSY.Transformer3W},
+    ::Type{StaticBranch},
     ::Type{<:PM.AbstractPowerModel},
 )
     PM_branch = Dict{String, Any}(
-        "br_r" => PSY.get_r(branch),
-        "rate_a" => PSY.get_rating(branch),
+        "br_r" => PNM.get_equivalent_r(branch),
+        "rate_a" => PNM.get_equivalent_rating(branch),
         "shift" => 0.0,
-        "rate_b" => PSY.get_rating(branch),
-        "br_x" => PSY.get_x(branch),
-        "rate_c" => PSY.get_rating(branch),
+        "rate_b" => PNM.get_equivalent_rating(branch),
+        "br_x" => PNM.get_equivalent_x(branch),
+        "rate_c" => PNM.get_equivalent_rating(branch),
         "g_to" => 0.0,
         "g_fr" => 0.0,
-        "b_fr" => PSY.get_b(branch).from,
-        "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
-        "br_status" => Float64(PSY.get_available(branch)),
-        "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
-        "b_to" => PSY.get_b(branch).to,
+        "b_fr" => PNM.get_equivalent_b(branch).from,
+        "f_bus" => arc_tuple[1],
+        "br_status" => Float64(PNM.get_equivalent_available(branch)),
+        "t_bus" => arc_tuple[2],
+        "b_to" => PNM.get_equivalent_b(branch).to,
         "index" => ix,
-        "angmin" => PSY.get_angle_limits(branch).min,
-        "angmax" => PSY.get_angle_limits(branch).max,
-        "transformer" => false,
+        "angmin" => -π / 2,
+        "angmax" => π / 2,
+        "transformer" => true,
         "tap" => 1.0,
+    )
+    return PM_branch
+end
+
+function get_branch_to_pm(
+    ix::Int,
+    arc_tuple::Tuple{Int, Int},
+    branch::PNM.ThreeWindingTransformerWinding{PSY.PhaseShiftingTransformer3W},
+    ::Type{StaticBranchUnbounded},
+    ::Type{<:PM.AbstractPowerModel},
+)
+    PM_branch = Dict{String, Any}(
+        "br_r" => PNM.get_equivalent_r(branch),
+        "rate_a" => PNM.get_equivalent_rating(branch),
+        "shift" => 0.0,
+        "rate_b" => PNM.get_equivalent_rating(branch),
+        "br_x" => PNM.get_equivalent_x(branch),
+        "rate_c" => PNM.get_equivalent_rating(branch),
+        "g_to" => 0.0,
+        "g_fr" => 0.0,
+        "b_fr" => PNM.get_equivalent_b(branch).from,
+        "f_bus" => arc_tuple[1],
+        "br_status" => Float64(PNM.get_equivalent_available(branch)),
+        "t_bus" => arc_tuple[2],
+        "b_to" => PNM.get_equivalent_b(branch).to,
+        "index" => ix,
+        "angmin" => -π / 2,
+        "angmax" => π / 2,
+        "transformer" => true,
+        "tap" => PNM.get_equivalent_tap(branch),
     )
     return PM_branch
 end
@@ -599,18 +630,18 @@ function get_branches_to_pm(
     PMmap_br = Dict{Tuple{Int, Int}, PM_MAP_TUPLE}()
     net_reduction_data = get_network_reduction(network_model)
     all_branch_maps_by_type = net_reduction_data.all_branch_maps_by_type
+    name_to_arc_maps = PNM.get_name_to_arc_maps(net_reduction_data)
     ix = 1
     @assert !isempty(branch_template)
-    name_to_arc_map = PNM.get_name_to_arc_map(net_reduction_data)
     modeled_arc_tuples = Set{Tuple{Int, Int}}()
     for (d, device_model) in branch_template
         comp_type = get_component_type(device_model)
-        if comp_type <: PSY.TwoTerminalHVDC || !(comp_type <: T) ||
-           !haskey(name_to_arc_map, comp_type)
+        if comp_type <: PSY.TwoTerminalHVDC || !haskey(name_to_arc_maps, comp_type)
             @info "No $d Branches to process in PowerModels data."
             continue
         end
-        for (_, (arc_tuple, reduction)) in name_to_arc_map[comp_type]
+        name_to_arc_map = PNM.get_name_to_arc_map(net_reduction_data, comp_type)
+        for (_, (arc_tuple, reduction)) in name_to_arc_map
             arc_tuple ∈ modeled_arc_tuples && continue # This is the PowerModels equivalent of the branch and constraint tracker.
             reduction_entry = all_branch_maps_by_type[reduction][comp_type][arc_tuple]
             PM_branches["$(ix)"] = get_branch_to_pm(
