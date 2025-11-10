@@ -1574,12 +1574,11 @@ function _get_branch_map(
     inter_area_branch_map =
     # This method uses ACBranch to support HVDC
         Dict{Tuple{String, String}, Dict{DataType, Vector{<:PSY.ACBranch}}}()
-    name_to_arc_map = PNM.get_name_to_arc_map(net_reduction_data)
+    name_to_arc_maps = PNM.get_name_to_arc_maps(net_reduction_data)
     for br_type in network_model.modeled_branch_types
-        if !haskey(name_to_arc_map, br_type)
-            continue
-        end
-        for (name, (arc, reduction)) in name_to_arc_map[br_type]
+        !haskey(name_to_arc_maps, br_type) && continue
+        name_to_arc_map = PNM.get_name_to_arc_map(net_reduction_data, br_type)
+        for (name, (arc, reduction)) in name_to_arc_map
             reduction_entry = all_branch_maps_by_type[reduction][br_type][arc]
             area_from, area_to = _get_area_from_to(reduction_entry)
             if area_from != area_to
@@ -1610,6 +1609,24 @@ end
 function _get_area_from_to(reduction_entry::PSY.ACBranch)
     area_from = PSY.get_area(PSY.get_arc(reduction_entry).from)
     area_to = PSY.get_area(PSY.get_arc(reduction_entry).to)
+    return area_from, area_to
+end
+
+function _get_area_from_to(reduction_entry::PNM.ThreeWindingTransformerWinding)
+    tfw = get_transformer(reduction_entry)
+    winding_int = get_winding_number(reduction_entry)
+    if winding_int == 1
+        area_from = PSY.get_area(PSY.get_primary_star_arc(tfw).from)
+        area_to = PSY.get_area(PSY.primary_star_arc(tfw).to)
+    elseif winding_int == 2
+        area_from = PSY.get_area(PSY.get_secondary_star_arc(tfw).from)
+        area_to = PSY.get_area(PSY.get_secondary_star_arc(tfw).to_index)
+    elseif winding_int == 3
+        area_from = PSY.get_area(PSY.get_tertiary_star_arc(tfw).from)
+        area_to = PSY.get_area(PSY.get_tertiary_star_arc(tfw).to)
+    else
+        @assert false "Winding number $winding_int is not valid for three-winding transformer"
+    end
     return area_from, area_to
 end
 

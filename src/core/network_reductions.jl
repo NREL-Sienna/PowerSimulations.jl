@@ -63,28 +63,36 @@ function search_for_reduced_branch_variable!(
 end
 
 function get_branch_argument_variable_axis(
-    network_reduction_data::PNM.NetworkReductionData,
+    net_reduction_data::PNM.NetworkReductionData,
     ::IS.FlattenIteratorWrapper{T},
 ) where {T <: PSY.ACTransmission}
-    return get_branch_argument_variable_axis(network_reduction_data, T)
+    return get_branch_argument_variable_axis(net_reduction_data, T)
 end
 
 function get_branch_argument_variable_axis(
-    network_reduction_data::PNM.NetworkReductionData,
+    net_reduction_data::PNM.NetworkReductionData,
     ::Type{T},
 ) where {T <: PSY.ACTransmission}
-    name_axis = network_reduction_data.name_to_arc_map[T]
+    name_axis = net_reduction_data.name_to_arc_map[T]
+    return collect(keys(name_axis))
+end
+
+function get_branch_argument_variable_axis(
+    net_reduction_data::PNM.NetworkReductionData,
+    ::Type{PowerNetworkMatrices.ThreeWindingTransformerWinding{T}},
+) where {T <: PSY.ThreeWindingTransformer}
+    name_axis = net_reduction_data.name_to_arc_map[T]
     return collect(keys(name_axis))
 end
 
 function get_branch_argument_constraint_axis(
-    network_reduction_data::PNM.NetworkReductionData,
+    net_reduction_data::PNM.NetworkReductionData,
     reduced_branch_tracker::BranchReductionOptimizationTracker,
     ::IS.FlattenIteratorWrapper{T},
     ::Type{U},
 ) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
     return get_branch_argument_constraint_axis(
-        network_reduction_data,
+        net_reduction_data,
         reduced_branch_tracker,
         T,
         U,
@@ -92,12 +100,12 @@ function get_branch_argument_constraint_axis(
 end
 
 function get_branch_argument_constraint_axis(
-    network_reduction_data::PNM.NetworkReductionData,
+    net_reduction_data::PNM.NetworkReductionData,
     reduced_branch_tracker::BranchReductionOptimizationTracker,
     ::Type{T},
     ::Type{U},
 ) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
-    name_axis = network_reduction_data.name_to_arc_map[T]
+    name_axis = net_reduction_data.name_to_arc_map[T]
     constraint_name_axis = Vector{String}()
     arc_tuples_with_constraints =
         get!(reduced_branch_tracker.constraint_dict, U, Set{Tuple{Int, Int}}())
