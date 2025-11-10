@@ -1293,9 +1293,9 @@ end
     template = ProblemTemplate(
         NetworkModel(PTDFPowerModel;
             PTDF_matrix = ptdf,
-            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.net_reduction_data),
             reduce_degree_two_branches = PNM.has_degree_two_reduction(
-                ptdf.network_reduction_data,
+                ptdf.net_reduction_data,
             ),
             use_slacks = false),
     )
@@ -1317,9 +1317,9 @@ end
     template = ProblemTemplate(
         NetworkModel(PTDFPowerModel;
             PTDF_matrix = ptdf,
-            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.net_reduction_data),
             reduce_degree_two_branches = PNM.has_degree_two_reduction(
-                ptdf.network_reduction_data,
+                ptdf.net_reduction_data,
             ),
             use_slacks = false),
     )
@@ -1340,9 +1340,9 @@ end
     template = ProblemTemplate(
         NetworkModel(PTDFPowerModel;
             PTDF_matrix = ptdf,
-            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.net_reduction_data),
             reduce_degree_two_branches = PNM.has_degree_two_reduction(
-                ptdf.network_reduction_data,
+                ptdf.net_reduction_data,
             ),
             use_slacks = false),
     )
@@ -1380,9 +1380,9 @@ end
     template = ProblemTemplate(
         NetworkModel(PTDFPowerModel;
             PTDF_matrix = ptdf,
-            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.net_reduction_data),
             reduce_degree_two_branches = PNM.has_degree_two_reduction(
-                ptdf.network_reduction_data,
+                ptdf.net_reduction_data,
             ),
             use_slacks = false),
     )
@@ -1403,9 +1403,9 @@ end
     template = ProblemTemplate(
         NetworkModel(PTDFPowerModel;
             PTDF_matrix = ptdf,
-            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.net_reduction_data),
             reduce_degree_two_branches = PNM.has_degree_two_reduction(
-                ptdf.network_reduction_data,
+                ptdf.net_reduction_data,
             ),
             use_slacks = false),
     )
@@ -1424,9 +1424,9 @@ end
     template = ProblemTemplate(
         NetworkModel(PTDFPowerModel;
             PTDF_matrix = ptdf,
-            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.net_reduction_data),
             reduce_degree_two_branches = PNM.has_degree_two_reduction(
-                ptdf.network_reduction_data,
+                ptdf.net_reduction_data,
             ),
             use_slacks = false),
     )

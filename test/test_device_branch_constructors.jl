@@ -848,9 +848,9 @@ end
 
     # Add Transformer3W device model when available
     # Test with DC Power Flow Model
-    for model in [DCPPowerModel, PTDFPowerModel]
+    for net_model in [DCPPowerModel, PTDFPowerModel]
         template = get_template_dispatch_with_network(
-            NetworkModel(model; PTDF_matrix = PTDF(system)),
+            NetworkModel(net_model; PTDF_matrix = PTDF(system)),
         )
         # Set device model for Transformer3W
         set_device_model!(template, DeviceModel(Transformer3W, StaticBranch))
@@ -876,14 +876,10 @@ end
         )
     end
 
-    # TODO: Test with AC Power Flow Model
-    # template_ac = get_thermal_dispatch_template_network(ACPPowerModel)
-    # set_device_model!(template_ac, DeviceModel(Transformer3W, StaticBranch))
-    # model_ac = DecisionModel(template_ac, system; optimizer = ipopt_optimizer)
-    # @test build!(model_ac; output_dir = mktempdir(; cleanup = true)) ==
-    #       PSI.ModelBuildStatus.BUILT
-    # @test solve!(model_ac) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-
-    @info "Transformer3W test scaffolding created. System modified with new bus, load, and generator at Bus 100."
-    @info "TODO: Add Transformer3W component creation and model tests once the type is available in PowerSystems.jl"
+    template_ac = get_thermal_dispatch_template_network(ACPPowerModel)
+    set_device_model!(template_ac, DeviceModel(Transformer3W, StaticBranch))
+    model_ac = DecisionModel(template_ac, system; optimizer = ipopt_optimizer)
+    @test build!(model_ac; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(model_ac) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
