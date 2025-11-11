@@ -4,6 +4,13 @@ mutable struct BranchReductionOptimizationTracker
         Dict{Tuple{Int, Int}, Vector{JuMP.VariableRef}},
     }
     constraint_dict::Dict{Type{<:ISOPT.ConstraintType}, Set{Tuple{Int, Int}}}
+    constraint_map_by_type::Dict{
+        Type{<:ISOPT.ConstraintType},
+        Dict{
+            Type{<:PSY.ACTransmission},
+            SortedDict{String, Tuple{Tuple{Int, Int}, String}},
+        },
+    }
     number_of_steps::Int
 end
 
@@ -11,6 +18,9 @@ get_variable_dict(reduction_tracker::BranchReductionOptimizationTracker) =
     reduction_tracker.variable_dict
 get_constraint_dict(reduction_tracker::BranchReductionOptimizationTracker) =
     reduction_tracker.constraint_dict
+get_constraint_map_by_type(reduction_tracker::BranchReductionOptimizationTracker) =
+    reduction_tracker.constraint_map_by_type
+
 get_number_of_steps(reduction_tracker::BranchReductionOptimizationTracker) =
     reduction_tracker.number_of_steps
 set_number_of_steps!(reduction_tracker, number_of_steps) =
@@ -29,7 +39,7 @@ Base.empty!(
 end
 
 function BranchReductionOptimizationTracker()
-    return BranchReductionOptimizationTracker(Dict(), Dict(), 0)
+    return BranchReductionOptimizationTracker(Dict(), Dict(), Dict(), 0)
 end
 
 function _make_empty_tracker_dict(arc_tuple::Tuple{Int, Int}, num_steps::Int)
@@ -105,16 +115,27 @@ function get_branch_argument_constraint_axis(
     ::Type{T},
     ::Type{U},
 ) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
+    constraint_tracker = get_constraint_dict(reduced_branch_tracker)
+    constraint_map_by_type = get_constraint_map_by_type(reduced_branch_tracker)
     name_axis = net_reduction_data.name_to_arc_map[T]
-    constraint_name_axis = Vector{String}()
     arc_tuples_with_constraints =
-        get!(reduced_branch_tracker.constraint_dict, U, Set{Tuple{Int, Int}}())
+        get!(constraint_tracker, U, Set{Tuple{Int, Int}}())
+    constraint_map = get!(
+        constraint_map_by_type,
+        U,
+        Dict{
+            Type{<:PSY.ACTransmission},
+            SortedDict{String, Tuple{Tuple{Int, Int}, String}},
+        }(),
+    )
+    constraint_submap =
+        get!(constraint_map, T, SortedDict{String, Tuple{Tuple{Int, Int}, String}}())
     for (branch_name, name_axis_tuple) in name_axis
         arc_tuple = name_axis_tuple[1]
         if !(arc_tuple in arc_tuples_with_constraints)
-            push!(constraint_name_axis, branch_name)
+            constraint_submap[branch_name] = name_axis_tuple
             push!(arc_tuples_with_constraints, arc_tuple)
         end
     end
-    return constraint_name_axis
+    return collect(keys(constraint_submap))
 end
