@@ -6,12 +6,12 @@
 
 * * *
 
-## LosslessLine
+## LossLessLine
 
-`LosslessLine` models are used with `PSY.DCBranch` models.
+`LossLessLine` models are used with `PSY.DCBranch` models.
 
 ```@docs
-LosslessLine
+LossLessLine
 ```
 
 **Variables:**
@@ -44,12 +44,12 @@ No constraints are added to the function.
 
 * * *
 
-## LosslessConverter
+## LossLessConverter
 
 Converters are used to interface the AC Buses with DC Buses.
 
 ```@docs
-LosslessConverter
+LossLessConverter
 ```
 
 **Variables:**
