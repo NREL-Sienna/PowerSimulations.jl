@@ -90,7 +90,7 @@ function _make_temp_component_map(pf_data::PFS.PowerFlowData, sys::PSY.System)
     temp_component_map[PSY.ACBus] =
         Dict(
             PSY.get_name(c) => PNM.get_bus_index(PSY.get_number(c), bus_lookup, nrd) for
-            c in get_components(PSY.ACBus, sys)
+            c in get_available_components(PSY.ACBus, sys)
         )
     return temp_component_map
 end
