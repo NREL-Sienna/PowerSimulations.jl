@@ -125,7 +125,8 @@ function read_results(
     end
 
     # Return a copy because callers may mutate it.
-    return deepcopy(data[index])
+    # Since DenseAxisArray contains Float64 (immutable), copy() is sufficient and faster than deepcopy()
+    return copy(data[index])
 end
 
 function write_optimizer_stats!(

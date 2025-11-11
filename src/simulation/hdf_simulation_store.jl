@@ -750,29 +750,44 @@ end
 function _deserialize_attributes!(store::HdfSimulationStore)
     container_key_lookup = get_container_key_lookup(store)
     group = store.file["simulation"]
-    initial_time = Dates.DateTime(HDF5.read(HDF5.attributes(group)["initial_time"]))
-    step_resolution =
-        Dates.Millisecond(HDF5.read(HDF5.attributes(group)["step_resolution_ms"]))
-    num_steps = HDF5.read(HDF5.attributes(group)["num_steps"])
+
+    # Batch read simulation-level attributes for better I/O performance
+    group_attrs = HDF5.attributes(group)
+    initial_time = Dates.DateTime(HDF5.read(group_attrs["initial_time"]))
+    step_resolution = Dates.Millisecond(HDF5.read(group_attrs["step_resolution_ms"]))
+    num_steps = HDF5.read(group_attrs["num_steps"])
+    problem_order = HDF5.read(group_attrs["problem_order"])
+
     store.params = SimulationStoreParams(initial_time, step_resolution, num_steps)
     empty!(get_dm_data(store))
-    for model in HDF5.read(HDF5.attributes(group)["problem_order"])
+
+    for model in problem_order
         problem_group = store.file["simulation/decision_models/$model"]
+        problem_attrs = HDF5.attributes(problem_group)
+
         # Fall back on old key for backwards compatibility
         horizon_count = HDF5.read(
-            if haskey(HDF5.attributes(problem_group), "horizon_count")
-                HDF5.attributes(problem_group)["horizon_count"]
+            if haskey(problem_attrs, "horizon_count")
+                problem_attrs["horizon_count"]
             else
-                HDF5.attributes(problem_group)["horizon"]
+                problem_attrs["horizon"]
             end)
+
+        # Batch read all problem-level attributes for better I/O performance
+        num_executions = HDF5.read(problem_attrs["num_executions"])
+        interval_ms = Dates.Millisecond(HDF5.read(problem_attrs["interval_ms"]))
+        resolution_ms = Dates.Millisecond(HDF5.read(problem_attrs["resolution_ms"]))
+        base_power = HDF5.read(problem_attrs["base_power"])
+        system_uuid = Base.UUID(HDF5.read(problem_attrs["system_uuid"]))
+
         model_name = Symbol(model)
         store.params.decision_models_params[model_name] = ModelStoreParams(
-            HDF5.read(HDF5.attributes(problem_group)["num_executions"]),
+            num_executions,
             horizon_count,
-            Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["interval_ms"])),
-            Dates.Millisecond(HDF5.read(HDF5.attributes(problem_group)["resolution_ms"])),
-            HDF5.read(HDF5.attributes(problem_group)["base_power"]),
-            Base.UUID(HDF5.read(HDF5.attributes(problem_group)["system_uuid"])),
+            interval_ms,
+            resolution_ms,
+            base_power,
+            system_uuid,
         )
         get_dm_data(store)[model_name] = DatasetContainer{HDF5Dataset}()
         for type in STORE_CONTAINERS
