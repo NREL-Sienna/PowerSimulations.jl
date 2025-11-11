@@ -11,6 +11,23 @@ function add_variables!(
     return
 end
 
+#=
+# TODO: Contingency. Is this needed?
+"""
+Add Contingency-related variables to the OptimizationContainer for any component.
+"""
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+    devices_outages::Union{Vector{U}, IS.FlattenIteratorWrapper{U}},
+    formulation::Union{AbstractServiceFormulation, AbstractDeviceFormulation},
+) where {T <: VariableType, U <: PSY.Component}
+    add_variable!(container, T(), devices, devices_outages, formulation)
+    return
+end
+=#
+
 """
 Add variables to the OptimizationContainer for a service.
 """
@@ -76,7 +93,7 @@ function add_variable!(
         container,
         variable_type,
         D,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         time_steps,
     )
 

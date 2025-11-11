@@ -62,12 +62,12 @@ function add_variables!(
     U <: PM.AbstractActivePowerModel,
 }
     time_steps = get_time_steps(container)
-    radial_network_reduction = get_radial_network_reduction(network_model)
-    if isempty(radial_network_reduction)
+    network_reduction = get_network_reduction(network_model)
+    if isempty(network_reduction)
         bus_numbers =
             PSY.get_number.(get_available_components(network_model, PSY.ACBus, sys))
     else
-        bus_numbers = collect(keys(PNM.get_bus_reduction_map(radial_network_reduction)))
+        bus_numbers = collect(keys(PNM.get_bus_reduction_map(network_reduction)))
     end
 
     variable = add_variable_container!(container, T(), PSY.ACBus, bus_numbers, time_steps)
@@ -91,12 +91,12 @@ function add_variables!(
     U <: PM.AbstractPowerModel,
 }
     time_steps = get_time_steps(container)
-    radial_network_reduction = get_radial_network_reduction(network_model)
-    if isempty(radial_network_reduction)
+    network_reduction = get_network_reduction(network_model)
+    if isempty(network_reduction)
         bus_numbers =
             PSY.get_number.(get_available_components(network_model, PSY.ACBus, sys))
     else
-        bus_numbers = collect(keys(PNM.get_bus_reduction_map(radial_network_reduction)))
+        bus_numbers = collect(keys(PNM.get_bus_reduction_map(network_reduction)))
     end
     variable_active =
         add_variable_container!(container, T(), PSY.ACBus, "P", bus_numbers, time_steps)

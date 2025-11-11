@@ -157,6 +157,7 @@ get_logs_folder(sim::Simulation) = sim.internal.logs_dir
 get_recorder_folder(sim::Simulation) = sim.internal.recorder_dir
 get_console_level(sim::Simulation) = sim.internal.console_level
 get_file_level(sim::Simulation) = sim.internal.file_level
+get_rng(sim::Simulation) = sim.internal.rng
 
 set_simulation_status!(sim::Simulation, status) = sim.internal.status = status
 set_simulation_build_status!(sim::Simulation, status::SimulationBuildStatus) =
@@ -178,7 +179,7 @@ function _get_simulation_initial_times!(sim::Simulation)
         if model_horizon > system_horizon
             throw(
                 IS.ConflictingInputsError(
-                    "$(get_name(model)) model horizon ($model_horizon) and forecast horizon ($system_horizon) are not compatible",
+                    "$(get_name(model)) model horizon: $(Dates.canonicalize(model_horizon)) and forecast horizon: $(Dates.canonicalize(system_horizon)) are not compatible",
                 ),
             )
         end
@@ -452,38 +453,42 @@ function _get_emulation_store_requirements(sim::Simulation)
 
     for (key, state_values) in get_duals_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
+        num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
-        reqs.duals[key] = Dict("columns" => cols, "dims" => (dims, length.(cols)...))
+        reqs.duals[key] =
+            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
     end
 
     for (key, state_values) in get_parameters_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
+        num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
-        reqs.parameters[key] = Dict("columns" => cols, "dims" => (dims, length.(cols)...))
+        reqs.parameters[key] =
+            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
     end
 
     for (key, state_values) in get_variables_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
+        num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
-        reqs.variables[key] = Dict("columns" => cols, "dims" => (dims, length.(cols)...))
+        reqs.variables[key] =
+            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
     end
 
     for (key, state_values) in get_aux_variables_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
+        num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
         reqs.aux_variables[key] =
-            Dict("columns" => cols, "dims" => (dims, length.(cols)...))
+            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
     end
 
     for (key, state_values) in get_expression_values(system_state)
         !should_write_resulting_value(key) && continue
-        dims = sim_time ÷ get_data_resolution(state_values)
+        num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
-        reqs.expressions[key] = Dict("columns" => cols, "dims" => (dims, length.(cols)...))
+        reqs.expressions[key] =
+            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
     end
     return reqs
 end
@@ -835,19 +840,62 @@ function _update_simulation_state!(sim::Simulation, model::EmulationModel)
 end
 
 function _update_simulation_state!(sim::Simulation, model::DecisionModel)
+    #Order matters; update parameters first to ensure event parameters are updated first
+    _update_simulation_state_parameters!(sim, model)
+    _update_simulation_state_others!(sim, model)
+    model_name = get_name(model)
+    simulation_time = get_current_time(sim)
+    IS.@record :execution StateUpdateEvent(simulation_time, model_name, "DecisionState")
+    return
+end
+
+function _update_simulation_state_parameters!(sim::Simulation, model::DecisionModel)
     model_name = get_name(model)
     store = get_simulation_store(sim)
     simulation_time = get_current_time(sim)
     state = get_simulation_state(sim)
     model_params = get_decision_model_params(store, model_name)
-    for field in fieldnames(DatasetContainer)
+    all_parameter_keys = list_decision_model_keys(store, model_name, :parameters)
+    countdown_parameter_keys = filter(_is_event_countdown_parameter_key, all_parameter_keys)
+    other_parameter_keys = filter(!_is_event_countdown_parameter_key, all_parameter_keys)
+    # Order matters; AvailableStatusChangeCountdownParameter must be updated first if it exists
+    for key in countdown_parameter_keys
+        !has_dataset(get_decision_states(state), key) && continue
+        res = read_result(DenseAxisArray, store, model_name, key, simulation_time)
+        update_decision_state!(state, key, res, simulation_time, model_params)
+    end
+    for key in other_parameter_keys
+        !has_dataset(get_decision_states(state), key) && continue
+        res = read_result(DenseAxisArray, store, model_name, key, simulation_time)
+        update_decision_state!(state, key, res, simulation_time, model_params)
+    end
+end
+
+function _is_event_countdown_parameter_key(
+    ::ParameterKey{T, U},
+) where {T <: ParameterType, U <: PSY.Component}
+    return false
+end
+
+function _is_event_countdown_parameter_key(
+    ::ParameterKey{AvailableStatusChangeCountdownParameter, U},
+) where {U <: PSY.Component}
+    return true
+end
+
+function _update_simulation_state_others!(sim::Simulation, model::DecisionModel)
+    model_name = get_name(model)
+    store = get_simulation_store(sim)
+    simulation_time = get_current_time(sim)
+    state = get_simulation_state(sim)
+    model_params = get_decision_model_params(store, model_name)
+    for field in [:duals, :aux_variables, :variables, :expressions]
         for key in list_decision_model_keys(store, model_name, field)
             !has_dataset(get_decision_states(state), key) && continue
             res = read_result(DenseAxisArray, store, model_name, key, simulation_time)
             update_decision_state!(state, key, res, simulation_time, model_params)
         end
     end
-    IS.@record :execution StateUpdateEvent(simulation_time, model_name, "DecisionState")
     return
 end
 
@@ -867,21 +915,17 @@ function _write_state_to_store!(store::SimulationStore, sim::Simulation)
         if store_update_time < state_update_time
             _update_timestamp = max(store_update_time + state_resolution, sim_ini_time)
             while _update_timestamp <= state_update_time
-                try
-                    state_values =
-                        get_decision_state_value(sim_state, key, _update_timestamp)
-                    ix = get_last_recorded_row(em_store, key) + 1
-                    write_result!(
-                        store,
-                        model_name,
-                        key,
-                        ix,
-                        _update_timestamp,
-                        state_values,
-                    )
-                catch
-                    @error "could not write result for $(PSI.encode_key_as_string(key))"
-                end
+                state_values =
+                    get_decision_state_value(sim_state, key, _update_timestamp)
+                ix = get_last_recorded_row(em_store, key) + 1
+                write_result!(
+                    store,
+                    model_name,
+                    key,
+                    ix,
+                    _update_timestamp,
+                    state_values,
+                )
                 _update_timestamp += state_resolution
             end
         end
@@ -1006,6 +1050,9 @@ function _execute!(
                         if model_number == execution_order[end]
                             _update_system_state!(sim, model)
                             _write_state_to_store!(store, sim)
+                            # This function needs to be called last so make sure that the update to the
+                            # state get written AFTER the models run.
+                            apply_simulation_events!(sim)
                         end
                     end
                 end

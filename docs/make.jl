@@ -2,35 +2,53 @@ using Documenter
 using PowerSystems
 using PowerSimulations
 using DataStructures
+using DocumenterInterLinks
+using Literate
+
+Literate.markdown(
+    "docs/src/tutorials/decision_problem.jl",
+    "docs/src/tutorials";
+    name = "decision_problem",
+    flavor = Literate.DocumenterFlavor(),
+)
+
+links = InterLinks(
+    "Julia" => "https://docs.julialang.org/en/v1/",
+    "InfrastructureSystems" => "https://nrel-sienna.github.io/InfrastructureSystems.jl/stable/",
+    "PowerSystems" => "https://nrel-sienna.github.io/PowerSystems.jl/stable/",
+    "PowerSimulations" => "https://nrel-sienna.github.io/PowerSimulations.jl/stable/",
+    "StorageSystemsSimulations" => "https://nrel-sienna.github.io/StorageSystemsSimulations.jl/stable/",
+    "HydroPowerSimulations" => "https://nrel-sienna.github.io/HydroPowerSimulations.jl/dev/",
+)
 
 pages = OrderedDict(
     "Welcome Page" => "index.md",
-    "Quick Start Guide" => "quick_start_guide.md",
     "Tutorials" => Any[
         "Single-step Problem" => "tutorials/decision_problem.md",
         "Multi-stage Production Cost Simulation" => "tutorials/pcm_simulation.md",
     ],
-    "Modeler Guide" => Any[
-        "modeler_guide/definitions.md",
-        "modeler_guide/psi_structure.md",
-        "modeler_guide/problem_templates.md",
-        "modeler_guide/running_a_simulation.md",
-        "modeler_guide/read_results.md",
-        "modeler_guide/simulation_recorder.md",
-        "modeler_guide/logging.md",
-        "modeler_guide/debugging_infeasible_models.md",
-        "modeler_guide/parallel_simulations.md",
-        "modeler_guide/modeling_faq.md",
+    "How to..." => Any[
+        "...register a variable in a custom operation model" => "how_to/register_variable.md",
+        "...create a problem template" => "how_to/problem_templates.md",
+        "...read the simulation results" => "how_to/read_results.md",
+        "...debug an infeasible model" => "how_to/debugging_infeasible_models.md",
+        "...configure logging" => "how_to/logging.md",
+        "...inspect simulation events using the recorder" => "how_to/simulation_recorder.md",
+        "...run a parallel simulation" => "how_to/parallel_simulations.md",
     ],
-    "Model Developer Guide" => Any[
-        "Operation Problem Structure" => "model_developer_guide/structure_of_operation_problem.md"
-        "Troubleshooting" => "model_developer_guide/troubleshooting.md"
+    "Explanation" => Any[
+        "explanation/psi_structure.md",
+        "explanation/feedforward.md",
+        "explanation/chronologies.md",
+        "explanation/sequencing.md",
     ],
-    "Code Base Developer Guide" => Any[
-        "Developer Guide" => "code_base_developer_guide/developer.md",
-        "Troubleshooting" => "code_base_developer_guide/troubleshooting.md",
-        "Internals" => "code_base_developer_guide/internal.md",
+    "Reference" => Any[
+        "Glossary and Acronyms" => "api/glossary.md",
+        "Public API" => "api/PowerSimulations.md",
+        "Developers" => ["Developer Guidelines" => "api/developer.md",
+            "Internals" => "api/internal.md"],
     ],
+    "Archived Old Docs Content" => "archive_old_docs_content.md",
     "Formulation Library" => Any[
         "Introduction" => "formulation_library/Introduction.md",
         "General" => "formulation_library/General.md",
@@ -43,7 +61,6 @@ pages = OrderedDict(
         "Feedforwards" => "formulation_library/Feedforward.md",
         "Piecewise Linear Cost" => "formulation_library/Piecewise.md",
     ],
-    "API Reference" => "api/PowerSimulations.md",
 )
 
 makedocs(;

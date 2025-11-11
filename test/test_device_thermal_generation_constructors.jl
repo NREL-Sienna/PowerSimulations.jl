@@ -1,4 +1,5 @@
 test_path = mktempdir()
+const TIME1 = DateTime("2024-01-01T00:00:00")
 
 @testset "Test Thermal Generation Cost Functions " begin
     test_cases = [
@@ -29,7 +30,11 @@ test_path = mktempdir()
             @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
             @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
             results = OptimizationProblemResults(model)
-            expr = read_expression(results, "ProductionCostExpression__ThermalStandard")
+            expr = read_expression(
+                results,
+                "ProductionCostExpression__ThermalStandard";
+                table_format = TableFormat.WIDE,
+            )
             var_unit_cost = sum(expr[!, "Test Unit"])
             @test isapprox(var_unit_cost, cost_reference; atol = 1)
             @test expr[!, "Test Unit"][end] == 0.0
@@ -37,7 +42,7 @@ test_path = mktempdir()
     end
 end
 
-#TODO: This test
+#TODO: ThermalGen
 #=
 @testset "Test Thermal Generation Cost Functions Fuel Cost time series" begin
     test_cases = [
@@ -63,39 +68,6 @@ end
             @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
             @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
             =#
-        end
-    end
-end
-=#
-
-#=
-#TODO: This test
-@testset "Test Thermal Generation MarketBidCost models" begin
-    test_cases = [
-        ("fixed_market_bid_cost", 20532.76),
-        #"market_bid_cost",
-    ]
-    for (i, cost_reference) in test_cases
-        @testset "$i" begin
-            sys = build_system(PSITestSystems, "c_$(i)")
-            template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
-            set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
-            set_device_model!(template, PowerLoad, StaticPowerLoad)
-            model = DecisionModel(
-                template,
-                sys;
-                name = "UC_$(i)",
-                optimizer = HiGHS_optimizer,
-                system_to_file = false,
-                optimizer_solve_log_print = true,
-            )
-            @test build!(model; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
-            @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-            results = OptimizationProblemResults(model)
-            expr = read_expression(results, "ProductionCostExpression__ThermalStandard")
-            var_unit_cost = sum(expr[!, "Test Unit1"])
-            @test isapprox(var_unit_cost, cost_reference; atol = 1)
-            @test expr[!, "Test Unit1"][end] == 0.0
         end
     end
 end
@@ -130,13 +102,20 @@ end
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
     psi_aux_variable_test(model, aux_variables_keys)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 480, 0, 504, 120, 120, true)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    device_model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
     mock_construct_device!(model, device_model)
     moi_tests(model, 480, 0, 240, 120, 120, true)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GQEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 480, 0, 264, 120, 120, true)
 end
 
 @testset "Thermal UC With AC - PF" begin
@@ -167,6 +146,11 @@ end
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
     psi_aux_variable_test(model, aux_variables_keys)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 600, 0, 624, 240, 120, true, 24)
+
+    device_model = DeviceModel(ThermalStandard, ThermalStandardUnitCommitment)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
@@ -174,6 +158,9 @@ end
     moi_tests(model, 600, 0, 360, 240, 120, true)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GQEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 600, 0, 384, 240, 120, true, 24)
 end
 
 @testset "Thermal MultiStart UC With DC - PF" begin
@@ -197,6 +184,9 @@ end
     psi_constraint_test(model, uc_constraint_keys)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 384, 0, 264, 48, 144, true)
 end
 
 @testset "Thermal MultiStart UC With AC - PF" begin
@@ -220,6 +210,9 @@ end
     psi_constraint_test(model, uc_constraint_keys)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 432, 0, 312, 96, 144, true, 24)
 end
 
 ################################### Basic Unit Commitment tests ############################
@@ -237,6 +230,11 @@ end
     moi_tests(model, 480, 0, 240, 120, 120, true)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 480, 0, 264, 120, 120, true)
+
+    device_model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14;)
@@ -244,6 +242,9 @@ end
     moi_tests(model, 480, 0, 240, 120, 120, true)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GQEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 480, 0, 264, 120, 120, true)
 end
 
 @testset "Thermal Basic UC With AC - PF" begin
@@ -260,6 +261,11 @@ end
     moi_tests(model, 600, 0, 360, 240, 120, true)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 600, 0, 384, 240, 120, true, 24)
+
+    device_model = DeviceModel(ThermalStandard, ThermalBasicUnitCommitment)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
@@ -267,6 +273,9 @@ end
     moi_tests(model, 600, 0, 360, 240, 120, true)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GQEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 600, 0, 384, 240, 120, true, 24)
 end
 
 @testset "Thermal MultiStart Basic UC With DC - PF" begin
@@ -283,6 +292,9 @@ end
     moi_tests(model, 384, 0, 96, 48, 144, true)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 384, 0, 120, 48, 144, true)
 end
 
 @testset "Thermal MultiStart Basic UC With AC - PF" begin
@@ -299,6 +311,9 @@ end
     moi_tests(model, 432, 0, 144, 96, 144, true)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 432, 0, 168, 96, 144, true, 24)
 end
 
 ################################### Basic Dispatch tests ###################################
@@ -320,17 +335,23 @@ end
 @testset "ThermalStandard  with ThermalBasicDispatch With AC - PF" begin
     device_model = DeviceModel(ThermalStandard, ThermalBasicDispatch)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
     mock_construct_device!(model, device_model)
     moi_tests(model, 240, 0, 240, 240, 0, false)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 
+    device_model = DeviceModel(ThermalStandard, ThermalBasicDispatch)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model)
     moi_tests(model, 240, 0, 240, 240, 0, false)
     psi_checkobjfun_test(model, GQEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 end
 
 # This Formulation is currently broken
@@ -341,6 +362,9 @@ end
     mock_construct_device!(model, device_model)
     moi_tests(model, 240, 0, 48, 48, 96, false)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 240, 0, 72, 48, 96, false)
 end
 
 @testset "ThermalMultiStart with ThermalBasicDispatch With AC - PF" begin
@@ -350,6 +374,9 @@ end
     mock_construct_device!(model, device_model)
     moi_tests(model, 288, 0, 96, 96, 96, false)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 288, 0, 120, 96, 96, false, 24)
 end
 
 ################################### No Minimum Dispatch tests ##############################
@@ -362,15 +389,21 @@ end
     key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
     moi_lbvalue_test(model, key, 0.0)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 120, 0, 144, 120, 0, false)
 
+    device_model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
-
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
     mock_construct_device!(model, device_model)
     moi_tests(model, 120, 0, 120, 120, 0, false)
     key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
     moi_lbvalue_test(model, key, 0.0)
     psi_checkobjfun_test(model, GQEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 120, 0, 144, 120, 0, false)
 end
 
 @testset "Thermal Dispatch NoMin With AC - PF" begin
@@ -382,15 +415,21 @@ end
     key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
     moi_lbvalue_test(model, key, 0.0)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 
+    device_model = DeviceModel(ThermalStandard, ThermalDispatchNoMin)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
-
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model)
     moi_tests(model, 240, 0, 240, 240, 0, false)
     key = PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, ThermalStandard, "lb")
     moi_lbvalue_test(model, key, 0.0)
     psi_checkobjfun_test(model, GQEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 end
 
 @testset "Thermal Dispatch NoMin With DC - PF" begin
@@ -437,12 +476,19 @@ end
     moi_tests(model, 120, 0, 168, 168, 0, false)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 120, 0, 192, 168, 0, false)
 
+    device_model = DeviceModel(ThermalStandard, ThermalStandardDispatch)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model)
     moi_tests(model, 120, 0, 120, 120, 0, false)
     psi_checkobjfun_test(model, GQEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 120, 0, 144, 120, 0, false)
 end
 
 @testset "ThermalStandard with ThermalStandardDispatch With AC - PF" begin
@@ -457,12 +503,19 @@ end
     moi_tests(model, 240, 0, 288, 288, 0, false)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 240, 0, 312, 288, 0, false, 24)
 
+    device_model = DeviceModel(ThermalStandard, ThermalStandardDispatch)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
     mock_construct_device!(model, device_model)
     moi_tests(model, 240, 0, 240, 240, 0, false)
     psi_checkobjfun_test(model, GQEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys14;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 240, 0, 264, 240, 0, false, 24)
 end
 
 @testset "ThermalMultiStart with ThermalStandardDispatch With DC - PF" begin
@@ -477,6 +530,9 @@ end
     moi_tests(model, 240, 0, 96, 96, 96, false)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 240, 0, 120, 96, 96, false)
 end
 
 @testset "ThermalMultiStart with ThermalStandardDispatch With AC - PF" begin
@@ -491,6 +547,9 @@ end
     moi_tests(model, 288, 0, 144, 144, 96, false)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 288, 0, 168, 144, 96, false, 24)
 end
 
 ################################### ThermalMultiStart Testing ##############################
@@ -521,13 +580,15 @@ end
         ),
     ]
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
-    no_less_than = Dict(true => 334, false => 282)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 528, 0, no_less_than[false], 108, 192, true)
+    moi_tests(model, 528, 0, 282, 108, 192, true)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 528, 0, 306, 108, 192, true)
 end
 
 @testset "Thermal MultiStart with MultiStart UC and AC - PF" begin
@@ -556,13 +617,15 @@ end
         ),
     ]
     device_model = DeviceModel(PSY.ThermalMultiStart, PSI.ThermalMultiStartUnitCommitment)
-    no_less_than = Dict(true => 382, false => 330)
     c_sys5_pglib = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 576, 0, no_less_than[false], 156, 192, true)
+    moi_tests(model, 576, 0, 330, 156, 192, true)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 576, 0, 354, 156, 192, true, 24)
 end
 
 ################################ Thermal Compact UC Testing ################################
@@ -573,6 +636,9 @@ end
     mock_construct_device!(model, device_model)
     moi_tests(model, 480, 0, 480, 120, 120, true)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 480, 0, 504, 120, 120, true)
 end
 
 @testset "Thermal MultiStart with Compact UC and DC - PF" begin
@@ -582,6 +648,9 @@ end
     mock_construct_device!(model, device_model)
     moi_tests(model, 384, 0, 240, 48, 144, true)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 384, 0, 264, 48, 144, true)
 end
 
 @testset "Thermal Standard with Compact UC and AC - PF" begin
@@ -591,6 +660,9 @@ end
     mock_construct_device!(model, device_model)
     moi_tests(model, 600, 0, 600, 240, 120, true)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 600, 0, 624, 240, 120, true, 24)
 end
 
 @testset "Thermal MultiStart with Compact UC and AC - PF" begin
@@ -600,6 +672,9 @@ end
     mock_construct_device!(model, device_model)
     moi_tests(model, 432, 0, 288, 96, 144, true)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 432, 0, 312, 96, 144, true, 24)
 end
 
 ################################ Thermal Basic Compact UC Testing ################################
@@ -610,6 +685,9 @@ end
     mock_construct_device!(model, device_model)
     moi_tests(model, 480, 0, 240, 120, 120, true)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 480, 0, 264, 120, 120, true)
 end
 
 @testset "Thermal MultiStart with Compact UC and DC - PF" begin
@@ -619,6 +697,9 @@ end
     mock_construct_device!(model, device_model)
     moi_tests(model, 384, 0, 96, 48, 144, true)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 384, 0, 120, 48, 144, true)
 end
 
 @testset "Thermal Standard with Compact UC and AC - PF" begin
@@ -628,6 +709,9 @@ end
     mock_construct_device!(model, device_model)
     moi_tests(model, 600, 0, 360, 240, 120, true)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 600, 0, 384, 240, 120, true, 24)
 end
 
 @testset "Thermal MultiStart with Compact UC and AC - PF" begin
@@ -637,6 +721,9 @@ end
     mock_construct_device!(model, device_model)
     moi_tests(model, 432, 0, 144, 96, 144, true)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib;)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 432, 0, 168, 96, 144, true, 24)
 end
 
 ############################ Thermal Compact Dispatch Testing ##############################
@@ -647,6 +734,14 @@ end
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
     moi_tests(model, 245, 0, 144, 144, 0, false)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(
+        model,
+        device_model;
+        built_for_recurrent_solves = true,
+        add_event_model = true,
+    )
+    moi_tests(model, 293, 0, 168, 144, 0, false)
 end
 
 @testset "Thermal MultiStart with Compact Dispatch and DC - PF" begin
@@ -656,6 +751,14 @@ end
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
     moi_tests(model, 290, 0, 96, 96, 96, false)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_pglib)
+    mock_construct_device!(
+        model,
+        device_model;
+        built_for_recurrent_solves = true,
+        add_event_model = true,
+    )
+    moi_tests(model, 338, 0, 120, 96, 96, false)
 end
 
 @testset "Thermal Standard with Compact Dispatch and AC - PF" begin
@@ -665,6 +768,14 @@ end
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
     moi_tests(model, 365, 0, 264, 264, 0, false)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5)
+    mock_construct_device!(
+        model,
+        device_model;
+        built_for_recurrent_solves = true,
+        add_event_model = true,
+    )
+    moi_tests(model, 413, 0, 288, 264, 0, false, 24)
 end
 
 @testset "Thermal MultiStart with Compact Dispatch and AC - PF" begin
@@ -674,6 +785,14 @@ end
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
     moi_tests(model, 338, 0, 144, 144, 96, false)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_pglib)
+    mock_construct_device!(
+        model,
+        device_model;
+        built_for_recurrent_solves = true,
+        add_event_model = true,
+    )
+    moi_tests(model, 386, 0, 168, 144, 96, false), 24
 end
 
 ############################# Model validation tests #######################################
@@ -711,31 +830,17 @@ end
     psi_checksolve_test(UC, [MOI.OPTIMAL], 8223.50)
 end
 
-#= Test disabled due to inconsistency between the models and the data
-@testset "UC with MarketBid Cost in ThermalGenerators" begin
-    sys = PSB.build_system(PSITestSystems, "c_market_bid_cost")
-    template = get_thermal_standard_uc_template()
-    set_device_model!(
-        template,
-        DeviceModel(ThermalMultiStart, ThermalMultiStartUnitCommitment),
-    )
-    UC = DecisionModel(
-        UnitCommitmentProblem,
-        template,
-        sys;
-        optimizer = HiGHS_optimizer,
-        initialize_model = false,
-    )
-    @test build!(UC; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
-    moi_tests(UC, 38, 0, 16, 8, 16, true)
-end
-=#
-
 @testset "Solving UC Models with Linear Networks" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys5_dc = PSB.build_system(PSITestSystems, "c_sys5_dc")
     systems = [c_sys5, c_sys5_dc]
-    networks = [DCPPowerModel, NFAPowerModel, PTDFPowerModel, CopperPlatePowerModel]
+    networks = [
+        PTDFPowerModel,
+        DCPPowerModel,
+        NFAPowerModel,
+        PTDFPowerModel,
+        CopperPlatePowerModel,
+    ]
     commitment_models = [ThermalStandardUnitCommitment, ThermalCompactUnitCommitment]
 
     for net in networks, sys in systems, model in commitment_models
@@ -770,6 +875,14 @@ end
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
     moi_tests(model, 365, 0, 264, 144, 0, false)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(
+        model,
+        device_model;
+        built_for_recurrent_solves = true,
+        add_event_model = true,
+    )
+    moi_tests(model, 413, 0, 288, 144, 0, false)
 end
 
 @testset "Test Feedforwards to ThermalStandard with ThermalBasicDispatch" begin
@@ -792,6 +905,14 @@ end
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
     moi_tests(model, 360, 0, 240, 120, 0, false)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(
+        model,
+        device_model;
+        built_for_recurrent_solves = true,
+        add_event_model = true,
+    )
+    moi_tests(model, 408, 0, 264, 120, 0, false)
 end
 
 @testset "Test Feedforwards to ThermalStandard with ThermalCompactDispatch" begin
@@ -814,6 +935,14 @@ end
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
     moi_tests(model, 365, 0, 264, 144, 0, false)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(
+        model,
+        device_model;
+        built_for_recurrent_solves = true,
+        add_event_model = true,
+    )
+    moi_tests(model, 413, 0, 288, 144, 0, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalStandardDispatch" begin
@@ -836,6 +965,14 @@ end
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
     moi_tests(model, 338, 0, 144, 96, 96, false)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(
+        model,
+        device_model;
+        built_for_recurrent_solves = true,
+        add_event_model = true,
+    )
+    moi_tests(model, 386, 0, 168, 96, 96, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalBasicDispatch" begin
@@ -858,6 +995,14 @@ end
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
     moi_tests(model, 336, 0, 96, 48, 96, false)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(
+        model,
+        device_model;
+        built_for_recurrent_solves = true,
+        add_event_model = true,
+    )
+    moi_tests(model, 384, 0, 120, 48, 96, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalCompactDispatch" begin
@@ -880,6 +1025,14 @@ end
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
     moi_tests(model, 338, 0, 144, 96, 96, false)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
+    mock_construct_device!(
+        model,
+        device_model;
+        built_for_recurrent_solves = true,
+        add_event_model = true,
+    )
+    moi_tests(model, 386, 0, 168, 96, 96, false)
 end
 
 @testset "Test Must Run ThermalGen" begin
@@ -906,14 +1059,14 @@ end
         )
 
         solve!(model; output_dir = mktempdir())
-        ptdf_vars = get_variable_values(OptimizationProblemResults(model))
-        power =
-            ptdf_vars[PowerSimulations.VariableKey{ActivePowerVariable, ThermalStandard}(
-                "",
-            )]
-        on = ptdf_vars[PowerSimulations.VariableKey{OnVariable, ThermalStandard}("")]
-        start = ptdf_vars[PowerSimulations.VariableKey{StartVariable, ThermalStandard}("")]
-        stop = ptdf_vars[PowerSimulations.VariableKey{StopVariable, ThermalStandard}("")]
+        ptdf_vars = read_variables(
+            OptimizationProblemResults(model);
+            table_format = TableFormat.WIDE,
+        )
+        power = ptdf_vars["ActivePowerVariable__ThermalStandard"]
+        on = ptdf_vars["OnVariable__ThermalStandard"]
+        start = ptdf_vars["StartVariable__ThermalStandard"]
+        stop = ptdf_vars["StopVariable__ThermalStandard"]
         power_sundance = power[!, "Sundance"]
         @test all(power_sundance .>= 1.0)
         for v in [on, start, stop]
@@ -966,6 +1119,13 @@ end
         @test JuMP.normalized_rhs(constraint[ix]) == ub_value
     end
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(
+        MockOperationProblem,
+        DCPPowerModel,
+        c_sys5)
+
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 480, 0, 528, 120, 120, true)
 end
 
 @testset "Thermal with fuel cost time series" begin
@@ -1008,7 +1168,7 @@ end
         steps = 2,
         models = models,
         sequence = sequence,
-        initial_time = DateTime("2024-01-01T00:00:00"),
+        initial_time = TIME1,
         simulation_folder = mktempdir(),
     )
 
@@ -1018,7 +1178,31 @@ end
 
     sim_res = SimulationResults(sim)
     res_uc = get_decision_problem_results(sim_res, "UC")
-    th_uc = read_realized_variable(res_uc, "ActivePowerVariable__ThermalStandard")
+
+    # Test time series <-> parameter correspondence
+    fc_uc = read_parameter(
+        res_uc,
+        PSI.FuelCostParameter,
+        PSY.ThermalStandard;
+        table_format = TableFormat.WIDE,
+    )
+    for (step_dt, step_df) in pairs(fc_uc)
+        for gen_name in names(DataFrames.select(step_df, Not(:DateTime)))
+            fc_comp = get_fuel_cost(
+                get_component(ThermalStandard, sys, gen_name);
+                start_time = step_dt,
+            )
+            @test all(step_df[!, :DateTime] .== TimeSeries.timestamp(fc_comp))
+            @test all(isapprox.(step_df[!, gen_name], TimeSeries.values(fc_comp)))
+        end
+    end
+
+    # Test effect on decision
+    th_uc = read_realized_variable(
+        res_uc,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
     p_brighton = th_uc[!, "Brighton"]
     p_solitude = th_uc[!, "Solitude"]
 
@@ -1115,6 +1299,12 @@ end
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GAEVF)
     psi_aux_variable_test(model, aux_variables_keys)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 720, 0, 504, 120, 120, true)
+
+    device_model =
+        DeviceModel(ThermalStandard, ThermalStandardUnitCommitment; use_slacks = true)
 
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
@@ -1122,6 +1312,9 @@ end
     moi_tests(model, 720, 0, 240, 120, 120, true)
     psi_checkbinvar_test(model, bin_variable_keys)
     psi_checkobjfun_test(model, GQEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 720, 0, 264, 120, 120, true)
 
     # Dispatch #
     device_model =
@@ -1137,12 +1330,20 @@ end
     moi_tests(model, 360, 0, 168, 168, 0, false)
     psi_constraint_test(model, uc_constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 360, 0, 192, 168, 0, false)
 
+    device_model =
+        DeviceModel(ThermalStandard, ThermalStandardDispatch; use_slacks = true)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
     mock_construct_device!(model, device_model)
     moi_tests(model, 360, 0, 120, 120, 0, false)
     psi_checkobjfun_test(model, GQEVF)
+    model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys14)
+    mock_construct_device!(model, device_model; add_event_model = true)
+    moi_tests(model, 360, 0, 144, 120, 0, false)
 end
 
 @testset "ThermalDispatchNoMin with PWL Costs" begin
@@ -1172,8 +1373,16 @@ end
     res = OptimizationProblemResults(problem)
 
     # Test that plant 101_STEAM_3 (using max power) have proper cost expression
-    cost = read_expression(res, "ProductionCostExpression__ThermalStandard")
-    p_th = read_variable(res, "ActivePowerVariable__ThermalStandard")
+    cost = read_expression(
+        res,
+        "ProductionCostExpression__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+    p_th = read_variable(
+        res,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
     steam3 = get_component(ThermalStandard, sys, "101_STEAM_3")
     val_curve = PSY.get_value_curve(PSY.get_variable(PSY.get_operation_cost(steam3)))
     io_curve = InputOutputCurve(val_curve)

@@ -254,24 +254,30 @@ function _process_timestamps(
 end
 
 function _read_results(
-    ::Type{Matrix{Float64}},
+    ::Type{DataFrame},
     res::SimulationProblemResults{DecisionModelSimulationResults},
     result_keys,
     timestamps::Vector{Dates.DateTime},
     store::Union{Nothing, <:SimulationStore};
     cols::Union{Colon, Vector{String}} = (:),
+    table_format::TableFormat = TableFormat.LONG,
 )
     vals = _read_results(res, result_keys, timestamps, store)
-    converted_vals = Dict{OptimizationContainerKey, ResultsByTime{Matrix{Float64}}}()
+    converted_vals = Dict{OptimizationContainerKey, ResultsByTime{DataFrame}}()
     for (result_key, result_data) in vals
-        inner_converted = SortedDict(
-            (date_key, Matrix{Float64}(permutedims(inner_data[cols, :].data)))
-            for (date_key, inner_data) in result_data.data)
-        converted_vals[result_key] = ResultsByTime{Matrix{Float64}, 1}(
+        inner_converted = SortedDict{Dates.DateTime, DataFrame}()
+        for (date_key, inner_data) in result_data
+            extra = ntuple(_ -> (:), ndims(inner_data) - 1)
+            inner_converted[date_key] =
+                to_results_dataframe(inner_data[cols, extra...], nothing, Val(table_format))
+        end
+        _cols = (cols isa Vector) ? (cols,) : result_data.column_names
+        num_dims = length(_cols)
+        converted_vals[result_key] = ResultsByTime{DataFrame, num_dims}(
             result_data.key,
             inner_converted,
             result_data.resolution,
-            (cols isa Vector) ? (cols,) : result_data.column_names)
+            _cols)
     end
     return converted_vals
 end
@@ -287,7 +293,7 @@ function _read_results(
 
     _store = try_resolve_store(store, res.store)
     existing_keys = list_result_keys(res, first(result_keys))
-    IS.Optimization._validate_keys(existing_keys, result_keys)
+    ISOPT._validate_keys(existing_keys, result_keys)
     cached_results = get_cached_results(res, eltype(result_keys))
     if _are_results_cached(res, result_keys, timestamps, keys(cached_results))
         @debug "reading results from SimulationsResults cache"  # NOTE tests match on this
@@ -321,12 +327,19 @@ Return the values for the requested variable. It keeps requests when performing 
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
   - `store::SimulationStore`: a store that has been opened for reading
+  - `table_format::TableFormat`: Format of the table to be returned. Default is
+    `TableFormat.LONG` where the columns are `DateTime`, `name`, and `value` when the data
+    has two dimensions and `DateTime`, `name`, `name2`, and `value` when the data has three
+    dimensions.
+    Set to it `TableFormat.WIDE` to pivot the names as columns.
+    Note: `TableFormat.WIDE` is not supported when the data has three dimensions.
 
 # Examples
 
 ```julia
 read_variable(results, ActivePowerVariable, ThermalStandard)
 read_variable(results, "ActivePowerVariable__ThermalStandard")
+read_variable(results, "ActivePowerVariable__ThermalStandard", table_format = TableFormat.WIDE)
 ```
 """
 function read_variable(
@@ -335,10 +348,14 @@ function read_variable(
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
     store = nothing,
+    table_format::TableFormat = TableFormat.LONG,
 )
     key = _deserialize_key(VariableKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
-    return make_dataframes(_read_results(res, [key], timestamps, store)[key])
+    return make_dataframes(
+        _read_results(res, [key], timestamps, store)[key];
+        table_format = table_format,
+    )
 end
 
 """
@@ -351,6 +368,12 @@ Return the values for the requested dual. It keeps requests when performing mult
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
   - `store::SimulationStore`: a store that has been opened for reading
+  - `table_format::TableFormat`: Format of the table to be returned. Default is
+    `TableFormat.LONG` where the columns are `DateTime`, `name`, and `value` when the data
+    has two dimensions and `DateTime`, `name`, `name2`, and `value` when the data has three
+    dimensions.
+    Set to it `TableFormat.WIDE` to pivot the names as columns.
+    Note: `TableFormat.WIDE` is not supported when the data has three dimensions.
 """
 function read_dual(
     res::SimulationProblemResults{DecisionModelSimulationResults},
@@ -358,11 +381,13 @@ function read_dual(
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
     store = nothing,
+    table_format::TableFormat = TableFormat.LONG,
 )
     key = _deserialize_key(ConstraintKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key];
+        table_format = table_format,
     )
 end
 
@@ -375,6 +400,12 @@ Return the values for the requested parameter. It keeps requests when performing
     splatted into a ParameterKey.
   - `initial_time::Dates.DateTime` : initial of the requested results
   - `count::Int`: Number of results
+  - `table_format::TableFormat`: Format of the table to be returned. Default is
+    `TableFormat.LONG` where the columns are `DateTime`, `name`, and `value` when the data
+    has two dimensions and `DateTime`, `name`, `name2`, and `value` when the data has three
+    dimensions.
+    Set to it `TableFormat.WIDE` to pivot the names as columns.
+    Note: `TableFormat.WIDE` is not supported when the data has three dimensions.
 """
 function read_parameter(
     res::SimulationProblemResults{DecisionModelSimulationResults},
@@ -382,11 +413,13 @@ function read_parameter(
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
     store = nothing,
+    table_format::TableFormat = TableFormat.LONG,
 )
     key = _deserialize_key(ParameterKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key];
+        table_format = table_format,
     )
 end
 
@@ -406,11 +439,13 @@ function read_aux_variable(
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
     store = nothing,
+    table_format::TableFormat = TableFormat.LONG,
 )
     key = _deserialize_key(AuxVarKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key];
+        table_format = table_format,
     )
 end
 
@@ -430,11 +465,13 @@ function read_expression(
     initial_time::Union{Nothing, Dates.DateTime} = nothing,
     count::Union{Int, Nothing} = nothing,
     store = nothing,
+    table_format::TableFormat = TableFormat.LONG,
 )
     key = _deserialize_key(ExpressionKey, res, args...)
     timestamps = _process_timestamps(res, initial_time, count)
     return make_dataframes(
-        _read_results(res, [key], timestamps, store)[key],
+        _read_results(res, [key], timestamps, store)[key];
+        table_format = table_format,
     )
 end
 
@@ -536,12 +573,21 @@ function read_results_with_keys(
     start_time::Union{Nothing, Dates.DateTime} = nothing,
     len::Union{Int, Nothing} = nothing,
     cols::Union{Colon, Vector{String}} = (:),
+    table_format = TableFormat.LONG,
 )
     meta = RealizedMeta(res; start_time = start_time, len = len)
     timestamps = _process_timestamps(res, meta.start_time, meta.len)
     result_values =
-        _read_results(Matrix{Float64}, res, result_keys, timestamps, nothing; cols = cols)
-    return get_realization(result_values, meta)
+        _read_results(
+            DataFrame,
+            res,
+            result_keys,
+            timestamps,
+            nothing;
+            cols = cols,
+            table_format = table_format,
+        )
+    return get_realization(result_values, meta; table_format = table_format)
 end
 
 function _are_results_cached(

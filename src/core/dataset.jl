@@ -131,7 +131,7 @@ function get_dataset_value(s::InMemoryDataset{3}, date::Dates.DateTime)
 end
 
 function get_column_names(k::OptimizationContainerKey, s::InMemoryDataset)
-    return get_column_names(k, s.values)
+    return get_column_names_from_axis_array(k, s.values)
 end
 
 function get_last_recorded_value(s::InMemoryDataset{2})
@@ -189,6 +189,11 @@ function set_value!(s::InMemoryDataset{3}, vals::DenseAxisArray{Float64, 2}, ind
     return
 end
 
+function set_value!(s::InMemoryDataset{2}, vals::Array{Float64, 1}, index::Int)
+    s.values[:, index] = vals
+    return
+end
+
 # HDF5Dataset does not account of overwrites in the data. Values are written sequentially.
 mutable struct HDF5Dataset{N} <: AbstractDataset
     values::HDF5.Dataset
@@ -218,7 +223,7 @@ end
 function HDF5Dataset{1}(
     values::HDF5.Dataset,
     column_dataset::HDF5.Dataset,
-    ::Tuple,
+    ::NTuple{1, Int},
     resolution::Dates.Millisecond,
     initial_time::Dates.DateTime,
 )
@@ -237,7 +242,7 @@ end
 function HDF5Dataset{2}(
     values::HDF5.Dataset,
     column_dataset::HDF5.Dataset,
-    dims::NTuple{4, Int},
+    column_lengths::NTuple{2, Int},
     resolution::Dates.Period,
     initial_time::Dates.DateTime,
 )
@@ -245,35 +250,9 @@ function HDF5Dataset{2}(
     # adjacent column entry in the HDF5 Datatset. The indexes for each column
     # are known because we know how many elements are in each dimension.
     # the names for the first column are store in the 1:first_column_number_of_elements.
-    col1 = column_dataset[1:dims[2]]
+    col1 = column_dataset[1:column_lengths[1]]
     # the names for the second column are store in the first_column_number_of elements + 1:end of the column with the names.
-    col2 = column_dataset[(dims[2] + 1):end]
-    HDF5Dataset{2}(
-        values,
-        column_dataset,
-        1,
-        0,
-        resolution,
-        initial_time,
-        UNSET_INI_TIME,
-        (col1, col2),
-    )
-end
-
-function HDF5Dataset{2}(
-    values::HDF5.Dataset,
-    column_dataset::HDF5.Dataset,
-    dims::NTuple{5, Int},
-    resolution::Dates.Period,
-    initial_time::Dates.DateTime,
-)
-    # The indexing is done in this way because we save all the names in an
-    # adjacent column entry in the HDF5 Datatset. The indexes for each column
-    # are known because we know how many elements are in each dimension.
-    # the names for the first column are store in the 1:first_column_number_of_elements.
-    col1 = column_dataset[1:dims[2]]
-    # the names for the second column are store in the first_column_number_of elements + 1:end of the column with the names.
-    col2 = column_dataset[(dims[2] + 1):end]
+    col2 = column_dataset[(column_lengths[1] + 1):end]
     HDF5Dataset{2}(
         values,
         column_dataset,

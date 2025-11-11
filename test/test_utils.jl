@@ -13,20 +13,20 @@ end
     fill!(one, 1.0)
     mock_key = PSI.VariableKey(ActivePowerVariable, ThermalStandard)
     one_df = PSI.to_dataframe(one, mock_key)
-    test_df = DataFrames.DataFrame(IS.Optimization.encode_key(mock_key) => [1.0, 1.0])
+    test_df = DataFrames.DataFrame(ISOPT.encode_key(mock_key) => [1.0, 1.0])
     @test one_df == test_df
 
-    two = PSI.DenseAxisArray{Float64}(undef, [:a], 1:2)
+    two = PSI.DenseAxisArray{Float64}(undef, ["a"], 1:2)
     fill!(two, 1.0)
     two_df = PSI.to_dataframe(two, mock_key)
     test_df = DataFrames.DataFrame(:a => [1.0, 1.0])
     @test two_df == test_df
 
-    three = PSI.DenseAxisArray{Float64}(undef, [:a], 1:2, 1:3)
+    three = PSI.DenseAxisArray{Float64}(undef, ["a"], 1:2, 1:3)
     fill!(three, 1.0)
     @test_throws MethodError PSI.to_dataframe(three, mock_key)
 
-    four = PSI.DenseAxisArray{Float64}(undef, [:a], 1:2, 1:3, 1:5)
+    four = PSI.DenseAxisArray{Float64}(undef, ["a"], 1:2, 1:3, 1:5)
     fill!(three, 1.0)
     @test_throws MethodError PSI.to_dataframe(four, mock_key)
 

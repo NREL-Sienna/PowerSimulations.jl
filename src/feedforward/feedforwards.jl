@@ -76,7 +76,7 @@ struct UpperBoundFeedforward <: AbstractAffectFeedforward
         source::Type{T},
         affected_values::Vector{DataType},
         add_slacks::Bool = false,
-        meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
+        meta = ISOPT.CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
@@ -128,7 +128,7 @@ struct LowerBoundFeedforward <: AbstractAffectFeedforward
         source::Type{T},
         affected_values::Vector{DataType},
         add_slacks::Bool = false,
-        meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
+        meta = ISOPT.CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
@@ -202,7 +202,7 @@ struct SemiContinuousFeedforward <: AbstractAffectFeedforward
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
+        meta = ISOPT.CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector{VariableKey}(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)
@@ -269,7 +269,7 @@ struct FixValueFeedforward <: AbstractAffectFeedforward
         component_type::Type{<:PSY.Component},
         source::Type{T},
         affected_values::Vector{DataType},
-        meta = IS.Optimization.CONTAINER_KEY_EMPTY_META,
+        meta = ISOPT.CONTAINER_KEY_EMPTY_META,
     ) where {T}
         values_vector = Vector(undef, length(affected_values))
         for (ix, v) in enumerate(affected_values)

@@ -101,8 +101,6 @@ ServiceModel
 
 ## Simulation Models
 
-Refer to the [Simulations Page](@ref running_a_simulation) to explanations on how to setup a Simulation, with Sequencing and Feedforwards.
-
 ```@docs
 InitialCondition
 SimulationModels
@@ -149,7 +147,7 @@ For a list of variables for each device refer to its Formulations page.
 ```@docs
 ActivePowerVariable
 ReactivePowerVariable
-PieceWiseLinearCostVariable
+PiecewiseLinearCostVariable
 RateofChangeConstraintSlackUp
 RateofChangeConstraintSlackDown
 ```
@@ -234,6 +232,7 @@ PowerOutput
 PowerFlowVoltageAngle
 PowerFlowVoltageMagnitude
 PowerFlowLossFactors
+PowerFlowVoltageStabilityFactors
 ```
 
 ### Branch Auxiliary Variables
@@ -257,7 +256,7 @@ PowerFlowLineActivePowerToFrom
 ### Common Constraints
 
 ```@docs
-PieceWiseLinearCostConstraint
+PiecewiseLinearCostConstraint
 
 ```
 
@@ -314,7 +313,6 @@ FlowRateConstraintFromTo
 FlowRateConstraintToFrom
 HVDCPowerBalance
 NetworkFlowConstraint
-RateLimitConstraint
 PhaseAngleControlLimit
 ```
 

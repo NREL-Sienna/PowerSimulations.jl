@@ -24,6 +24,10 @@ get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::StaticPowerLo
 get_multiplier_value(::ReactivePowerTimeSeriesParameter, d::PSY.ElectricLoad, ::StaticPowerLoad) = -1*PSY.get_max_reactive_power(d)
 get_multiplier_value(::TimeSeriesParameter, d::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation) = PSY.get_max_active_power(d)
 
+# To avoid ambiguity with default_interface_methods.jl:
+get_multiplier_value(::AbstractPiecewiseLinearBreakpointParameter, ::PSY.ElectricLoad, ::StaticPowerLoad) = 1.0
+get_multiplier_value(::AbstractPiecewiseLinearBreakpointParameter, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation) = 1.0
+
 
 ########################Objective Function##################################################
 proportional_cost(cost::Nothing, ::OnVariable, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=1.0
@@ -58,6 +62,13 @@ get_initial_conditions_device_model(
     ::DeviceModel{T, <:AbstractLoadFormulation},
 ) where {T <: PSY.ElectricLoad} = DeviceModel(T, StaticPowerLoad)
 
+function get_default_time_series_names(
+    ::Type{<:PSY.MotorLoad},
+    ::Type{<:Union{FixedOutput, AbstractLoadFormulation}},
+)
+    return Dict{Type{<:TimeSeriesParameter}, String}()
+end
+
 ####################################### Reactive Power Constraints #########################
 """
 Reactive Power Constraints on Controllable Loads Assume Constant power_factor
@@ -79,7 +90,7 @@ function add_constraints!(
         container,
         T(),
         V,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         time_steps,
     )
     jump_model = get_jump_model(container)
@@ -145,7 +156,7 @@ function add_constraints!(
         container,
         T(),
         V,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         time_steps;
         meta = "binary",
     )
@@ -178,6 +189,65 @@ function objective_function!(
     ::DeviceModel{T, U},
     ::Type{<:PM.AbstractPowerModel},
 ) where {T <: PSY.ControllableLoad, U <: PowerLoadInterruption}
+    add_variable_cost!(container, ActivePowerVariable(), devices, U())
     add_proportional_cost!(container, OnVariable(), devices, U())
     return
 end
+
+# code repetition: basically copy-paste from thermal_generation.jl, just change types
+# and incremental to decremental.
+function proportional_cost(
+    container::OptimizationContainer,
+    cost::PSY.LoadCost,
+    S::OnVariable,
+    T::PSY.ControllableLoad,
+    U::PowerLoadInterruption,
+    t::Int,
+)
+    return onvar_cost(container, cost, S, T, U, t) +
+           PSY.get_constant_term(PSY.get_vom_cost(PSY.get_variable(cost))) +
+           PSY.get_fixed(cost)
+end
+
+function onvar_cost(
+    container::OptimizationContainer,
+    cost::PSY.LoadCost,
+    ::OnVariable,
+    d::PSY.ControllableLoad,
+    ::PowerLoadInterruption,
+    t::Int,
+)
+    return _onvar_cost(container, PSY.get_variable(cost), d, t)
+end
+
+is_time_variant_term(
+    ::OptimizationContainer,
+    ::PSY.LoadCost,
+    ::OnVariable,
+    ::PSY.ControllableLoad,
+    ::AbstractLoadFormulation,
+    ::Int,
+) = false
+
+is_time_variant_term(
+    ::OptimizationContainer,
+    cost::PSY.MarketBidCost,
+    ::OnVariable,
+    ::PSY.ControllableLoad,
+    ::PowerLoadInterruption,
+    ::Int,
+) =
+    is_time_variant(PSY.get_decremental_initial_input(cost))
+
+proportional_cost(
+    container::OptimizationContainer,
+    cost::PSY.MarketBidCost,
+    ::OnVariable,
+    comp::PSY.ControllableLoad,
+    ::PowerLoadInterruption,
+    t::Int,
+) =
+    _lookup_maybe_time_variant_param(container, comp, t,
+        Val(is_time_variant(PSY.get_decremental_initial_input(cost))),
+        PSY.get_initial_input ∘ PSY.get_decremental_offer_curves ∘ PSY.get_operation_cost,
+        DecrementalCostAtMinParameter())

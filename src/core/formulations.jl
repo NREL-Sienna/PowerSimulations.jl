@@ -11,11 +11,14 @@ abstract type AbstractDeviceFormulation end
 
 ########################### Thermal Generation Formulations ################################
 abstract type AbstractThermalFormulation <: AbstractDeviceFormulation end
+
 abstract type AbstractThermalDispatchFormulation <: AbstractThermalFormulation end
 abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
 
 abstract type AbstractStandardUnitCommitment <: AbstractThermalUnitCommitment end
 abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
+abstract type AbstractSecurityConstrainedUnitCommitment <: AbstractThermalUnitCommitment end
+
 """
 Formulation type to enable basic unit commitment representation without any intertemporal (ramp, min on/off time) constraints
 """
@@ -24,6 +27,13 @@ struct ThermalBasicUnitCommitment <: AbstractStandardUnitCommitment end
 Formulation type to enable standard unit commitment with intertemporal constraints and simplified startup profiles
 """
 struct ThermalStandardUnitCommitment <: AbstractStandardUnitCommitment end
+
+"""
+Formulation type to enable Security-Constrained (G-1) standard unit commitment with intertemporal constraints and simplified startup profiles
+"""
+struct ThermalSecurityConstrainedStandardUnitCommitment <:
+       AbstractSecurityConstrainedUnitCommitment end
+
 """
 Formulation type to enable basic dispatch without any intertemporal (ramp) constraints
 """
@@ -80,6 +90,8 @@ struct DeviceLimitedRegulation <: AbstractRegulationFormulation end
 ########################### Renewable Generation Formulations ##############################
 abstract type AbstractRenewableFormulation <: AbstractDeviceFormulation end
 abstract type AbstractRenewableDispatchFormulation <: AbstractRenewableFormulation end
+abstract type AbstractSecurityConstrainedRenewableDispatchFormulation <:
+              AbstractRenewableDispatchFormulation end
 
 """
 Formulation type to add injection variables constrained by a maximum injection time series for `RenewableGen`
@@ -87,9 +99,23 @@ Formulation type to add injection variables constrained by a maximum injection t
 struct RenewableFullDispatch <: AbstractRenewableDispatchFormulation end
 
 """
+Formulation type to enable Renewable Security-Constrained (G-1) and add injection variables constrained by a maximum injection time series for `RenewableGen`
+"""
+struct RenewableSecurityConstrainedFullDispatch <:
+       AbstractSecurityConstrainedRenewableDispatchFormulation end
+
+"""
 Formulation type to add real and reactive injection variables with constant power factor with maximum real power injections constrained by a time series for `RenewableGen`
 """
 struct RenewableConstantPowerFactor <: AbstractRenewableDispatchFormulation end
+
+########################### Source Formulations ##############################
+abstract type AbstractSourceFormulation <: AbstractDeviceFormulation end
+
+"""
+Formulation type to add import and export model for `Source`
+"""
+struct ImportExportSourceModel <: AbstractSourceFormulation end
 
 """
 Abstract type for Branch Formulations (a.k.a Models)
@@ -139,6 +165,11 @@ Branch type to represent piecewise lossy power flow on two terminal DC lines
 """
 struct HVDCTwoTerminalPiecewiseLoss <: AbstractTwoTerminalDCLineFormulation end
 
+"""
+Branch type to represent non-linear LCC (line commutated converter) model on two-terminal DC lines
+"""
+struct HVDCTwoTerminalLCC <: AbstractTwoTerminalDCLineFormulation end
+
 # Not Implemented
 # struct VoltageSourceDC <: AbstractTwoTerminalDCLineFormulation end
 
@@ -146,80 +177,46 @@ struct HVDCTwoTerminalPiecewiseLoss <: AbstractTwoTerminalDCLineFormulation end
 abstract type AbstractConverterFormulation <: AbstractDeviceFormulation end
 
 """
-LossLess InterconnectingConverter Model
+Lossless InterconnectingConverter Model
 """
-struct LossLessConverter <: AbstractConverterFormulation end
+struct LosslessConverter <: AbstractConverterFormulation end
 
 """
-LossLess Line Abstract Model
+Linear Loss InterconnectingConverter Model
 """
-struct LossLessLine <: AbstractBranchFormulation end
+struct LinearLossConverter <: AbstractConverterFormulation end
 
-############################## Network Model Formulations ##################################
-# These formulations are taken directly from PowerModels
-
-abstract type AbstractPTDFModel <: PM.AbstractDCPModel end
 """
-Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix.
+Quadratic Loss InterconnectingConverter Model
 """
-struct PTDFPowerModel <: AbstractPTDFModel end
+struct QuadraticLossConverter <: AbstractConverterFormulation end
+
+############################## HVDC Lines Formulations ##################################
+abstract type AbstractDCLineFormulation <: AbstractBranchFormulation end
+
 """
-Infinite capacity approximation of network flow to represent entire system with a single node.
+Lossless Line Abstract Model
 """
-struct CopperPlatePowerModel <: PM.AbstractActivePowerModel end
+struct DCLosslessLine <: AbstractDCLineFormulation end
+
 """
-Approximation to represent inter-area flow with each area represented as a single node.
+Lossy Line Abstract Model
 """
-struct AreaBalancePowerModel <: PM.AbstractActivePowerModel end
+struct DCLossyLine <: AbstractDCLineFormulation end
+
+struct LosslessLine <: AbstractDCLineFormulation end
+
+############################## HVDC Network Model Formulations ##################################
+abstract type AbstractHVDCNetworkModel end
+
 """
-Linear active power approximation using the power transfer distribution factor [PTDF](https://nrel-sienna.github.io/PowerNetworkMatrices.jl/stable/tutorials/tutorial_PTDF_matrix/) matrix. Balancing areas independently.
+Transport Lossless HVDC network model. No DC voltage variables are added and DC lines are modeled as lossless power transport elements
 """
-struct AreaPTDFPowerModel <: AbstractPTDFModel end
-
-#================================================
-    # exact non-convex models
-    ACPPowerModel, ACRPowerModel, ACTPowerModel
-
-    # linear approximations
-    DCPPowerModel, NFAPowerModel
-
-    # quadratic approximations
-    DCPLLPowerModel, LPACCPowerModel
-
-    # quadratic relaxations
-    SOCWRPowerModel, SOCWRConicPowerModel,
-    SOCBFPowerModel, SOCBFConicPowerModel,
-    QCRMPowerModel, QCLSPowerModel,
-
-    # sdp relaxations
-    SDPWRMPowerModel, SparseSDPWRMPowerModel
-================================================#
-
-##### Exact Non-Convex Models #####
-import PowerModels: ACPPowerModel
-
-import PowerModels: ACRPowerModel
-
-import PowerModels: ACTPowerModel
-
-##### Linear Approximations #####
-import PowerModels: DCPPowerModel
-
-import PowerModels: NFAPowerModel
-
-##### Quadratic Approximations #####
-import PowerModels: DCPLLPowerModel
-
-import PowerModels: LPACCPowerModel
-
-##### Quadratic Relaxations #####
-import PowerModels: SOCWRPowerModel
-
-import PowerModels: SOCWRConicPowerModel
-
-import PowerModels: QCRMPowerModel
-
-import PowerModels: QCLSPowerModel
+struct TransportHVDCNetworkModel <: AbstractHVDCNetworkModel end
+"""
+DC Voltage HVDC network model, where currents are solved based on DC voltage difference between DC buses
+"""
+struct VoltageDispatchHVDCNetworkModel <: AbstractHVDCNetworkModel end
 
 """
 Abstract type for Service Formulations (a.k.a Models)
@@ -234,6 +231,8 @@ abstract type AbstractServiceFormulation end
 
 abstract type AbstractReservesFormulation <: AbstractServiceFormulation end
 
+abstract type AbstractSecurityConstrainedReservesFormulation <: AbstractReservesFormulation end
+
 abstract type AbstractAGCFormulation <: AbstractServiceFormulation end
 
 struct PIDSmoothACE <: AbstractAGCFormulation end
@@ -247,6 +246,13 @@ struct GroupReserve <: AbstractReservesFormulation end
 Struct for to add reserves to be larger than a specified requirement
 """
 struct RangeReserve <: AbstractReservesFormulation end
+
+"""
+Struct for to add reserves to be larger than a specified requirement and map how those should be allocated and deployed considering generators outages
+"""
+struct RangeReserveWithDeliverabilityConstraints <:
+       AbstractSecurityConstrainedReservesFormulation end
+
 """
 Struct for to add reserves to be larger than a variable requirement depending of costs
 """

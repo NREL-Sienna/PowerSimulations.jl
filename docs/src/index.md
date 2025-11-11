@@ -16,39 +16,46 @@ of operations models and simulation models.
 
 The most common Simulation Model is the solution of a Unit Commitment and Economic Dispatch sequence of problems. This model is used in commercial Production Cost Modeling tools, but it has a limited scope of analysis.
 
-## How the documentation is structured
+`PowerSimulations.jl` is an active project under development, and we welcome your feedback, suggestions, and bug reports.
 
-`PowerSimulations.jl` documentation and code are organized according to the needs of different users depending on their skillset and requirements. In broad terms there are three categories:
+## About Sienna
 
-  - **Modeler**: Users that want to solve an operations problem or run a simulation using the existing models in `PowerSimulations.jl`. For instance, answer questions about the change in operation costs in future fuel mixes. Check the formulations library page to choose a modeling strategy that fits your needs.
+`PowerSimulations.jl` is part of the National Renewable Energy Laboratory's
+[Sienna ecosystem](https://nrel-sienna.github.io/Sienna/), an open source framework for
+power system modeling, simulation, and optimization. The Sienna ecosystem can be
+[found on Github](https://github.com/NREL-Sienna/Sienna). It contains three applications:
 
-  - **Model Developer**: Users that want to develop custom models and workflows for the simulation of a power system operation. For instance, study the impacts of an stochastic optimization problem over a deterministic.
-  - **Code Base Developers**: Users that want to add new core functionalities or fix bugs in the core capabilities of `PowerSimulations.jl`.
+  - [Sienna\Data](https://nrel-sienna.github.io/Sienna/pages/applications/sienna_data.html) enables
+    efficient data input, analysis, and transformation
+  - [Sienna\Ops](https://nrel-sienna.github.io/Sienna/pages/applications/sienna_ops.html) enables
+    enables system scheduling simulations by formulating and solving optimization problems
+  - [Sienna\Dyn](https://nrel-sienna.github.io/Sienna/pages/applications/sienna_dyn.html) enables
+    system transient analysis including small signal stability and full system dynamic
+    simulations
 
-`PowerSimulations.jl` is an active project under development, and we welcome your feedback,
-suggestions, and bug reports.
+Each application uses multiple packages in the [`Julia`](http://www.julialang.org)
+programming language.
 
-**Note**: `PowerSimulations.jl` uses the data model implemented in [`PowerSystems.jl`](https://github.com/NREL-Sienna/PowerSystems.jl)
-to construct optimization models. In most cases, you need to add `PowerSystems.jl` to your scripts.
+## Installation and Quick Links
 
-## Installation
+  - [Sienna installation page](https://nrel-sienna.github.io/Sienna/SiennaDocs/docs/build/how-to/install/):
+    Instructions to install `PowerSimulations.jl` and other Sienna\Ops packages
+  - [`JuMP.jl` solver's page](https://jump.dev/JuMP.jl/stable/installation/#Install-a-solver): An appropriate optimization solver is required for running `PowerSimulations.jl` models. Refer to this page to select and install a solver for your application.
+  - [Sienna Documentation Hub](https://nrel-sienna.github.io/Sienna/SiennaDocs/docs/build/index.html):
+    Links to other Sienna packages' documentation
 
-The latest stable release of PowerSimulations can be installed using the Julia package manager with
+## How To Use This Documentation
 
-```julia
-] add PowerSimulations
-```
+There are five main sections containing different information:
 
-For the current development version, "checkout" this package with
+  - **Tutorials** - Detailed walk-throughs to help you *learn* how to use
+    `PowerSimulations.jl`
+  - **How to...** - Directions to help *guide* your work for a particular task
+  - **Explanation** - Additional details and background information to help you *understand*
+    `PowerSimulations.jl`, its structure, and how it works behind the scenes
+  - **Reference** - Technical references and API for a quick *look-up* during your work
+  - **Formulation Library** - Technical reference for the variables, parameters, and
+  equations that PowerSimulations.jl uses to define device behavior
 
-```julia
-] add PowerSimulations#main
-```
-
-An appropriate optimization solver is required for running PowerSimulations models. Refer to [`JuMP.jl` solver's page](https://jump.dev/JuMP.jl/stable/installation/#Install-a-solver) to select the most appropriate for the application of interest.
-
-* * *
-
-PowerSystems has been developed as part of the Scalable Integrated Infrastructure Planning
-(SIIP) initiative at the U.S. Department of Energy's National Renewable Energy
-Laboratory ([NREL](https://www.nrel.gov/)).
+`PowerSimulations.jl` strives to follow the [Diataxis](https://diataxis.fr/) documentation
+framework.

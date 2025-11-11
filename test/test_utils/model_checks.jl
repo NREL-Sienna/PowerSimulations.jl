@@ -9,6 +9,7 @@ function moi_tests(
     greaterthan::Int,
     equalto::Int,
     binary::Bool,
+    lessthan_quadratic::Union{Int, Nothing} = nothing,
 )
     JuMPmodel = PSI.get_jump_model(model)
     @test JuMP.num_variables(JuMPmodel) == vars
@@ -18,7 +19,9 @@ function moi_tests(
     @test JuMP.num_constraints(JuMPmodel, GAEVF, MOI.EqualTo{Float64}) == equalto
     @test ((JuMP.VariableRef, MOI.ZeroOne) in JuMP.list_of_constraint_types(JuMPmodel)) ==
           binary
-
+    !isnothing(lessthan_quadratic) &&
+        @test JuMP.num_constraints(JuMPmodel, GQEVF, MOI.LessThan{Float64}) ==
+              lessthan_quadratic
     return
 end
 
@@ -264,8 +267,8 @@ function check_duration_on_initial_conditions_values(
     for ic in duration_on_data
         name = PSY.get_name(ic.component)
         on_var = PSI.get_initial_condition_value(initial_conditions_data, OnVariable(), T)[
-            1,
             name,
+            1,
         ]
         duration_on = PSI.jump_value(PSI.get_value(ic))
         if on_var == 1.0 && PSY.get_status(ic.component)
@@ -290,8 +293,8 @@ function check_duration_off_initial_conditions_values(
     for ic in duration_off_data
         name = PSY.get_name(ic.component)
         on_var = PSI.get_initial_condition_value(initial_conditions_data, OnVariable(), T)[
-            1,
             name,
+            1,
         ]
         duration_off = PSI.jump_value(PSI.get_value(ic))
         if on_var == 0.0 && !PSY.get_status(ic.component)
@@ -338,8 +341,8 @@ function check_status_initial_conditions_values(model, ::Type{T}) where {T <: PS
     for ic in initial_conditions
         name = PSY.get_name(ic.component)
         status = PSI.get_initial_condition_value(initial_conditions_data, OnVariable(), T)[
-            1,
             name,
+            1,
         ]
         @test PSI.jump_value(PSI.get_value(ic)) == status
     end
@@ -360,8 +363,8 @@ function check_active_power_initial_condition_values(
             ActivePowerVariable(),
             T,
         )[
-            1,
             name,
+            1,
         ]
         @test PSI.jump_value(PSI.get_value(ic)) == power
     end
@@ -385,8 +388,8 @@ function check_active_power_abovemin_initial_condition_values(
             PSI.PowerAboveMinimumVariable(),
             T,
         )[
-            1,
             name,
+            1,
         ]
         @test PSI.jump_value(PSI.get_value(ic)) == power
     end
@@ -421,10 +424,10 @@ function check_initialization_constraint_count(
     ::S,
     ::Type{T};
     filter_func = PSY.get_available,
-    meta = PSI.IS.Optimization.CONTAINER_KEY_EMPTY_META,
+    meta = PSI.ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {S <: PSI.ConstraintType, T <: PSY.Component}
     container =
-        IS.Optimization.get_initial_conditions_model_container(PSI.get_internal(model))
+        ISOPT.get_initial_conditions_model_container(PSI.get_internal(model))
     no_component = length(PSY.get_components(filter_func, T, model.sys))
     time_steps = PSI.get_time_steps(container)[end]
     constraint = PSI.get_constraint(container, S(), T, meta)
@@ -436,7 +439,7 @@ function check_constraint_count(
     ::S,
     ::Type{T};
     filter_func = PSY.get_available,
-    meta = PSI.IS.Optimization.CONTAINER_KEY_EMPTY_META,
+    meta = PSI.ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {S <: PSI.ConstraintType, T <: PSY.Component}
     no_component = length(PSY.get_components(filter_func, T, model.sys))
     time_steps = PSI.get_time_steps(PSI.get_optimization_container(model))[end]
@@ -450,7 +453,7 @@ function check_constraint_count(
     ::Type{T},
 ) where {T <: PSY.Component}
     container = PSI.get_optimization_container(model)
-    set_name =
+    device_name_set =
         PSY.get_name.(
             PSI._get_ramp_constraint_devices(
                 container,
@@ -462,14 +465,14 @@ function check_constraint_count(
         PSI.RampConstraint(),
         T;
         meta = "up",
-        filter_func = x -> x.name in set_name,
+        filter_func = x -> x.name in device_name_set,
     )
     check_constraint_count(
         model,
         PSI.RampConstraint(),
         T;
         meta = "dn",
-        filter_func = x -> x.name in set_name,
+        filter_func = x -> x.name in device_name_set,
     )
     return
 end
@@ -490,19 +493,19 @@ function check_constraint_count(
         ),
         collect(get_components(PSY.get_available, T, model.sys)),
     )
-    set_name = PSY.get_name.(duration_devices)
+    device_name_set = PSY.get_name.(duration_devices)
     check_constraint_count(
         model,
         PSI.DurationConstraint(),
         T;
         meta = "up",
-        filter_func = x -> x.name in set_name,
+        filter_func = x -> x.name in device_name_set,
     )
     return check_constraint_count(
         model,
         PSI.DurationConstraint(),
         T;
         meta = "dn",
-        filter_func = x -> x.name in set_name,
+        filter_func = x -> x.name in device_name_set,
     )
 end

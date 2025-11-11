@@ -1,39 +1,30 @@
 """
 Stores results data for one DecisionModel
 """
-mutable struct DecisionModelStore <: IS.Optimization.AbstractModelStore
+mutable struct DecisionModelStore <: ISOPT.AbstractModelStore
     # All DenseAxisArrays have axes (column names, row indexes)
-    duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
-    parameters::Dict{
-        ParameterKey,
-        OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
-    }
-    variables::Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}
-    aux_variables::Dict{
-        AuxVarKey,
-        OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
-    }
-    expressions::Dict{
-        ExpressionKey,
-        OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}},
-    }
+    duals::Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}
+    parameters::Dict{ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}
+    variables::Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}
+    aux_variables::Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}
+    expressions::Dict{ExpressionKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}
     optimizer_stats::OrderedDict{Dates.DateTime, OptimizerStats}
 end
 
 function DecisionModelStore()
     return DecisionModelStore(
-        Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
-        Dict{ExpressionKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}}(),
+        Dict{ConstraintKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}(),
+        Dict{ParameterKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}(),
+        Dict{VariableKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}(),
+        Dict{AuxVarKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}(),
+        Dict{ExpressionKey, OrderedDict{Dates.DateTime, DenseAxisArray{Float64}}}(),
         OrderedDict{Dates.DateTime, OptimizerStats}(),
     )
 end
 
 function initialize_storage!(
     store::DecisionModelStore,
-    container::IS.Optimization.AbstractOptimizationContainer,
+    container::ISOPT.AbstractOptimizationContainer,
     params::ModelStoreParams,
 )
     num_of_executions = get_num_executions(params)
@@ -50,8 +41,11 @@ function initialize_storage!(
             !should_write_resulting_value(key) && continue
             @debug "Adding $(encode_key_as_string(key)) to DecisionModelStore" _group =
                 LOG_GROUP_MODEL_STORE
-            column_names = get_column_names(key, field_container)
-            data = OrderedDict{Dates.DateTime, DenseAxisArray{Float64, 2}}()
+            column_names = get_column_names(container, type, field_container, key)
+            data = OrderedDict{
+                Dates.DateTime,
+                DenseAxisArray{Float64, length(column_names) + 1},
+            }()
             for timestamp in
                 range(initial_time; step = model_interval, length = num_of_executions)
                 data[timestamp] = fill!(
@@ -71,15 +65,10 @@ function write_result!(
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
     update_timestamp::Dates.DateTime,
-    array::DenseAxisArray{<:Any, 2},
-)
-    columns = axes(array)[1]
-    if eltype(columns) !== String
-        # TODO: This happens because buses are stored by indexes instead of name.
-        columns = string.(columns)
-    end
+    array::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange}},
+) where {T}
     container = getfield(store, get_store_container_type(key))
-    container[key][index] = DenseAxisArray(array.data, columns, 1:size(array)[2])
+    container[key][index] = array
     return
 end
 
@@ -89,15 +78,37 @@ function write_result!(
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
     update_timestamp::Dates.DateTime,
-    array::DenseAxisArray{<:Any, 1},
-)
-    columns = axes(array)[1]
-    if eltype(columns) !== String
-        # TODO: This happens because buses are stored by indexes instead of name.
-        columns = string.(columns)
-    end
+    array::DenseAxisArray{T, 2, <:Tuple{Vector{Int}, UnitRange}},
+) where {T}
+    columns = get_column_names_from_axis_array(array)
     container = getfield(store, get_store_container_type(key))
-    container[key][index] = DenseAxisArray(to_matrix(array), ["1"], columns)
+    container[key][index] = DenseAxisArray(array.data, columns..., 1:size(array, 2))
+    return
+end
+
+function write_result!(
+    store::DecisionModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::DecisionModelIndexType,
+    update_timestamp::Dates.DateTime,
+    array::DenseAxisArray{T, 1, <:Tuple{Vector{String}}},
+) where {T}
+    container = getfield(store, get_store_container_type(key))
+    container[key][index] = array
+    return
+end
+
+function write_result!(
+    store::DecisionModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::DecisionModelIndexType,
+    update_timestamp::Dates.DateTime,
+    array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, Vector{String}, UnitRange{Int}}},
+) where {T}
+    container = getfield(store, get_store_container_type(key))
+    container[key][index] = array
     return
 end
 
@@ -109,7 +120,7 @@ function read_results(
     container = getfield(store, get_store_container_type(key))
     data = container[key]
     if isnothing(index)
-        @assert length(data) == 1
+        @assert_op length(data) == 1
         index = first(keys(data))
     end
 
@@ -122,9 +133,11 @@ function write_optimizer_stats!(
     stats::OptimizerStats,
     index::DecisionModelIndexType,
 )
-    if index in keys(store.optimizer_stats)
-        @warn "Overwriting optimizer stats"
-    end
+    # TODO: This check is incompatible with test calls to psi_checksolve_test
+    # Overwriting should not be allowed in normal operation.
+    # if index in keys(store.optimizer_stats)
+    #     error("Bug: Overwriting optimizer stats for index = $index")
+    # end
     store.optimizer_stats[index] = stats
     return
 end
@@ -138,5 +151,5 @@ end
 
 function get_column_names(store::DecisionModelStore, key::OptimizationContainerKey)
     container = getfield(store, get_store_container_type(key))
-    return get_column_names(key, first(values(container[key])))
+    return get_column_names_from_axis_array(key, first(values(container[key])))
 end

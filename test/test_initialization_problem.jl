@@ -174,7 +174,7 @@ end
             initial_time = init_time,
             horizon = Hour(48),
         )
-        PSI.instantiate_network_model(model)
+        PSI.instantiate_network_model!(model)
         PSI.build_pre_step!(model)
         setup_ic_model_container!(model)
         ####### Check initialization problem constraints #####

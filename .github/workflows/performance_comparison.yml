@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: julia-actions/setup-julia@latest
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v5
       - name: Run Perfomance Test Main
         run: |
           julia --project=test -e 'using Pkg; Pkg.add(PackageSpec(name="PowerSimulations", rev="main")); Pkg.instantiate()'
@@ -42,7 +42,7 @@ jobs:
           body="${body//$'\r'/'%0D'}"
           echo "::set-output name=body::$body"
       - name: Find Comment
-        uses: peter-evans/find-comment@v1
+        uses: peter-evans/find-comment@v5
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -50,7 +50,7 @@ jobs:
           body-includes: Performance Results
       - name: Create comment
         if: steps.fc.outputs.comment-id == ''
-        uses: peter-evans/create-or-update-comment@v1
+        uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
@@ -68,7 +68,7 @@ jobs:
             ${{ steps.solve_results.outputs.body }}
       - name: Update comment
         if: steps.fc.outputs.comment-id != ''
-        uses: peter-evans/create-or-update-comment@v1
+        uses: peter-evans/create-or-update-comment@v5
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           body: |

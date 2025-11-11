@@ -54,7 +54,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
     name::Symbol
     template::AbstractProblemTemplate
     sys::PSY.System
-    internal::IS.Optimization.ModelInternal
+    internal::ISOPT.ModelInternal
     simulation_info::SimulationInfo
     store::EmulationModelStore # might be extended to other stores for simulation
     ext::Dict{String, Any}
@@ -72,7 +72,7 @@ mutable struct EmulationModel{M <: EmulationProblem} <: OperationModel
             name = Symbol(name)
         end
         finalize_template!(template, sys)
-        internal = IS.Optimization.ModelInternal(
+        internal = ISOPT.ModelInternal(
             OptimizationContainer(sys, settings, jump_model, PSY.SingleTimeSeries),
         )
         new{M}(
@@ -283,7 +283,7 @@ function init_model_store_params!(model::EmulationModel)
     horizon = interval = resolution = get_resolution(settings)
     base_power = PSY.get_base_power(system)
     sys_uuid = IS.get_uuid(system)
-    IS.Optimization.set_store_params!(
+    ISOPT.set_store_params!(
         get_internal(model),
         ModelStoreParams(
             num_executions,
@@ -325,7 +325,7 @@ end
 function build_impl!(model::EmulationModel{<:EmulationProblem})
     build_pre_step!(model)
     @info "Instantiating Network Model"
-    instantiate_network_model(model)
+    instantiate_network_model!(model)
     handle_initial_conditions!(model)
     build_model!(model)
     serialize_metadata!(get_optimization_container(model), get_output_dir(model))
@@ -354,7 +354,7 @@ function build!(
     file_mode = "w"
     add_recorders!(model, recorders)
     register_recorders!(model, file_mode)
-    logger = IS.Optimization.configure_logging(
+    logger = ISOPT.configure_logging(
         get_internal(model),
         PROBLEM_LOG_FILENAME,
         file_mode,
@@ -395,7 +395,7 @@ function reset!(model::EmulationModel{<:EmulationProblem})
     if built_for_recurrent_solves(model)
         set_execution_count!(model, 0)
     end
-    IS.Optimization.set_container!(
+    ISOPT.set_container!(
         get_internal(model),
         OptimizationContainer(
             get_system(model),
@@ -404,7 +404,7 @@ function reset!(model::EmulationModel{<:EmulationProblem})
             PSY.SingleTimeSeries,
         ),
     )
-    IS.Optimization.set_initial_conditions_model_container!(get_internal(model), nothing)
+    ISOPT.set_initial_conditions_model_container!(get_internal(model), nothing)
     empty_time_series_cache!(model)
     empty!(get_store(model))
     set_status!(model, ModelBuildStatus.EMPTY)
@@ -470,7 +470,7 @@ function update_parameter_values!(
     IS.@record :execution ParameterUpdateEvent(
         T,
         U,
-        parameter_attributes,
+        "event", # parameter_attributes,
         get_current_timestamp(model),
         get_name(model),
     )
@@ -491,7 +491,7 @@ function run_impl!(
 )
     _pre_solve_model_checks(model, optimizer)
     internal = get_internal(model)
-    executions = IS.Optimization.get_executions(internal)
+    executions = ISOPT.get_executions(internal)
     # Temporary check. Needs better way to manage re-runs of the same model
     if internal.execution_count > 0
         error("Call build! again")
@@ -562,7 +562,7 @@ function run!(
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
     file_mode = "a"
     register_recorders!(model, file_mode)
-    logger = IS.Optimization.configure_logging(
+    logger = ISOPT.configure_logging(
         get_internal(model),
         PROBLEM_LOG_FILENAME,
         file_mode,
@@ -638,4 +638,60 @@ function solve!(
         write_optimizer_stats!(store, model, get_execution_count(model))
     end
     return get_run_status(model)
+end
+
+function handle_initial_conditions!(model::EmulationModel{<:EmulationProblem})
+    # This code is a duplicate of DecisionModel initial conditions handling.
+    # It should be refactored to better handle AGC emulator initial conditions
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Model Initialization" begin
+        if isempty(get_template(model))
+            return
+        end
+        settings = get_settings(model)
+        initialize_model = get_initialize_model(settings)
+        deserialize_initial_conditions = get_deserialize_initial_conditions(settings)
+        serialized_initial_conditions_file = get_initial_conditions_file(model)
+        custom_init_file = get_initialization_file(settings)
+
+        if !initialize_model && deserialize_initial_conditions
+            throw(
+                IS.ConflictingInputsError(
+                    "!initialize_model && deserialize_initial_conditions",
+                ),
+            )
+        elseif !initialize_model && !isempty(custom_init_file)
+            throw(IS.ConflictingInputsError("!initialize_model && initialization_file"))
+        end
+
+        if !initialize_model
+            @info "Skip build of initial conditions"
+            return
+        end
+
+        if !isempty(custom_init_file)
+            if !isfile(custom_init_file)
+                error("initialization_file = $custom_init_file does not exist")
+            end
+            if abspath(custom_init_file) != abspath(serialized_initial_conditions_file)
+                cp(custom_init_file, serialized_initial_conditions_file; force = true)
+            end
+        end
+
+        if deserialize_initial_conditions && isfile(serialized_initial_conditions_file)
+            set_initial_conditions_data!(
+                get_optimization_container(model),
+                Serialization.deserialize(serialized_initial_conditions_file),
+            )
+            @info "Deserialized initial_conditions_data"
+        else
+            @info "Make Initial Conditions Model"
+            build_initial_conditions!(model)
+            initialize!(model)
+        end
+        ISOPT.set_initial_conditions_model_container!(
+            get_internal(model),
+            nothing,
+        )
+    end
+    return
 end

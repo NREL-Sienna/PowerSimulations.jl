@@ -1,6 +1,5 @@
-const DeviceModelForBranches = DeviceModel{<:PSY.Branch, <:AbstractDeviceFormulation}
+
 const DevicesModelContainer = Dict{Symbol, DeviceModel}
-const BranchModelContainer = Dict{Symbol, DeviceModelForBranches}
 const ServicesModelContainer = Dict{Tuple{String, Symbol}, ServiceModel}
 
 abstract type AbstractProblemTemplate end
@@ -55,6 +54,8 @@ get_service_models(template::ProblemTemplate) = template.services
 get_network_model(template::ProblemTemplate) = template.network_model
 get_network_formulation(template::ProblemTemplate) =
     get_network_formulation(get_network_model(template))
+get_hvdc_network_model(template::ProblemTemplate) =
+    template.network_model.hvdc_network_model
 
 function get_component_types(template::ProblemTemplate)::Vector{DataType}
     return vcat(
@@ -96,6 +97,28 @@ function set_network_model!(
     model::NetworkModel{<:PM.AbstractPowerModel},
 )
     template.network_model = model
+    return
+end
+
+"""
+Sets the network model in a template.
+"""
+function set_hvdc_network_model!(
+    template::ProblemTemplate,
+    model::Union{Nothing, AbstractHVDCNetworkModel},
+)
+    set_hvdc_network_model!(template.network_model, model)
+    return
+end
+
+"""
+Sets the network model in a template.
+"""
+function set_hvdc_network_model!(
+    template::ProblemTemplate,
+    model::Type{U},
+) where {U <: AbstractHVDCNetworkModel}
+    set_hvdc_network_model!(template.network_model, model())
     return
 end
 
@@ -202,6 +225,12 @@ function _populate_contributing_devices!(template::ProblemTemplate, sys::PSY.Sys
     union!(modeled_devices, Set(get_component_type(m) for m in values(branch_models)))
     incompatible_device_types = get_incompatible_devices(device_models)
     services_mapping = PSY.get_contributing_device_mapping(sys)
+    if isempty(keys(services_mapping))
+        @warn "The system doesn't include any services. No services will be modeled, consider removing the service models from the template." _group =
+            LOG_GROUP_SERVICE_CONSTUCTORS
+        empty!(service_models)
+        return
+    end
     for (service_key, service_model) in service_models
         @debug "Populating service $(service_key)"
         empty!(get_contributing_devices_map(service_model))
@@ -212,8 +241,9 @@ function _populate_contributing_devices!(template::ProblemTemplate, sys::PSY.Sys
                 LOG_GROUP_SERVICE_CONSTUCTORS
             continue
         end
+        service_devices_key = (type = S, name = PSY.get_name(service))
         contributing_devices_ =
-            services_mapping[(type = S, name = PSY.get_name(service))].contributing_devices
+            services_mapping[service_devices_key].contributing_devices
         for d in contributing_devices_
             _add_contributing_device_by_type!(
                 service_model,
@@ -223,9 +253,9 @@ function _populate_contributing_devices!(template::ProblemTemplate, sys::PSY.Sys
             )
         end
         if isempty(get_contributing_devices_map(service_model))
-            @warn "The contributing devices for service $(PSY.get_name(service)) is empty, consider removing the service from the system" _group =
-                LOG_GROUP_SERVICE_CONSTUCTORS
-            continue
+            error(
+                "The contributing devices for service $(PSY.get_name(service)) is empty. Add contributing devices to the service in the data to continue.",
+            )
         end
     end
     return

@@ -1,5 +1,14 @@
 ######## CONSTRAINTS ############
 
+_add_lb(::RangeConstraintLBExpressions) = true
+_add_ub(::RangeConstraintLBExpressions) = false
+
+_add_lb(::RangeConstraintUBExpressions) = false
+_add_ub(::RangeConstraintUBExpressions) = true
+
+_add_lb(::ExpressionType) = true
+_add_ub(::ExpressionType) = false
+
 # Generic fallback functions
 function get_startup_shutdown(
     device,
@@ -95,7 +104,7 @@ function _add_lower_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
 ) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
-    device_names = [PSY.get_name(d) for d in devices]
+    device_names = PSY.get_name.(devices)
 
     con_lb =
         add_constraints_container!(container, T(), V, device_names, time_steps; meta = "lb")
@@ -117,7 +126,7 @@ function _add_upper_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
 ) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
-    device_names = [PSY.get_name(d) for d in devices]
+    device_names = PSY.get_name.(devices)
 
     con_ub =
         add_constraints_container!(container, T(), V, device_names, time_steps; meta = "ub")
@@ -245,7 +254,7 @@ function _add_semicontinuous_lower_bound_range_constraints_impl!(
     ::DeviceModel{V, W},
 ) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     con_lb = add_constraints_container!(container, T(), V, names, time_steps; meta = "lb")
     varbin = get_variable(container, OnVariable(), V)
 
@@ -270,7 +279,7 @@ function _add_semicontinuous_lower_bound_range_constraints_impl!(
     ::DeviceModel{V, W},
 ) where {T <: ConstraintType, V <: PSY.ThermalGen, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     con_lb = add_constraints_container!(container, T(), V, names, time_steps; meta = "lb")
     varbin = get_variable(container, OnVariable(), V)
 
@@ -304,7 +313,7 @@ function _add_semicontinuous_upper_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
 ) where {T <: ConstraintType, V <: PSY.ThermalGen, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     con_ub = add_constraints_container!(container, T(), V, names, time_steps; meta = "ub")
     varbin = get_variable(container, OnVariable(), V)
 
@@ -338,7 +347,7 @@ function _add_semicontinuous_upper_bound_range_constraints_impl!(
     model::DeviceModel{V, W},
 ) where {T <: ConstraintType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     con_ub = add_constraints_container!(container, T(), V, names, time_steps; meta = "ub")
     varbin = get_variable(container, OnVariable(), V)
 
@@ -385,8 +394,8 @@ function add_reserve_range_constraints!(
     X <: PM.AbstractPowerModel,
 }
     array = get_variable(container, U(), V)
-    _add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model)
-    _add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    _add_reserve_upper_bound_range_constraints!(container, T, array, devices, model)
+    _add_reserve_lower_bound_range_constraints!(container, T, array, devices, model)
     return
 end
 
@@ -405,12 +414,14 @@ function add_reserve_range_constraints!(
     X <: PM.AbstractPowerModel,
 }
     array = get_expression(container, U(), W)
-    _add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model)
-    _add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    _add_ub(U()) &&
+        _add_reserve_upper_bound_range_constraints!(container, T, array, devices, model)
+    _add_lb(U()) &&
+        _add_reserve_lower_bound_range_constraints!(container, T, array, devices, model)
     return
 end
 
-function _add_reserve_lower_bound_range_constraints_impl!(
+function _add_reserve_lower_bound_range_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     array,
@@ -422,7 +433,7 @@ function _add_reserve_lower_bound_range_constraints_impl!(
     W <: AbstractDeviceFormulation,
 }
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     binary_variables = [ReservationVariable()]
 
     IS.@assert_op length(binary_variables) == 1
@@ -444,7 +455,7 @@ function _add_reserve_lower_bound_range_constraints_impl!(
     return
 end
 
-function _add_reserve_upper_bound_range_constraints_impl!(
+function _add_reserve_upper_bound_range_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     array,
@@ -456,7 +467,7 @@ function _add_reserve_upper_bound_range_constraints_impl!(
     W <: AbstractDeviceFormulation,
 }
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     binary_variables = [ReservationVariable()]
 
     IS.@assert_op length(binary_variables) == 1
@@ -502,15 +513,19 @@ function add_reserve_range_constraints!(
     ::Type{Y},
 ) where {
     T <:
-    Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+    Union{
+        ReactivePowerVariableLimitsConstraint,
+        ActivePowerVariableLimitsConstraint,
+        OutputActivePowerVariableLimitsConstraint,
+    },
     U <: VariableType,
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
     Y <: PM.AbstractPowerModel,
 }
     array = get_variable(container, U(), W)
-    _add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model)
-    _add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    _add_reserve_upper_bound_range_constraints!(container, T, array, devices, model)
+    _add_reserve_lower_bound_range_constraints!(container, T, array, devices, model)
     return
 end
 
@@ -538,19 +553,25 @@ function add_reserve_range_constraints!(
     ::Type{Y},
 ) where {
     T <:
-    Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+    Union{
+        ReactivePowerVariableLimitsConstraint,
+        ActivePowerVariableLimitsConstraint,
+        OutputActivePowerVariableLimitsConstraint,
+    },
     U <: ExpressionType,
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
     Y <: PM.AbstractPowerModel,
 }
     array = get_expression(container, U(), W)
-    _add_reserve_upper_bound_range_constraints_impl!(container, T, array, devices, model)
-    _add_reserve_lower_bound_range_constraints_impl!(container, T, array, devices, model)
+    _add_ub(U()) &&
+        _add_reserve_upper_bound_range_constraints!(container, T, array, devices, model)
+    _add_lb(U()) &&
+        _add_reserve_lower_bound_range_constraints!(container, T, array, devices, model)
     return
 end
 
-function _add_reserve_lower_bound_range_constraints_impl!(
+function _add_reserve_lower_bound_range_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     array,
@@ -558,12 +579,16 @@ function _add_reserve_lower_bound_range_constraints_impl!(
     ::DeviceModel{W, X},
 ) where {
     T <:
-    Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+    Union{
+        ReactivePowerVariableLimitsConstraint,
+        ActivePowerVariableLimitsConstraint,
+        OutputActivePowerVariableLimitsConstraint,
+    },
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
 }
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     binary_variables = [ReservationVariable()]
 
     con_lb = add_constraints_container!(container, T(), W, names, time_steps; meta = "lb")
@@ -582,7 +607,7 @@ function _add_reserve_lower_bound_range_constraints_impl!(
     return
 end
 
-function _add_reserve_upper_bound_range_constraints_impl!(
+function _add_reserve_upper_bound_range_constraints!(
     container::OptimizationContainer,
     ::Type{T},
     array,
@@ -590,12 +615,16 @@ function _add_reserve_upper_bound_range_constraints_impl!(
     ::DeviceModel{W, X},
 ) where {
     T <:
-    Union{ReactivePowerVariableLimitsConstraint, OutputActivePowerVariableLimitsConstraint},
+    Union{
+        ReactivePowerVariableLimitsConstraint,
+        ActivePowerVariableLimitsConstraint,
+        OutputActivePowerVariableLimitsConstraint,
+    },
     W <: PSY.Component,
     X <: AbstractDeviceFormulation,
 }
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     binary_variables = [ReservationVariable()]
 
     con_ub = add_constraints_container!(container, T(), W, names, time_steps; meta = "ub")
@@ -764,7 +793,7 @@ function add_parameterized_upper_bound_range_constraints(
     ::Type{T},
     ::Type{U},
     ::Type{P},
-    devices::IS.FlattenIteratorWrapper{V},
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
@@ -792,7 +821,7 @@ function add_parameterized_upper_bound_range_constraints(
     ::Type{T},
     ::Type{U},
     ::Type{P},
-    devices::IS.FlattenIteratorWrapper{V},
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::DeviceModel{V, W},
     ::Type{X},
 ) where {
@@ -821,7 +850,31 @@ function upper_bound_range_with_parameter!(
     constraint_container::JuMPConstraintArray,
     lhs_array,
     param::P,
-    devices::IS.FlattenIteratorWrapper{V},
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
+    ::DeviceModel{V, W},
+) where {P <: AvailableStatusParameter, V <: PSY.Component, W <: AbstractDeviceFormulation}
+    param_array = get_parameter_array(container, param, V)
+    param_multiplier = get_parameter_multiplier_array(container, P(), V)
+    jump_model = get_jump_model(container)
+    time_steps = axes(constraint_container)[2]
+    for device in devices, t in time_steps
+        ub = PSY.get_max_active_power(device)
+        name = PSY.get_name(device)
+        constraint_container[name, t] = JuMP.@constraint(
+            jump_model,
+            lhs_array[name, t] <= ub * param_array[name, t]
+        )
+    end
+    return
+end
+
+# This function is re-used in SemiContinuousFeedforward
+function upper_bound_range_with_parameter!(
+    container::OptimizationContainer,
+    constraint_container::JuMPConstraintArray,
+    lhs_array,
+    param::P,
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     ::DeviceModel{V, W},
 ) where {P <: ParameterType, V <: PSY.Component, W <: AbstractDeviceFormulation}
     param_array = get_parameter_array(container, param, V)
@@ -871,11 +924,11 @@ function _add_parameterized_upper_bound_range_constraints_impl!(
     ::Type{T},
     array,
     param::P,
-    devices::IS.FlattenIteratorWrapper{V},
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     model::DeviceModel{V, W},
 ) where {
     T <: ConstraintType,
-    P <: ParameterType,
+    P <: TimeSeriesParameter,
     V <: PSY.Component,
     W <: AbstractDeviceFormulation,
 }
@@ -888,6 +941,28 @@ function _add_parameterized_upper_bound_range_constraints_impl!(
         return
     end
 
+    constraint =
+        add_constraints_container!(container, T(), V, names, time_steps; meta = "ub")
+
+    upper_bound_range_with_parameter!(container, constraint, array, param, devices, model)
+    return
+end
+
+function _add_parameterized_upper_bound_range_constraints_impl!(
+    container::OptimizationContainer,
+    ::Type{T},
+    array,
+    param::P,
+    devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
+    model::DeviceModel{V, W},
+) where {
+    T <: ConstraintType,
+    P <: ParameterType,
+    V <: PSY.Component,
+    W <: AbstractDeviceFormulation,
+}
+    time_steps = get_time_steps(container)
+    names = PSY.get_name.(devices)
     constraint =
         add_constraints_container!(container, T(), V, names, time_steps; meta = "ub")
 

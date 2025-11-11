@@ -13,7 +13,7 @@ mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     name::Symbol
     template::AbstractProblemTemplate
     sys::PSY.System
-    internal::Union{Nothing, IS.Optimization.ModelInternal}
+    internal::Union{Nothing, ISOPT.ModelInternal}
     simulation_info::SimulationInfo
     store::DecisionModelStore
     ext::Dict{String, Any}
@@ -75,7 +75,7 @@ function DecisionModel{M}(
         name = Symbol(name)
     end
     ts_type = get_deterministic_time_series_type(sys)
-    internal = IS.Optimization.ModelInternal(
+    internal = ISOPT.ModelInternal(
         OptimizationContainer(sys, settings, jump_model, ts_type),
     )
 
@@ -273,7 +273,7 @@ function init_model_store_params!(model::DecisionModel)
         sys_uuid,
         get_metadata(get_optimization_container(model)),
     )
-    IS.Optimization.set_store_params!(get_internal(model), store_params)
+    ISOPT.set_store_params!(get_internal(model), store_params)
     return
 end
 
@@ -339,7 +339,7 @@ end
 function build_impl!(model::DecisionModel{<:DecisionProblem})
     build_pre_step!(model)
     @info "Instantiating Network Model"
-    instantiate_network_model(model)
+    instantiate_network_model!(model)
     handle_initial_conditions!(model)
     build_model!(model)
     serialize_metadata!(get_optimization_container(model), get_output_dir(model))
@@ -416,7 +416,7 @@ function reset!(model::DecisionModel{<:DefaultDecisionProblem})
     end
     sys = get_system(model)
     ts_type = get_deterministic_time_series_type(sys)
-    IS.Optimization.set_container!(
+    ISOPT.set_container!(
         get_internal(model),
         OptimizationContainer(
             get_system(model),
@@ -428,7 +428,7 @@ function reset!(model::DecisionModel{<:DefaultDecisionProblem})
     get_optimization_container(model).built_for_recurrent_solves =
         was_built_for_recurrent_solves
     internal = get_internal(model)
-    IS.Optimization.set_initial_conditions_model_container!(internal, nothing)
+    ISOPT.set_initial_conditions_model_container!(internal, nothing)
     empty_time_series_cache!(model)
     empty!(get_store(model))
     set_status!(model, ModelBuildStatus.EMPTY)
@@ -480,7 +480,7 @@ function solve!(
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_OPERATION_MODEL_TIMER)
     file_mode = "a"
     register_recorders!(model, file_mode)
-    logger = IS.Optimization.configure_logging(
+    logger = ISOPT.configure_logging(
         get_internal(model),
         PROBLEM_LOG_FILENAME,
         file_mode,
@@ -562,4 +562,58 @@ function solve!(
         advance_execution_count!(model)
     end
     return get_run_status(model)
+end
+
+function handle_initial_conditions!(model::DecisionModel{<:DecisionProblem})
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Model Initialization" begin
+        if isempty(get_template(model))
+            return
+        end
+        settings = get_settings(model)
+        initialize_model = get_initialize_model(settings)
+        deserialize_initial_conditions = get_deserialize_initial_conditions(settings)
+        serialized_initial_conditions_file = get_initial_conditions_file(model)
+        custom_init_file = get_initialization_file(settings)
+
+        if !initialize_model && deserialize_initial_conditions
+            throw(
+                IS.ConflictingInputsError(
+                    "!initialize_model && deserialize_initial_conditions",
+                ),
+            )
+        elseif !initialize_model && !isempty(custom_init_file)
+            throw(IS.ConflictingInputsError("!initialize_model && initialization_file"))
+        end
+
+        if !initialize_model
+            @info "Skip build of initial conditions"
+            return
+        end
+
+        if !isempty(custom_init_file)
+            if !isfile(custom_init_file)
+                error("initialization_file = $custom_init_file does not exist")
+            end
+            if abspath(custom_init_file) != abspath(serialized_initial_conditions_file)
+                cp(custom_init_file, serialized_initial_conditions_file; force = true)
+            end
+        end
+
+        if deserialize_initial_conditions && isfile(serialized_initial_conditions_file)
+            set_initial_conditions_data!(
+                get_optimization_container(model),
+                Serialization.deserialize(serialized_initial_conditions_file),
+            )
+            @info "Deserialized initial_conditions_data"
+        else
+            @info "Make Initial Conditions Model"
+            build_initial_conditions!(model)
+            initialize!(model)
+        end
+        ISOPT.set_initial_conditions_model_container!(
+            get_internal(model),
+            nothing,
+        )
+    end
+    return
 end

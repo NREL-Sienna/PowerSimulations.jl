@@ -50,7 +50,7 @@ function _add_feedforward_constraints!(
     V <: PSY.Component,
 }
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     constraint_lb =
         add_constraints_container!(container, T(), V, names, time_steps; meta = "$(U)_lb")
     constraint_ub =
@@ -90,7 +90,7 @@ function _add_sc_feedforward_constraints!(
     W <: AbstractDeviceFormulation,
 }
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     constraint_lb =
         add_constraints_container!(container, T(), V, names, time_steps; meta = "$(U)_lb")
     constraint_ub =
@@ -135,7 +135,7 @@ function _add_sc_feedforward_constraints!(
     W <: AbstractDeviceFormulation,
 }
     time_steps = get_time_steps(container)
-    names = [PSY.get_name(d) for d in devices]
+    names = PSY.get_name.(devices)
     constraint_lb =
         add_constraints_container!(container, T(), V, names, time_steps; meta = "$(U)_lb")
     constraint_ub =
@@ -228,7 +228,7 @@ function add_feedforward_constraints!(
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
         axes = JuMP.axes(variable)
-        IS.@assert_op axes[1] == [PSY.get_name(d) for d in devices]
+        @assert issetequal(axes[1], PSY.get_name.(devices))
         IS.@assert_op axes[2] == time_steps
         # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
         for v in variable
@@ -236,6 +236,42 @@ function add_feedforward_constraints!(
                 @debug "lb reset" JuMP.lower_bound(v) v _group =
                     LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
                 JuMP.set_lower_bound(v, 0.0)
+            end
+        end
+        _add_sc_feedforward_constraints!(
+            container,
+            FeedforwardSemiContinuousConstraint,
+            parameter_type(),
+            var,
+            devices,
+            model,
+        )
+    end
+    return
+end
+
+function add_feedforward_constraints!(
+    container::OptimizationContainer,
+    model::DeviceModel{T, U},
+    devices::IS.FlattenIteratorWrapper{T},
+    ff::SemiContinuousFeedforward,
+) where {T <: PSY.ThermalGen, U <: AbstractThermalFormulation}
+    parameter_type = get_default_parameter_type(ff, T)
+    time_steps = get_time_steps(container)
+    for var in get_affected_values(ff)
+        variable = get_variable(container, var)
+        axes = JuMP.axes(variable)
+        @assert issetequal(axes[1], PSY.get_name.(devices))
+        IS.@assert_op axes[2] == time_steps
+        # If the variable was a lower bound != 0, not removing the LB can cause infeasibilities
+        for d in devices
+            PSY.get_must_run(d) && continue
+            for v in variable[PSY.get_name(d), :]
+                if JuMP.has_lower_bound(v) && JuMP.lower_bound(v) > 0.0
+                    @debug "lb reset $(PSY.get_name(d))" JuMP.lower_bound(v) v _group =
+                        LOG_GROUP_FEEDFORWARDS_CONSTRUCTION
+                    JuMP.set_lower_bound(v, 0.0)
+                end
             end
         end
         _add_sc_feedforward_constraints!(
@@ -285,8 +321,8 @@ function add_feedforward_constraints!(
     multiplier_ub = get_parameter_multiplier_array(container, parameter_type(), T)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
-        set_name, set_time = JuMP.axes(variable)
-        IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
+        device_name_set, set_time = JuMP.axes(variable)
+        @assert issetequal(device_name_set, PSY.get_name.(devices))
         IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
@@ -294,12 +330,12 @@ function add_feedforward_constraints!(
             container,
             FeedforwardUpperBoundConstraint(),
             T,
-            set_name,
+            device_name_set,
             time_steps;
             meta = "$(var_type)ub",
         )
 
-        for t in time_steps, name in set_name
+        for t in time_steps, name in device_name_set
             con_ub[name, t] = JuMP.@constraint(
                 container.JuMPmodel,
                 variable[name, t] <= param_ub[name, t] * multiplier_ub[name, t]
@@ -344,8 +380,8 @@ function add_feedforward_constraints!(
     multiplier_ub = get_parameter_multiplier_array(container, parameter_type(), T)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
-        set_name, set_time = JuMP.axes(variable)
-        IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
+        device_name_set, set_time = JuMP.axes(variable)
+        @assert issetequal(device_name_set, PSY.get_name.(devices))
         IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
@@ -353,13 +389,13 @@ function add_feedforward_constraints!(
             container,
             FeedforwardLowerBoundConstraint(),
             T,
-            set_name,
+            device_name_set,
             time_steps;
             meta = "$(var_type)lb",
         )
 
         use_slacks = get_slacks(ff)
-        for t in time_steps, name in set_name
+        for t in time_steps, name in device_name_set
             if use_slacks
                 slack_var =
                     get_variable(container, LowerBoundFeedForwardSlack(), T, "$(var_type)")
@@ -398,8 +434,8 @@ function add_feedforward_constraints!(
     use_slacks = get_slacks(ff)
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
-        set_name, set_time = JuMP.axes(variable)
-        IS.@assert_op set_name == [PSY.get_name(d) for d in contributing_devices]
+        device_name_set, set_time = JuMP.axes(variable)
+        IS.@assert_op device_name_set == [PSY.get_name(d) for d in contributing_devices]
         IS.@assert_op set_time == time_steps
 
         var_type = get_entry_type(var)
@@ -407,12 +443,12 @@ function add_feedforward_constraints!(
             container,
             FeedforwardLowerBoundConstraint(),
             T,
-            set_name,
+            device_name_set,
             time_steps;
             meta = "$(var_type)_$(service_name)",
         )
 
-        for t in time_steps, name in set_name
+        for t in time_steps, name in device_name_set
             if use_slacks
                 slack_var = get_variable(
                     container,
@@ -473,10 +509,10 @@ function add_feedforward_constraints!(
     multiplier = get_parameter_multiplier_array(container, parameter_type(), T, "$var_type")
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
-        set_name, set_time = JuMP.axes(variable)
-        IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
+        device_name_set, set_time = JuMP.axes(variable)
+        IS.@assert_op device_name_set == PSY.get_name.(devices)
 
-        for t in set_time, name in set_name
+        for t in set_time, name in device_name_set
             JuMP.fix(variable[name, t], param[name, t] * multiplier[name, t]; force = true)
         end
     end
@@ -500,10 +536,10 @@ function add_feedforward_constraints!(
     )
     for var in get_affected_values(ff)
         variable = get_variable(container, var)
-        set_name, set_time = JuMP.axes(variable)
-        IS.@assert_op set_name == [PSY.get_name(d) for d in devices]
+        device_name_set, set_time = JuMP.axes(variable)
+        @assert issetequal(device_name_set, PSY.get_name.(devices))
         IS.@assert_op set_time == time_steps
-        for t in time_steps, name in set_name
+        for t in time_steps, name in device_name_set
             JuMP.fix(variable[name, t], param[name, t] * multiplier[name, t]; force = true)
         end
     end

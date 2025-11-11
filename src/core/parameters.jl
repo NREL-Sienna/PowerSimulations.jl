@@ -26,10 +26,6 @@ end
 get_time_series_type(::TimeSeriesAttributes{T}) where {T <: PSY.TimeSeriesData} = T
 get_time_series_name(attr::TimeSeriesAttributes) = attr.name
 get_time_series_multiplier_id(attr::TimeSeriesAttributes) = attr.multiplier_id[]
-function set_time_series_multiplier_id!(attr::TimeSeriesAttributes, val::Int)
-    attr.multiplier_id[] = val
-    return
-end
 
 get_subsystem(attr::TimeSeriesAttributes) = attr.subsystem[]
 function set_subsystem!(attr::TimeSeriesAttributes, val::String)
@@ -48,7 +44,14 @@ function add_component_name!(attr::TimeSeriesAttributes, name::String, uuid::Str
 end
 
 get_component_names(attr::TimeSeriesAttributes) = keys(attr.component_name_to_ts_uuid)
-function _get_ts_uuid(attr::TimeSeriesAttributes, name)
+function _get_ts_uuid(attr::TimeSeriesAttributes, name::String)
+    if !haskey(attr.component_name_to_ts_uuid, name)
+        throw(
+            ArgumentError(
+                "No time series UUID found for in attributes for component $name: available names are $(keys(attr.component_name_to_ts_uuid))",
+            ),
+        )
+    end
     return attr.component_name_to_ts_uuid[name]
 end
 
@@ -64,14 +67,24 @@ end
 get_attribute_key(attr::VariableValueAttributes) = attr.attribute_key
 
 struct CostFunctionAttributes{T} <: ParameterAttributes
-    variable_type::Type
+    variable_types::Tuple{Vararg{Type}}
     sos_status::SOSStatusVariable
     uses_compact_power::Bool
 end
 
 get_sos_status(attr::CostFunctionAttributes) = attr.sos_status
-get_variable_type(attr::CostFunctionAttributes) = attr.variable_type
+get_variable_types(attr::CostFunctionAttributes) = attr.variable_types
 get_uses_compact_power(attr::CostFunctionAttributes) = attr.uses_compact_power
+
+struct EventParametersAttributes{T <: PSY.Outage, U <: ParameterType} <: ParameterAttributes
+    affected_devices::Vector{<:PSY.Component}
+end
+
+function get_param_type(
+    ::EventParametersAttributes{T, U},
+) where {T <: PSY.Outage, U <: ParameterType}
+    return U
+end
 
 struct ParameterContainer{T <: AbstractArray, U <: AbstractArray}
     attributes::ParameterAttributes
@@ -127,7 +140,8 @@ function get_parameter_column_refs(
     param_array::DenseAxisArray,
     column,
 ) where {T <: PSY.TimeSeriesData}
-    return param_array[_get_ts_uuid(attributes, column), axes(param_array)[2:end]...]
+    expand_ixs((_get_ts_uuid(attributes, column),), param_array)
+    return param_array[expand_ixs((_get_ts_uuid(attributes, column),), param_array)...]
 end
 
 function get_parameter_column_values(container::ParameterContainer, column::AbstractString)
@@ -146,6 +160,14 @@ end
 
 function get_parameter_values(
     ::ParameterAttributes,
+    param_array::DenseAxisArray,
+    multiplier_array::DenseAxisArray,
+)
+    return (.*).(jump_value.(param_array), multiplier_array)
+end
+
+function get_parameter_values(
+    attr::EventParametersAttributes,
     param_array::DenseAxisArray,
     multiplier_array::DenseAxisArray,
 )
@@ -174,69 +196,49 @@ Base.length(c::ParameterContainer) = length(c.parameter_array)
 Base.size(c::ParameterContainer) = size(c.parameter_array)
 
 function get_column_names(key::ParameterKey, c::ParameterContainer)
-    return get_column_names(key, get_multiplier_array(c))
+    return get_column_names_from_axis_array(key, get_multiplier_array(c))
 end
 
-function _set_parameter!(
-    array::AbstractArray{Float64},
-    ::JuMP.Model,
-    value::Float64,
-    ixs::Tuple,
-)
-    array[ixs...] = value
-    return
-end
-
+const ValidDataParamEltypes = Union{Float64, Tuple{Vararg{Float64}}}
 function _set_parameter!(
     array::AbstractArray{T},
     ::JuMP.Model,
-    value::T,
+    value::Union{T, AbstractVector{T}},
     ixs::Tuple,
-) where {T <: IS.FunctionData}
-    array[ixs...] = value
+) where {T <: ValidDataParamEltypes}
+    assign_maybe_broadcast!(array, value, ixs)
     return
 end
 
 function _set_parameter!(
     array::AbstractArray{JuMP.VariableRef},
     model::JuMP.Model,
-    value::Float64,
+    value::Union{T, AbstractVector{T}},
     ixs::Tuple,
-)
-    array[ixs...] = add_jump_parameter(model, value)
+) where {T <: ValidDataParamEltypes}
+    assign_maybe_broadcast!(array, add_jump_parameter.(Ref(model), value), ixs)
     return
 end
 
 function _set_parameter!(
     array::SparseAxisArray{Union{Nothing, JuMP.VariableRef}},
     model::JuMP.Model,
-    value::Float64,
+    value::Union{T, AbstractVector{T}},
     ixs::Tuple,
-)
-    array[ixs...] = add_jump_parameter(model, value)
+) where {T <: ValidDataParamEltypes}
+    assign_maybe_broadcast!(array, add_jump_parameter.(Ref(model), value), ixs)
     return
 end
 
 function set_multiplier!(container::ParameterContainer, multiplier::Float64, ixs...)
-    get_multiplier_array(container)[ixs...] = multiplier
+    assign_maybe_broadcast!(get_multiplier_array(container), multiplier, ixs)
     return
 end
 
 function set_parameter!(
     container::ParameterContainer,
     jump_model::JuMP.Model,
-    parameter::Float64,
-    ixs...,
-)
-    param_array = get_parameter_array(container)
-    _set_parameter!(param_array, jump_model, parameter, ixs)
-    return
-end
-
-function set_parameter!(
-    container::ParameterContainer,
-    jump_model::JuMP.Model,
-    parameter::IS.FunctionData,
+    parameter::Union{ValidDataParamEltypes, AbstractVector{<:ValidDataParamEltypes}},
     ixs...,
 )
     param_array = get_parameter_array(container)
@@ -255,9 +257,36 @@ Parameter to define reactive power time series
 struct ReactivePowerTimeSeriesParameter <: TimeSeriesParameter end
 
 """
+Parameter to define active power out time series
+"""
+struct ActivePowerOutTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
+Parameter to define active power in time series
+"""
+struct ActivePowerInTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
 Parameter to define requirement time series
 """
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
+Abstract type for dynamic ratings of AC branches
+"""
+abstract type AbstractDynamicBranchRatingTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
+Parameter to define the dynamic rating time series of a branch
+"""
+struct DynamicBranchRatingTimeSeriesParameter <:
+       AbstractDynamicBranchRatingTimeSeriesParameter end
+
+"""
+Parameter to define the dynamic ratings time series of an AC branch for post-contingency condition
+"""
+struct PostContingencyDynamicBranchRatingTimeSeriesParameter <:
+       AbstractDynamicBranchRatingTimeSeriesParameter end
 
 """
 Parameter to define Flow From_To limit time series
@@ -292,7 +321,7 @@ Parameter to define variable lower bound
 struct LowerBoundValueParameter <: VariableValueParameter end
 
 """
-Parameter to define unit commitment status
+Parameter to define unit commitment status updated from the system state
 """
 struct OnStatusParameter <: VariableValueParameter end
 
@@ -311,12 +340,77 @@ Parameter to define fuel cost time series
 """
 struct FuelCostParameter <: ObjectiveFunctionParameter end
 
+"Parameter to define startup cost time series"
+struct StartupCostParameter <: ObjectiveFunctionParameter end
+
+"Parameter to define shutdown cost time series"
+struct ShutdownCostParameter <: ObjectiveFunctionParameter end
+
+"Parameters to define the cost at the minimum available power"
+abstract type AbstractCostAtMinParameter <: ObjectiveFunctionParameter end
+
+"[`AbstractCostAtMinParameter`](@ref) for the incremental case (power source)"
+struct IncrementalCostAtMinParameter <: AbstractCostAtMinParameter end
+
+"[`AbstractCostAtMinParameter`](@ref) for the decremental case (power sink)"
+struct DecrementalCostAtMinParameter <: AbstractCostAtMinParameter end
+
+"Parameters to define the slopes of a piecewise linear cost function"
+abstract type AbstractPiecewiseLinearSlopeParameter <: ObjectiveFunctionParameter end
+
+"[`AbstractPiecewiseLinearSlopeParameter`](@ref) for the incremental case (power source)"
+struct IncrementalPiecewiseLinearSlopeParameter <: AbstractPiecewiseLinearSlopeParameter end
+
+"[`AbstractPiecewiseLinearSlopeParameter`](@ref) for the decremental case (power sink)"
+struct DecrementalPiecewiseLinearSlopeParameter <: AbstractPiecewiseLinearSlopeParameter end
+
+abstract type AbstractPiecewiseLinearBreakpointParameter <: TimeSeriesParameter end
+
+"[`AbstractPiecewiseLinearBreakpointParameter`](@ref) for the incremental case (power source)"
+struct IncrementalPiecewiseLinearBreakpointParameter <:
+       AbstractPiecewiseLinearBreakpointParameter end
+
+"[`AbstractPiecewiseLinearBreakpointParameter`](@ref) for the decremental case (power sink)"
+struct DecrementalPiecewiseLinearBreakpointParameter <:
+       AbstractPiecewiseLinearBreakpointParameter end
+
 abstract type AuxVariableValueParameter <: RightHandSideParameter end
 
-struct EventParameter <: ParameterType end
+abstract type EventParameter <: ParameterType end
+
+"""
+Parameter to define component availability status updated from the system state
+"""
+struct AvailableStatusParameter <: EventParameter end
+
+"""
+Parameter to define active power offset during an event.
+"""
+struct ActivePowerOffsetParameter <: EventParameter end
+
+"""
+Parameter to define reactive power offset during an event.
+"""
+struct ReactivePowerOffsetParameter <: EventParameter end
+
+"""
+Parameter to record that the component changed in the availability status
+"""
+struct AvailableStatusChangeCountdownParameter <: EventParameter end
 
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
+should_write_resulting_value(::Type{<:EventParameter}) = true
 
+should_write_resulting_value(::Type{<:FuelCostParameter}) = true
+should_write_resulting_value(::Type{<:ShutdownCostParameter}) = true
+should_write_resulting_value(::Type{<:AbstractCostAtMinParameter}) = true
+should_write_resulting_value(::Type{<:AbstractPiecewiseLinearSlopeParameter}) = true
+should_write_resulting_value(::Type{<:AbstractPiecewiseLinearBreakpointParameter}) = true
+
+convert_result_to_natural_units(::Type{DynamicBranchRatingTimeSeriesParameter}) = true
+convert_result_to_natural_units(
+    ::Type{PostContingencyDynamicBranchRatingTimeSeriesParameter},
+) = true
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{RequirementTimeSeriesParameter}) = true

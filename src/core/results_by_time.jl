@@ -46,6 +46,19 @@ function _check_column_consistency(
     # TODO:
 end
 
+function _check_column_consistency(
+    data::SortedDict{Dates.DateTime, DataFrame},
+    cols::NTuple{N, Vector{String}},
+) where {N}
+    for df in values(data)
+        if DataFrames.ncol(df) != length(cols[1])
+            error(
+                "Mismatch in length of DataFrame columns: $(DataFrames.ncol(df)) $(length(cols[1]))",
+            )
+        end
+    end
+end
+
 # TODO: Implement consistency check for other sizes
 
 # This struct behaves like a dict, delegating to its 'data' field.
@@ -58,8 +71,10 @@ Base.firstindex(res::ResultsByTime) = firstindex(res.data)
 Base.lastindex(res::ResultsByTime) = lastindex(res.data)
 
 get_column_names(x::ResultsByTime) = x.column_names
-get_num_rows(::ResultsByTime{DenseAxisArray{Float64, 2}}, data) = length(axes(data)[2])
-get_num_rows(::ResultsByTime{Matrix{Float64}}, data) = size(data)[1]
+get_num_rows(::ResultsByTime{DenseAxisArray{Float64, 2}}, data) = size(data, 2)
+get_num_rows(::ResultsByTime{DenseAxisArray{Float64, 3}}, data) = size(data, 3)
+get_num_rows(::ResultsByTime{Matrix{Float64}}, data) = size(data, 1)
+get_num_rows(::ResultsByTime{DataFrame}, data) = DataFrames.nrow(data)
 
 function _add_timestamps!(
     df::DataFrames.DataFrame,
@@ -67,50 +82,69 @@ function _add_timestamps!(
     timestamp::Dates.DateTime,
     data,
 )
-    if results.resolution != Dates.Period(Dates.Millisecond(0))
-        time_col =
-            range(
-                timestamp;
-                length = get_num_rows(results, data),
-                step = results.resolution,
-            )
+    time_col = _get_timestamps(results, timestamp, get_num_rows(results, data))
+    if !isnothing(time_col)
         DataFrames.insertcols!(df, 1, :DateTime => time_col)
     end
     return
 end
 
+function _get_timestamps(results::ResultsByTime, timestamp::Dates.DateTime, len::Int)
+    if results.resolution == Dates.Period(Dates.Millisecond(0))
+        return nothing
+    end
+    return range(timestamp; length = len, step = results.resolution)
+end
+
 function make_dataframe(
     results::ResultsByTime{DenseAxisArray{Float64, 2}},
-    timestamp::Dates.DateTime,
+    timestamp::Dates.DateTime;
+    table_format::TableFormat = TableFormat.LONG,
 )
     array = results.data[timestamp]
-    df = DataFrames.DataFrame(permutedims(array.data), axes(array)[1])
-    _add_timestamps!(df, results, timestamp, array)
-    return df
+    timestamps = _get_timestamps(results, timestamp, get_num_rows(results, array))
+    return to_results_dataframe(array, timestamps, Val(table_format))
 end
 
 function make_dataframe(
     results::ResultsByTime{DenseAxisArray{Float64, 3}},
-    timestamp::Dates.DateTime,
+    timestamp::Dates.DateTime;
+    table_format::TableFormat = TableFormat.LONG,
 )
-    df = DataFrames.DataFrame()
     array = results.data[timestamp]
-    for idx in Iterators.product(array.axes[1:2]...)
-        df[!, "$(idx)"] = array[idx..., :].data
+    num_timestamps = get_num_rows(results, array)
+    timestamps = _get_timestamps(results, timestamp, num_timestamps)
+    return to_results_dataframe(array, timestamps, Val(table_format))
+end
+
+function make_dataframe(
+    results::ResultsByTime{Matrix{Float64}},
+    timestamp::Dates.DateTime;
+    table_format::TableFormat = TableFormat.LONG,
+)
+    array = results.data[timestamp]
+    df_wide = DataFrames.DataFrame(array, results.column_names)
+    _add_timestamps!(df_wide, results, timestamp, array)
+    return if table_format == TableFormat.LONG
+        measure_vars = [x for x in names(df_wide) if x != "DateTime"]
+        DataFrames.stack(
+            df_wide,
+            measure_vars;
+            variable_name = :name,
+            value_name = :value,
+        )
+    elseif table_format == TableFormat.WIDE
+        df_wide
+    else
+        error("Unsupported table format: $table_format")
     end
-    # _add_timestamps!(df, results, timestamp, array)
-    return df
 end
 
-function make_dataframe(results::ResultsByTime{Matrix{Float64}}, timestamp::Dates.DateTime)
-    array = results.data[timestamp]
-    df = DataFrames.DataFrame(array, results.column_names)
-    _add_timestamps!(df, results, timestamp, array)
-    return df
-end
-
-function make_dataframes(results::ResultsByTime)
-    return SortedDict(k => make_dataframe(results, k) for k in keys(results.data))
+function make_dataframes(results::ResultsByTime; table_format::TableFormat = table_format)
+    return SortedDict(
+        k => make_dataframe(results, k; table_format = table_format) for
+        k in keys(results.data)
+    )
 end
 
 struct ResultsByKeyAndTime

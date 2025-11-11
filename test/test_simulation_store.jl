@@ -199,8 +199,7 @@ end
     # Use this seed to produce the same randomly generated arrays for write and verify.
     seed = 1234
     _run_sim_test(path, sim, variables, model_defs, cache_rules, seed)
-    # TODO: Re-enable later when we serialize the keys to be deserialized later
-    # _verify_read_results(path, sim, variables, model_defs, seed)
+    _verify_read_results(path, sim, variables, model_defs, seed)
 end
 
 @testset "Test OptimizationOutputCache" begin
@@ -256,5 +255,4 @@ end
 
 # TODO: test optimizer stats
 # TODO: unit tests of individual functions, size checks
-# TODO: 3-d arrays
 # TODO: profiling of memory performance and GC

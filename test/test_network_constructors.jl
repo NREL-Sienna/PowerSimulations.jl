@@ -10,9 +10,9 @@
         ps_model = DecisionModel(template, c_sys5; optimizer = solver)
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.ModelBuildStatus.BUILT
-        @test PSI.get_optimization_container(ps_model).pm !== nothing
-        # TODO: Change test
-        # @test :nodal_balance_active in keys(PSI.get_optimization_container(ps_model).expressions)
+        opt_container = PSI.get_optimization_container(ps_model)
+        @test opt_container.pm !== nothing
+        @test PSI.has_container_key(opt_container, ActivePowerBalance, ACBus)
     end
 end
 
@@ -43,11 +43,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -74,8 +70,8 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
     ]
@@ -90,7 +86,7 @@ end
         c_sys14_dc => [600, 0, 648, 552, 456],
     )
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 340000.0,
+        c_sys5 => 240000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
@@ -105,11 +101,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -120,13 +112,6 @@ end
             10000,
         )
     end
-    # PTDF input Error testing
-    ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
-    @test build!(
-        ps_model;
-        console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
-        output_dir = mktempdir(; cleanup = true),
-    ) == PSI.ModelBuildStatus.FAILED
 end
 
 @testset "Network DC-PF with VirtualPTDF Model" begin
@@ -136,8 +121,8 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(RateLimitConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
         PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
     ]
@@ -152,7 +137,7 @@ end
         c_sys14_dc => [600, 0, 648, 552, 456],
     )
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 340000.0,
+        c_sys5 => 240000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
@@ -168,11 +153,114 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
+            false,
+        )
+        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checksolve_test(
+            ps_model,
+            [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+            test_obj_values[sys],
+            10000,
+        )
+    end
+end
+
+@testset "Network DC-PF with VirtualPTDF Model and implementing Dynamic Branch Ratings" begin
+    line_device_model = DeviceModel(
+        Line,
+        StaticBranch;
+        time_series_names = Dict(
+            DynamicBranchRatingTimeSeriesParameter => "dynamic_line_ratings",
+        ))
+    TapTransf_device_model = DeviceModel(
+        TapTransformer,
+        StaticBranch;
+        time_series_names = Dict(
+            DynamicBranchRatingTimeSeriesParameter => "dynamic_line_ratings",
+        ))
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
+    systems = [c_sys5, c_sys14, c_sys14_dc]
+    objfuncs = [GAEVF, GQEVF, GQEVF]
+    constraint_keys = [
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
+    ]
+    PTDF_ref = IdDict{System, VirtualPTDF}(
+        c_sys5 => VirtualPTDF(c_sys5),
+        c_sys14 => VirtualPTDF(c_sys14),
+        c_sys14_dc => VirtualPTDF(c_sys14_dc),
+    )
+    branches_dlr = IdDict{System, Vector{String}}(
+        c_sys5 => ["1", "2", "6"],
+        c_sys14 => ["Line1", "Line2", "Line9", "Line10", "Line12", "Trans2"],
+        c_sys14_dc => ["Line1", "Line9", "Line10", "Line12", "Trans2"],
+    )
+    dlr_factors = vcat([fill(x, 6) for x in [1.15, 1.05, 1.1, 1]]...)
+    test_results = IdDict{System, Vector{Int}}(
+        c_sys5 => [264, 0, 264, 264, 168],
+        c_sys14 => [600, 0, 600, 600, 504],
+        c_sys14_dc => [600, 0, 648, 552, 456],
+    )
+    test_obj_values = IdDict{System, Float64}(
+        c_sys5 => 241293.703,
+        c_sys14 => 142000.0,
+        c_sys14_dc => 142000.0,
+    )
+    n_steps = 2
+    for (ix, sys) in enumerate(systems)
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(
+                PTDFPowerModel;
+                PTDF_matrix = PTDF_ref[sys],
+            ),
+        )
+
+        set_device_model!(template, line_device_model)
+        set_device_model!(template, TapTransf_device_model)
+        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+
+        for branch_name in branches_dlr[sys]
+            branch = get_component(PSY.ACTransmission, sys, branch_name)
+            dlr_data = SortedDict{Dates.DateTime, TimeSeries.TimeArray}()
+            data_ts = collect(
+                DateTime("1/1/2024  0:00:00", "d/m/y  H:M:S"):Hour(1):DateTime(
+                    "1/1/2024  23:00:00",
+                    "d/m/y  H:M:S",
+                ),
+            )
+
+            for t in 1:n_steps
+                ini_time = data_ts[1] + Day(t - 1)
+                dlr_data[ini_time] =
+                    TimeArray(
+                        data_ts + Day(t - 1),
+                        get_rating(branch) * get_base_power(sys) * dlr_factors,
+                    )
+            end
+
+            PSY.add_time_series!(
+                sys,
+                branch,
+                PSY.Deterministic(
+                    "dynamic_line_ratings",
+                    dlr_data;
+                    scaling_factor_multiplier = get_rating,
+                ),
+            )
+        end
+
+        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+        psi_constraint_test(ps_model, constraint_keys)
+
+        moi_tests(
+            ps_model,
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -192,8 +280,8 @@ end
     systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-        PSI.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "ub"),
-        PSI.ConstraintKey(PSI.RateLimitConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(PSI.FlowRateConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(PSI.FlowRateConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
     ]
     test_results = IdDict{System, Vector{Int}}(
@@ -202,9 +290,9 @@ end
         c_sys14_dc => [984, 432, 648, 552, 840],
     )
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 342000.0,
-        c_sys14 => 142000.0,
-        c_sys14_dc => 135000.0,
+        c_sys5 => 242000.0,
+        c_sys14 => 143000.0,
+        c_sys14_dc => 143000.0,
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(DCPPowerModel)
@@ -214,11 +302,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -239,8 +323,8 @@ end
     objfuncs = [GAEVF, GQEVF, GQEVF]
     # Check for voltage and angle constraints
     constraint_keys = [
-        PSI.ConstraintKey(RateLimitConstraintFromTo, PSY.Line),
-        PSI.ConstraintKey(RateLimitConstraintToFrom, PSY.Line),
+        PSI.ConstraintKey(FlowRateConstraintFromTo, PSY.Line),
+        PSI.ConstraintKey(FlowRateConstraintToFrom, PSY.Line),
         PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus),
         PSI.ConstraintKey(PSI.NodalBalanceReactiveConstraint, PSY.ACBus),
     ]
@@ -250,7 +334,7 @@ end
         c_sys14_dc => [2832, 432, 336, 240, 744],
     )
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 340000.0,
+        c_sys5 => 240000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
@@ -262,11 +346,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -292,7 +372,7 @@ end
         c_sys14_dc => [648, 0, 648, 552, 384],
     )
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 300000.0,
+        c_sys5 => 240000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
@@ -304,11 +384,7 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys][1],
-            test_results[sys][2],
-            test_results[sys][3],
-            test_results[sys][4],
-            test_results[sys][5],
+            test_results[sys]...,
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
@@ -375,7 +451,7 @@ end
     # TODO: add model specific constraints to this list. Bi-directional flows etc
     constraint_keys = [PSI.ConstraintKey(PSI.NodalBalanceActiveConstraint, PSY.ACBus)]
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 340000.0,
+        c_sys5 => 240000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
@@ -433,7 +509,6 @@ end
 
 @testset "2 Subnetworks HVDC DC-PF with CopperPlatePowerModel" begin
     c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
-    # Test passing a VirtualPTDF Model
     template = get_thermal_dispatch_template_network(NetworkModel(CopperPlatePowerModel))
     ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
 
@@ -451,12 +526,25 @@ end
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 480288, 100)
 
     results = OptimizationProblemResults(ps_model)
-    hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
+    hvdc_flow =
+        read_variable(
+            results,
+            "FlowActivePowerVariable__TwoTerminalGenericHVDCLine";
+            table_format = TableFormat.WIDE,
+        )
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200)
 
-    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
-    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
 
     zone_1_load = sum(eachcol(load[!, ["Load-nodeC", "Load-nodeD", "Load-nodeB"]]))
     zone_1_gen = sum(
@@ -488,7 +576,7 @@ end
     )
 
     # Test forcing flows to 0.0
-    hvdc_link = get_component(TwoTerminalHVDCLine, c_sys5, "nodeC-nodeC2")
+    hvdc_link = get_component(TwoTerminalGenericHVDCLine, c_sys5, "nodeC-nodeC2")
     set_active_power_limits_from!(hvdc_link, (min = 0.0, max = 0.0))
     set_active_power_limits_to!(hvdc_link, (min = 0.0, max = 0.0))
 
@@ -504,12 +592,25 @@ end
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
 
     results = OptimizationProblemResults(ps_model)
-    hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
+    hvdc_flow =
+        read_variable(
+            results,
+            "FlowActivePowerVariable__TwoTerminalGenericHVDCLine";
+            table_format = TableFormat.WIDE,
+        )
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
 
-    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
-    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
 
     zone_1_load = sum(eachcol(load[!, ["Load-nodeC", "Load-nodeD", "Load-nodeB"]]))
     zone_1_gen = sum(
@@ -548,15 +649,28 @@ end
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
     @test size(copper_plate_constraints) == (2, 24)
 
-    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 684763, 100)
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482587, 100)
 
     results = OptimizationProblemResults(ps_model)
-    hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
+    hvdc_flow =
+        read_variable(
+            results,
+            "FlowActivePowerVariable__TwoTerminalGenericHVDCLine";
+            table_format = TableFormat.WIDE,
+        )
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .<= 200 + PSI.ABSOLUTE_TOLERANCE)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .>= -200 - PSI.ABSOLUTE_TOLERANCE)
 
-    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
-    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
 
     zone_1_load = sum(eachcol(load[!, ["Load-nodeC", "Load-nodeD", "Load-nodeB"]]))
     zone_1_gen = sum(
@@ -588,7 +702,7 @@ end
     )
 
     # Test forcing flows to 0.0
-    hvdc_link = get_component(PSY.TwoTerminalHVDCLine, c_sys5, "nodeC-nodeC2")
+    hvdc_link = get_component(PSY.TwoTerminalGenericHVDCLine, c_sys5, "nodeC-nodeC2")
     set_active_power_limits_from!(hvdc_link, (min = 0.0, max = 0.0))
     set_active_power_limits_to!(hvdc_link, (min = 0.0, max = 0.0))
 
@@ -604,12 +718,25 @@ end
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.System)
 
     results = OptimizationProblemResults(ps_model)
-    hvdc_flow = read_variable(results, "FlowActivePowerVariable__TwoTerminalHVDCLine")
+    hvdc_flow =
+        read_variable(
+            results,
+            "FlowActivePowerVariable__TwoTerminalGenericHVDCLine";
+            table_format = TableFormat.WIDE,
+        )
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
     @test all(hvdc_flow[!, "nodeC-nodeC2"] .== 0.0)
 
-    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
-    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
 
     zone_1_load = sum(eachcol(load[!, ["Load-nodeC", "Load-nodeD", "Load-nodeB"]]))
     zone_1_gen = sum(
@@ -627,6 +754,18 @@ end
         ),
     )
     @test all(isapprox.(sum(zone_2_gen .+ zone_2_load; dims = 2), 0.0; atol = 1e-3))
+
+    # Test passing a Virtual PTDF Model with higher tolerance
+    c_sys5 = PSB.build_system(PSISystems, "2Area 5 Bus System")
+    # Test passing a VirtualPTDF Model
+    template = get_thermal_dispatch_template_network(
+        NetworkModel(PTDFPowerModel; PTDF_matrix = VirtualPTDF(c_sys5; tol = 1e-2)),
+    )
+    ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
+
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 # These models are easier to test due to their lossless nature
@@ -658,7 +797,11 @@ end
 
         res_red = OptimizationProblemResults(uc_model_red)
 
-        flow_lines = read_variable(res_red, "FlowActivePowerVariable__Line")
+        flow_lines = read_variable(
+            res_red,
+            "FlowActivePowerVariable__Line";
+            table_format = TableFormat.WIDE,
+        )
         line_names = DataFrames.names(flow_lines)[2:end]
 
         ##### Solve Original Model ####
@@ -684,7 +827,11 @@ end
 
         res_orig = OptimizationProblemResults(uc_model_orig)
 
-        flow_lines_orig = read_variable(res_orig, "FlowActivePowerVariable__Line")
+        flow_lines_orig = read_variable(
+            res_orig,
+            "FlowActivePowerVariable__Line";
+            table_format = TableFormat.WIDE,
+        )
 
         for line in line_names
             @test isapprox(flow_lines[!, line], flow_lines_orig[!, line])
@@ -692,12 +839,80 @@ end
     end
 end
 
+@testset "StandardPTDF with Ward reduction Test" begin
+    new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
+    #This ward reduction is equivalent to the radial reduciton, therefore flows should be unchanged
+    nr = NetworkReduction[WardReduction([1, 2, 3, 4, 5])]
+    ptdf = PTDF(new_sys; network_reductions = nr)
+    template_uc = template_unit_commitment(;
+        network = NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            use_slacks = false,
+        ),
+    )
+    thermal_model = ThermalStandardUnitCommitment
+    set_device_model!(template_uc, ThermalStandard, thermal_model)
+
+    ##### Solve Reduced Model ####
+    solver = HiGHS_optimizer
+    uc_model_red = DecisionModel(
+        template_uc,
+        new_sys;
+        optimizer = solver,
+        name = "UC_RED",
+        store_variable_names = true,
+    )
+
+    @test build!(uc_model_red; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    solve!(uc_model_red)
+
+    res_red = OptimizationProblemResults(uc_model_red)
+
+    flow_lines = read_variable(
+        res_red,
+        "FlowActivePowerVariable__Line";
+        table_format = TableFormat.WIDE,
+    )
+    line_names = DataFrames.names(flow_lines)[2:end]
+
+    ##### Solve Original Model ####
+    template_uc_orig = template_unit_commitment(;
+        network = NetworkModel(PTDFPowerModel;
+            reduce_radial_branches = false,
+            use_slacks = false,
+        ),
+    )
+    set_device_model!(template_uc_orig, ThermalStandard, thermal_model)
+
+    uc_model_orig = DecisionModel(
+        template_uc_orig,
+        new_sys;
+        optimizer = solver,
+        name = "UC_ORIG",
+        store_variable_names = true,
+    )
+
+    @test build!(uc_model_orig; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    solve!(uc_model_orig)
+
+    res_orig = OptimizationProblemResults(uc_model_orig)
+
+    flow_lines_orig = read_variable(
+        res_orig,
+        "FlowActivePowerVariable__Line";
+        table_format = TableFormat.WIDE,
+    )
+
+    for line in line_names
+        @test isapprox(flow_lines[!, line], flow_lines_orig[!, line])
+    end
+end
+
 @testset "All PowerModels models construction with reduced radial branches" begin
     new_sys = PSB.build_system(PSITestSystems, "c_sys5_radial")
     for (network, solver) in NETWORKS_FOR_TESTING
-        if network ∈ PSI.INCOMPATIBLE_WITH_RADIAL_BRANCHES_POWERMODELS
-            continue
-        end
         template = get_thermal_dispatch_template_network(
             NetworkModel(network;
                 PTDF_matrix = PTDF(new_sys),
@@ -740,7 +955,11 @@ end
     @test size(copper_plate_constraints) == (2, 24)
 
     results = OptimizationProblemResults(ps_model)
-    slacks_up = read_variable(results, "SystemBalanceSlackUp__Area")
+    slacks_up = read_variable(
+        results,
+        "SystemBalanceSlackUp__Area";
+        table_format = TableFormat.WIDE,
+    )
     @test all(slacks_up[!, "Area_1"] .> 0.0)
     @test all(slacks_up[!, "Area_2"] .≈ 0.0)
 end
@@ -767,13 +986,25 @@ end
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
 
     results = OptimizationProblemResults(ps_model)
-    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    interarea_flow = read_variable(
+        results,
+        "FlowActivePowerVariable__AreaInterchange";
+        table_format = TableFormat.WIDE,
+    )
     # The values for these tests come from the data
     @test all(interarea_flow[!, "1_2"] .<= 150)
     @test all(interarea_flow[!, "1_2"] .>= -150)
 
-    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
-    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
 
     zone_1_load = sum(eachcol(load[!, ["Bus4_1", "Bus3_1", "Bus2_1"]]))
     zone_1_gen = sum(
@@ -856,7 +1087,11 @@ end
     psi_checksolve_test(ps_model, [MOI.OPTIMAL], 482055, 1)
 
     results = OptimizationProblemResults(ps_model)
-    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    interarea_flow = read_variable(
+        results,
+        "FlowActivePowerVariable__AreaInterchange";
+        table_format = TableFormat.WIDE,
+    )
     # The values for these tests come from the data
     @test interarea_flow[4, "1_2"] != 0.0
     @test interarea_flow[5, "1_2"] == 0.0
@@ -887,16 +1122,28 @@ end
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
     @test size(copper_plate_constraints) == (2, 24)
 
-    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 666147, 1)
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 497551, 1)
 
     results = OptimizationProblemResults(ps_model)
-    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    interarea_flow = read_variable(
+        results,
+        "FlowActivePowerVariable__AreaInterchange";
+        table_format = TableFormat.WIDE,
+    )
     # The values for these tests come from the data
     @test all(interarea_flow[!, "1_2"] .<= 100.0 + PSI.ABSOLUTE_TOLERANCE)
     @test all(interarea_flow[!, "1_2"] .>= -100.0 - PSI.ABSOLUTE_TOLERANCE)
 
-    load = read_parameter(results, "ActivePowerTimeSeriesParameter__PowerLoad")
-    thermal_gen = read_variable(results, "ActivePowerVariable__ThermalStandard")
+    load = read_parameter(
+        results,
+        "ActivePowerTimeSeriesParameter__PowerLoad";
+        table_format = TableFormat.WIDE,
+    )
+    thermal_gen = read_variable(
+        results,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
 
     zone_1_load = sum(eachcol(load[!, ["Bus4_1", "Bus3_1", "Bus2_1"]]))
     zone_1_gen = sum(
@@ -997,12 +1244,313 @@ end
         PSI.get_constraint(opt_container, CopperPlateBalanceConstraint(), PSY.Area)
     @test size(copper_plate_constraints) == (2, 24)
 
-    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 671937, 1)
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 489842, 1)
 
     results = OptimizationProblemResults(ps_model)
-    interarea_flow = read_variable(results, "FlowActivePowerVariable__AreaInterchange")
+    interarea_flow = read_variable(
+        results,
+        "FlowActivePowerVariable__AreaInterchange";
+        table_format = TableFormat.WIDE,
+    )
     # The values for these tests come from the data
     @test interarea_flow[1, "1_2"] != 0.0
     @test interarea_flow[5, "1_2"] == 0.0
     @test interarea_flow[6, "1_2"] == 0.0
+end
+
+function add_dummy_time_series_data!(sys)
+    # Attach dummy data so the problem builds:
+    dummy_data = Dict(
+        DateTime("2020-01-01T08:00:00") => [5.0, 6, 7, 7, 7],
+        DateTime("2020-01-01T08:30:00") => [9.0, 9, 9, 9, 8],
+        DateTime("2020-01-01T09:00:00") => [6.0, 6, 5, 5, 4],
+    )
+    resolution = Dates.Minute(5)
+    dummy_forecast = Deterministic("max_active_power", dummy_data, resolution)
+    load = collect(get_components(StandardLoad, sys))[1]
+    add_time_series!(sys, load, dummy_forecast)
+    return sys
+end
+
+function get_n_constraints_in_container(ps_model)
+    return sum([
+        size(v)[1] * size(v)[2] for v in values(ps_model.internal.container.constraints)
+    ])
+end
+
+function get_n_variables_in_container(ps_model)
+    return sum([
+        size(v)[1] * size(v)[2] for v in values(ps_model.internal.container.variables)
+    ])
+end
+
+@testset "Network reductions - PTDF" begin
+    # Base Case : Only reductions for double circuits:
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranch)
+    set_device_model!(template, Transformer2W, StaticBranch)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    # (3 double circuits) x (5 timesteps) = 15 additional variables in container compared to JuMP model:
+    moi_tests(ps_model, 60, 0, 60, 60, 65, false)
+    @test get_n_variables_in_container(ps_model) == 60
+    @test get_n_constraints_in_container(ps_model) == 185
+
+    # Radial Reduction :
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[RadialReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranch)
+    set_device_model!(template, Transformer2W, StaticBranch)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    moi_tests(ps_model, 55, 0, 55, 55, 60, false)
+    @test get_n_variables_in_container(ps_model) == 55
+    @test get_n_constraints_in_container(ps_model) == 170
+
+    # Degree Two Reduction :
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[DegreeTwoReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranch)
+    set_device_model!(template, Transformer2W, StaticBranch)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    moi_tests(ps_model, 35, 0, 35, 35, 40, false)
+    @test get_n_variables_in_container(ps_model) == 60
+    @test get_n_constraints_in_container(ps_model) == 110
+    vars = ps_model.internal.container.variables
+    line_flow =
+        vars[ISOPT.VariableKey{FlowActivePowerVariable, Line}(
+            "",
+        )]
+    tfw_flow = vars[ISOPT.VariableKey{
+        FlowActivePowerVariable,
+        Transformer2W,
+    }(
+        "",
+    )]
+    # Parallel branch within chain to d2:
+    @test line_flow["2-10-i_double_circuit", :] == line_flow["10-3-i_1", :]
+    # D2 chain with different component types:
+    @test line_flow["1-9-i_1", :] == tfw_flow["9-5-i_1", :]
+    # Parallel branch within chain to d2 with mixed types (parallel comes from tracker):
+    @test line_flow["3-11-i_1", :] == tfw_flow["11-4-i_double_circuit", :]
+
+    # Radial + Degree Two Reduction :
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[RadialReduction(), DegreeTwoReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranch)
+    set_device_model!(template, Transformer2W, StaticBranch)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    moi_tests(ps_model, 30, 0, 30, 30, 35, false)
+    @test get_n_variables_in_container(ps_model) == 55
+    @test get_n_constraints_in_container(ps_model) == 95
+end
+
+@testset "Network reductions for system with subnetworks" begin
+    sys = build_system(PSISystems, "HVDC_TWO_RTO_RTS_1Hr_sys")
+    nr = NetworkReduction[RadialReduction(), DegreeTwoReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranch)
+    set_device_model!(template, Transformer2W, StaticBranch)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+end
+
+# Tests a case with series reductions containing different branch types, some with and some without filters applied
+@testset "Network reductions + branch filter edge cases" begin
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[RadialReduction(), DegreeTwoReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, DeviceModel(Line, StaticBranch))
+    modeled_transformer_names = ["9-5-i_1"]
+    set_device_model!(
+        template,
+        DeviceModel(
+            Transformer2W,
+            StaticBranch;
+            attributes = Dict(
+                "filter_function" => x -> PSY.get_name(x) in modeled_transformer_names,
+            ),
+        ),
+    )
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+end
+
+@testset "Branch bounds of parallel and series reductions" begin
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[DegreeTwoReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranchBounds)
+    set_device_model!(template, Transformer2W, StaticBranchBounds)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    l1_parallel = PSY.get_rating(PSY.get_component(ACTransmission, sys, "1-4-i_1"))
+    l2_parallel = PSY.get_rating(PSY.get_component(ACTransmission, sys, "1-4-i_2"))
+    @test JuMP.upper_bound(
+        ps_model.internal.container.variables[PSI.VariableKey{FlowActivePowerVariable, Line}(
+            "",
+        )][
+            "1-4-i_double_circuit",
+            1,
+        ],
+    ) == minimum([l1_parallel, l2_parallel])
+    l1_series = PSY.get_rating(PSY.get_component(ACTransmission, sys, "9-5-i_1"))
+    l2_series = PSY.get_rating(PSY.get_component(ACTransmission, sys, "1-9-i_1"))
+    @test JuMP.upper_bound(
+        ps_model.internal.container.variables[PSI.VariableKey{
+            FlowActivePowerVariable,
+            Transformer2W,
+        }(
+            "",
+        )][
+            "9-5-i_1",
+            1,
+        ],
+    ) == minimum([l1_series, l2_series])
+    @test JuMP.upper_bound(
+        ps_model.internal.container.variables[PSI.VariableKey{FlowActivePowerVariable, Line}(
+            "",
+        )][
+            "1-9-i_1",
+            1,
+        ],
+    ) == minimum([l1_series, l2_series])
+end
+
+@testset "Network reductions - PowerModels" begin
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    for (network_model, optimizer) in NETWORKS_FOR_TESTING
+        @testset "Network Model: $(network_model)" begin
+            # Only default reductions:
+            template = ProblemTemplate(
+                NetworkModel(network_model;
+                    reduce_radial_branches = false,
+                    reduce_degree_two_branches = false,
+                    use_slacks = false),
+            )
+            set_device_model!(template, Line, StaticBranch)
+            set_device_model!(template, Transformer2W, StaticBranch)
+            ps_model = DecisionModel(template, sys; optimizer = optimizer)
+            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
+            JuMPmodel = PSI.get_jump_model(ps_model)
+            n_vars = JuMP.num_variables(JuMPmodel)
+
+            # Radial reductions:
+            template = ProblemTemplate(
+                NetworkModel(network_model;
+                    reduce_radial_branches = true,
+                    reduce_degree_two_branches = false,
+                    use_slacks = false),
+            )
+            set_device_model!(template, Line, StaticBranch)
+            set_device_model!(template, Transformer2W, StaticBranch)
+            ps_model = DecisionModel(template, sys; optimizer = optimizer)
+            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
+            JuMPmodel = PSI.get_jump_model(ps_model)
+            n_vars_radial = JuMP.num_variables(JuMPmodel)
+
+            # Radial + degree two reductions:
+            template = ProblemTemplate(
+                NetworkModel(network_model;
+                    reduce_radial_branches = true,
+                    reduce_degree_two_branches = true,
+                    use_slacks = false),
+            )
+            set_device_model!(template, Line, StaticBranch)
+            set_device_model!(template, Transformer2W, StaticBranch)
+            ps_model = DecisionModel(template, sys; optimizer = optimizer)
+            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
+            JuMPmodel = PSI.get_jump_model(ps_model)
+            n_vars_radial_d2 = JuMP.num_variables(JuMPmodel)
+
+            @test n_vars_radial_d2 < n_vars_radial < n_vars
+        end
+    end
 end

@@ -556,14 +556,43 @@ end
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+    network_model::NetworkModel{AreaBalancePowerModel},
+)
+    interfaces = get_available_components(model, sys)
+    interface = PSY.get_component(PSY.TransmissionInterface, sys, get_service_name(model))
+    if get_use_slacks(model)
+        # Adding the slacks can be done in a cleaner fashion
+        @assert PSY.get_available(interface)
+        transmission_interface_slacks!(container, interface)
+    end
+    # Lazy container addition for the expressions.
+    lazy_container_addition!(
+        container,
+        InterfaceTotalFlow(),
+        PSY.TransmissionInterface,
+        PSY.get_name.(interfaces),
+        get_time_steps(container),
+    )
+    @warn "AreaBalancePowerModel doesn't model individual line flows and it ignores the flows on AC Transmission Devices"
+    add_feedforward_arguments!(container, model, interface)
+    return
+end
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ModelConstructStage,
-    model::ServiceModel{T, ConstantMaxInterfaceFlow},
+    model::ServiceModel{PSY.TransmissionInterface, ConstantMaxInterfaceFlow},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
-) where {T <: PSY.TransmissionInterface}
+)
     name = get_service_name(model)
-    service = PSY.get_component(T, sys, name)
+    service = PSY.get_component(PSY.TransmissionInterface, sys, name)
     !PSY.get_available(service) && return
 
     add_to_expression!(
@@ -572,6 +601,7 @@ function construct_service!(
         FlowActivePowerVariable,
         service,
         model,
+        network_model,
     )
 
     if get_use_slacks(model)
@@ -602,15 +632,16 @@ function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::ServiceModel{T, VariableMaxInterfaceFlow},
+    model::ServiceModel{PSY.TransmissionInterface, VariableMaxInterfaceFlow},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
-) where {T <: PSY.TransmissionInterface}
+)
     interfaces = get_available_components(model, sys)
     if get_use_slacks(model)
         # Adding the slacks can be done in a cleaner fashion
-        interface = PSY.get_component(T, sys, get_service_name(model))
+        interface =
+            PSY.get_component(PSY.TransmissionInterface, sys, get_service_name(model))
         @assert PSY.get_available(interface)
         transmission_interface_slacks!(container, interface)
     end
@@ -618,7 +649,7 @@ function construct_service!(
     lazy_container_addition!(
         container,
         InterfaceTotalFlow(),
-        T,
+        PSY.TransmissionInterface,
         PSY.get_name.(interfaces),
         get_time_steps(container),
     )
@@ -641,7 +672,7 @@ function construct_service!(
             add_parameters!(container, MaxInterfaceFlowLimitParameter, device, model)
         end
     end
-    interface = PSY.get_component(T, sys, get_service_name(model))
+    interface = PSY.get_component(PSY.TransmissionInterface, sys, get_service_name(model))
     add_feedforward_arguments!(container, model, interface)
     return
 end
@@ -665,6 +696,7 @@ function construct_service!(
         FlowActivePowerVariable,
         service,
         model,
+        network_model,
     )
 
     if get_use_slacks(model)
