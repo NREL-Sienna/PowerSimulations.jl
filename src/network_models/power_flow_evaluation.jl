@@ -651,7 +651,7 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
             if br isa U
                 @assert T <: LineFlowAuxVariableType "Only LineFlowAuxVariableType aux vars " *
                                                      "can be used for parallel branches: got $T"
-                if PSY.get_r(br) + im * PSY.get_x(br) != impedance
+                if !isapprox(PSY.get_r(br) + im * PSY.get_x(br), impedance)
                     throw(
                         error(
                             "All parallel branches must have the same impedance: " *
