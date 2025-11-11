@@ -1416,6 +1416,29 @@ end
           PSI.ModelBuildStatus.BUILT
 end
 
+# Tests a case with series reductions containing different branch types, some with and some without filters applied
+@testset "Network reductions + branch filter edge cases" begin
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[RadialReduction(), DegreeTwoReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, DeviceModel(Line, StaticBranch))
+    modeled_transformer_names = ["9-5-i_1"] 
+    set_device_model!(template, DeviceModel(Transformer2W, StaticBranch; attributes = Dict("filter_function" => x->PSY.get_name(x) in modeled_transformer_names)))
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+end 
+
 @testset "Branch bounds of parallel and series reductions" begin
     sys = build_system(PSITestSystems, "case11_network_reductions")
     add_dummy_time_series_data!(sys)
