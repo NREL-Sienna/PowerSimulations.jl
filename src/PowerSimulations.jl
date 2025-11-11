@@ -60,9 +60,9 @@ export PhaseAngleControl
 # export VoltageSourceDC
 
 ######## HVDC models ########
-export LossLessConverter
+export LosslessConverter
 export QuadraticLossConverter
-export LossLessLine
+export LosslessLine
 export DCLossyLine
 ######## Load Models ########
 export StaticPowerLoad

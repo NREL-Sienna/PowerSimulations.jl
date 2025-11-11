@@ -1,4 +1,4 @@
-@testset "Renewable DCPLossLess FullDispatch" begin
+@testset "Renewable DCPLossless FullDispatch" begin
     device_model = DeviceModel(RenewableDispatch, RenewableFullDispatch)
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_re)
@@ -22,7 +22,7 @@ end
     moi_tests(model, 144, 0, 168, 72, 0, false, 24)
 end
 
-@testset "Renewable DCPLossLess Constantpower_factor" begin
+@testset "Renewable DCPLossless Constantpower_factor" begin
     device_model = DeviceModel(RenewableDispatch, RenewableConstantPowerFactor)
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_re)
@@ -46,7 +46,7 @@ end
     moi_tests(model, 144, 0, 96, 0, 72, false, 24)
 end
 
-@testset "Renewable DCPLossLess FixedOutput" begin
+@testset "Renewable DCPLossless FixedOutput" begin
     device_model = DeviceModel(RenewableDispatch, FixedOutput)
     c_sys5_re = PSB.build_system(PSITestSystems, "c_sys5_re")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_re;)

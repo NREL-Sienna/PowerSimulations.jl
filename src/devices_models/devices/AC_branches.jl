@@ -74,10 +74,10 @@ function add_variables!(
     T <: AbstractACActivePowerFlow,
     U <: PSY.ACTransmission}
     time_steps = get_time_steps(container)
-    network_reduction_data = network_model.network_reduction
-    branch_names = get_branch_argument_variable_axis(network_reduction_data, devices)
+    net_reduction_data = network_model.network_reduction
+    branch_names = get_branch_argument_variable_axis(net_reduction_data, devices)
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
-    all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(network_reduction_data)
+    all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
 
     variable_container = add_variable_container!(
         container,
@@ -87,7 +87,7 @@ function add_variables!(
         time_steps,
     )
 
-    for (name, (arc, reduction)) in PNM.get_name_to_arc_map(network_reduction_data)[U]
+    for (name, (arc, reduction)) in PNM.get_name_to_arc_map(net_reduction_data, U)
         # TODO: entry is not type stable here, it can return any type ACTransmission.
         # It might have performance implications. Possibly separate this into other functions
         reduction_entry = all_branch_maps_by_type[reduction][U][arc]
@@ -198,10 +198,10 @@ function branch_rate_bounds!(
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {B <: PSY.ACTransmission, T <: AbstractBranchFormulation}
     time_steps = get_time_steps(container)
-    network_reduction_data = get_network_reduction(network_model)
-    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    net_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = net_reduction_data.all_branch_maps_by_type
     for var in _get_flow_variable_vector(container, network_model, B)
-        for (name, (arc, reduction)) in PNM.get_name_to_arc_map(network_reduction_data)[B]
+        for (name, (arc, reduction)) in PNM.get_name_to_arc_map(net_reduction_data, B)
             # TODO: entry is not type stable here, it can return any type ACTransmission.
             # It might have performance implications. Possibly separate this into other functions
             reduction_entry = all_branch_maps_by_type[reduction][B][arc]
@@ -365,6 +365,12 @@ end
 function get_rating(device::T) where {T <: PSY.ACTransmission}
     return PSY.get_rating(device)
 end
+function get_rating(
+    device::PNM.ThreeWindingTransformerWinding{T},
+) where {T <: PSY.ThreeWindingTransformer}
+    return PNM.get_equivalent_rating(device)
+end
+
 """
 Min and max limits for Abstract Branch Formulation
 """
@@ -480,15 +486,15 @@ function add_constraints!(
     V <: PM.AbstractActivePowerModel,
 }
     time_steps = get_time_steps(container)
-    network_reduction_data = network_model.network_reduction
+    net_reduction_data = network_model.network_reduction
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     branch_names = get_branch_argument_constraint_axis(
-        network_reduction_data,
+        net_reduction_data,
         reduced_branch_tracker,
         devices,
         cons_type,
     )
-    all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(network_reduction_data)
+    all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
 
     con_lb =
         add_constraints_container!(
@@ -516,8 +522,8 @@ function add_constraints!(
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
-    for name in branch_names
-        arc, reduction = PNM.get_name_to_arc_map(network_reduction_data)[T][name]
+    for (name, (arc, reduction)) in
+        get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][T]
         # TODO: entry is not type stable here, it can return any type ACTransmission.
         # It might have performance implications. Possibly separate this into other functions
         reduction_entry = all_branch_maps_by_type[reduction][T][arc]
@@ -577,10 +583,10 @@ function add_constraints!(
     network_model::NetworkModel{T},
 ) where {B <: PSY.ACTransmission, T <: PM.AbstractPowerModel}
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
-    network_reduction_data = get_network_reduction(network_model)
-    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    net_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = net_reduction_data.all_branch_maps_by_type
     device_names = get_branch_argument_constraint_axis(
-        network_reduction_data,
+        net_reduction_data,
         reduced_branch_tracker,
         devices,
         cons_type,
@@ -601,8 +607,8 @@ function add_constraints!(
     if use_slacks
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), B)
     end
-    for name in device_names
-        arc, reduction = PNM.get_name_to_arc_map(network_reduction_data)[B][name]
+    for (name, (arc, reduction)) in
+        get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraintFromTo][B]
         # TODO: entry is not type stable here, it can return any type ACTransmission.
         # It might have performance implications. Possibly separate this into other functions
         reduction_entry = all_branch_maps_by_type[reduction][B][arc]
@@ -629,11 +635,11 @@ function add_constraints!(
     network_model::NetworkModel{T},
 ) where {B <: PSY.ACTransmission, T <: PM.AbstractPowerModel}
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
-    network_reduction_data = get_network_reduction(network_model)
-    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    net_reduction_data = get_network_reduction(network_model)
+    all_branch_maps_by_type = net_reduction_data.all_branch_maps_by_type
     time_steps = get_time_steps(container)
     device_names = get_branch_argument_constraint_axis(
-        network_reduction_data,
+        net_reduction_data,
         reduced_branch_tracker,
         devices,
         cons_type,
@@ -652,8 +658,8 @@ function add_constraints!(
     if use_slacks
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), B)
     end
-    for name in device_names
-        arc, reduction = PNM.get_name_to_arc_map(network_reduction_data)[B][name]
+    for (name, (arc, reduction)) in
+        get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraintToFrom][B]
         # TODO: entry is not type stable here, it can return any type ACTransmission.
         # It might have performance implications. Possibly separate this into other functions
         reduction_entry = all_branch_maps_by_type[reduction][B][arc]
@@ -773,11 +779,11 @@ function add_expressions!(
 ) where {B <: PSY.ACTransmission}
     time_steps = get_time_steps(container)
     ptdf = get_PTDF_matrix(network_model)
-    network_reduction_data = network_model.network_reduction
+    net_reduction_data = network_model.network_reduction
     # This might need to be changed to something else
-    branch_names = get_branch_argument_variable_axis(network_reduction_data, devices)
+    branch_names = get_branch_argument_variable_axis(net_reduction_data, devices)
     # Needs to be a vector to use multi-threading
-    name_to_arc_map = collect(PNM.get_name_to_arc_map(network_reduction_data)[B])
+    name_to_arc_map = collect(PNM.get_name_to_arc_map(net_reduction_data, B))
     nodal_balance_expressions = get_expression(
         container,
         ActivePowerBalance(),
@@ -843,10 +849,10 @@ function add_constraints!(
     time_steps = get_time_steps(container)
     branch_flow_expr = get_expression(container, PTDFBranchFlow(), B)
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
-    network_reduction_data = network_model.network_reduction
+    net_reduction_data = network_model.network_reduction
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     branches = get_branch_argument_constraint_axis(
-        network_reduction_data,
+        net_reduction_data,
         reduced_branch_tracker,
         devices,
         cons_type,

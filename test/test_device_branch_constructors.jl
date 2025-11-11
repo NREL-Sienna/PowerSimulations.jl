@@ -720,3 +720,166 @@ end
     # some relaxations will find a solution with 0.0 slack
     @test sum(vars[!, "2"]) >= -1e-6
 end
+
+@testset "Three Winding Transformer Test - Basic Setup and Model" begin
+    # Start with the base system
+    system = PSB.build_system(PSITestSystems, "c_sys5_ml")
+    busD = PSY.get_component(ACBus, system, "nodeD")
+    # Create a new bus for the tertiary winding (connected via transformer to Bus 4)
+    new_bus1 = ACBus(;
+        number = 101,
+        name = "Bus3WT_1",
+        available = true,
+        bustype = ACBusTypes.PQ,
+        angle = 0.0,
+        magnitude = 1.0,
+        voltage_limits = (min = 0.95, max = 1.05),
+        base_voltage = 230.0,
+        area = PSY.get_area(busD),
+        load_zone = PSY.get_load_zone(busD),
+    )
+    PSY.add_component!(system, new_bus1)
+
+    new_bus2 = ACBus(;
+        number = 102,
+        name = "Bus3WT_2",
+        available = true,
+        bustype = ACBusTypes.PQ,
+        angle = 0.0,
+        magnitude = 1.0,
+        voltage_limits = (min = 0.95, max = 1.05),
+        base_voltage = 230.0,
+        area = PSY.get_area(busD),
+        load_zone = PSY.get_load_zone(busD),
+    )
+    PSY.add_component!(system, new_bus2)
+
+    # Add a new load at the new bus
+    new_load = PowerLoad(;
+        name = "Load_Bus3WT",
+        available = true,
+        bus = new_bus1,
+        active_power = 0.5,
+        reactive_power = 0.1,
+        base_power = 100.0,
+        max_active_power = 0.5,
+        max_reactive_power = 0.1,
+    )
+    PSY.add_component!(system, new_load)
+
+    # Add a new generator at the new bus to provide power
+    new_gen = ThermalStandard(;
+        name = "Gen_Bus100",
+        available = true,
+        status = true,
+        bus = new_bus2,
+        active_power = 0.4,
+        reactive_power = 0.0,
+        rating = 0.5,
+        prime_mover_type = PrimeMovers.ST,
+        fuel = ThermalFuels.COAL,
+        active_power_limits = (min = 0.0, max = 0.5),
+        reactive_power_limits = (min = -0.3, max = 0.3),
+        ramp_limits = (up = 0.5, down = 0.5),
+        operation_cost = ThermalGenerationCost(;
+            variable = CostCurve(LinearCurve(0.0)),
+            start_up = 0.0,
+            shut_down = 0.0,
+            fixed = 0.0,
+        ),
+        base_power = 100.0,
+        time_limits = nothing,
+    )
+    PSY.add_component!(system, new_gen)
+
+    # Create a star bus for the Transformer3W
+    star_bus = ACBus(;
+        number = 103,
+        name = "Star_Bus_T3W",
+        available = true,
+        bustype = ACBusTypes.PQ,
+        angle = 0.0,
+        magnitude = 1.0,
+        voltage_limits = (min = 0.95, max = 1.05),
+        base_voltage = 230.0,
+        area = PSY.get_area(busD),
+        load_zone = PSY.get_load_zone(busD),
+    )
+    PSY.add_component!(system, star_bus)
+
+    transformer3w = Transformer3W(;
+        name = "Transformer3W_busD",
+        available = true,
+        primary_star_arc = Arc(; from = busD, to = star_bus),
+        secondary_star_arc = Arc(; from = new_bus1, to = star_bus),
+        tertiary_star_arc = Arc(; from = new_bus2, to = star_bus),
+        star_bus = star_bus,
+        active_power_flow_primary = 0.0,
+        reactive_power_flow_primary = 0.0,
+        active_power_flow_secondary = 0.0,
+        reactive_power_flow_secondary = 0.0,
+        active_power_flow_tertiary = 0.0,
+        reactive_power_flow_tertiary = 0.0,
+        # Star-to-winding impedances
+        r_primary = 0.01,
+        x_primary = 0.1,
+        r_secondary = 0.01,
+        x_secondary = 0.1,
+        r_tertiary = 0.01,
+        x_tertiary = 0.1,
+        # Winding-to-winding impedances
+        r_12 = 0.01,
+        x_12 = 0.1,
+        r_23 = 0.01,
+        x_23 = 0.1,
+        r_13 = 0.01,
+        x_13 = 0.1,
+        # Base powers for each winding pair
+        base_power_12 = 100.0,
+        base_power_23 = 100.0,
+        base_power_13 = 100.0,
+        # Ratings for each winding
+        rating = nothing,
+        rating_primary = 1.0,
+        rating_secondary = 1.0,
+        rating_tertiary = 0.5,
+    )
+    PSY.add_component!(system, transformer3w)
+
+    # Add Transformer3W device model when available
+    # Test with DC Power Flow Model
+    for net_model in [DCPPowerModel, PTDFPowerModel]
+        template = get_template_dispatch_with_network(
+            NetworkModel(net_model; PTDF_matrix = PTDF(system)),
+        )
+        # Set device model for Transformer3W
+        set_device_model!(template, DeviceModel(Transformer3W, StaticBranch))
+        set_device_model!(template, MonitoredLine, StaticBranch)
+
+        model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
+        @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+              PSI.ModelBuildStatus.BUILT
+
+        # Test that variables are created for the transformer
+        @test check_variable_unbounded(model_m, FlowActivePowerVariable, Transformer3W)
+
+        @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+        # Test flow constraints
+        transformer = PSY.get_component(Transformer3W, system, "Transformer3W_busD")
+        @test check_flow_variable_values(
+            model_m,
+            FlowActivePowerVariable,
+            Transformer3W,
+            "Transformer3W_busD_winding_3",
+            PSY.get_rating_tertiary(transformer),
+        )
+    end
+
+    template_ac = get_thermal_dispatch_template_network(ACPPowerModel)
+    set_device_model!(template_ac, DeviceModel(Transformer3W, StaticBranch))
+    model_ac = DecisionModel(template_ac, system; optimizer = ipopt_optimizer)
+    @test build!(model_ac; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(model_ac) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+end

@@ -1416,6 +1416,38 @@ end
           PSI.ModelBuildStatus.BUILT
 end
 
+# Tests a case with series reductions containing different branch types, some with and some without filters applied
+@testset "Network reductions + branch filter edge cases" begin
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[RadialReduction(), DegreeTwoReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, DeviceModel(Line, StaticBranch))
+    modeled_transformer_names = ["9-5-i_1"]
+    set_device_model!(
+        template,
+        DeviceModel(
+            Transformer2W,
+            StaticBranch;
+            attributes = Dict(
+                "filter_function" => x -> PSY.get_name(x) in modeled_transformer_names,
+            ),
+        ),
+    )
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+end
+
 @testset "Branch bounds of parallel and series reductions" begin
     sys = build_system(PSITestSystems, "case11_network_reductions")
     add_dummy_time_series_data!(sys)
@@ -1472,51 +1504,53 @@ end
     sys = build_system(PSITestSystems, "case11_network_reductions")
     add_dummy_time_series_data!(sys)
     for (network_model, optimizer) in NETWORKS_FOR_TESTING
-        # Only default reductions:
-        template = ProblemTemplate(
-            NetworkModel(network_model;
-                reduce_radial_branches = false,
-                reduce_degree_two_branches = false,
-                use_slacks = false),
-        )
-        set_device_model!(template, Line, StaticBranch)
-        set_device_model!(template, Transformer2W, StaticBranch)
-        ps_model = DecisionModel(template, sys; optimizer = optimizer)
-        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.ModelBuildStatus.BUILT
-        JuMPmodel = PSI.get_jump_model(ps_model)
-        n_vars = JuMP.num_variables(JuMPmodel)
+        @testset "Network Model: $(network_model)" begin
+            # Only default reductions:
+            template = ProblemTemplate(
+                NetworkModel(network_model;
+                    reduce_radial_branches = false,
+                    reduce_degree_two_branches = false,
+                    use_slacks = false),
+            )
+            set_device_model!(template, Line, StaticBranch)
+            set_device_model!(template, Transformer2W, StaticBranch)
+            ps_model = DecisionModel(template, sys; optimizer = optimizer)
+            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
+            JuMPmodel = PSI.get_jump_model(ps_model)
+            n_vars = JuMP.num_variables(JuMPmodel)
 
-        # Radial reductions:
-        template = ProblemTemplate(
-            NetworkModel(network_model;
-                reduce_radial_branches = true,
-                reduce_degree_two_branches = false,
-                use_slacks = false),
-        )
-        set_device_model!(template, Line, StaticBranch)
-        set_device_model!(template, Transformer2W, StaticBranch)
-        ps_model = DecisionModel(template, sys; optimizer = optimizer)
-        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.ModelBuildStatus.BUILT
-        JuMPmodel = PSI.get_jump_model(ps_model)
-        n_vars_radial = JuMP.num_variables(JuMPmodel)
+            # Radial reductions:
+            template = ProblemTemplate(
+                NetworkModel(network_model;
+                    reduce_radial_branches = true,
+                    reduce_degree_two_branches = false,
+                    use_slacks = false),
+            )
+            set_device_model!(template, Line, StaticBranch)
+            set_device_model!(template, Transformer2W, StaticBranch)
+            ps_model = DecisionModel(template, sys; optimizer = optimizer)
+            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
+            JuMPmodel = PSI.get_jump_model(ps_model)
+            n_vars_radial = JuMP.num_variables(JuMPmodel)
 
-        # Radial + degree two reductions:
-        template = ProblemTemplate(
-            NetworkModel(network_model;
-                reduce_radial_branches = true,
-                reduce_degree_two_branches = true,
-                use_slacks = false),
-        )
-        set_device_model!(template, Line, StaticBranch)
-        set_device_model!(template, Transformer2W, StaticBranch)
-        ps_model = DecisionModel(template, sys; optimizer = optimizer)
-        @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-              PSI.ModelBuildStatus.BUILT
-        JuMPmodel = PSI.get_jump_model(ps_model)
-        n_vars_radial_d2 = JuMP.num_variables(JuMPmodel)
+            # Radial + degree two reductions:
+            template = ProblemTemplate(
+                NetworkModel(network_model;
+                    reduce_radial_branches = true,
+                    reduce_degree_two_branches = true,
+                    use_slacks = false),
+            )
+            set_device_model!(template, Line, StaticBranch)
+            set_device_model!(template, Transformer2W, StaticBranch)
+            ps_model = DecisionModel(template, sys; optimizer = optimizer)
+            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
+            JuMPmodel = PSI.get_jump_model(ps_model)
+            n_vars_radial_d2 = JuMP.num_variables(JuMPmodel)
 
-        @test n_vars_radial_d2 < n_vars_radial < n_vars
+            @test n_vars_radial_d2 < n_vars_radial < n_vars
+        end
     end
 end

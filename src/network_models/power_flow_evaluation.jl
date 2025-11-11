@@ -90,7 +90,7 @@ function _make_temp_component_map(pf_data::PFS.PowerFlowData, sys::PSY.System)
     temp_component_map[PSY.ACBus] =
         Dict(
             PSY.get_name(c) => PNM.get_bus_index(PSY.get_number(c), bus_lookup, nrd) for
-            c in get_components(PSY.ACBus, sys)
+            c in get_available_components(PSY.ACBus, sys)
         )
     return temp_component_map
 end
@@ -651,7 +651,7 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
             if br isa U
                 @assert T <: LineFlowAuxVariableType "Only LineFlowAuxVariableType aux vars " *
                                                      "can be used for parallel branches: got $T"
-                if PSY.get_r(br) + im * PSY.get_x(br) != impedance
+                if !isapprox(PSY.get_r(br) + im * PSY.get_x(br), impedance)
                     throw(
                         error(
                             "All parallel branches must have the same impedance: " *

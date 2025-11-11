@@ -177,9 +177,9 @@ struct HVDCTwoTerminalLCC <: AbstractTwoTerminalDCLineFormulation end
 abstract type AbstractConverterFormulation <: AbstractDeviceFormulation end
 
 """
-LossLess InterconnectingConverter Model
+Lossless InterconnectingConverter Model
 """
-struct LossLessConverter <: AbstractConverterFormulation end
+struct LosslessConverter <: AbstractConverterFormulation end
 
 """
 Linear Loss InterconnectingConverter Model
@@ -195,16 +195,16 @@ struct QuadraticLossConverter <: AbstractConverterFormulation end
 abstract type AbstractDCLineFormulation <: AbstractBranchFormulation end
 
 """
-LossLess Line Abstract Model
+Lossless Line Abstract Model
 """
-struct DCLossLessLine <: AbstractDCLineFormulation end
+struct DCLosslessLine <: AbstractDCLineFormulation end
 
 """
 Lossy Line Abstract Model
 """
 struct DCLossyLine <: AbstractDCLineFormulation end
 
-struct LossLessLine <: AbstractDCLineFormulation end
+struct LosslessLine <: AbstractDCLineFormulation end
 
 ############################## HVDC Network Model Formulations ##################################
 abstract type AbstractHVDCNetworkModel end

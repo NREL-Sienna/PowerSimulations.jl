@@ -2,14 +2,14 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{PSY.InterconnectingConverter, LossLessConverter},
+    model::DeviceModel{PSY.InterconnectingConverter, LosslessConverter},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
     devices = get_available_components(
         model,
         sys,
     )
-    add_variables!(container, ActivePowerVariable, devices, LossLessConverter())
+    add_variables!(container, ActivePowerVariable, devices, LosslessConverter())
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -26,7 +26,7 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{PSY.InterconnectingConverter, LossLessConverter},
+    model::DeviceModel{PSY.InterconnectingConverter, LosslessConverter},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
     devices = get_available_components(
@@ -73,7 +73,7 @@ function construct_device!(
             ConverterNegativeCurrent,
             devices,
             QuadraticLossConverter(),
-        ) # i^- 
+        ) # i^-
         add_variables!(
             container,
             ConverterCurrentDirection,
@@ -224,14 +224,14 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{PSY.TModelHVDCLine, LossLessLine},
+    model::DeviceModel{PSY.TModelHVDCLine, LosslessLine},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
     devices = get_available_components(
         model,
         sys,
     )
-    add_variables!(container, FlowActivePowerVariable, devices, LossLessLine())
+    add_variables!(container, FlowActivePowerVariable, devices, LosslessLine())
     add_to_expression!(
         container,
         ActivePowerBalance,
@@ -248,7 +248,7 @@ function construct_device!(
     ::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{PSY.TModelHVDCLine, LossLessLine},
+    model::DeviceModel{PSY.TModelHVDCLine, LosslessLine},
     ::NetworkModel{<:PM.AbstractActivePowerModel},
 )
 end

@@ -11,8 +11,8 @@
     set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
     set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
-    set_device_model!(template_uc, DeviceModel(InterconnectingConverter, LossLessConverter))
-    set_device_model!(template_uc, DeviceModel(TModelHVDCLine, LossLessLine))
+    set_device_model!(template_uc, DeviceModel(InterconnectingConverter, LosslessConverter))
+    set_device_model!(template_uc, DeviceModel(TModelHVDCLine, LosslessLine))
     set_hvdc_network_model!(template_uc, TransportHVDCNetworkModel)
     model = DecisionModel(template_uc, sys_5; name = "UC", optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir()) == PSI.ModelBuildStatus.BUILT
@@ -30,8 +30,8 @@
     set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch)
     set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
     set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
-    set_device_model!(template_uc, DeviceModel(InterconnectingConverter, LossLessConverter))
-    set_device_model!(template_uc, DeviceModel(TModelHVDCLine, LossLessLine))
+    set_device_model!(template_uc, DeviceModel(InterconnectingConverter, LosslessConverter))
+    set_device_model!(template_uc, DeviceModel(TModelHVDCLine, LosslessLine))
     set_hvdc_network_model!(template_uc, TransportHVDCNetworkModel)
     model = DecisionModel(template_uc, sys_5; name = "UC", optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir()) == PSI.ModelBuildStatus.BUILT
@@ -81,8 +81,8 @@ end
     template = ProblemTemplate()
     set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
-    set_device_model!(template, TModelHVDCLine, LossLessLine)
-    set_device_model!(template, InterconnectingConverter, LossLessConverter)
+    set_device_model!(template, TModelHVDCLine, LosslessLine)
+    set_device_model!(template, InterconnectingConverter, LosslessConverter)
     set_hvdc_network_model!(template, TransportHVDCNetworkModel)
     model =
         DecisionModel(

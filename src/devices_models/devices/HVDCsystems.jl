@@ -68,7 +68,7 @@ end
 get_variable_multiplier(_, ::Type{PSY.TModelHVDCLine}, ::AbstractBranchFormulation) = 1.0
 
 requires_initialization(::AbstractConverterFormulation) = false
-requires_initialization(::LossLessLine) = false
+requires_initialization(::LosslessLine) = false
 
 function get_initial_conditions_device_model(
     ::OperationModel,

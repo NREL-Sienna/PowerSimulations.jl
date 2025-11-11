@@ -884,10 +884,6 @@ function add_to_expression!(
     U <: FlowActivePowerToFromVariable,
     V <: PSY.TwoTerminalHVDC,
 }
-    # TODO: Implement topology check
-    error(
-        "here the check for appropriate topology needs to be done based on the network model and the network reduction",
-    )
     variable = get_variable(container, U(), V)
     expression = get_expression(container, T(), PSY.ACBus)
     radial_network_reduction = get_radial_network_reduction(network_model)
@@ -1846,15 +1842,15 @@ end
 
 function _handle_nodal_or_zonal_interfaces(
     br_type::Type{V},
-    network_reduction_data::PNM.NetworkReductionData,
+    net_reduction_data::PNM.NetworkReductionData,
     direction_map::Dict{String, Int},
     contributing_devices::Vector{V},
     variable::JuMPVariableArray,
     expression::DenseAxisArray, # There is no good type for a DenseAxisArray slice
 ) where {V <: PSY.ACTransmission}
-    all_branch_maps_by_type = network_reduction_data.all_branch_maps_by_type
+    all_branch_maps_by_type = net_reduction_data.all_branch_maps_by_type
     for (name, (arc, reduction)) in
-        PNM.get_name_to_arc_map(network_reduction_data)[br_type]
+        PNM.get_name_to_arc_map(net_reduction_data, br_type)
         reduction_entry = all_branch_maps_by_type[reduction][br_type][arc]
         if _reduced_entry_in_interface(reduction_entry, contributing_devices)
             if isempty(direction_map)
@@ -1864,7 +1860,7 @@ function _handle_nodal_or_zonal_interfaces(
                     arc,
                     reduction_entry,
                     direction_map,
-                    network_reduction_data,
+                    net_reduction_data,
                 )
             end
             for t in axes(variable, 2)
@@ -1881,7 +1877,7 @@ end
 
 function _handle_nodal_or_zonal_interfaces(
     ::Type{PSY.AreaInterchange},
-    network_reduction_data::PNM.NetworkReductionData,
+    net_reduction_data::PNM.NetworkReductionData,
     direction_map::Dict{String, Int},
     contributing_devices::Vector{PSY.AreaInterchange},
     variable::JuMPVariableArray,
@@ -1913,7 +1909,7 @@ function add_to_expression!(
     model::ServiceModel{PSY.TransmissionInterface, V},
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {V <: Union{ConstantMaxInterfaceFlow, VariableMaxInterfaceFlow}}
-    network_reduction_data = get_network_reduction(network_model)
+    net_reduction_data = get_network_reduction(network_model)
     expression = get_expression(container, InterfaceTotalFlow(), PSY.TransmissionInterface)
     service_name = get_service_name(model)
     direction_map = PSY.get_direction_mapping(service)
@@ -1922,7 +1918,7 @@ function add_to_expression!(
         variable = get_variable(container, FlowActivePowerVariable(), br_type)
         _handle_nodal_or_zonal_interfaces(
             br_type,
-            network_reduction_data,
+            net_reduction_data,
             direction_map,
             contributing_devices,
             variable,
@@ -1951,11 +1947,11 @@ function _get_direction(
     arc_tuple::Tuple{Int, Int},
     reduction_entry::PNM.BranchesParallel,
     direction_map::Dict{String, Int},
-    network_reduction_data::PNM.NetworkReductionData,
+    net_reduction_data::PNM.NetworkReductionData,
 )
     # Loops through parallel branches twice, but there are relatively few parallel branches per reduction entry:
     directions = [
-        _get_direction(arc_tuple, x, direction_map, network_reduction_data) for
+        _get_direction(arc_tuple, x, direction_map, net_reduction_data) for
         x in reduction_entry
     ]
     if allequal(directions)
@@ -1973,16 +1969,16 @@ function _get_direction(
     arc_tuple::Tuple{Int, Int},
     reduction_entry::PNM.BranchesSeries,
     direction_map::Dict{String, Int},
-    network_reduction_data::PNM.NetworkReductionData,
+    net_reduction_data::PNM.NetworkReductionData,
 )
     # direction of segments from the user provided mapping:
     mapping_directions = [
-        _get_direction(arc_tuple, x, direction_map, network_reduction_data) for
+        _get_direction(arc_tuple, x, direction_map, net_reduction_data) for
         x in reduction_entry
     ]
     # direction of segments relative to the reduced degree two chain:
     _, segment_orientations =
-        PNM._get_chain_data(arc_tuple, reduction_entry, network_reduction_data)
+        PNM._get_chain_data(arc_tuple, reduction_entry, net_reduction_data)
     segment_directions = [x == :FromTo ? 1.0 : -1.0 for x in segment_orientations]
     net_directions = mapping_directions .* segment_directions
     if allequal(net_directions)
