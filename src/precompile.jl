@@ -3,6 +3,16 @@
 
 This file contains representative workloads to reduce time-to-first-execution (TTFX).
 We use PrecompileTools to execute common code paths during package precompilation.
+
+The main goal is to reduce the "first build time" - the time it takes to build a
+simulation model the first time after loading the package. This is achieved by:
+
+1. Executing common type constructions during precompilation
+2. Adding explicit @precompile directives for frequently-used method signatures
+3. Covering multiple network formulations since each creates different specializations
+
+Note: Full simulation builds require PowerSystems data, so we focus on precompiling
+the setup and configuration steps that don't require system-specific data.
 """
 
 import PrecompileTools
@@ -13,6 +23,7 @@ PrecompileTools.@compile_workload begin
     
     try
         # 1. Template construction - most common user entry point
+        # Each network formulation creates different type specializations
         template_copper = ProblemTemplate(CopperPlatePowerModel)
         template_ptdf = ProblemTemplate(PTDFPowerModel)
         template_dcp = ProblemTemplate(DCPPowerModel)
@@ -35,7 +46,7 @@ PrecompileTools.@compile_workload begin
         Base.isempty(template_copper)
         Base.isempty(template_ptdf)
         
-        # 5. NetworkModel getters - frequently called
+        # 5. NetworkModel getters - frequently called during setup
         get_network_formulation(network_copper)
         get_network_formulation(network_ptdf)
         get_network_formulation(network_dcp)
