@@ -499,6 +499,7 @@ import Distributed
 import Distributions: Bernoulli, Geometric
 import Random
 import Random: AbstractRNG, rand
+import PrecompileTools
 
 # Base Imports
 import Base.getindex
@@ -730,5 +731,8 @@ include("utils/time_series_utils.jl")
 include("utils/recorder_events.jl")
 include("utils/datetime_utils.jl")
 include("utils/generate_valid_formulations.jl")
+
+# Precompilation workload to reduce TTFX (Time To First X)
+include("precompile.jl")
 
 end
