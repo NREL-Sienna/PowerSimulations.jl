@@ -601,6 +601,44 @@ end
 
 function get_branch_to_pm(
     ix::Int,
+    branch::PSY.TwoTerminalGenericHVDCLine,
+    ::Type{HVDCTwoTerminalDispatch},
+    ::Type{<:PM.AbstractDCPModel},
+)
+    PM_branch = Dict{String, Any}(
+        "loss1" => PSY.get_proportional_term(PSY.get_loss(branch)),
+        "mp_pmax" => PSY.get_reactive_power_limits_from(branch).max,
+        "model" => 2,
+        "shutdown" => 0.0,
+        "pmaxt" => PSY.get_active_power_limits_to(branch).max,
+        "pmaxf" => PSY.get_active_power_limits_from(branch).max,
+        "startup" => 0.0,
+        "loss0" => PSY.get_constant_term(PSY.get_loss(branch)),
+        "pt" => 0.0,
+        "vt" => PSY.get_magnitude(PSY.get_arc(branch).to),
+        "qmaxf" => PSY.get_reactive_power_limits_from(branch).max,
+        "pmint" => PSY.get_active_power_limits_to(branch).min,
+        "f_bus" => PSY.get_number(PSY.get_arc(branch).from),
+        "mp_pmin" => PSY.get_reactive_power_limits_from(branch).min,
+        "br_status" => 0.0,
+        "t_bus" => PSY.get_number(PSY.get_arc(branch).to),
+        "index" => ix,
+        "qmint" => PSY.get_reactive_power_limits_to(branch).min,
+        "qf" => 0.0,
+        "cost" => 0.0,
+        "pminf" => PSY.get_active_power_limits_from(branch).min,
+        "qt" => 0.0,
+        "qminf" => PSY.get_reactive_power_limits_from(branch).min,
+        "vf" => PSY.get_magnitude(PSY.get_arc(branch).from),
+        "qmaxt" => PSY.get_reactive_power_limits_to(branch).max,
+        "ncost" => 0,
+        "pf" => 0.0,
+    )
+    return PM_branch
+end
+
+function get_branch_to_pm(
+    ix::Int,
     branch::PSY.TwoTerminalLCCLine,
     ::Type{HVDCTwoTerminalLCC},
     ::Type{<:PM.AbstractPowerModel},

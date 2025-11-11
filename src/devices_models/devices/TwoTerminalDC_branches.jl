@@ -204,6 +204,31 @@ function _get_pwl_loss_params(
     return from_to_loss_params, to_from_loss_params
 end
 
+function add_variables!(
+    container::OptimizationContainer,
+    ::Type{FlowActivePowerVariable},
+    network_model::NetworkModel{CopperPlatePowerModel},
+    devices::IS.FlattenIteratorWrapper{T},
+    formulation::U,
+) where {T <: PSY.TwoTerminalHVDC, U <: AbstractBranchFormulation}
+    inter_network_branches = T[]
+    for d in devices
+        ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
+        ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
+        if ref_bus_from != ref_bus_to
+            push!(inter_network_branches, d)
+        else
+            @warn(
+                "HVDC Line $(PSY.get_name(d)) is in the same subnetwork, so the line will not be modeled."
+            )
+        end
+    end
+    if !isempty(inter_network_branches)
+        add_variables!(container, FlowActivePowerVariable, inter_network_branches, U())
+    end
+    return
+end
+
 function add_constraints!(
     container::OptimizationContainer,
     ::Type{T},
