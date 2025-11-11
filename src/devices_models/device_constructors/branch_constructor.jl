@@ -1613,8 +1613,8 @@ function _get_area_from_to(reduction_entry::PSY.ACBranch)
 end
 
 function _get_area_from_to(reduction_entry::PNM.ThreeWindingTransformerWinding)
-    tfw = get_transformer(reduction_entry)
-    winding_int = get_winding_number(reduction_entry)
+    tfw = PNM.get_transformer(reduction_entry)
+    winding_int = PNM.get_winding_number(reduction_entry)
     if winding_int == 1
         area_from = PSY.get_area(PSY.get_primary_star_arc(tfw).from)
         area_to = PSY.get_area(PSY.primary_star_arc(tfw).to)
