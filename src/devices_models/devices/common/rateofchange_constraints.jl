@@ -219,6 +219,90 @@ function add_linear_ramp_constraints!(
     return
 end
 
+function add_linear_ramp_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{ActivePowerVariable},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    ::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.ThermalGen, W <: AbstractThermalDispatchFormulation}
+
+    # Explicit guard: this ED ramp method requires a fixed commitment path.
+    if !has_container_key(container, OnStatusParameter, V)
+        error(
+            "OnStatusParameter is required for dispatch ramp gating. " *
+            "Attach a SemiContinuousFeedforward with source=OnVariable from UC to ED.",
+        )
+    end
+
+    time_steps = get_time_steps(container)
+    variable = get_variable(container, U(), V)
+    ramp_devices = _get_ramp_constraint_devices(container, devices)
+    minutes_per_period = _get_minutes_per_period(container)
+    IC = _get_initial_condition_type(T, V, W)
+    initial_conditions_power = get_initial_condition(container, IC(), V)
+    ic_power_by_name =
+        Dict(get_component_name(ic) => get_value(ic) for ic in initial_conditions_power)
+
+    # Commitment path from UC as a PARAMETER (fixed 0/1)
+    on_param = get_parameter(container, OnStatusParameter(), V)
+    on_status = on_param.parameter_array  # on_status[name, t] ∈ {0,1} (fixed)
+
+    set_name = [PSY.get_name(r) for r in ramp_devices]
+    con_up =
+        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "up")
+    con_down =
+        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "dn")
+
+    jump_model = get_jump_model(container)
+
+    for dev in ramp_devices
+        name = PSY.get_name(dev)
+        ramp_limits = PSY.get_ramp_limits(dev)
+        power_limits = PSY.get_active_power_limits(dev)
+
+        # --- t = 1: Use ic_power to determine starting ramp condition
+        ic_power = ic_power_by_name[name]
+        ycur = on_status[name, 1]
+        sl_ub, sl_lb = _get_ramp_slack_vars(container, model, name, 1)
+
+        # Ramp UP from IC
+        con_up[name, 1] = JuMP.@constraint(jump_model,
+            variable[name, 1] - ic_power - sl_ub <=
+            ramp_limits.up * minutes_per_period + power_limits.max * (1 - ycur)
+        )
+
+        # Ramp DOWN from IC  
+        con_down[name, 1] = JuMP.@constraint(jump_model,
+            ic_power - variable[name, 1] - sl_lb <=
+            ramp_limits.down * minutes_per_period + power_limits.max * (1 - ycur)
+        )
+
+        # --- t ≥ 2: gate by previous status y_{t-1}
+        for t in time_steps[2:end]
+            yprev = on_status[name, t - 1]   # 0/1 fixed from UC
+            ycur = on_status[name, t]       # 0/1 fixed from UC
+            sl_ub, sl_lb = _get_ramp_slack_vars(container, model, name, t)
+
+            # Ramp UP when already ON previously
+            con_up[name, t] = JuMP.@constraint(jump_model,
+                variable[name, t] - variable[name, t - 1] - sl_ub <=
+                ramp_limits.up * minutes_per_period + power_limits.max * (2 - yprev - ycur)
+            )
+
+            # Ramp DOWN when already ON previously
+            con_down[name, t] = JuMP.@constraint(jump_model,
+                variable[name, t - 1] - variable[name, t] - sl_lb <=
+                ramp_limits.down * minutes_per_period +
+                power_limits.max * (2 - yprev - ycur)
+            )
+        end
+    end
+
+    return
+end
+
 @doc raw"""
 Constructs allowed rate-of-change constraints from variables, initial condtions, start/stop status, and rate data
 
