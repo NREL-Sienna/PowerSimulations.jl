@@ -149,13 +149,13 @@ function add_linear_ramp_constraints!(
     return
 end
 
-function add_linear_ramp_constraints!(
+# Helper function containing the shared ramp constraint logic
+function _add_linear_ramp_constraints_impl!(
     container::OptimizationContainer,
     T::Type{<:ConstraintType},
     U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     parameters = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
@@ -222,18 +222,26 @@ end
 function add_linear_ramp_constraints!(
     container::OptimizationContainer,
     T::Type{<:ConstraintType},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    return _add_linear_ramp_constraints_impl!(container, T, U, devices, model)
+end
+
+function add_linear_ramp_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
     U::Type{ActivePowerVariable},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    ::Type{<:PM.AbstractPowerModel},
+    X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.ThermalGen, W <: AbstractThermalDispatchFormulation}
 
-    # Explicit guard: this ED ramp method requires a fixed commitment path.
+    # Fallback to generic implementation if OnStatusParameter is not present
     if !has_container_key(container, OnStatusParameter, V)
-        error(
-            "OnStatusParameter is required for dispatch ramp gating. " *
-            "Attach a SemiContinuousFeedforward with source=OnVariable from UC to ED.",
-        )
+        return _add_linear_ramp_constraints_impl!(container, T, U, devices, model)
     end
 
     time_steps = get_time_steps(container)
