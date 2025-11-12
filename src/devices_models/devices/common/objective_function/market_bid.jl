@@ -568,7 +568,6 @@ function _add_pwl_constraint!(
     # just look up what it is currently fixed to and use that here without worrying about
     # updating.
     if _include_constant_min_gen_power_in_constraint(component, U(), D())
-        # TODO this seems kind of redundant with the
         sum_pwl_vars += jump_fixed_value(first(break_points))::Float64
     elseif _include_min_gen_power_in_constraint(component, U(), D())
         on_vars = get_variable(container, OnVariable(), T)
@@ -756,8 +755,8 @@ function _get_pwl_data(
 end
 
 """
-Add PWL cost terms for data coming from the MarketBidCost
-with a fixed incremental offer curve
+Add PWL cost terms for data coming from the MarketBidCost. Curve might be time varint, or 
+might be fixed: logic as to which is handled in _get_pwl_data.
 """
 function add_pwl_term!(
     is_decremental::Bool,
@@ -814,54 +813,52 @@ function add_pwl_term!(
     end
 end
 
-##################################################
-########## PWL for StepwiseCostReserve  ##########
-##################################################
-
-# Not touching this in PR #1303, TODO figure it out later -GKS
+# TODO LK: move into reserves.jl once things are working. Leaving it here for now,
+# to simplify tracking changes.
 function _add_pwl_term!(
     container::OptimizationContainer,
-    component::T,
-    cost_data::PSY.CostCurve{PSY.PiecewiseIncrementalCurve},
+    component::PSY.Reserve,
+    variable_cost::Union{PSY.CostCurve{PSY.PiecewiseIncrementalCurve}, PSY.ForecastKey},
     ::U,
     ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractServiceFormulation}
+) where {U <: VariableType, V <: AbstractServiceFormulation}
     multiplier = objective_function_multiplier(U(), V())
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
-    base_power = get_base_power(container)
-    value_curve = PSY.get_value_curve(cost_data)
-    power_units = PSY.get_power_units(cost_data)
-    cost_component = PSY.get_function_data(value_curve)
-    device_base_power = PSY.get_base_power(component)
-    data = get_piecewise_curve_per_system_unit(
-        cost_component,
-        power_units,
-        base_power,
-        device_base_power,
-    )
     name = PSY.get_name(component)
     time_steps = get_time_steps(container)
     pwl_cost_expressions = Vector{JuMP.AffExpr}(undef, time_steps[end])
     sos_val = _get_sos_value(container, V, component)
+
     for t in time_steps
-        break_points = PSY.get_x_coords(data)
+        breakpoints, slopes = _get_reserve_pwl_data(container, component, variable_cost, t)
+
         _add_pwl_variables!(
             container,
-            T,
+            typeof(component),
             name,
             t,
-            length(IS.get_y_coords(data)),
+            length(slopes),
             PiecewiseLinearBlockIncrementalOffer,
         )
-        _add_pwl_constraint!(container, component, U(), break_points, sos_val, t)
+
+        _add_pwl_constraint!(
+            container,
+            component,
+            U(),
+            breakpoints,
+            sos_val,
+            t,
+        )
+
         pwl_cost = _get_pwl_cost_expression(
             container,
             component,
             t,
-            IS.get_y_coords(data),
+            slopes,
             multiplier * dt,
         )
+
         pwl_cost_expressions[t] = pwl_cost
     end
     return pwl_cost_expressions
