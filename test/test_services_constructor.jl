@@ -96,9 +96,12 @@ end
     )
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
 
-    model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer)
+    model = DecisionModel(template, c_sys5_uc; optimizer = HiGHS_optimizer,
+        store_variable_names = true)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
+    # TODO LK: debug code.
+    # save_objective_function(model, joinpath(homedir(), "Downloads", "objfun.txt")
     moi_tests(model, 984, 0, 576, 216, 168, true)
 end
 
@@ -134,7 +137,7 @@ end
     )
     ts_key = add_time_series!(c_sys5_uc, rdc, cost_curve_ts)
     set_variable!(rdc, ts_key)
-    # TODO LK: fails currently. yet to implement.
+    # TODO LK: fails currently. currently working on implementing.
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
 end

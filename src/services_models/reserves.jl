@@ -521,6 +521,52 @@ function add_variable_cost!(
     return
 end
 
+"""
+Return (breakpoints, slopes) for a ReserveDemandCurve, evaluating time-varying
+ForecastKey data if necessary. Mirrors _get_pwl_data for OfferCurveCost, but with a bare 
+cost curve or time series as input, instead of a component.
+"""
+function _get_reserve_pwl_data(
+    container::OptimizationContainer,
+    component::PSY.Reserve,
+    variable_cost::Union{PSY.CostCurve{PSY.PiecewiseIncrementalCurve}, PSY.ForecastKey},
+    t::Int,
+)
+    base_power = get_base_power(container)
+    device_base_power = PSY.get_base_power(component)
+
+    if variable_cost isa PSY.CostCurve{PSY.PiecewiseIncrementalCurve}
+        # Static curve
+        cost_component = PSY.get_function_data(PSY.get_value_curve(variable_cost))
+        breakpoints = PSY.get_x_coords(cost_component)
+        slopes = PSY.get_y_coords(cost_component)
+        unit_system = PSY.get_power_units(variable_cost)
+    elseif variable_cost isa PSY.ForecastKey
+        @show keys(get_parameters(container))
+        # TODO LK: this next line errors--written by AI. figure out what the correct analog 
+        # to _get_pwl_data is. Might need to add parameters to the container first.
+        cost_curve_t = get_parameter_value(container, variable_cost, t)
+        cost_component = PSY.get_function_data(PSY.get_value_curve(cost_curve_t))
+        breakpoints = PSY.get_x_coords(cost_component)
+        slopes = PSY.get_y_coords(cost_component)
+        unit_system = PSY.get_power_units(cost_curve_t)
+    else
+        error(
+            "Unsupported variable cost type $(typeof(variable_cost)) for reserve $(PSY.get_name(component))",
+        )
+    end
+
+    breakpoints, slopes = get_piecewise_curve_per_system_unit(
+        breakpoints,
+        slopes,
+        unit_system,
+        base_power,
+        device_base_power,
+    )
+
+    return breakpoints, slopes
+end
+
 function _add_variable_cost_to_objective!(
     container::OptimizationContainer,
     ::T,
@@ -534,12 +580,16 @@ function _add_variable_cost_to_objective!(
     variable_cost = PSY.get_variable(component)
     if variable_cost isa Nothing
         error("ReserveDemandCurve $(component.name) does not have cost data.")
-    elseif typeof(variable_cost) <: PSY.TimeSeriesKey
-        error(
-            "Timeseries curve for ReserveDemandCurve $(component.name) is not supported yet.",
-        )
+        #elseif typeof(variable_cost) <: PSY.TimeSeriesKey
+        #    error(
+        #        "Timeseries curve for ReserveDemandCurve $(component.name) is not supported yet.",
+        #    )
     end
 
+    # error: no such method, bc variable_cost is a ForecastKey, not a CostCurve.
+    # For components with time-varying MarketBidCost, we handle this by passing
+    # the full MarketBidCost object plus the timestep:
+    # that add_pwl_term! calls _get_pwl_data, which evaluates the time series if needed.
     pwl_cost_expressions =
         _add_pwl_term!(container, component, variable_cost, T(), U())
     for t in time_steps
