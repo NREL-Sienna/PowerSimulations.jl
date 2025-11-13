@@ -63,7 +63,6 @@ function get_default_attributes(
 end
 #################################### Flow Variable Bounds ##################################################
 # Additional Method to be able to filter the branches that are not in the PTDF matrix
-
 function add_variables!(
     container::OptimizationContainer,
     ::Type{T},
@@ -73,6 +72,8 @@ function add_variables!(
 ) where {
     T <: AbstractACActivePowerFlow,
     U <: PSY.ACTransmission}
+
+    #=
     time_steps = get_time_steps(container)
     net_reduction_data = network_model.network_reduction
     branch_names = get_branch_argument_variable_axis(net_reduction_data, devices)
@@ -113,6 +114,20 @@ function add_variables!(
             variable_container[name, t] = tracker_container[t]
         end
     end
+    =#
+    return
+end
+
+function add_variables!(
+    ::OptimizationContainer,
+    ::Type{T},
+    network_model::NetworkModel{<:AbstractPTDFModel},
+    devices::IS.FlattenIteratorWrapper{U},
+    formulation::StaticBranchUnbounded,
+) where {
+    T <: AbstractACActivePowerFlow,
+    U <: PSY.ACTransmission}
+    @debug "PTDF Branch Flows with StaticBranchUnbounded do not require flow variables $T. Flow values are given by PTDFBranchFlow."
     return
 end
 
@@ -546,28 +561,70 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    ::Type{FlowRateConstraint},
+    cons_type::Type{FlowRateConstraint},
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, U},
-    network_model::NetworkModel{CopperPlatePowerModel},
-) where {T <: PSY.ACTransmission, U <: AbstractBranchFormulation}
-    inter_network_branches = T[]
-    for d in devices
-        ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
-        ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
-        if ref_bus_from != ref_bus_to
-            push!(inter_network_branches, d)
-        end
-    end
-    if !isempty(inter_network_branches)
-        add_range_constraints!(
+    device_model::DeviceModel{T, U},
+    network_model::NetworkModel{V},
+) where {
+    T <: PSY.ACTransmission,
+    U <: AbstractBranchFormulation,
+    V <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    net_reduction_data = network_model.network_reduction
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    branch_names = get_branch_argument_constraint_axis(
+        net_reduction_data,
+        reduced_branch_tracker,
+        devices,
+        cons_type,
+    )
+    all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
+
+    con_lb =
+        add_constraints_container!(
             container,
-            FlowRateConstraint,
-            FlowActivePowerVariable,
-            devices,
-            model,
-            CopperPlatePowerModel,
+            cons_type(),
+            T,
+            branch_names,
+            time_steps;
+            meta = "lb",
         )
+    con_ub =
+        add_constraints_container!(
+            container,
+            cons_type(),
+            T,
+            branch_names,
+            time_steps;
+            meta = "ub",
+        )
+
+    array = get_expression(container, PTDFBranchFlow(), T)
+
+    use_slacks = get_use_slacks(device_model)
+    if use_slacks
+        slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
+        slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
+    end
+    for (name, (arc, reduction)) in
+        get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][T]
+        # TODO: entry is not type stable here, it can return any type ACTransmission.
+        # It might have performance implications. Possibly separate this into other functions
+        reduction_entry = all_branch_maps_by_type[reduction][T][arc]
+        limits = get_min_max_limits(reduction_entry, FlowRateConstraint, U)
+        for t in time_steps
+            con_ub[name, t] =
+                JuMP.@constraint(get_jump_model(container),
+                    array[name, t] -
+                    (use_slacks ? slack_ub[name, t] : 0.0) <=
+                    limits.max)
+            con_lb[name, t] =
+                JuMP.@constraint(get_jump_model(container),
+                    array[name, t] +
+                    (use_slacks ? slack_lb[name, t] : 0.0) >=
+                    limits.min)
+        end
     end
     return
 end
@@ -846,6 +903,7 @@ function add_constraints!(
     model::DeviceModel{B, <:AbstractBranchFormulation},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {B <: PSY.ACTransmission}
+    #=
     time_steps = get_time_steps(container)
     branch_flow_expr = get_expression(container, PTDFBranchFlow(), B)
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
@@ -873,6 +931,18 @@ function add_constraints!(
             )
         end
     end
+    =#
+    return
+end
+
+function add_constraints!(
+    ::OptimizationContainer,
+    cons_type::Type{NetworkFlowConstraint},
+    ::IS.FlattenIteratorWrapper{B},
+    ::DeviceModel{B, StaticBranchUnbounded},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {B <: PSY.ACTransmission}
+    @debug "PTDF Branch Flows with StaticBranchUnbounded do not require network flow constraints $cons_type. Flow values are given by PTDFBranchFlow."
     return
 end
 
