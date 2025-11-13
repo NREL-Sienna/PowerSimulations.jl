@@ -131,7 +131,7 @@ function add_shut_down_cost!(
             exp = _add_proportional_term_maybe_variant!(
                 Val(add_as_time_variant), container, U(), d, my_cost_term * multiplier,
                 t)
-            # add_to_expression!(container, ProductionCostExpression, exp, component, t)  # TODO do we want this?
+            add_to_expression!(container, ProductionCostExpression, exp, d, t)
         end
     end
     return
@@ -185,13 +185,15 @@ function _add_vom_cost_to_objective!(
         base_power,
         device_base_power,
     )
+    resolution = get_resolution(container)
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     for t in get_time_steps(container)
         exp =
             _add_proportional_term!(
                 container,
                 T(),
                 component,
-                cost_term_normalized * multiplier,
+                cost_term_normalized * multiplier * dt,
                 t,
             )
         add_to_expression!(container, ProductionCostExpression, exp, component, t)
@@ -335,7 +337,7 @@ function _add_start_up_cost_to_objective!(
         exp = _add_proportional_term_maybe_variant!(
             Val(add_as_time_variant), container, T(), component,
             my_cost_term * multiplier, t)
-        # add_to_expression!(container, ProductionCostExpression, exp, component, t)  # TODO do we want this?
+        add_to_expression!(container, ProductionCostExpression, exp, component, t)
     end
     return
 end
