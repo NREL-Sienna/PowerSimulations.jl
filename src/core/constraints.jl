@@ -272,7 +272,17 @@ The specified constraint is formulated as:
 """
 struct FlowRateConstraint <: ConstraintType end
 struct PostContingencyEmergencyRateLimitConstrain <: PostContingencyConstraintType end
+
+"""
+Struct to create the constraint for branch flow rate limits from the 'from' bus to the 'to' bus.
+For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
+"""
 struct FlowRateConstraintFromTo <: ConstraintType end
+
+"""
+Struct to create the constraint for branch flow rate limits from the 'to' bus to the 'from' bus.
+For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
+"""
 struct FlowRateConstraintToFrom <: ConstraintType end
 struct RegulationLimitsConstraint <: ConstraintType end
 
@@ -450,6 +460,17 @@ P^\\text{min} \\le p_t^\\text{in} \\le P^\\text{max}, \\quad \\forall t \\in \\{
 
 abstract type PostContingencyVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 
+"""
+Struct to create the constraint to limit active power input expressions.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound and LowerBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+P^\\text{min} \\le p_t^\\text{in} \\le P^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
 struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 """
 Struct to create the constraint to limit active power output expressions.
