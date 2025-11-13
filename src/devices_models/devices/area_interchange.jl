@@ -165,7 +165,7 @@ function add_constraints!(
     network_model::NetworkModel{T},
     inter_area_branch_map::Dict{
         Tuple{String, String},
-        Dict{DataType, Vector{<:PSY.ACBranch}},
+        Dict{DataType, Vector{String}},
     },
 ) where {T <: AbstractPTDFModel}
     @assert !isempty(inter_area_branch_map)
@@ -197,7 +197,7 @@ function add_constraints!(
         inter_change_name = PSY.get_name(area_interchange)
         area_from_name = PSY.get_name(PSY.get_from_area(area_interchange))
         area_to_name = PSY.get_name(PSY.get_to_area(area_interchange))
-        direction_branch_map = Dict{Float64, Dict{DataType, Vector{<:PSY.ACBranch}}}()
+        direction_branch_map = Dict{Float64, Dict{DataType, Vector{String}}}()
         if haskey(inter_area_branch_map, (area_from_name, area_to_name))
             # 1 is the multiplier
             direction_branch_map[1.0] =
@@ -219,11 +219,10 @@ function add_constraints!(
         for t in time_steps
             sum_of_flows = JuMP.AffExpr()
             for (mult, inter_area_branches) in direction_branch_map
-                for (type, branches) in inter_area_branches
+                for (type, names) in inter_area_branches
                     flow_vars = get_variable(container, FlowActivePowerVariable(), type)
-                    for b in branches
-                        b_name = PSY.get_name(b)
-                        _add_to_jump_expression!(sum_of_flows, flow_vars[b_name, t], mult)
+                    for name in names
+                        _add_to_jump_expression!(sum_of_flows, flow_vars[name, t], mult)
                     end
                 end
             end
