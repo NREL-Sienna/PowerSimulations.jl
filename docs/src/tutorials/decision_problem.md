@@ -26,7 +26,7 @@ using Dates
 ## Data
 
 !!! note
-    
+
     [PowerSystemCaseBuilder.jl](https://github.com/NREL-Sienna/PowerSystemCaseBuilder.jl)
     is a helper library that makes it easier to reproduce examples in the documentation
     and tutorials. Normally you would pass your local files to create the system data
@@ -132,14 +132,14 @@ build!(problem; output_dir = mktempdir())
 ````
 
 !!! tip
-    
+
     The principal component of the [`DecisionModel`](@ref) is the JuMP model.
     But you can serialize to a file using the following command:
-    
+
     ```julia
     serialize_optimization_model(problem, save_path)
     ```
-    
+
     Keep in mind that if the setting `"store_variable_names"` is set to `False` then
     the file won't show the model's names.
 
@@ -193,6 +193,7 @@ read_parameter(res, "ActivePowerTimeSeriesParameter__RenewableDispatch")
 Take a look at the plotting capabilities in
 [PowerGraphics.jl](https://nrel-sienna.github.io/PowerGraphics.jl/stable/)
 
-* * *
+---
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
+
