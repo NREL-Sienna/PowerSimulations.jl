@@ -698,76 +698,30 @@ function _make_flow_expressions!(
     # return expressions
 end
 
-function _add_expression_to_container!(
-    branch_flow_expr::JuMPAffineExpressionDArrayStringInt,
+function _make_postcontingency_flow_expressions!(
     jump_model::JuMP.Model,
+    name::String,
+    outage_id::String,
     time_steps::UnitRange{Int},
     ptdf_col::AbstractVector{Float64},
-    nodal_balance_expressions::JuMPAffineExpressionDArrayIntInt,
-    reduction_entry::T,
-    branches::Vector{String},
-) where {T <: PSY.ACTransmission}
-    name = PSY.get_name(reduction_entry)
-    if name in branches
-        branch_flow_expr[name, :] .= _make_flow_expressions!(
-            jump_model,
-            name,
-            time_steps,
-            ptdf_col,
-            nodal_balance_expressions.data,
+    post_contingency_deployment_expr::Matrix{JuMP.AffExpr},
+    pre_contingency_flow::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange{Int}}}
+)where{T}
+    # @debug "Making Flow Expression on thread $(Threads.threadid()) for branch $name"
+    expressions = Vector{JuMP.AffExpr}(undef, length(time_steps))
+    for t in time_steps
+        
+        expressions[t] = JuMP.@expression(
+                jump_model,
+            pre_contingency_flow[name, t] + sum(
+                ptdf_col[i] * post_contingency_deployment_expr[i, t] for
+                i in 1:length(ptdf_col)
+            )
         )
     end
-    return
-end
-
-function _add_expression_to_container!(
-    branch_flow_expr::JuMPAffineExpressionDArrayStringInt,
-    jump_model::JuMP.Model,
-    time_steps::UnitRange{Int},
-    ptdf_col::AbstractVector{Float64},
-    nodal_balance_expressions::JuMPAffineExpressionDArrayIntInt,
-    reduction_entry::Vector{Any},
-    branches::Vector{String},
-)
-    names = _get_branch_names(reduction_entry)
-    for name in names
-        if name in branches
-            branch_flow_expr[name, :] .= _make_flow_expressions!(
-                jump_model,
-                name,
-                time_steps,
-                ptdf_col,
-                nodal_balance_expressions.data,
-            )
-            #Only one constraint added per arc; once it is found can return
-            return
-        end
-    end
-end
-
-function _add_expression_to_container!(
-    branch_flow_expr::JuMPAffineExpressionDArrayStringInt,
-    jump_model::JuMP.Model,
-    time_steps::UnitRange{Int},
-    ptdf_col::AbstractVector{Float64},
-    nodal_balance_expressions::JuMPAffineExpressionDArrayIntInt,
-    reduction_entry::Set{PSY.ACTransmission},
-    branches::Vector{String},
-)
-    names = _get_branch_names(reduction_entry)
-    for name in names
-        if name in branches
-            branch_flow_expr[name, :] .= _make_flow_expressions!(
-                jump_model,
-                name,
-                time_steps,
-                ptdf_col,
-                nodal_balance_expressions.data,
-            )
-            #Only one constraint added per arc; once it is found can return
-            return
-        end
-    end
+    #return name, expressions
+    # change when using the not concurrent version
+    return expressions
 end
 
 function add_expressions!(

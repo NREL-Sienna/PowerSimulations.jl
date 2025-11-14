@@ -43,7 +43,7 @@ const DISABLED_TEST_FILES = [  # Can generate with ls -1 test | grep "test_.*.jl
     # "test_simulation_results.jl",
     # "test_simulation_sequence.jl",
     # "test_simulation_store.jl",
-    "test_static_injection_security_constrained_models.jl",
+    #"test_static_injection_security_constrained_models.jl",
     # "test_utils.jl",
 ]
 

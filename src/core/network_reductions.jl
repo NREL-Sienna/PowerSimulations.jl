@@ -139,3 +139,33 @@ function get_branch_argument_constraint_axis(
     end
     return collect(keys(constraint_submap))
 end
+
+function get_branch_argument_constraint_axis(
+    net_reduction_data::PNM.NetworkReductionData,
+    reduced_branch_tracker::BranchReductionOptimizationTracker,
+    branch_types::Vector{DataType},
+    ::Type{U},
+) where {U <: ISOPT.ConstraintType}
+    names=[]
+    for branch_type in branch_types
+        
+        if !haskey(
+            net_reduction_data.name_to_arc_map,
+            branch_type,
+        )
+            continue
+        end
+
+        name = get_branch_argument_constraint_axis(
+            net_reduction_data,
+            reduced_branch_tracker,
+            branch_type,
+            U,
+        )
+        push!(names, name)
+    end
+
+   
+    return reduce(vcat, names)
+end
+
