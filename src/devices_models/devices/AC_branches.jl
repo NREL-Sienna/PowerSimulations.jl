@@ -705,14 +705,13 @@ function _make_postcontingency_flow_expressions!(
     time_steps::UnitRange{Int},
     ptdf_col::AbstractVector{Float64},
     post_contingency_deployment_expr::Matrix{JuMP.AffExpr},
-    pre_contingency_flow::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange{Int}}}
-)where{T}
+    pre_contingency_flow::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
+) where {T}
     # @debug "Making Flow Expression on thread $(Threads.threadid()) for branch $name"
     expressions = Vector{JuMP.AffExpr}(undef, length(time_steps))
     for t in time_steps
-        
         expressions[t] = JuMP.@expression(
-                jump_model,
+            jump_model,
             pre_contingency_flow[name, t] + sum(
                 ptdf_col[i] * post_contingency_deployment_expr[i, t] for
                 i in 1:length(ptdf_col)

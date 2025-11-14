@@ -146,9 +146,8 @@ function get_branch_argument_constraint_axis(
     branch_types::Vector{DataType},
     ::Type{U},
 ) where {U <: ISOPT.ConstraintType}
-    names=[]
+    names = []
     for branch_type in branch_types
-        
         if !haskey(
             net_reduction_data.name_to_arc_map,
             branch_type,
@@ -165,7 +164,5 @@ function get_branch_argument_constraint_axis(
         push!(names, name)
     end
 
-   
     return reduce(vcat, names)
 end
-

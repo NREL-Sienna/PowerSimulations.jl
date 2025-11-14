@@ -258,7 +258,7 @@ Struct for to add reserves implicit reserve requirement from generation outages 
 """
 struct ContingencyReserveWithDeliverabilityConstraints <:
        AbstractSecurityConstrainedReservesFormulation end
-       
+
 """
 Struct for to add reserves to be larger than a variable requirement depending of costs
 """

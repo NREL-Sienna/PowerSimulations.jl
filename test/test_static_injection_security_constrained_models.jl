@@ -367,11 +367,11 @@ end
     remove_component!(c_sys5, l4)
 
     systems = [c_sys5]
-    
+
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => PTDF(c_sys5),
     )
-    
+
     components_outages_cases = IdDict{System, Vector{String}}(
         c_sys5 => ["Alta"],
     )
@@ -422,11 +422,11 @@ end
     remove_component!(c_sys5, l4)
 
     systems = [c_sys5]
-    
+
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => PTDF(c_sys5),
     )
-    
+
     components_outages_cases = IdDict{System, Vector{String}}(
         c_sys5 => ["Alta"],
     )
@@ -1302,7 +1302,6 @@ end
     constraint_keys = [
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "lb"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "ub"), PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
-
         PSI.ConstraintKey(
             PostContingencyGenerationBalanceConstraint,
             PSY.VariableReserve{ReserveUp},
@@ -1317,9 +1316,7 @@ end
             PostContingencyActivePowerGenerationLimitsConstraint,
             PSY.VariableReserve{ReserveUp},
             "Reserve1 -ub",
-        ),
-        
-    ]
+        ),]
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => PTDF(c_sys5),
     )
@@ -1363,7 +1360,7 @@ end
                 ContingencyReserveWithDeliverabilityConstraints,
                 "Reserve1",
             ))
-       
+
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -1386,7 +1383,6 @@ end
             sys,
             res,
             reserve_up)
-        
     end
 end
 
@@ -1564,7 +1560,6 @@ end
     end
 end
 
-
 @testset "G-n with Contingency reserve deliverability constraints with AreaBalancePowerModel with Reserve Requirement" begin
     constraint_keys = [
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "lb"),
@@ -1739,12 +1734,10 @@ end
     end
 end
 
-
 @testset "G-n with Contingency reserve deliverability constraints with AreaBalancePowerModel with NO Reserve Requirement" begin
     constraint_keys = [
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "lb"),
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "ub"), PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.Area),
-        
         PSI.ConstraintKey(
             PostContingencyGenerationBalanceConstraint,
             PSY.VariableReserve{ReserveUp},
@@ -1788,7 +1781,7 @@ end
     ]
 
     c_sys = PSB.build_system(PSISystems, "two_area_pjm_DA"; add_reserves = true)
-    
+
     reserve_up = get_component(VariableReserve{ReserveUp}, c_sys, "Reserve1_1")
     remove_time_series!(
         c_sys,

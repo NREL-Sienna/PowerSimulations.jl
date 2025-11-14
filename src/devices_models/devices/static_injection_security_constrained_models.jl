@@ -232,7 +232,7 @@ function construct_service!(
         PostContingencyBranchFlow,
         service,
         model,
-        network_model
+        network_model,
     )
 
     add_constraints!(
@@ -293,9 +293,6 @@ function construct_service!(
     return
 end
 
-
-
-
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -316,7 +313,13 @@ function construct_service!(
         length(PSY.get_time_series_keys(service)) > 0
 
     if has_requirement_ts
-        add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+        add_constraints!(
+            container,
+            RequirementConstraint,
+            service,
+            contributing_devices,
+            model,
+        )
         add_constraints!(container, RampConstraint, service, contributing_devices, model)
         add_constraints!(
             container,
@@ -409,11 +412,9 @@ function construct_service!(
             model,
             network_model,
         )
-
     end
     return
 end
-
 
 function construct_service!(
     container::OptimizationContainer,
@@ -510,7 +511,7 @@ function construct_service!(
         model,
         network_model,
     )
-    
+
     add_constraints!(
         container,
         PostContingencyGenerationBalanceConstraint,
@@ -520,8 +521,6 @@ function construct_service!(
         model,
         network_model,
     )
-
-
 
     if has_requirement_ts
         add_constraints!(
@@ -561,8 +560,6 @@ function construct_service!(
 
     return
 end
-
-
 
 function add_to_expression!(
     container::OptimizationContainer,
@@ -1159,8 +1156,8 @@ function add_post_contingency_flow_expressions!(
     net_reduction_data = network_model.network_reduction
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     name_to_arc_maps = PNM.get_name_to_arc_maps(net_reduction_data)
-   
-    modeled_branch_types =  network_model.modeled_branch_types
+
+    modeled_branch_types = network_model.modeled_branch_types
 
     branch_names = get_branch_argument_constraint_axis(
         net_reduction_data,
@@ -1168,7 +1165,7 @@ function add_post_contingency_flow_expressions!(
         modeled_branch_types,
         PostContingencyEmergencyFlowRateConstraint,
     )
-    
+
     expression_container = add_expression_container!(
         container,
         T(),
@@ -1180,32 +1177,33 @@ function add_post_contingency_flow_expressions!(
     )
 
     post_contingency_deployment_expr = get_expression(
-                container,
-                PostContingencyNodalActivePowerDeployment(),
-                R,
-                service_name,
-            )
-    
+        container,
+        PostContingencyNodalActivePowerDeployment(),
+        R,
+        service_name,
+    )
+
     ptdf = get_PTDF_matrix(network_model)
     jump_model = get_jump_model(container)
     for outage in associated_outages
         outage_id = string(IS.get_uuid(outage))
         post_cont_expr = post_contingency_deployment_expr[outage_id, :, :]
         for b_type in modeled_branch_types
-            
             if !haskey(
                 get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
                 b_type,
-                )
+            )
                 continue
             end
-           
-            pre_contingency_flow = get_variable(container, FlowActivePowerVariable(), b_type)
+
+            pre_contingency_flow =
+                get_variable(container, FlowActivePowerVariable(), b_type)
             for (name, (arc, reduction)) in
-                    get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
+                get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
                 ptdf_col = ptdf[arc, :]
-                
-                expression_container[outage_id, name, :] .= _make_postcontingency_flow_expressions!(
+
+                expression_container[outage_id, name, :] .=
+                    _make_postcontingency_flow_expressions!(
                         jump_model,
                         name,
                         outage_id,
@@ -1281,12 +1279,12 @@ function add_constraints!(
 }
     time_steps = get_time_steps(container)
     net_reduction_data = network_model.network_reduction
-    
+
     name_to_arc_maps = PNM.get_name_to_arc_maps(net_reduction_data)
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
-   
-    modeled_branch_types =  network_model.modeled_branch_types
+
+    modeled_branch_types = network_model.modeled_branch_types
 
     branch_names = get_branch_argument_constraint_axis(
         net_reduction_data,
@@ -1328,16 +1326,20 @@ function add_constraints!(
             if !haskey(
                 get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
                 b_type,
-                )
+            )
                 continue
             end
 
             for (name, (arc, reduction)) in
-                    get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
+                get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
                 # TODO: entry is not type stable here, it can return any type ACTransmission.
                 # It might have performance implications. Possibly separate this into other functions
                 reduction_entry = all_branch_maps_by_type[reduction][b_type][arc]
-                limits = get_min_max_limits(reduction_entry, PostContingencyEmergencyFlowRateConstraint, StaticBranch) #TODO Implement methods for rating_b
+                limits = get_min_max_limits(
+                    reduction_entry,
+                    PostContingencyEmergencyFlowRateConstraint,
+                    StaticBranch,
+                ) #TODO Implement methods for rating_b
                 for t in time_steps
                     con_ub[outage_id, name, t] =
                         JuMP.@constraint(get_jump_model(container),
@@ -1430,8 +1432,6 @@ function add_constraints!(
 
     return
 end
-
-
 
 function construct_service!(
     container::OptimizationContainer,
