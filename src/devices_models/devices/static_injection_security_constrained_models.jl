@@ -88,7 +88,7 @@ function construct_service!(
     model::ServiceModel{SR, F},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-    ::NetworkModel{<:PM.AbstractDCPModel},
+    ::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {SR <: PSY.AbstractReserve,
     F <: ContingencyReserveWithDeliverabilityConstraints}
     name = get_service_name(model)
@@ -293,6 +293,131 @@ function construct_service!(
     return
 end
 
+
+
+
+function construct_service!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::ServiceModel{SR, F},
+    devices_template::Dict{Symbol, DeviceModel},
+    incompatible_device_types::Set{<:DataType},
+    network_model::NetworkModel{<:CopperPlatePowerModel},
+) where {SR <: PSY.AbstractReserve,
+    F <: ContingencyReserveWithDeliverabilityConstraints}
+    name = get_service_name(model)
+    service = PSY.get_component(SR, sys, name)
+    !PSY.get_available(service) && return
+    contributing_devices = get_contributing_devices(model)
+
+    has_requirement_ts =
+        haskey(get_time_series_names(model), RequirementTimeSeriesParameter) &&
+        length(PSY.get_time_series_keys(service)) > 0
+
+    if has_requirement_ts
+        add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
+        add_constraints!(container, RampConstraint, service, contributing_devices, model)
+        add_constraints!(
+            container,
+            ParticipationFractionConstraint,
+            service,
+            contributing_devices,
+            model,
+        )
+        objective_function!(container, service, model)
+    end
+
+    add_feedforward_constraints!(container, model, service)
+
+    add_constraint_dual!(container, sys, model)
+
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+    if isempty(associated_outages)
+        @warn "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency expresions/constraints addition for service formulation $F."
+        return
+    end
+
+    add_to_expression!(
+        container,
+        sys,
+        PostContingencyActivePowerBalance,
+        PostContingencyActivePowerReserveDeploymentVariable,
+        contributing_devices,
+        service,
+        model,
+        network_model,
+    )
+
+    attribute_device_map = PSY.get_component_supplemental_attribute_pairs(
+        PSY.Generator,
+        PSY.UnplannedOutage,
+        sys,
+    )
+
+    add_to_expression!(
+        container,
+        PostContingencyActivePowerBalance,
+        ActivePowerVariable,
+        attribute_device_map,
+        service,
+        model,
+        network_model,
+    )
+
+    add_constraints!(
+        container,
+        PostContingencyGenerationBalanceConstraint,
+        PostContingencyActivePowerBalance,
+        contributing_devices,
+        service,
+        model,
+        network_model,
+    )
+
+    if has_requirement_ts
+        add_constraints!(
+            container,
+            sys,
+            PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint,
+            ActivePowerReserveVariable,
+            PostContingencyActivePowerReserveDeploymentVariable,
+            contributing_devices,
+            service,
+            model,
+            network_model,
+        )
+    else
+        add_to_expression!(
+            container,
+            sys,
+            PostContingencyActivePowerGeneration,
+            ActivePowerVariable,
+            PostContingencyActivePowerReserveDeploymentVariable,
+            contributing_devices,
+            service,
+            model,
+            network_model,
+        )
+        add_constraints!(
+            container,
+            sys,
+            PostContingencyActivePowerGenerationLimitsConstraint,
+            PostContingencyActivePowerGeneration,
+            contributing_devices,
+            service,
+            model,
+            network_model,
+        )
+
+    end
+    
+
+    
+
+    return
+end
+
 function add_to_expression!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -310,7 +435,7 @@ function add_to_expression!(
     V <: PSY.Generator,
     R <: PSY.AbstractReserve,
     F <: ContingencyReserveWithDeliverabilityConstraints,
-    N <: AbstractPTDFModel,
+    N <: PM.AbstractActivePowerModel,
 }
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
@@ -384,7 +509,7 @@ function add_constraints!(
     V <: PSY.Generator,
     R <: PSY.AbstractReserve,
     F <: ContingencyReserveWithDeliverabilityConstraints,
-    N <: AbstractPTDFModel,
+    N <: PM.AbstractActivePowerModel,
 }
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
