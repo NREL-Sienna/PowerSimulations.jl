@@ -588,7 +588,7 @@ function construct_service!(
     model::ServiceModel{SR, F},
     devices_template::Dict{Symbol, DeviceModel},
     incompatible_device_types::Set{<:DataType},
-    ::NetworkModel{<:PM.AbstractDCPModel},
+    ::NetworkModel{<:PM.AbstractActivePowerModel},
 ) where {SR <: PSY.AbstractReserve,
     F <: RampReserveWithDeliverabilityConstraints}
     name = get_service_name(model)
@@ -1285,50 +1285,7 @@ function add_constraints!(
     return
 end
 
-function construct_service!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ArgumentConstructStage,
-    model::ServiceModel{SR, F},
-    devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Set{<:DataType},
-    ::NetworkModel{<:CopperPlatePowerModel},
-) where {SR <: PSY.AbstractReserve,
-    F <: RampReserveWithDeliverabilityConstraints}
-    name = get_service_name(model)
-    service = PSY.get_component(SR, sys, name)
-    !PSY.get_available(service) && return
-    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
-    contributing_devices = get_contributing_devices(model)
 
-    add_variables!(
-        container,
-        ActivePowerReserveVariable,
-        service,
-        contributing_devices,
-        RampReserve(),
-    )
-
-    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
-    add_feedforward_arguments!(container, model, service)
-
-    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
-    if isempty(associated_outages)
-        @warn "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency variable addition for service formulation $F."
-        return
-    end
-
-    add_variables!(
-        container,
-        sys,
-        PostContingencyActivePowerReserveDeploymentVariable,
-        service,
-        contributing_devices,
-        F(),
-    )
-
-    return
-end
 
 function construct_service!(
     container::OptimizationContainer,
@@ -1605,51 +1562,6 @@ function add_constraints!(
             end
         end
     end
-    return
-end
-
-function construct_service!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ArgumentConstructStage,
-    model::ServiceModel{SR, F},
-    devices_template::Dict{Symbol, DeviceModel},
-    incompatible_device_types::Set{<:DataType},
-    ::NetworkModel{<:AreaBalancePowerModel},
-) where {SR <: PSY.AbstractReserve,
-    F <: RampReserveWithDeliverabilityConstraints}
-    name = get_service_name(model)
-    service = PSY.get_component(SR, sys, name)
-    !PSY.get_available(service) && return
-    add_parameters!(container, RequirementTimeSeriesParameter, service, model)
-    contributing_devices = get_contributing_devices(model)
-
-    add_variables!(
-        container,
-        ActivePowerReserveVariable,
-        service,
-        contributing_devices,
-        RampReserve(),
-    )
-
-    add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
-    add_feedforward_arguments!(container, model, service)
-
-    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
-    if isempty(associated_outages)
-        @warn "No associated outage supplemental attributes found for service: $SR('$name'). Skipping contingency variable addition for service formulation $F."
-        return
-    end
-
-    add_variables!(
-        container,
-        sys,
-        PostContingencyActivePowerReserveDeploymentVariable,
-        service,
-        contributing_devices,
-        F(),
-    )
-
     return
 end
 
