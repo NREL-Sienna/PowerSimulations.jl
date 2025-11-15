@@ -738,7 +738,8 @@ function _make_branch_scuc_postcontingency_flow_expressions!(
     for t in time_steps
         expressions[t] = JuMP.@expression(
             jump_model,
-            pre_contingency_flow[name, t] + ( lodf * precontingency_outage_flow_variables[t] )
+            pre_contingency_flow[name, t] +
+            (lodf * precontingency_outage_flow_variables[t])
         )
     end
     #return name, expressions

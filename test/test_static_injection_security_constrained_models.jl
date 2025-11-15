@@ -1316,7 +1316,7 @@ end
             PostContingencyActivePowerGenerationLimitsConstraint,
             PSY.VariableReserve{ReserveUp},
             "Reserve1 -ub",
-        ),]
+        )]
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => PTDF(c_sys5),
     )

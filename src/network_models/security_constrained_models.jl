@@ -1,6 +1,5 @@
 # TODO - error if a the outage is associated with a reduced branch in N-1 formulation
 
-
 """
 Add branch post-contingency rate limit constraints for ACBranch considering LODF and Security Constraints
 """
@@ -88,9 +87,9 @@ function add_constraints!(
 
             for (name, (arc, reduction)) in
                 get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
-                
                 reduction_entry = all_branch_maps_by_type[reduction][b_type][arc]
-                limits = get_min_max_limits(reduction_entry, FlowRateConstraint, StaticBranch)#TODO implement Methods for rating B
+                limits =
+                    get_min_max_limits(reduction_entry, FlowRateConstraint, StaticBranch)#TODO implement Methods for rating B
                 #limits = get_min_max_limits(reduction_entry, T, StaticBranch)
                 for t in time_steps
                     con_ub[outage_id, name, t] =
@@ -102,7 +101,6 @@ function add_constraints!(
                             expressions[outage_id, name, t] >=
                             limits.min)
                 end
-            
             end
         end
     end
@@ -150,8 +148,7 @@ function add_post_contingency_flow_expressions!(
         branches_names,
         time_steps,
     )
-    
-    
+
     jump_model = get_jump_model(container)
 
     precontingency_outage_flow_variables = get_variable(
@@ -175,10 +172,11 @@ function add_post_contingency_flow_expressions!(
                 "Outage $(outage_id) is associated with $(length(associated_devices)) devices of type $V. Expected only one associated device per outage for contingency analysis. It is being considered only component $(PSY.get_name(contingency_device_name))."
             )
         end
-        index_lodf_outage = ( contingency_device.arc.from.number,
-                              contingency_device.arc.to.number,
-                            )
-        contingency_variables = precontingency_outage_flow_variables[contingency_device_name, : ]
+        index_lodf_outage = (contingency_device.arc.from.number,
+            contingency_device.arc.to.number,
+        )
+        contingency_variables =
+            precontingency_outage_flow_variables[contingency_device_name, :]
 
         for b_type in modeled_branch_types
             if !haskey(
@@ -192,7 +190,6 @@ function add_post_contingency_flow_expressions!(
                 get_variable(container, FlowActivePowerVariable(), b_type)
             for (name, (arc, reduction)) in
                 get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
-        
                 lodf_factor = lodf[arc, index_lodf_outage]
                 expression_container[outage_id, name, :] .=
                     _make_branch_scuc_postcontingency_flow_expressions!(
@@ -209,7 +206,6 @@ function add_post_contingency_flow_expressions!(
     end
     return
 end
-
 
 # For DC Power only
 function construct_device!(
