@@ -723,6 +723,29 @@ function _make_postcontingency_flow_expressions!(
     return expressions
 end
 
+function _make_branch_scuc_postcontingency_flow_expressions!(
+    jump_model::JuMP.Model,
+    name::String,
+    outage_id::String,
+    time_steps::UnitRange{Int},
+    lodf::Float64,
+    precontingency_outage_flow_variables::Vector{JuMP.VariableRef},
+    pre_contingency_flow::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
+) where {T}
+    # @debug "Making Flow Expression on thread $(Threads.threadid()) for branch $name"
+    
+    expressions = Vector{JuMP.AffExpr}(undef, length(time_steps))
+    for t in time_steps
+        expressions[t] = JuMP.@expression(
+            jump_model,
+            pre_contingency_flow[name, t] + ( lodf * precontingency_outage_flow_variables[t] )
+        )
+    end
+    #return name, expressions
+    # change when using the not concurrent version
+    return expressions
+end
+
 function add_expressions!(
     container::OptimizationContainer,
     ::Type{PTDFBranchFlow},
