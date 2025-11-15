@@ -369,7 +369,7 @@ function construct_device!(
 
         add_constraints!(
             container,
-            PostContingencyEmergencyRateLimitConstrain,
+            PostContingencyEmergencyFlowRateConstraint,
             branches,
             branches_outages,
             model,

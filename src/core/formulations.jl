@@ -146,6 +146,10 @@ Branch formulation for PhaseShiftingTransformer flow control
 """
 struct PhaseAngleControl <: AbstractBranchFormulation end
 
+abstract type AbstractSecurityConstrainedStaticBranch <: AbstractBranchFormulation end
+
+struct SecurityConstrainedStaticBranch <: AbstractSecurityConstrainedStaticBranch end
+
 ############################### DC Branch Formulations #####################################
 abstract type AbstractTwoTerminalDCLineFormulation <: AbstractBranchFormulation end
 """
@@ -250,7 +254,13 @@ struct RangeReserve <: AbstractReservesFormulation end
 """
 Struct for to add reserves to be larger than a specified requirement and map how those should be allocated and deployed considering generators outages
 """
-struct RangeReserveWithDeliverabilityConstraints <:
+struct RampReserveWithDeliverabilityConstraints <:
+       AbstractSecurityConstrainedReservesFormulation end
+
+"""
+Struct for to add reserves implicit reserve requirement from generation outages and map how those should be allocated and deployed in each outage at each time-step
+"""
+struct ContingencyReserveWithDeliverabilityConstraints <:
        AbstractSecurityConstrainedReservesFormulation end
 
 """
