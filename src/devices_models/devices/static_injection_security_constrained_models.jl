@@ -567,10 +567,16 @@ function add_to_expression!(
         meta = service_name,
     )
 
-    reserve_deployment_variable = get_variable(container, PostContingencyActivePowerReserveDeploymentVariable(), R, service_name)
+    reserve_deployment_variable = get_variable(
+        container,
+        PostContingencyActivePowerReserveDeploymentVariable(),
+        R,
+        service_name,
+    )
 
     for generator in contributing_devices
-        variable_generator = get_variable(container, ActivePowerVariable(), typeof(generator))
+        variable_generator =
+            get_variable(container, ActivePowerVariable(), typeof(generator))
         generator_name = get_name(generator)
 
         for outage in associated_outages
@@ -650,7 +656,8 @@ function add_constraints!(
             meta = "$service_name -ub",
         )
 
-    expressions = get_expression(container, PostContingencyActivePowerGeneration(), R, service_name)
+    expressions =
+        get_expression(container, PostContingencyActivePowerGeneration(), R, service_name)
 
     for device in contributing_devices
         device_name = get_name(device)

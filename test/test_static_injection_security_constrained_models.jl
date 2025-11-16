@@ -363,7 +363,12 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
 
     l4 = get_component(Line, c_sys5, "4")
-    add_equivalent_ac_transmission_with_parallel_circuits!(c_sys5, l4, PSY.Line, PSY.MonitoredLine)
+    add_equivalent_ac_transmission_with_parallel_circuits!(
+        c_sys5,
+        l4,
+        PSY.Line,
+        PSY.MonitoredLine,
+    )
     remove_component!(c_sys5, l4)
 
     systems = [c_sys5]
@@ -418,7 +423,12 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
 
     l4 = get_component(Line, c_sys5, "4")
-    add_equivalent_ac_transmission_with_parallel_circuits!(c_sys5, l4, PSY.Line, PSY.MonitoredLine)
+    add_equivalent_ac_transmission_with_parallel_circuits!(
+        c_sys5,
+        l4,
+        PSY.Line,
+        PSY.MonitoredLine,
+    )
     remove_component!(c_sys5, l4)
 
     systems = [c_sys5]

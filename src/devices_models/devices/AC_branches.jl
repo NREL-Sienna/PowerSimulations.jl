@@ -560,7 +560,6 @@ function get_scuc_min_max_limits(
         return (min = -1 * PSY.get_rating(device), max = PSY.get_rating(device))
     end
     return (min = -1 * PSY.get_rating_b(device), max = PSY.get_rating_b(device))
-
 end
 
 function get_scuc_min_max_limits(
@@ -1040,7 +1039,6 @@ function add_constraints!(
     end
     return
 end
-
 
 ############################## Flow Limits Constraints #####################################
 """

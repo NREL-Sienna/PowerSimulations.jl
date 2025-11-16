@@ -3,7 +3,7 @@ function add_equivalent_ac_transmission_with_parallel_circuits!(
     ac_transmission::PSY.Line,
     ::Type{T},
 ) where {T <: PSY.Line}
-    rating_new = PSY.get_rating(ac_transmission)/2
+    rating_new = PSY.get_rating(ac_transmission) / 2
     ac_transmission_copy = Line(;
         name = PSY.get_name(ac_transmission) * "_copy",
         available = PSY.get_available(ac_transmission),
@@ -13,14 +13,14 @@ function add_equivalent_ac_transmission_with_parallel_circuits!(
         r = PSY.get_r(ac_transmission),
         x = PSY.get_x(ac_transmission),
         b = PSY.get_b(ac_transmission),
-        rating = PSY.get_rating(ac_transmission)/2,
+        rating = PSY.get_rating(ac_transmission) / 2,
         angle_limits = PSY.get_angle_limits(ac_transmission),
         rating_b = PSY.get_rating_b(ac_transmission),
         rating_c = PSY.get_rating_c(ac_transmission),
         g = PSY.get_g(ac_transmission),
         services = PSY.get_services(ac_transmission),
         ext = PSY.get_ext(ac_transmission))
-    
+
     #Set ratings the half so the case remains equivalent to the original
     set_rating!(ac_transmission, rating_new)
     add_component!(sys, ac_transmission_copy)
@@ -32,8 +32,7 @@ function add_equivalent_ac_transmission_with_parallel_circuits!(
     ::Type{T},
     ::Type{MonitoredLine},
 ) where {T <: PSY.Line}
-
-    rating_new = PSY.get_rating(ac_transmission)/2
+    rating_new = PSY.get_rating(ac_transmission) / 2
     ac_transmission_copy = MonitoredLine(;
         name = PSY.get_name(ac_transmission) * "_copy",
         available = PSY.get_available(ac_transmission),
@@ -55,8 +54,8 @@ function add_equivalent_ac_transmission_with_parallel_circuits!(
         services = PSY.get_services(ac_transmission),
         ext = PSY.get_ext(ac_transmission))
 
-        #Set ratings the half so the case remains equivalent to the original
-        set_rating!(ac_transmission, rating_new)
+    #Set ratings the half so the case remains equivalent to the original
+    set_rating!(ac_transmission, rating_new)
     add_component!(sys, ac_transmission_copy)
 end
 
