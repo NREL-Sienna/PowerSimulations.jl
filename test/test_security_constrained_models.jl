@@ -316,7 +316,7 @@ end
     template = get_thermal_dispatch_template_network(PTDFPowerModel)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     l4 = get_component(Line, c_sys5, "4")
-    add_parallel_ac_transmission!(c_sys5, l4, PSY.Line)
+    add_equivalent_ac_transmission_with_parallel_circuits!(c_sys5, l4, PSY.Line)
     systems = [c_sys5]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
