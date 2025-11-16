@@ -23,8 +23,6 @@ export PTDFPowerModel
 export CopperPlatePowerModel
 export AreaBalancePowerModel
 export AreaPTDFPowerModel
-export SecurityConstrainedPTDFPowerModel
-export SecurityConstrainedAreaPTDFPowerModel
 
 # HVDC Network Relevant exports
 export TransportHVDCNetworkModel

@@ -733,7 +733,7 @@ function _make_branch_scuc_postcontingency_flow_expressions!(
     pre_contingency_flow::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
 ) where {T}
     # @debug "Making Flow Expression on thread $(Threads.threadid()) for branch $name"
-    
+
     expressions = Vector{JuMP.AffExpr}(undef, length(time_steps))
     for t in time_steps
         expressions[t] = JuMP.@expression(

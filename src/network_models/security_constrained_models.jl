@@ -287,7 +287,7 @@ function construct_device!(
     add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, FlowRateConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
-    objective_function!(container, devices, model, SecurityConstrainedPTDFPowerModel)
+    objective_function!(container, devices, model, X)
     add_constraint_dual!(container, sys, model)
 
     associated_outages = PSY.get_associated_supplemental_attributes(

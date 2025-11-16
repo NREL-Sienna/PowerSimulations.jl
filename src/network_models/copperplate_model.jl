@@ -6,7 +6,7 @@ function add_constraints!(
 ) where {
     T <: CopperPlateBalanceConstraint,
     U <: PSY.System,
-    V <: Union{CopperPlatePowerModel, PTDFPowerModel, SecurityConstrainedPTDFPowerModel},
+    V <: Union{CopperPlatePowerModel, PTDFPowerModel},
 }
     time_steps = get_time_steps(container)
     expressions = get_expression(container, ActivePowerBalance(), U)
@@ -28,7 +28,7 @@ function add_constraints!(
 ) where {
     T <: CopperPlateBalanceConstraint,
     U <: PSY.System,
-    V <: Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel},
+    V <: AreaPTDFPowerModel,
 }
     time_steps = get_time_steps(container)
     expressions = get_expression(container, ActivePowerBalance(), PSY.Area)
