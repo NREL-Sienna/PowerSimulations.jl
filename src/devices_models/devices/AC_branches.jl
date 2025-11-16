@@ -657,6 +657,17 @@ function add_constraints!(
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
+    #TODO we need to reactivate Dynamic Branch Ratings by checking if there is a time series associated
+    #has_dlr_ts =
+    #    haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
+    # if has_dlr_ts
+    #     ts_name =
+    #         get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
+    #     ts_type = get_default_time_series_type(container)
+    #     param_container =
+    #         get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
+    #     mult = get_multiplier_array(param_container)
+    # end
     for (name, (arc, reduction)) in
         get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][T]
         # TODO: entry is not type stable here, it can return any type ACTransmission.
