@@ -1155,7 +1155,6 @@ function add_post_contingency_flow_expressions!(
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
     net_reduction_data = network_model.network_reduction
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
-    name_to_arc_maps = PNM.get_name_to_arc_maps(net_reduction_data)
 
     modeled_branch_types = network_model.modeled_branch_types
 
