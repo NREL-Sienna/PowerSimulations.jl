@@ -12,7 +12,7 @@ function add_constraints!(
 ) where {
     T <: PostContingencyEmergencyFlowRateConstraint,
     V <: PSY.ACTransmission,
-    U <: AbstractBranchFormulation,
+    U <: AbstractSecurityConstrainedStaticBranch,
     X <: AbstractPTDFModel,
 }
     time_steps = get_time_steps(container)
@@ -89,8 +89,7 @@ function add_constraints!(
                 get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
                 reduction_entry = all_branch_maps_by_type[reduction][b_type][arc]
                 limits =
-                    get_min_max_limits(reduction_entry, FlowRateConstraint, StaticBranch)#TODO implement Methods for rating B
-                #limits = get_min_max_limits(reduction_entry, T, StaticBranch)
+                    get_scuc_min_max_limits(reduction_entry, T, U)
                 for t in time_steps
                     con_ub[outage_id, name, t] =
                         JuMP.@constraint(get_jump_model(container),

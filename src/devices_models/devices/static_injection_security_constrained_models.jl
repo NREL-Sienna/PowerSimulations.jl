@@ -1,19 +1,5 @@
-
-function _get_modeled_branch_types(
-    container::OptimizationContainer,
-    network_model::NetworkModel{<:AbstractPTDFModel},
-)
-    modeled_branch_types_with_devices = DataType[]
-    for branch_type in network_model.modeled_branch_types
-        if has_container_key(container, FlowActivePowerVariable, branch_type)
-            push!(modeled_branch_types_with_devices, branch_type)
-        end
-    end
-    return modeled_branch_types_with_devices
-end
-
-#G-1 WITH RESERVES AND DELIVERABILITY CONSTRAINTS
-
+# G-1 WITH RESERVES AND DELIVERABILITY CONSTRAINTS
+# ----------- ContingencyReserveWithDeliverabilityConstraints -----------
 function add_variables!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -271,8 +257,6 @@ function construct_service!(
             container,
             sys,
             PostContingencyActivePowerGeneration,
-            ActivePowerVariable,
-            PostContingencyActivePowerReserveDeploymentVariable,
             contributing_devices,
             service,
             model,
@@ -282,7 +266,6 @@ function construct_service!(
             container,
             sys,
             PostContingencyActivePowerGenerationLimitsConstraint,
-            PostContingencyActivePowerGeneration,
             contributing_devices,
             service,
             model,
@@ -395,8 +378,6 @@ function construct_service!(
             container,
             sys,
             PostContingencyActivePowerGeneration,
-            ActivePowerVariable,
-            PostContingencyActivePowerReserveDeploymentVariable,
             contributing_devices,
             service,
             model,
@@ -406,7 +387,6 @@ function construct_service!(
             container,
             sys,
             PostContingencyActivePowerGenerationLimitsConstraint,
-            PostContingencyActivePowerGeneration,
             contributing_devices,
             service,
             model,
@@ -539,8 +519,6 @@ function construct_service!(
             container,
             sys,
             PostContingencyActivePowerGeneration,
-            ActivePowerVariable,
-            PostContingencyActivePowerReserveDeploymentVariable,
             contributing_devices,
             service,
             model,
@@ -550,7 +528,6 @@ function construct_service!(
             container,
             sys,
             PostContingencyActivePowerGenerationLimitsConstraint,
-            PostContingencyActivePowerGeneration,
             contributing_devices,
             service,
             model,
@@ -565,16 +542,12 @@ function add_to_expression!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::Type{T},
-    ::Type{U},
-    ::Type{D},
     contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
     service::R,
     reserves_model::ServiceModel{R, F},
     network_model::NetworkModel{N},
 ) where {
     T <: PostContingencyActivePowerGeneration,
-    U <: ActivePowerVariable,
-    D <: PostContingencyActivePowerReserveDeploymentVariable,
     V <: PSY.Generator,
     R <: PSY.AbstractReserve,
     F <: ContingencyReserveWithDeliverabilityConstraints,
@@ -584,7 +557,7 @@ function add_to_expression!(
     service_name = PSY.get_name(service)
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
 
-    expression = lazy_container_addition!(
+    expression = add_expression_container!(
         container,
         T(),
         R,
@@ -594,11 +567,10 @@ function add_to_expression!(
         meta = service_name,
     )
 
-    variable_generator = get_variable(container, U(), V)
-    reserve_deployment_variable = get_variable(container, D(), R, service_name)
+    reserve_deployment_variable = get_variable(container, PostContingencyActivePowerReserveDeploymentVariable(), R, service_name)
 
     for generator in contributing_devices
-        variable_generator = get_variable(container, U(), typeof(generator))
+        variable_generator = get_variable(container, ActivePowerVariable(), typeof(generator))
         generator_name = get_name(generator)
 
         for outage in associated_outages
@@ -641,14 +613,12 @@ function add_constraints!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::Type{T},
-    ::Type{U},
     contributing_devices::Union{IS.FlattenIteratorWrapper{V}, Vector{V}},
     service::R,
     reserves_model::ServiceModel{R, F},
     network_model::NetworkModel{N},
 ) where {
     T <: PostContingencyActivePowerGenerationLimitsConstraint,
-    U <: PostContingencyActivePowerGeneration,
     V <: PSY.Generator,
     R <: PSY.AbstractReserve,
     F <: ContingencyReserveWithDeliverabilityConstraints,
@@ -680,7 +650,7 @@ function add_constraints!(
             meta = "$service_name -ub",
         )
 
-    expressions = get_expression(container, U(), R, service_name)
+    expressions = get_expression(container, PostContingencyActivePowerGeneration(), R, service_name)
 
     for device in contributing_devices
         device_name = get_name(device)
@@ -697,7 +667,7 @@ function add_constraints!(
 
             outage_id = string(IS.get_uuid(outage))
 
-            limits = PSY.get_active_power_limits(device)
+            limits = PSY.get_active_power_limits(device) #TODO check if limits has time series
 
             for t in time_steps
                 if generator_is_in_associated_devices
@@ -724,6 +694,7 @@ function add_constraints!(
     return
 end
 
+# ----------- RampReserveWithDeliverabilityConstraints -----------
 function construct_service!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -1334,11 +1305,11 @@ function add_constraints!(
                 # TODO: entry is not type stable here, it can return any type ACTransmission.
                 # It might have performance implications. Possibly separate this into other functions
                 reduction_entry = all_branch_maps_by_type[reduction][b_type][arc]
-                limits = get_min_max_limits(
+                limits = get_scuc_min_max_limits(
                     reduction_entry,
                     PostContingencyEmergencyFlowRateConstraint,
                     StaticBranch,
-                ) #TODO Implement methods for rating_b
+                )
                 for t in time_steps
                     con_ub[outage_id, name, t] =
                         JuMP.@constraint(get_jump_model(container),
@@ -1521,6 +1492,7 @@ function construct_service!(
     return
 end
 
+# ----------- Functions for Network model AreaBalancePowerModel -----------
 function add_to_expression!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -1538,7 +1510,6 @@ function add_to_expression!(
     F <: AbstractSecurityConstrainedReservesFormulation,
     N <: AreaBalancePowerModel,
 }
-    @info "Adding to expression: $(T) for service: $(R) with formulation: $(F)************************"
     time_steps = get_time_steps(container)
     service_name = PSY.get_name(service)
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)

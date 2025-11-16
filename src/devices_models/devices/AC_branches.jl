@@ -458,6 +458,141 @@ function get_min_max_limits(
     return (min = -π / 2, max = π / 2)
 end
 
+"""
+Min and max limits for monitored line
+"""
+function get_min_max_limits(
+    device::PSY.MonitoredLine,
+    ::Type{<:ConstraintType},
+    ::Type{<:AbstractBranchFormulation},
+)
+    if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to
+        @warn(
+            "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
+        )
+    end
+    limit = min(
+        PSY.get_rating(device),
+        PSY.get_flow_limits(device).to_from,
+        PSY.get_flow_limits(device).from_to,
+    )
+    minmax = (min = -1 * limit, max = limit)
+    return minmax
+end
+
+#TODO Implement methods for rating_b and solve ambiguiety
+"""
+Min and max limits for Abstract Branch Formulation
+"""
+function get_scuc_min_max_limits(
+    double_circuit::PNM.BranchesParallel{<:PSY.ACTransmission},
+    constraint_type::Type{<:PostContingencyConstraintType},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    min_max_by_circuit = [
+        get_scuc_min_max_limits(device, constraint_type, branch_formulation) for
+        device in double_circuit
+    ]
+    min_by_circuit = [x.min for x in min_max_by_circuit]
+    max_by_circuit = [x.max for x in min_max_by_circuit]
+    # Limit by most restictive circuit:
+    return (min = maximum(min_by_circuit), max = minimum(max_by_circuit))
+end
+
+"""
+Min and max limits for Abstract Branch Formulation
+"""
+function get_scuc_min_max_limits(#TODO review this
+    transformer_entry::PNM.ThreeWindingTransformerWinding,
+    constraint_type::Type{<:PostContingencyConstraintType},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    transformer = PNM.get_transformer(transformer_entry)
+    winding_number = PNM.get_winding_number(transformer_entry)
+    if winding_number == 1
+        limits = (
+            min = -1 * PSY.get_rating_primary(transformer),
+            max = PSY.get_rating_primary(transformer),
+        )
+    elseif winding_number == 2
+        limits = (
+            min = -1 * PSY.get_rating_secondary(transformer),
+            max = PSY.get_rating_secondary(transformer),
+        )
+    elseif winding_number == 3
+        limits = (
+            min = -1 * PSY.get_rating_tertiary(transformer),
+            max = PSY.get_rating_tertiary(transformer),
+        )
+    end
+    return limits
+end
+
+"""
+Min and max limits for Abstract Branch Formulation
+"""
+function get_scuc_min_max_limits(
+    series_chain::PNM.BranchesSeries,
+    constraint_type::Type{<:PostContingencyConstraintType},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    min_max_by_segment = [
+        get_scuc_min_max_limits(segment, constraint_type, branch_formulation) for
+        segment in series_chain
+    ]
+    min_by_segment = [x.min for x in min_max_by_segment]
+    max_by_segment = [x.max for x in min_max_by_segment]
+    # Limit by most restictive segment:
+    return (min = maximum(min_by_segment), max = minimum(max_by_segment))
+end
+
+"""
+Min and max limits for Abstract Branch Formulation and Post-Contingency conditions
+"""
+function get_scuc_min_max_limits(
+    device::PSY.ACTransmission,
+    ::Type{<:PostContingencyConstraintType},
+    ::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    if PSY.get_rating_b(device) === nothing
+        @warn "Branch $(get_name(device)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
+            \n Consider including post-contingency limits using set_rating_b!()."
+        return (min = -1 * PSY.get_rating(device), max = PSY.get_rating(device))
+    end
+    return (min = -1 * PSY.get_rating_b(device), max = PSY.get_rating_b(device))
+
+end
+
+function get_scuc_min_max_limits(
+    ::PSY.PhaseShiftingTransformer,
+    ::Type{PhaseAngleControlLimit},
+    ::Type{PhaseAngleControl},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    return (min = -π / 2, max = π / 2)
+end
+
+"""
+Min and max limits for monitored line
+"""
+function get_scuc_min_max_limits(
+    device::PSY.MonitoredLine,
+    ::Type{<:PostContingencyConstraintType},
+    ::Type{<:AbstractBranchFormulation},
+)
+    if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to
+        @warn(
+            "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
+        )
+    end
+    limit = min(
+        PSY.get_rating(device),
+        PSY.get_flow_limits(device).to_from,
+        PSY.get_flow_limits(device).from_to,
+    )
+    minmax = (min = -1 * limit, max = limit)
+    return minmax
+end
+
 function _get_device_dynamic_branch_rating_time_series(
     param_container::ParameterContainer,
     device::PSY.ACTransmission,
@@ -895,27 +1030,6 @@ function add_constraints!(
     return
 end
 
-"""
-Min and max limits for monitored line
-"""
-function get_min_max_limits(
-    device::PSY.MonitoredLine,
-    ::Type{<:ConstraintType},
-    ::Type{<:AbstractBranchFormulation},
-)
-    if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to
-        @warn(
-            "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
-        )
-    end
-    limit = min(
-        PSY.get_rating(device),
-        PSY.get_flow_limits(device).to_from,
-        PSY.get_flow_limits(device).from_to,
-    )
-    minmax = (min = -1 * limit, max = limit)
-    return minmax
-end
 
 ############################## Flow Limits Constraints #####################################
 """
