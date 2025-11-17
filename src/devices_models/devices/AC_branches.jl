@@ -64,6 +64,18 @@ end
 #################################### Flow Variable Bounds ##################################################
 # Additional Method to be able to filter the branches that are not in the PTDF matrix
 function add_variables!(
+    ::OptimizationContainer,
+    ::Type{T},
+    network_model::NetworkModel{<:AbstractPTDFModel},
+    devices::IS.FlattenIteratorWrapper{U},
+    formulation::StaticBranch,
+) where {
+    T <: AbstractACActivePowerFlow,
+    U <: PSY.ACTransmission}
+    return
+end
+
+function add_variables!(
     container::OptimizationContainer,
     ::Type{T},
     network_model::NetworkModel{<:AbstractPTDFModel},
@@ -72,8 +84,6 @@ function add_variables!(
 ) where {
     T <: AbstractACActivePowerFlow,
     U <: PSY.ACTransmission}
-
-    #=
     time_steps = get_time_steps(container)
     net_reduction_data = network_model.network_reduction
     branch_names = get_branch_argument_variable_axis(net_reduction_data, devices)
@@ -114,7 +124,6 @@ function add_variables!(
             variable_container[name, t] = tracker_container[t]
         end
     end
-    =#
     return
 end
 
@@ -900,10 +909,9 @@ function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{NetworkFlowConstraint},
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::DeviceModel{B, StaticBranchBounds},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {B <: PSY.ACTransmission}
-    #=
     time_steps = get_time_steps(container)
     branch_flow_expr = get_expression(container, PTDFBranchFlow(), B)
     flow_variables = get_variable(container, FlowActivePowerVariable(), B)
@@ -931,7 +939,6 @@ function add_constraints!(
             )
         end
     end
-    =#
     return
 end
 
@@ -939,10 +946,10 @@ function add_constraints!(
     ::OptimizationContainer,
     cons_type::Type{NetworkFlowConstraint},
     ::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, StaticBranchUnbounded},
+    ::DeviceModel{B, T},
     ::NetworkModel{<:AbstractPTDFModel},
-) where {B <: PSY.ACTransmission}
-    @debug "PTDF Branch Flows with StaticBranchUnbounded do not require network flow constraints $cons_type. Flow values are given by PTDFBranchFlow."
+) where {B <: PSY.ACTransmission, T <: Union{StaticBranchUnbounded, StaticBranch}}
+    @debug "PTDF Branch Flows with $T do not require network flow constraints $cons_type. Flow values are given by PTDFBranchFlow."
     return
 end
 

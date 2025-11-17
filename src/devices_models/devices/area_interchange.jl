@@ -220,9 +220,9 @@ function add_constraints!(
             sum_of_flows = JuMP.AffExpr()
             for (mult, inter_area_branches) in direction_branch_map
                 for (type, names) in inter_area_branches
-                    flow_vars = get_expression(container, PTDFBranchFlow(), type)
+                    flow_expr = get_expression(container, PTDFBranchFlow(), type)
                     for name in names
-                        _add_to_jump_expression!(sum_of_flows, flow_vars[name, t], mult)
+                        JuMP.add_to_expression!(sum_of_flows, flow_expr[name, t], mult)
                     end
                 end
             end

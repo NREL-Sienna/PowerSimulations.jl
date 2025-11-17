@@ -439,6 +439,29 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{T, StaticBranch},
+    network_model::NetworkModel{<:AbstractPTDFModel},
+) where {T <: PSY.ACTransmission}
+    devices = get_available_components(model, sys)
+    # The order of these methods is important. The add_expressions! must be before the constraints
+    add_expressions!(
+        container,
+        PTDFBranchFlow,
+        devices,
+        model,
+        network_model,
+    )
+
+    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
+    add_feedforward_constraints!(container, model, devices)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, StaticBranchUnbounded},
     network_model::NetworkModel{<:AbstractPTDFModel},
