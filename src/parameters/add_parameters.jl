@@ -71,6 +71,26 @@ end
 
 function add_parameters!(
     container::OptimizationContainer,
+    ::T,
+    service::U,
+    model::ServiceModel{U, V},
+) where {
+    T <: DecrementalPiecewiseLinearSlopeParameter,
+    U <: PSY.Service,
+    V <: AbstractServiceFormulation}
+    if get_rebuild_model(get_settings(container)) &&
+       has_container_key(container, T, U, PSY.get_name(service))
+        return
+    end
+    println("Inside DecrementalPiecewiseLinearSlopeParameter add_parameters!")
+    println(T)
+    _add_parameters!(container, T, service, model)
+    return
+end
+
+
+function add_parameters!(
+    container::OptimizationContainer,
     ::Type{T},
     ff::AbstractAffectFeedforward,
     model::DeviceModel{D, W},
@@ -588,6 +608,55 @@ function _add_parameters!(
         ts_name,
         [ts_uuid],
         [name],
+        additional_axes,
+        time_steps;
+        meta = name,
+    )
+
+    set_subsystem!(get_attributes(parameter_container), get_subsystem(model))
+    jump_model = get_jump_model(container)
+    ts_vector = get_time_series(container, service, T(), name)
+    multiplier = get_multiplier_value(T(), service, V())
+    for t in time_steps
+        set_multiplier!(parameter_container, multiplier, name, t)
+        set_parameter!(parameter_container, jump_model, ts_vector[t], ts_uuid, t)
+    end
+    add_component_name!(get_attributes(parameter_container), name, ts_uuid)
+    return
+end
+
+function _add_parameters!(
+    container::OptimizationContainer,
+    ::Type{T},
+    service::U,
+    model::ServiceModel{U, V},
+) where {T <: DecrementalPiecewiseLinearSlopeParameter, U <: PSY.Service, V <: AbstractServiceFormulation}
+    ts_type = get_default_time_series_type(container)
+    println("ts_type: $(ts_type)")
+    println("Inside _add_parameters! for DecrementalPiecewiseLinearSlopeParameter")
+    if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
+        error("add_parameters! for DecrementalPiecewiseLinearSlopeParameter is not compatible with $ts_type")
+    end
+    time_steps = get_time_steps(container)
+    name = PSY.get_name(service)
+    println("time_steps: $(time_steps)")
+    println("name: $(name)")
+    additional_axes = calc_additional_axes(container, T(), [service], model)
+    println("---------------------")
+    println("type of container: $(typeof(container))")
+    println("type of T: $(typeof(T()))")
+    println("type of U: $(typeof(U))")
+    println("type of ts_type: $(typeof(ts_type))")
+    println("type of [name]: $(typeof(([name])))")
+    println("type of additional_axes: $(typeof((additional_axes)))")
+    println("type of time_steps: $(typeof(time_steps))")
+
+    parameter_container = add_param_container!(
+        container,
+        T(),
+        U,
+        ts_type,
+        name,
         additional_axes,
         time_steps;
         meta = name,

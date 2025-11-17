@@ -537,19 +537,42 @@ function _get_reserve_pwl_data(
 
     if variable_cost isa PSY.CostCurve{PSY.PiecewiseIncrementalCurve}
         # Static curve
+        @info "Using static cost curve for reserve $(PSY.get_name(component))"
+        @info variable_cost
         cost_component = PSY.get_function_data(PSY.get_value_curve(variable_cost))
         breakpoints = PSY.get_x_coords(cost_component)
         slopes = PSY.get_y_coords(cost_component)
         unit_system = PSY.get_power_units(variable_cost)
     elseif variable_cost isa PSY.ForecastKey
+        name = PSY.get_name(component)
+        time_steps = get_time_steps(container)
+
         @show keys(get_parameters(container))
+        @show "Evaluating time series cost curve for reserve $(PSY.get_name(component))"
+        @show variable_cost
+        
+        # pwl_cost_expressions =
+        # _add_pwl_term!(container, component, variable_cost, T(), U())
+
+        # for t in time_steps
+        #     println("Evaluating for time step $t")
+        #     breakpoints, slopes = _get_reserve_pwl_data(container, component, variable_cost, t)
+        #     @show breakpoints, slopes
+        # end
+        
         # TODO LK: this next line errors--written by AI. figure out what the correct analog 
         # to _get_pwl_data is. Might need to add parameters to the container first.
-        cost_curve_t = get_parameter_value(container, variable_cost, t)
-        cost_component = PSY.get_function_data(PSY.get_value_curve(cost_curve_t))
-        breakpoints = PSY.get_x_coords(cost_component)
-        slopes = PSY.get_y_coords(cost_component)
-        unit_system = PSY.get_power_units(cost_curve_t)
+
+
+        # cost_component = PSY.get_function_data(PSY.get_value_curve(cost_curve_t))
+
+        # breakpoints = PSY.get_x_coords(cost_component)
+        # slopes = PSY.get_y_coords(cost_component)
+        # unit_system = PSY.get_power_units(cost_curve_t)
+
+        name = PSY.get_name(component)
+        time_steps = get_time_steps(container)
+        is_decremental = false
     else
         error(
             "Unsupported variable cost type $(typeof(variable_cost)) for reserve $(PSY.get_name(component))",
@@ -625,4 +648,22 @@ function add_proportional_cost!(
         )
     end
     return
+end
+
+# create parameter for the slopes and breakpoints
+function process_stepwise_cost_reserve_parameters!(
+    container::OptimizationContainer,
+    devices_in,
+    model::ServiceModel,
+    service::D
+) where {D <: PSY.ReserveDemandCurve}
+    @show "In process_stepwise_cost_reserve_parameters!"
+    for param in (
+        DecrementalPiecewiseLinearSlopeParameter(),
+        DecrementalPiecewiseLinearBreakpointParameter(),
+    )
+    
+    println("Adding parameter: $(param) - $(typeof(param))")
+    add_parameters!(container, param, service, model)
+    end
 end

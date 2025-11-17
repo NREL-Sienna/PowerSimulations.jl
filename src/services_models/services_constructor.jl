@@ -220,6 +220,13 @@ function construct_service!(
     service = PSY.get_component(SR, sys, name)
     !PSY.get_available(service) && return
     contributing_devices = get_contributing_devices(model)
+
+    # add parameter for the slopes and breakpoints for time series    
+    if PSY.get_variable(service) isa PSY.ForecastKey
+        println("Service $name has variable cost time series")
+        process_stepwise_cost_reserve_parameters!(container, contributing_devices, model, service)
+    end
+    
     add_variable!(container, ServiceRequirementVariable(), service, StepwiseCostReserve())
     add_variables!(
         container,

@@ -1378,6 +1378,64 @@ function _add_param_container!(
     return param_container
 end
 
+
+# new add_param_container! and _add_param_container! methods for DecrementalPiecewiseLinearSlopeParameter
+function _add_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+    attributes::TimeSeriesAttributes{R},
+    axs...;
+    sparse = false,
+) where {R, T <: ObjectiveFunctionParameter, U <: PSY.Component}
+    if sparse
+        param_array = sparse_container_spec(R, axs...)
+        multiplier_array = sparse_container_spec(Float64, axs...)
+    else
+        param_array = DenseAxisArray{R}(undef, axs...)
+        multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
+    end
+    param_container = ParameterContainer(attributes, param_array, multiplier_array)
+    _assign_container!(container.parameters, key, param_container)
+    return param_container
+end
+
+
+function add_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    ::Type{V},
+    name::String,
+    additional_axs,
+    time_steps::UnitRange{Int};
+    sparse = false,
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {
+    T <: DecrementalPiecewiseLinearSlopeParameter,
+    U <: PSY.Component,
+    V <: PSY.TimeSeriesData
+    }
+    println("Type of T: $(T)")
+    param_key = ParameterKey(T, U, meta)
+    println("Inside add_param_container!")
+    println("meta $meta")
+    println("param_key: $(param_key)")
+    if isabstracttype(V)
+        error("$V can't be abstract: $param_key")
+    end
+    attributes = TimeSeriesAttributes(V, name)
+    println("attributes: $(attributes)")
+    println("Type of attributes: $(typeof(attributes))")
+    return _add_param_container!(
+        container,
+        param_key,
+        attributes,
+        additional_axs,
+        time_steps;
+        sparse = sparse,
+    )
+end
+
 function add_param_container!(
     container::OptimizationContainer,
     ::T,
