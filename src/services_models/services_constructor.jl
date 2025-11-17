@@ -224,9 +224,14 @@ function construct_service!(
     # add parameter for the slopes and breakpoints for time series    
     if PSY.get_variable(service) isa PSY.ForecastKey
         println("Service $name has variable cost time series")
-        process_stepwise_cost_reserve_parameters!(container, contributing_devices, model, service)
+        process_stepwise_cost_reserve_parameters!(
+            container,
+            contributing_devices,
+            model,
+            service,
+        )
     end
-    
+
     add_variable!(container, ServiceRequirementVariable(), service, StepwiseCostReserve())
     add_variables!(
         container,

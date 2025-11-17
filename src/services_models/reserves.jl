@@ -550,7 +550,7 @@ function _get_reserve_pwl_data(
         @show keys(get_parameters(container))
         @show "Evaluating time series cost curve for reserve $(PSY.get_name(component))"
         @show variable_cost
-        
+
         # pwl_cost_expressions =
         # _add_pwl_term!(container, component, variable_cost, T(), U())
 
@@ -559,10 +559,9 @@ function _get_reserve_pwl_data(
         #     breakpoints, slopes = _get_reserve_pwl_data(container, component, variable_cost, t)
         #     @show breakpoints, slopes
         # end
-        
+
         # TODO LK: this next line errors--written by AI. figure out what the correct analog 
         # to _get_pwl_data is. Might need to add parameters to the container first.
-
 
         # cost_component = PSY.get_function_data(PSY.get_value_curve(cost_curve_t))
 
@@ -655,15 +654,14 @@ function process_stepwise_cost_reserve_parameters!(
     container::OptimizationContainer,
     devices_in,
     model::ServiceModel,
-    service::D
+    service::D,
 ) where {D <: PSY.ReserveDemandCurve}
     @show "In process_stepwise_cost_reserve_parameters!"
     for param in (
         DecrementalPiecewiseLinearSlopeParameter(),
         DecrementalPiecewiseLinearBreakpointParameter(),
     )
-    
-    println("Adding parameter: $(param) - $(typeof(param))")
-    add_parameters!(container, param, service, model)
+        println("Adding parameter: $(param) - $(typeof(param))")
+        add_parameters!(container, param, service, model)
     end
 end

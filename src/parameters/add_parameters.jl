@@ -88,7 +88,6 @@ function add_parameters!(
     return
 end
 
-
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
@@ -630,12 +629,18 @@ function _add_parameters!(
     ::Type{T},
     service::U,
     model::ServiceModel{U, V},
-) where {T <: DecrementalPiecewiseLinearSlopeParameter, U <: PSY.Service, V <: AbstractServiceFormulation}
+) where {
+    T <: DecrementalPiecewiseLinearSlopeParameter,
+    U <: PSY.Service,
+    V <: AbstractServiceFormulation,
+}
     ts_type = get_default_time_series_type(container)
     println("ts_type: $(ts_type)")
     println("Inside _add_parameters! for DecrementalPiecewiseLinearSlopeParameter")
     if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
-        error("add_parameters! for DecrementalPiecewiseLinearSlopeParameter is not compatible with $ts_type")
+        error(
+            "add_parameters! for DecrementalPiecewiseLinearSlopeParameter is not compatible with $ts_type",
+        )
     end
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)

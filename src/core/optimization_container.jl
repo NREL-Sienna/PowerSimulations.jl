@@ -1378,7 +1378,6 @@ function _add_param_container!(
     return param_container
 end
 
-
 # new add_param_container! and _add_param_container! methods for DecrementalPiecewiseLinearSlopeParameter
 function _add_param_container!(
     container::OptimizationContainer,
@@ -1399,7 +1398,6 @@ function _add_param_container!(
     return param_container
 end
 
-
 function add_param_container!(
     container::OptimizationContainer,
     ::T,
@@ -1413,8 +1411,8 @@ function add_param_container!(
 ) where {
     T <: DecrementalPiecewiseLinearSlopeParameter,
     U <: PSY.Component,
-    V <: PSY.TimeSeriesData
-    }
+    V <: PSY.TimeSeriesData,
+}
     println("Type of T: $(T)")
     param_key = ParameterKey(T, U, meta)
     println("Inside add_param_container!")
