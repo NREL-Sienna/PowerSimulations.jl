@@ -228,6 +228,8 @@ function construct_service!(
         contributing_devices,
         StepwiseCostReserve(),
     )
+    # Process parameters
+    #process_stepwise_cost_reserve_parameters!(container, service, devices_template, model)
     add_to_expression!(container, ActivePowerReserveVariable, model, devices_template)
     add_expressions!(container, ProductionCostExpression, [service], model)
     return
@@ -248,7 +250,7 @@ function construct_service!(
     contributing_devices = get_contributing_devices(model)
 
     add_constraints!(container, RequirementConstraint, service, contributing_devices, model)
-
+    
     objective_function!(container, service, model)
 
     add_feedforward_constraints!(container, model, service)

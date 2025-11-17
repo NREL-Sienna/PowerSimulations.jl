@@ -132,6 +132,23 @@ function add_variable!(
     return
 end
 
+################################## Parameters ##########################################
+function process_stepwise_cost_reserve_parameters!(
+    container::OptimizationContainer,
+    service::PSY.ReserveDemandCurve,
+    devices_template::DeviceModel,
+    model::ServiceModel{PSY.ReserveDemandCurve, StepwiseCostReserve},
+)
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    jump_model = get_jump_model(container)
+
+    # Requirement Time Series Parameter
+    error()
+
+    return
+end
+
 ################################## Reserve Requirement Constraint ##########################
 function add_constraints!(
     container::OptimizationContainer,
@@ -538,19 +555,24 @@ function _add_variable_cost_to_objective!(
         error(
             "Timeseries curve for ReserveDemandCurve $(component.name) is not supported yet.",
         )
-    end
-
-    pwl_cost_expressions =
-        _add_pwl_term!(container, component, variable_cost, T(), U())
-    for t in time_steps
-        add_to_expression!(
-            container,
-            ProductionCostExpression,
-            pwl_cost_expressions[t],
-            component,
-            t,
-        )
-        add_to_objective_invariant_expression!(container, pwl_cost_expressions[t])
+        # Steps:
+        # 1) Create the parameter container for slopes and breakpoints
+        # 2) add pwl term with decremental and timeseries # add_pwl_term! in market_bid.jl line 762
+        # 2.5) Update _get_pwl_data to work with ORDC
+        # 3) Update cost parameters to work in ORDC `update_cost_parameters.jl`.
+    else
+        pwl_cost_expressions =
+            _add_pwl_term!(container, component, variable_cost, T(), U())
+        for t in time_steps
+            add_to_expression!(
+                container,
+                ProductionCostExpression,
+                pwl_cost_expressions[t],
+                component,
+                t,
+            )
+            add_to_objective_invariant_expression!(container, pwl_cost_expressions[t])
+        end    
     end
     return
 end
