@@ -222,8 +222,7 @@ function construct_service!(
     contributing_devices = get_contributing_devices(model)
 
     # add parameter for the slopes and breakpoints for time series    
-    if PSY.get_variable(service) isa PSY.ForecastKey
-        println("Service $name has variable cost time series")
+    if typeof(PSY.get_variable(service)) <: PSY.TimeSeriesKey
         process_stepwise_cost_reserve_parameters!(
             container,
             contributing_devices,
