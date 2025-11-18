@@ -1303,7 +1303,11 @@ function _add_param_container!(
     additional_axs,
     time_steps::UnitRange{Int};
     sparse = false,
-) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
+) where {
+    T <: Union{TimeSeriesParameter, DecrementalPiecewiseLinearSlopeParameter},
+    U <: PSY.Component,
+    V <: PSY.TimeSeriesData,
+}
     if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
         param_type = JuMP.VariableRef
     else
@@ -1404,6 +1408,8 @@ function add_param_container!(
     ::Type{U},
     ::Type{V},
     name::String,
+    param_axs,
+    multiplier_axs,
     additional_axs,
     time_steps::UnitRange{Int};
     sparse = false,
@@ -1413,21 +1419,17 @@ function add_param_container!(
     U <: PSY.Component,
     V <: PSY.TimeSeriesData,
 }
-    println("Type of T: $(T)")
     param_key = ParameterKey(T, U, meta)
-    println("Inside add_param_container!")
-    println("meta $meta")
-    println("param_key: $(param_key)")
     if isabstracttype(V)
         error("$V can't be abstract: $param_key")
     end
     attributes = TimeSeriesAttributes(V, name)
-    println("attributes: $(attributes)")
-    println("Type of attributes: $(typeof(attributes))")
     return _add_param_container!(
         container,
         param_key,
         attributes,
+        param_axs,
+        multiplier_axs,
         additional_axs,
         time_steps;
         sparse = sparse,
