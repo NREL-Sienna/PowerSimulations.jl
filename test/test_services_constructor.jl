@@ -1071,3 +1071,68 @@ end
         output_dir = mktempdir(; cleanup = true),
     ) == PSI.ModelBuildStatus.FAILED
 end
+
+@testset "Test ORDC with TimeSeries" begin
+    c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+    ordc = first(get_components(PSY.ReserveDemandCurve, c_sys5_uc))
+    ordc_2 = ReserveDemandCurve{ReserveUp}(
+        ordc.variable,
+        "ORDC2",
+        true,
+        ordc.time_frame,
+    )
+    add_service!(c_sys5_uc, ordc_2, get_components(ThermalStandard, c_sys5_uc))
+    # Add time-varying data to the ORDC2
+    ex_incr_x = (0.03, 0.13, 0.07)
+    ex_incr_y = (0.03, 0.13, 0.07)
+    ex_fd = ordc.variable.value_curve.function_data
+    ex_ts2 = make_deterministic_ts(
+        c_sys5_uc,
+        "variable_cost",
+        ex_fd,
+        ex_incr_x,
+        ex_incr_y;
+        override_min_x = 0.0,
+        override_max_x = last(get_x_coords(ex_fd)),
+        create_extra_tranches = true,
+    )
+    im_key2 = add_time_series!(c_sys5_uc, ordc_2, ex_ts2)
+    set_variable!(ordc_2, im_key2)
+    template = ProblemTemplate(NetworkModel(CopperPlatePowerModel; use_slacks = true))
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve11"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve, "Reserve1"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveDown}, RangeReserve, "Reserve2"),
+    )
+
+    set_service_model!(
+        template,
+        ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC1"),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(ReserveDemandCurve{ReserveUp}, StepwiseCostReserve, "ORDC2"),
+    )
+
+    model = DecisionModel(
+        template,
+        c_sys5_uc;
+        name = "UC",
+        store_variable_names = true,
+        optimizer = HiGHS_optimizer,
+        system_to_file = false,
+    )
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+end
