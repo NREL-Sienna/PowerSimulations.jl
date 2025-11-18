@@ -43,6 +43,10 @@ get_initial_parameter_value(::VariableValueParameter, d::Type{<:PSY.AbstractRese
 objective_function_multiplier(::ServiceRequirementVariable, ::StepwiseCostReserve) = -1.0
 sos_status(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=SOSStatusVariable.NO_VARIABLE
 uses_compact_power(::PSY.ReserveDemandCurve, ::StepwiseCostReserve)=false
+
+############################### Breakpoints and Slopes, ReserveDemandCurve ################################
+get_multiplier_value(::AbstractPiecewiseLinearBreakpointParameter, d::PSY.ReserveDemandCurve, ::AbstractReservesFormulation) = 1.0
+get_multiplier_value(::AbstractPiecewiseLinearSlopeParameter, d::PSY.ReserveDemandCurve, ::AbstractReservesFormulation) = 1.0
 #! format: on
 
 function get_initial_conditions_service_model(
@@ -656,12 +660,10 @@ function process_stepwise_cost_reserve_parameters!(
     model::ServiceModel,
     service::D,
 ) where {D <: PSY.ReserveDemandCurve}
-    @show "In process_stepwise_cost_reserve_parameters!"
     for param in (
-        DecrementalPiecewiseLinearSlopeParameter(),
-        DecrementalPiecewiseLinearBreakpointParameter(),
+        DecrementalPiecewiseLinearBreakpointParameter,
+        DecrementalPiecewiseLinearSlopeParameter,
     )
-        println("Adding parameter: $(param) - $(typeof(param))")
         add_parameters!(container, param, service, model)
     end
 end
