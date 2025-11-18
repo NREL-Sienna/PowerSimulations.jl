@@ -268,14 +268,6 @@ function construct_device!(
         )
     end
 
-    add_variables!(
-        container,
-        FlowActivePowerVariable,
-        network_model,
-        devices,
-        StaticBranch(),
-    )
-
     if haskey(get_time_series_names(model), DynamicBranchRatingTimeSeriesParameter)
         add_parameters!(container, DynamicBranchRatingTimeSeriesParameter, devices, model)
     end
@@ -444,13 +436,6 @@ function construct_device!(
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACTransmission}
     devices = get_available_components(model, sys)
-    add_variables!(
-        container,
-        FlowActivePowerVariable,
-        network_model,
-        devices,
-        StaticBranchUnbounded(),
-    )
     add_feedforward_arguments!(container, model, devices)
     return
 end

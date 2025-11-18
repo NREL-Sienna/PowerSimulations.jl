@@ -62,18 +62,6 @@ function get_default_attributes(
     return Dict{String, Any}()
 end
 #################################### Flow Variable Bounds ##################################################
-# Additional Method to be able to filter the branches that are not in the PTDF matrix
-function add_variables!(
-    ::OptimizationContainer,
-    ::Type{T},
-    network_model::NetworkModel{<:AbstractPTDFModel},
-    devices::IS.FlattenIteratorWrapper{U},
-    formulation::StaticBranch,
-) where {
-    T <: AbstractACActivePowerFlow,
-    U <: PSY.ACTransmission}
-    return
-end
 
 function add_variables!(
     container::OptimizationContainer,
