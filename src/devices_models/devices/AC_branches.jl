@@ -480,7 +480,6 @@ function get_min_max_limits(
     return minmax
 end
 
-#TODO Implement methods for rating_b and solve ambiguiety
 """
 Min and max limits for Abstract Branch Formulation
 """
