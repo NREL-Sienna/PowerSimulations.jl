@@ -616,7 +616,7 @@ function _add_pwl_constraint!(
     )
     len_cost_data = length(break_points) - 1
     jump_model = get_jump_model(container)
-    pwl_vars = get_variable(container, PiecewiseLinearBlockIncrementalOffer(), T)
+    pwl_vars = get_variable(container, PiecewiseLinearBlockDecrementalOffer(), T)
     const_container[name, period] = JuMP.@constraint(
         jump_model,
         variables[name, period] ==
@@ -688,7 +688,7 @@ function _get_pwl_cost_expression(
     multiplier::Float64,
 ) where {T <: PSY.ReserveDemandCurve}
     name = PSY.get_name(component)
-    pwl_var_container = get_variable(container, PiecewiseLinearBlockIncrementalOffer(), T)
+    pwl_var_container = get_variable(container, PiecewiseLinearBlockDecrementalOffer(), T)
     ordc_cost = JuMP.AffExpr(0.0)
     for (i, slope) in enumerate(slopes_normalized)
         JuMP.add_to_expression!(
@@ -813,15 +813,19 @@ function add_pwl_term!(
     end
 end
 
-# TODO LK: move into reserves.jl once things are working. Leaving it here for now,
-# to simplify tracking changes.
+# ORDC-specific method for adding PWL cost terms
 function _add_pwl_term!(
     container::OptimizationContainer,
-    component::PSY.Reserve,
-    variable_cost::Union{PSY.CostCurve{PSY.PiecewiseIncrementalCurve}, PSY.ForecastKey},
+    component::T,
+    cost_data::W,
     ::U,
     ::V,
-) where {U <: VariableType, V <: AbstractServiceFormulation}
+) where {
+    T <: PSY.Component,
+    U <: VariableType,
+    V <: AbstractServiceFormulation,
+    W <: Union{PSY.CostCurve{PSY.PiecewiseIncrementalCurve}, IS.TimeSeriesKey},
+}
     multiplier = objective_function_multiplier(U(), V())
     resolution = get_resolution(container)
     dt = Dates.value(Dates.Second(resolution)) / SECONDS_IN_HOUR
@@ -831,7 +835,7 @@ function _add_pwl_term!(
     sos_val = _get_sos_value(container, V, component)
 
     for t in time_steps
-        breakpoints, slopes = _get_reserve_pwl_data(container, component, variable_cost, t)
+        breakpoints, slopes = _get_reserve_pwl_data(container, component, cost_data, t)
 
         _add_pwl_variables!(
             container,
@@ -839,7 +843,7 @@ function _add_pwl_term!(
             name,
             t,
             length(slopes),
-            PiecewiseLinearBlockIncrementalOffer,
+            PiecewiseLinearBlockDecrementalOffer,
         )
 
         _add_pwl_constraint!(
