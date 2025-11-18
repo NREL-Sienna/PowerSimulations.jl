@@ -532,59 +532,58 @@ cost curve or time series as input, instead of a component.
 """
 function _get_reserve_pwl_data(
     container::OptimizationContainer,
-    component::PSY.Reserve,
+    component::T,
     variable_cost::Union{PSY.CostCurve{PSY.PiecewiseIncrementalCurve}, PSY.ForecastKey},
     t::Int,
-)
+) where {T <: PSY.ReserveDemandCurve}
     base_power = get_base_power(container)
     device_base_power = PSY.get_base_power(component)
+
+    if !(variable_cost isa PSY.CostCurve{PSY.PiecewiseIncrementalCurve}) &&
+       !(variable_cost isa PSY.ForecastKey)
+        error(
+            "Unsupported variable cost type $(typeof(variable_cost)) for reserve $(PSY.get_name(component))",
+        )
+    end
 
     if variable_cost isa PSY.CostCurve{PSY.PiecewiseIncrementalCurve}
         # Static curve
         @info "Using static cost curve for reserve $(PSY.get_name(component))"
         @info variable_cost
         cost_component = PSY.get_function_data(PSY.get_value_curve(variable_cost))
-        breakpoints = PSY.get_x_coords(cost_component)
-        slopes = PSY.get_y_coords(cost_component)
+        breakpoint_cost_component = PSY.get_x_coords(cost_component)
+        slope_cost_component = PSY.get_y_coords(cost_component)
         unit_system = PSY.get_power_units(variable_cost)
-    elseif variable_cost isa PSY.ForecastKey
-        name = PSY.get_name(component)
-        time_steps = get_time_steps(container)
-
-        @show keys(get_parameters(container))
-        @show "Evaluating time series cost curve for reserve $(PSY.get_name(component))"
-        @show variable_cost
-
-        # pwl_cost_expressions =
-        # _add_pwl_term!(container, component, variable_cost, T(), U())
-
-        # for t in time_steps
-        #     println("Evaluating for time step $t")
-        #     breakpoints, slopes = _get_reserve_pwl_data(container, component, variable_cost, t)
-        #     @show breakpoints, slopes
-        # end
-
-        # TODO LK: this next line errors--written by AI. figure out what the correct analog 
-        # to _get_pwl_data is. Might need to add parameters to the container first.
-
-        # cost_component = PSY.get_function_data(PSY.get_value_curve(cost_curve_t))
-
-        # breakpoints = PSY.get_x_coords(cost_component)
-        # slopes = PSY.get_y_coords(cost_component)
-        # unit_system = PSY.get_power_units(cost_curve_t)
-
-        name = PSY.get_name(component)
-        time_steps = get_time_steps(container)
-        is_decremental = false
     else
-        error(
-            "Unsupported variable cost type $(typeof(variable_cost)) for reserve $(PSY.get_name(component))",
-        )
+        variable_cost isa PSY.ForecastKey
+        name = PSY.get_name(component)
+        is_decremental = true
+        # Slope Data
+        SlopeParam = _SLOPE_PARAMS[is_decremental]
+        slope_param_arr = get_parameter_array(container, SlopeParam(), T, name)
+        slope_param_mult = get_parameter_multiplier_array(container, SlopeParam(), T, name)
+        @assert size(slope_param_arr) == size(slope_param_mult)  # multiplier arrays should be 3D too
+        ts_uuid = axes(slope_param_arr)[1][1]
+        slope_cost_component =
+            slope_param_arr[ts_uuid, :, t] .* slope_param_mult[name, :, t]
+        slope_cost_component = slope_cost_component.data
+
+        #Breakpoint data
+        BreakpointParam = _BREAKPOINT_PARAMS[is_decremental]
+        breakpoint_param_container = get_parameter(container, BreakpointParam(), T, name)
+        breakpoint_param_arr = get_parameter_column_refs(breakpoint_param_container, name)  # performs component -> time series many-to-one mapping
+        breakpoint_param_mult = get_multiplier_array(breakpoint_param_container)
+        @assert size(breakpoint_param_arr) == size(breakpoint_param_mult[name, :, :])
+        breakpoint_cost_component =
+            breakpoint_param_arr[:, t] .* breakpoint_param_mult[name, :, t]
+        breakpoint_cost_component = breakpoint_cost_component.data
+        @assert_op length(slope_cost_component) == length(breakpoint_cost_component) - 1
+        unit_system = PSY.UnitSystem.NATURAL_UNITS
     end
 
     breakpoints, slopes = get_piecewise_curve_per_system_unit(
-        breakpoints,
-        slopes,
+        breakpoint_cost_component,
+        slope_cost_component,
         unit_system,
         base_power,
         device_base_power,
@@ -606,10 +605,6 @@ function _add_variable_cost_to_objective!(
     variable_cost = PSY.get_variable(component)
     if variable_cost isa Nothing
         error("ReserveDemandCurve $(component.name) does not have cost data.")
-        #elseif typeof(variable_cost) <: PSY.TimeSeriesKey
-        #    error(
-        #        "Timeseries curve for ReserveDemandCurve $(component.name) is not supported yet.",
-        #    )
     end
 
     # error: no such method, bc variable_cost is a ForecastKey, not a CostCurve.
