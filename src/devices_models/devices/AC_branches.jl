@@ -862,9 +862,9 @@ function _make_postcontingency_flow_expressions!(
             )
         )
     end
-    #return name, expressions
+    return name, expressions
     # change when using the not concurrent version
-    return expressions
+    #return expressions
 end
 
 function _make_branch_scuc_postcontingency_flow_expressions!(
@@ -886,9 +886,9 @@ function _make_branch_scuc_postcontingency_flow_expressions!(
             (lodf * precontingency_outage_flow_variables[t])
         )
     end
-    #return name, expressions
+    return name, expressions
     # change when using the not concurrent version
-    return expressions
+    #return expressions
 end
 
 function add_expressions!(

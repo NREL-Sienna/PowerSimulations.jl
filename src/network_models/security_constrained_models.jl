@@ -156,37 +156,93 @@ function add_post_contingency_flow_expressions!(
         V,
     )
 
-    for outage in associated_outages
-        outage_id = string(IS.get_uuid(outage))
-        associated_devices =
-            PSY.get_associated_components(
-                sys,
-                outage;
-                component_type = V,
-            )
-        contingency_device = first(associated_devices)
-        contingency_device_name = PSY.get_name(contingency_device)
-        if length(associated_devices) != 1
-            @warn(
-                "Outage $(outage_id) is associated with $(length(associated_devices)) devices of type $V. Expected only one associated device per outage for contingency analysis. It is being considered only component $(PSY.get_name(contingency_device_name))."
-            )
-        end
-        index_lodf_outage = (contingency_device.arc.from.number,
-            contingency_device.arc.to.number,
+    for b_type in modeled_branch_types
+        if !haskey(
+            get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
+            b_type,
         )
-        contingency_variables =
-            precontingency_outage_flow_variables[contingency_device_name, :]
+            continue
+        end
 
-        for b_type in modeled_branch_types
-            if !haskey(
-                get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
-                b_type,
-            )
-                continue
+        pre_contingency_flow =
+            get_variable(container, FlowActivePowerVariable(), b_type)
+        name_to_arc_map =
+            get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
+
+        for outage in associated_outages
+            outage_id = string(IS.get_uuid(outage))
+            associated_devices =
+                PSY.get_associated_components(
+                    sys,
+                    outage;
+                    component_type = V,
+                )
+            contingency_device = first(associated_devices)
+            contingency_device_name = PSY.get_name(contingency_device)
+            if length(associated_devices) != 1
+                @warn(
+                    "Outage $(outage_id) is associated with $(length(associated_devices)) devices of type $V. Expected only one associated device per outage for contingency analysis. It is being considered only component $(PSY.get_name(contingency_device_name))."
+                )
             end
+            index_lodf_outage = (contingency_device.arc.from.number,
+                contingency_device.arc.to.number,
+            )
+            contingency_variables =
+                precontingency_outage_flow_variables[contingency_device_name, :]
 
-            pre_contingency_flow =
-                get_variable(container, FlowActivePowerVariable(), b_type)
+            tasks = map(collect(name_to_arc_map)) do pair
+                (name, (arc, _)) = pair
+                lodf_factor = lodf[arc, index_lodf_outage]
+                Threads.@spawn _make_branch_scuc_postcontingency_flow_expressions!(
+                    jump_model,
+                    name,
+                    outage_id,
+                    time_steps,
+                    lodf_factor,
+                    contingency_variables.data,
+                    pre_contingency_flow,
+                )
+            end
+            for task in tasks
+                name, expressions = fetch(task)
+                expression_container[outage_id, name, :] .= expressions
+            end
+        end
+    end
+
+    #= Leaving serial code commented out for debugging purposes in the future
+    for b_type in modeled_branch_types
+        if !haskey(
+            get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
+            b_type,
+        )
+            continue
+        end
+
+        pre_contingency_flow =
+            get_variable(container, FlowActivePowerVariable(), b_type)
+
+        for outage in associated_outages
+            outage_id = string(IS.get_uuid(outage))
+            associated_devices =
+                PSY.get_associated_components(
+                    sys,
+                    outage;
+                    component_type = V,
+                )
+            contingency_device = first(associated_devices)
+            contingency_device_name = PSY.get_name(contingency_device)
+            if length(associated_devices) != 1
+                @warn(
+                    "Outage $(outage_id) is associated with $(length(associated_devices)) devices of type $V. Expected only one associated device per outage for contingency analysis. It is being considered only component $(PSY.get_name(contingency_device_name))."
+                )
+            end
+            index_lodf_outage = (contingency_device.arc.from.number,
+                contingency_device.arc.to.number,
+            )
+            contingency_variables =
+                precontingency_outage_flow_variables[contingency_device_name, :]
+
             for (name, (arc, reduction)) in
                 get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
                 lodf_factor = lodf[arc, index_lodf_outage]
@@ -203,6 +259,7 @@ function add_post_contingency_flow_expressions!(
             end
         end
     end
+    =#
     return
 end
 

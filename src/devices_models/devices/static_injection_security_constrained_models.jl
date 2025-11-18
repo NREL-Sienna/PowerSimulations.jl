@@ -1162,19 +1162,57 @@ function add_post_contingency_flow_expressions!(
 
     ptdf = get_PTDF_matrix(network_model)
     jump_model = get_jump_model(container)
-    for outage in associated_outages
-        outage_id = string(IS.get_uuid(outage))
-        post_cont_expr = post_contingency_deployment_expr[outage_id, :, :]
-        for b_type in modeled_branch_types
-            if !haskey(
-                get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
-                b_type,
-            )
-                continue
-            end
 
-            pre_contingency_flow =
+    for b_type in modeled_branch_types
+        if !haskey(
+            get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
+            b_type,
+        )
+            continue
+        end
+        pre_contingency_flow =
+            get_variable(container, FlowActivePowerVariable(), b_type)
+        name_to_arc_map =
+            get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
+
+        for outage in associated_outages
+            outage_id = string(IS.get_uuid(outage))
+            post_cont_expr = post_contingency_deployment_expr[outage_id, :, :]
+
+            tasks = map(collect(name_to_arc_map)) do pair
+                (name, (arc, _)) = pair
+                ptdf_col = ptdf[arc, :]
+                Threads.@spawn _make_postcontingency_flow_expressions!(
+                    jump_model,
+                    name,
+                    outage_id,
+                    time_steps,
+                    ptdf_col,
+                    post_cont_expr.data,
+                    pre_contingency_flow,
+                )
+            end
+            for task in tasks
+                name, expressions = fetch(task)
+                expression_container[outage_id, name, :] .= expressions
+            end
+        end
+    end
+    #= Leaving serial code commented out for debugging purposes in the future
+    for b_type in modeled_branch_types
+        if !haskey(
+            get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
+            b_type,
+        )
+            continue
+        end
+        pre_contingency_flow =
                 get_variable(container, FlowActivePowerVariable(), b_type)
+
+        for outage in associated_outages
+            outage_id = string(IS.get_uuid(outage))
+            post_cont_expr = post_contingency_deployment_expr[outage_id, :, :]
+
             for (name, (arc, reduction)) in
                 get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
                 ptdf_col = ptdf[arc, :]
@@ -1192,6 +1230,7 @@ function add_post_contingency_flow_expressions!(
             end
         end
     end
+    =#
     return
 end
 
