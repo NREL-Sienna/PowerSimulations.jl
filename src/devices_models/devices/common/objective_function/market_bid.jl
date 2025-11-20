@@ -597,11 +597,11 @@ Implement the constraints for PWL Block Offer variables for ORDC. That is:
 \\sum_{k\\in\\mathcal{K}} \\delta_{k,t} <= P_{k+1,t}^{max} - P_{k,t}^{max}
 ```
 """
-function _add_pwl_constraint!(
+function _add_pwl_ordc_constraint!(
     container::OptimizationContainer,
     component::T,
     ::U,
-    break_points::Vector{Float64},
+    break_points::Vector{<:JuMPOrFloat},
     sos_status::SOSStatusVariable,
     period::Int,
 ) where {T <: PSY.ReserveDemandCurve, U <: ServiceRequirementVariable}
@@ -846,7 +846,7 @@ function _add_pwl_term!(
             PiecewiseLinearBlockDecrementalOffer,
         )
 
-        _add_pwl_constraint!(
+        _add_pwl_ordc_constraint!(
             container,
             component,
             U(),
