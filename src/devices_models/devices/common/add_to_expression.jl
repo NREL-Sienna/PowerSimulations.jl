@@ -1152,13 +1152,12 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     device_model::DeviceModel{V, W},
-    network_model::NetworkModel{X},
+    network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: SystemBalanceExpressions,
     U <: TimeSeriesParameter,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: CopperPlatePowerModel,
 }
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
@@ -1200,13 +1199,12 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     device_model::DeviceModel{V, W},
-    network_model::NetworkModel{X},
+    network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: ActivePowerTimeSeriesParameter,
     V <: PSY.MotorLoad,
     W <: StaticPowerLoad,
-    X <: CopperPlatePowerModel,
 }
     expression = get_expression(container, T(), PSY.System)
     for d in devices
@@ -1229,13 +1227,12 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    network_model::NetworkModel{X},
+    network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: OnStatusParameter,
     V <: PSY.ThermalGen,
     W <: AbstractDeviceFormulation,
-    X <: CopperPlatePowerModel,
 }
     parameter = get_parameter_array(container, U(), V)
     expression = get_expression(container, T(), PSY.System)
@@ -1660,7 +1657,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
-    V <: PSY.ACBranch,
+    V <: PSY.TwoTerminalHVDC,
     W <: AbstractBranchFormulation,
     X <: Union{PTDFPowerModel, SecurityConstrainedPTDFPowerModel},
 }
