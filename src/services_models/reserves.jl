@@ -613,6 +613,7 @@ function _add_variable_cost_to_objective!(
     # that add_pwl_term! calls _get_pwl_data, which evaluates the time series if needed.
     pwl_cost_expressions =
         _add_pwl_term!(container, component, variable_cost, T(), U())
+    is_t_variant = is_time_variant(PSY.get_variable(component))
     for t in time_steps
         add_to_expression!(
             container,
@@ -621,7 +622,11 @@ function _add_variable_cost_to_objective!(
             component,
             t,
         )
-        add_to_objective_invariant_expression!(container, pwl_cost_expressions[t])
+        if is_t_variant
+            add_to_objective_variant_expression!(container, pwl_cost_expressions[t])
+        else
+            add_to_objective_invariant_expression!(container, pwl_cost_expressions[t])
+        end
     end
     return
 end
