@@ -36,6 +36,38 @@ function _update_parameter_values!(
     return
 end
 
+function _update_service_cost_parameter_values!(
+    parameter_array::DenseAxisArray,
+    ::T,
+    parameter_multiplier::JuMPFloatArray,
+    attributes::CostFunctionAttributes,
+    ::Type{V},
+    model::DecisionModel,
+    ::DatasetContainer{InMemoryDataset},
+    service_name::String,
+) where {T <: ObjectiveFunctionParameter, V <: PSY.Service}
+    initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
+    time_steps = get_time_steps(get_optimization_container(model))
+    horizon = time_steps[end]
+    container = get_optimization_container(model)
+    @assert !is_synchronized(container)
+    service = PSY.get_component(V, get_system(model), service_name)
+    # `handle_variable_cost_parameter` is responsible for figuring out whether there is
+    # actually time variance for this particular component and, if so, performing the update
+    handle_variable_cost_parameter(
+        T(),
+        service,
+        service_name,
+        parameter_array,
+        parameter_multiplier,
+        attributes,
+        container,
+        initial_forecast_time,
+        horizon,
+    )
+    return
+end
+
 # We only support certain time series costs for PSY.OfferCurveCost, nothing to do for all the others
 # We group them this way because we implement them that way: avoids method ambiguity issues
 handle_variable_cost_parameter(
@@ -131,6 +163,50 @@ function handle_variable_cost_parameter(
     for (t, value::PSY.PiecewiseStepData) in enumerate(TimeSeries.values(ts_vector))
         unwrapped_value =
             _unwrap_for_param(T(), value, lookup_additional_axes(parameter_array))
+        _set_param_value!(parameter_array, unwrapped_value, name, t)
+        update_variable_cost!(
+            slope_param,
+            container,
+            value,  # intentionally passing the PiecewiseStepData here, not the unwrapped
+            parameter_multiplier,
+            attributes,
+            component,
+            t,
+        )
+    end
+    return
+end
+
+function handle_variable_cost_parameter(
+    slope_param::T,
+    component::PSY.ReserveDemandCurve,
+    name,
+    parameter_array,
+    parameter_multiplier,
+    attributes,
+    container,
+    initial_forecast_time,
+    horizon,
+) where {T <: AbstractPiecewiseLinearSlopeParameter}
+    is_time_variant(PSY.get_variable(component)) || return
+    ts = IS.get_time_series(
+        component,
+        PSY.get_variable(component);
+        start_time = initial_forecast_time,
+        len = horizon,
+        count = 1,
+    )
+    ts_vector = PSY.read_and_convert_ts(
+        ts,
+        component,
+        initial_forecast_time,
+        horizon,
+        nothing,
+    )
+    for (t, value::PSY.PiecewiseStepData) in enumerate(TimeSeries.values(ts_vector))
+        unwrapped_value =
+            _unwrap_for_param(T(), value, lookup_additional_axes(parameter_array))
+
         _set_param_value!(parameter_array, unwrapped_value, name, t)
         update_variable_cost!(
             slope_param,
