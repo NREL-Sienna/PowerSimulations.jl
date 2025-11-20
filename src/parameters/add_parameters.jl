@@ -415,6 +415,22 @@ _param_to_vars(
     ::AbstractDeviceFormulation,
 ) =
     (PiecewiseLinearBlockDecrementalOffer,)
+_param_to_vars(
+    ::Union{
+        IncrementalPiecewiseLinearSlopeParameter,
+        IncrementalPiecewiseLinearBreakpointParameter,
+    },
+    ::AbstractServiceFormulation,
+) =
+    (PiecewiseLinearBlockIncrementalOffer,)
+_param_to_vars(
+    ::Union{
+        DecrementalPiecewiseLinearSlopeParameter,
+        DecrementalPiecewiseLinearBreakpointParameter,
+    },
+    ::AbstractServiceFormulation,
+) =
+    (PiecewiseLinearBlockDecrementalOffer,)
 
 # Layer of indirection to handle possible additional axes. Most parameters have just the two
 # usual axes (device, timestamp), but some have a third (e.g., piecewise tranche)
@@ -710,6 +726,7 @@ function _add_parameters!(
         T(),
         U,
         ts_type,
+        _param_to_vars(T(), V()),
         ts_name,
         [ts_uuid],
         [name],
@@ -718,7 +735,6 @@ function _add_parameters!(
         meta = name,
     )
 
-    set_subsystem!(get_attributes(parameter_container), get_subsystem(model))
     jump_model = get_jump_model(container)
     multiplier = get_multiplier_value(T(), service, V())
     raw_ts_vals = get_time_series_initial_values!(container, ts_type, service, ts_name)
@@ -726,9 +742,8 @@ function _add_parameters!(
     @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
     for t in time_steps
         set_multiplier!(parameter_container, multiplier, name, t)
-        set_parameter!(parameter_container, jump_model, ts_vals[t], ts_uuid, t)
+        set_parameter!(parameter_container, jump_model, ts_vals[t], name, t)
     end
-    add_component_name!(get_attributes(parameter_container), name, ts_uuid)
     return
 end
 
