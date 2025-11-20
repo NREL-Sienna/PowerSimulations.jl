@@ -1294,6 +1294,7 @@ function _add_param_container!(
     )
 end
 
+# This is the method for services parameters for timeseries parameters
 function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
@@ -1304,7 +1305,7 @@ function _add_param_container!(
     time_steps::UnitRange{Int};
     sparse = false,
 ) where {
-    T <: Union{TimeSeriesParameter, DecrementalPiecewiseLinearSlopeParameter},
+    T <: TimeSeriesParameter,
     U <: PSY.Component,
     V <: PSY.TimeSeriesData,
 }
@@ -1321,6 +1322,46 @@ function _add_param_container!(
     else
         param_array =
             DenseAxisArray{param_type}(undef, param_axs, additional_axs..., time_steps)
+        multiplier_array =
+            fill!(
+                DenseAxisArray{Float64}(
+                    undef,
+                    multiplier_axs,
+                    additional_axs...,
+                    time_steps,
+                ),
+                NaN,
+            )
+    end
+    param_container = ParameterContainer(attribute, param_array, multiplier_array)
+    _assign_container!(container.parameters, key, param_container)
+    return param_container
+end
+
+# This is the method for services parameters for objective function parameters
+function _add_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+    attribute::CostFunctionAttributes{V},
+    param_axs,
+    multiplier_axs,
+    additional_axs,
+    time_steps::UnitRange{Int};
+    sparse = false,
+) where {
+    T <: ObjectiveFunctionParameter,
+    U <: PSY.Component,
+    V <: Float64,
+}
+    param_type = Float64
+    if sparse
+        param_array =
+            sparse_container_spec(param_type, multiplier_axs, additional_axs..., time_steps)
+        multiplier_array =
+            sparse_container_spec(Float64, multiplier_axs, additional_axs..., time_steps)
+    else
+        param_array =
+            DenseAxisArray{param_type}(undef, multiplier_axs, additional_axs..., time_steps)
         multiplier_array =
             fill!(
                 DenseAxisArray{Float64}(
@@ -1382,31 +1423,13 @@ function _add_param_container!(
     return param_container
 end
 
-# new add_param_container! and _add_param_container! methods for DecrementalPiecewiseLinearSlopeParameter
-function _add_param_container!(
-    container::OptimizationContainer,
-    key::ParameterKey{T, U},
-    attributes::TimeSeriesAttributes{R},
-    axs...;
-    sparse = false,
-) where {R, T <: ObjectiveFunctionParameter, U <: PSY.Component}
-    if sparse
-        param_array = sparse_container_spec(R, axs...)
-        multiplier_array = sparse_container_spec(Float64, axs...)
-    else
-        param_array = DenseAxisArray{R}(undef, axs...)
-        multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
-    end
-    param_container = ParameterContainer(attributes, param_array, multiplier_array)
-    _assign_container!(container.parameters, key, param_container)
-    return param_container
-end
-
+# add param containers for services with objective function parameters
 function add_param_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
     ::Type{V},
+    variable_types::Tuple{Vararg{Type}},
     name::String,
     param_axs,
     multiplier_axs,
@@ -1415,7 +1438,7 @@ function add_param_container!(
     sparse = false,
     meta = ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {
-    T <: DecrementalPiecewiseLinearSlopeParameter,
+    T <: ObjectiveFunctionParameter,
     U <: PSY.Component,
     V <: PSY.TimeSeriesData,
 }
@@ -1423,7 +1446,11 @@ function add_param_container!(
     if isabstracttype(V)
         error("$V can't be abstract: $param_key")
     end
-    attributes = TimeSeriesAttributes(V, name)
+    attributes = CostFunctionAttributes{Float64}(
+        variable_types,
+        SOSStatusVariable.NO_VARIABLE,
+        false,
+    )
     return _add_param_container!(
         container,
         param_key,
