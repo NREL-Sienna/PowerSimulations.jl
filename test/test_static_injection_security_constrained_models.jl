@@ -359,6 +359,7 @@ end
     end
 end
 
+#This test ensures that the security constrained models build even when there are devices without set_device_model!()
 @testset "Test if G-n with Ramp reserve deliverability constraints builds when there is a device without set_device_model!()" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
 

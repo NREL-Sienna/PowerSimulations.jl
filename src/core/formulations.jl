@@ -141,6 +141,9 @@ struct PhaseAngleControl <: AbstractBranchFormulation end
 
 abstract type AbstractSecurityConstrainedStaticBranch <: AbstractBranchFormulation end
 
+"""
+Branch formulation for PSY.ACTransmission Branches that allows to model security-constrained UC/ED by adding outage supplemental attributes to the branches.
+"""
 struct SecurityConstrainedStaticBranch <: AbstractSecurityConstrainedStaticBranch end
 
 ############################### DC Branch Formulations #####################################

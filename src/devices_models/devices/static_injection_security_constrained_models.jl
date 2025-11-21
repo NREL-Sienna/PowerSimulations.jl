@@ -1351,7 +1351,7 @@ function add_constraints!(
                 # TODO: entry is not type stable here, it can return any type ACTransmission.
                 # It might have performance implications. Possibly separate this into other functions
                 reduction_entry = all_branch_maps_by_type[reduction][b_type][arc]
-                limits = get_scuc_min_max_limits(
+                limits = get_emergency_min_max_limits(
                     reduction_entry,
                     PostContingencyEmergencyFlowRateConstraint,
                     StaticBranch,

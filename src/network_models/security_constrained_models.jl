@@ -1,5 +1,3 @@
-# TODO - error if a the outage is associated with a reduced branch in N-1 formulation
-
 """
 Add branch post-contingency rate limit constraints for ACBranch considering LODF and Security Constraints
 """
@@ -89,7 +87,7 @@ function add_constraints!(
                 get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
                 reduction_entry = all_branch_maps_by_type[reduction][b_type][arc]
                 limits =
-                    get_scuc_min_max_limits(reduction_entry, T, U)
+                    get_emergency_min_max_limits(reduction_entry, T, U)
                 for t in time_steps
                     con_ub[outage_id, name, t] =
                         JuMP.@constraint(get_jump_model(container),

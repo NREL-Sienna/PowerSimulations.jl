@@ -367,7 +367,7 @@ export ActivePowerInTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export DynamicBranchRatingTimeSeriesParameter
 export FuelCostParameter
-export PostContingencyDynamicBranchRatingTimeSeriesParameter#TODO review idf this should remain
+#export PostContingencyDynamicBranchRatingTimeSeriesParameter#TODO review idf this should remain
 export RequirementTimeSeriesParameter
 export FromToFlowLimitParameter
 export ToFromFlowLimitParameter

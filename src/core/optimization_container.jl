@@ -634,7 +634,7 @@ function initialize_system_expressions!(
     if isempty(areas)
         throw(
             IS.ConflictingInputsError(
-                "AreaPTDFPowerModel doesn't support systems with no Areas",
+                "AreaPTDFPowerModel doesn't support systems without Areas",
             ),
         )
     end
