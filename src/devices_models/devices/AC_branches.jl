@@ -498,7 +498,7 @@ function get_dynamic_branch_rating(
 end
 
 """
-Min and max limits for Abstract Branch Formulation
+Min and max limits for Abstract Branch Formulation with DLR
 """
 function _get_device_dynamic_branch_rating_limits(
     param_container::ParameterContainer,
@@ -528,7 +528,28 @@ function _get_device_dynamic_branch_rating_limits(
 end
 
 """
-Min and max limits for Abstract Branch Formulation
+Min and max limits for Abstract Branch Formulation with DLR
+"""
+function get_min_max_limits(
+    param_container::ParameterContainer,
+    transformer_entry::PNM.ThreeWindingTransformerWinding,
+    ts_name::String,
+    ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
+    #constraint_type::Type{<:ConstraintType},
+    #branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    return get_min_max_limits(
+        transformer_entry,
+        FlowRateConstraint,
+        StaticBranch,
+    )
+end
+
+"""
+Min and max limits for Abstract Branch Formulation with DLR
 """
 function _get_device_dynamic_branch_rating_limits(
     param_container::ParameterContainer,
@@ -555,6 +576,25 @@ function _get_device_dynamic_branch_rating_limits(
     max_by_segment = [x.max for x in min_max_by_segment]
     # Limit by most restictive segment:
     return (min = maximum(min_by_segment), max = minimum(max_by_segment))
+end
+
+"""
+Min and max limits for monitored line
+"""
+function get_min_max_limits(
+    param_container::ParameterContainer,
+    device::PSY.MonitoredLine,
+    ts_name::String,
+    ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
+)
+    return get_min_max_limits(
+        device,
+        FlowRateConstraint,
+        StaticBranch,
+    )
 end
 
 function _get_device_dynamic_branch_rating_limits(
