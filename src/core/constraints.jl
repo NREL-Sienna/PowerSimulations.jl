@@ -49,6 +49,7 @@ The specified constraint is generally formulated as:
 ```
 """
 struct CopperPlateBalanceConstraint <: ConstraintType end
+struct PostContingencyCopperPlateBalanceConstraint <: PostContingencyConstraintType end
 
 """
 Struct to create the constraint to balance active power.
@@ -253,7 +254,6 @@ r_{d,t} \\le R^\\text{th,dn} \\cdot \\text{TF}\\quad  \\forall d\\in \\mathcal{D
 ```
 """
 struct RampConstraint <: ConstraintType end
-struct PostContingencyRampConstraint <: PostContingencyConstraintType end
 struct RampLimitConstraint <: ConstraintType end
 struct RangeLimitConstraint <: ConstraintType end
 """
@@ -271,7 +271,7 @@ The specified constraint is formulated as:
 ```
 """
 struct FlowRateConstraint <: ConstraintType end
-struct PostContingencyEmergencyRateLimitConstrain <: PostContingencyConstraintType end
+struct PostContingencyEmergencyFlowRateConstraint <: PostContingencyConstraintType end
 struct FlowRateConstraintFromTo <: ConstraintType end
 struct FlowRateConstraintToFrom <: ConstraintType end
 struct RegulationLimitsConstraint <: ConstraintType end
@@ -487,7 +487,7 @@ in its most basic formulation is of the form:
 P^\\text{min} \\le p_t + \\Delta p_{c, t}  \\le P^\\text{max}, \\quad \\forall c \\in \\mathcal{C} \\ \\forall t \\in \\{1,\\dots,T\\}
 ```
 """
-struct PostContingencyActivePowerVariableLimitsConstraint <:
+struct PostContingencyActivePowerGenerationLimitsConstraint <:
        PostContingencyVariableLimitsConstraint end
 
 """
