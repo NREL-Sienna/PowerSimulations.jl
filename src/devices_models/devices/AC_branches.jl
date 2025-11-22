@@ -510,7 +510,15 @@ function _get_device_dynamic_branch_rating_limits(
     mult,
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
     min_max_by_circuit = [
-        _get_device_dynamic_branch_rating_limits(param_container, device, ts_name, ts_type, t, ci_name, mult) for
+        _get_device_dynamic_branch_rating_limits(
+            param_container,
+            device,
+            ts_name,
+            ts_type,
+            t,
+            ci_name,
+            mult,
+        ) for
         device in double_circuit
     ]
     min_by_circuit = [x.min for x in min_max_by_circuit]
@@ -532,7 +540,15 @@ function _get_device_dynamic_branch_rating_limits(
     mult,
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
     min_max_by_segment = [
-        _get_device_dynamic_branch_rating_limits(param_container, segment, ts_name, ts_type, t, ci_name, mult) for
+        _get_device_dynamic_branch_rating_limits(
+            param_container,
+            segment,
+            ts_name,
+            ts_type,
+            t,
+            ci_name,
+            mult,
+        ) for
         segment in series_chain
     ]
     min_by_segment = [x.min for x in min_max_by_segment]
@@ -747,9 +763,9 @@ function add_constraints!(
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
-    
+
     has_dlr_ts =
-       haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
+        haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
     if has_dlr_ts
         ts_name =
             get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
@@ -765,7 +781,6 @@ function add_constraints!(
         reduction_entry = all_branch_maps_by_type[reduction][T][arc]
         limits = get_min_max_limits(reduction_entry, FlowRateConstraint, U)
         for t in time_steps
-
             if has_dlr_ts
                 limits =
                     _get_device_dynamic_branch_rating_limits(
