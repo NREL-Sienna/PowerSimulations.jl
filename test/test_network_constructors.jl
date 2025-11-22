@@ -180,6 +180,9 @@ end
             DynamicBranchRatingTimeSeriesParameter => "dynamic_line_ratings",
         ))
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
+    #Add line in parallel to test reductions
+    l2 = get_component(Line, c_sys5, "2")
+    add_equivalent_ac_transmission_with_parallel_circuits!(c_sys5, l2, PSY.Line)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
@@ -207,7 +210,7 @@ end
         c_sys14_dc => [600, 0, 648, 552, 456],
     )
     test_obj_values = IdDict{System, Float64}(
-        c_sys5 => 241293.703,
+        c_sys5 => 340475.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
@@ -239,7 +242,7 @@ end
                 dlr_data[ini_time] =
                     TimeArray(
                         data_ts + Day(t - 1),
-                        get_rating(branch) * get_base_power(sys) * dlr_factors,
+                        dlr_factors,
                     )
             end
 
