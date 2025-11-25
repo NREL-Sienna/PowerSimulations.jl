@@ -35,7 +35,7 @@
     set_hvdc_network_model!(template_uc, TransportHVDCNetworkModel)
     model = DecisionModel(template_uc, sys_5; name = "UC", optimizer = HiGHS_optimizer)
     @test build!(model; output_dir = mktempdir()) == PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 1416, 0, 1248, 528, 672, true)
+    moi_tests(model, 1128, 0, 1248, 528, 384, true)
     @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
