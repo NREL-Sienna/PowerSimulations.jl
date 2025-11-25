@@ -127,7 +127,7 @@ function add_post_contingency_flow_expressions!(
 
     net_reduction_data = network_model.network_reduction
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
-    
+
     modeled_branch_types = network_model.modeled_branch_types
 
     branches_names = get_branch_argument_constraint_axis(
@@ -180,7 +180,8 @@ function add_post_contingency_flow_expressions!(
                 contingency_device.arc.to.number,
             )
 
-            contingency_variables = reduced_branch_tracker.variable_dict[FlowActivePowerVariable][index_lodf_outage]
+            contingency_variables =
+                reduced_branch_tracker.variable_dict[FlowActivePowerVariable][index_lodf_outage]
 
             tasks = map(collect(name_to_arc_map)) do pair
                 (name, (arc, _)) = pair
