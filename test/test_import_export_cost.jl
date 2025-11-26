@@ -85,7 +85,7 @@ end
 
 @testset "ImportExportCost with time varying export breakpoints, reservation off" begin
     import_scalar = 1.0
-    export_scalar = 40.0  # NOTE this maxes out ActivePowerInVariable
+    export_scalar = 50.0  # NOTE this maxes out ActivePowerInVariable
     sys_constant = make_5_bus_with_ie_ts(false, false, false, false;
         import_scalar = import_scalar, export_scalar = export_scalar,
         name = "sys_constant")

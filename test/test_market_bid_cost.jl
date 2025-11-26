@@ -441,7 +441,7 @@ end
 
     # Scenario 1: hot and warm starts
     load_mult_a = 1.0
-    therm_mult_a = 7.4
+    therm_mult_a = 7.35
     c_sys5_pglib0a = create_multistart_sys(false, load_mult_a, therm_mult_a; add_ts = false)
     c_sys5_pglib1a = create_multistart_sys(false, load_mult_a, therm_mult_a)
     c_sys5_pglib2a = create_multistart_sys(true, load_mult_a, therm_mult_a)
