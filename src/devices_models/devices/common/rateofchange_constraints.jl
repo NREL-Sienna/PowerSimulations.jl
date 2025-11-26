@@ -250,8 +250,6 @@ function add_linear_ramp_constraints!(
     minutes_per_period = _get_minutes_per_period(container)
     IC = _get_initial_condition_type(T, V, W)
     initial_conditions_power = get_initial_condition(container, IC(), V)
-    ic_power_by_name =
-        Dict(get_component_name(ic) => get_value(ic) for ic in initial_conditions_power)
 
     # Commitment path from UC as a PARAMETER (fixed 0/1)
     on_param = get_parameter(container, OnStatusParameter(), V)
@@ -271,7 +269,8 @@ function add_linear_ramp_constraints!(
         power_limits = PSY.get_active_power_limits(dev)
 
         # --- t = 1: Use ic_power to determine starting ramp condition
-        ic_power = ic_power_by_name[name]
+        ic_idx = findfirst(ic -> get_component_name(ic) == name, initial_conditions_power)
+        ic_power = get_value(initial_conditions_power[ic_idx])
         ycur = on_status[name, 1]
         sl_ub, sl_lb = _get_ramp_slack_vars(container, model, name, 1)
 
