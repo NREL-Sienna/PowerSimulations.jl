@@ -440,18 +440,39 @@ end
     # enough to change the decisions that form the correct solution
 
     # Scenario 1: hot and warm starts
-    load_mult_a = 1.0
-    therm_mult_a = 7.35
-    c_sys5_pglib0a = create_multistart_sys(false, load_mult_a, therm_mult_a; add_ts = false)
-    c_sys5_pglib1a = create_multistart_sys(false, load_mult_a, therm_mult_a)
-    c_sys5_pglib2a = create_multistart_sys(true, load_mult_a, therm_mult_a)
+    # TODO the process to empirically tune these values so the tests work everywhere is
+    # absolutely horrible, we need a more robust system ASAP
+    # https://github.com/NREL-Sienna/PowerSimulations.jl/issues/1460
+    load_pow_mult_a = 1.01
+    therm_pow_mult_a = 1.07
+    therm_price_mult_a = 7.40
+    c_sys5_pglib0a = create_multistart_sys(
+        false,
+        load_pow_mult_a,
+        therm_pow_mult_a,
+        therm_price_mult_a;
+        add_ts = false,
+    )
+    c_sys5_pglib1a =
+        create_multistart_sys(false, load_pow_mult_a, therm_pow_mult_a, therm_price_mult_a)
+    c_sys5_pglib2a =
+        create_multistart_sys(true, load_pow_mult_a, therm_pow_mult_a, therm_price_mult_a)
 
     # Scenario 2: hot and cold starts
-    load_mult_b = 1.05
-    therm_mult_b = 7.4
-    c_sys5_pglib0b = create_multistart_sys(false, load_mult_b, therm_mult_b; add_ts = false)
-    c_sys5_pglib1b = create_multistart_sys(false, load_mult_b, therm_mult_b)
-    c_sys5_pglib2b = create_multistart_sys(true, load_mult_b, therm_mult_b)
+    load_pow_mult_b = 1.05
+    therm_pow_mult_b = 1.0
+    therm_price_mult_b = 7.4
+    c_sys5_pglib0b = create_multistart_sys(
+        false,
+        load_pow_mult_b,
+        therm_pow_mult_b,
+        therm_price_mult_b;
+        add_ts = false,
+    )
+    c_sys5_pglib1b =
+        create_multistart_sys(false, load_pow_mult_b, therm_pow_mult_b, therm_price_mult_b)
+    c_sys5_pglib2b =
+        create_multistart_sys(true, load_pow_mult_b, therm_pow_mult_b, therm_price_mult_b)
 
     test_generic_mbc_equivalence(c_sys5_pglib0a, c_sys5_pglib1a; multistart = true)
     test_generic_mbc_equivalence(c_sys5_pglib0b, c_sys5_pglib1b; multistart = true)
@@ -471,6 +492,9 @@ end
             multistart = true,
             simulation = use_simulation,
         )
+        @test all(isapprox.(decisions1, decisions2))
+        @show decisions1
+        @show decisions1_2
         @test all(isapprox.(decisions1_2, decisions2_2))
         # Make sure our tests included all types of startups and shutdowns
         @test all(approx_geq_1.(decisions1 .+ decisions1_2))
