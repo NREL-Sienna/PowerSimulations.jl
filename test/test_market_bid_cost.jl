@@ -493,8 +493,6 @@ end
             simulation = use_simulation,
         )
         @test all(isapprox.(decisions1, decisions2))
-        @show decisions1
-        @show decisions1_2
         @test all(isapprox.(decisions1_2, decisions2_2))
         # Make sure our tests included all types of startups and shutdowns
         @test all(approx_geq_1.(decisions1 .+ decisions1_2))
