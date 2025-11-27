@@ -1,11 +1,10 @@
 name: CrossPackageTest
 
 on:
-  workflow_dispatch:
-  # push:
-  #   branches: [main]
-  #   tags: [v*]
-  # pull_request:
+  push:
+    branches: [main]
+    tags: [v*]
+  pull_request:
 
 jobs:
   test:

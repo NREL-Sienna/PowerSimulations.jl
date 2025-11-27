@@ -1,13 +1,12 @@
 name: Documentation
 
 on:
-  workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
-  #     - 'release-'
-  #   tags: '*'
-  # pull_request:
+  push:
+    branches:
+      - main
+      - 'release-'
+    tags: '*'
+  pull_request:
 
 jobs:
   build:
