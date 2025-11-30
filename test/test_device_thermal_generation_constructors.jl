@@ -41,7 +41,7 @@ const TIME1 = DateTime("2024-01-01T00:00:00")
                 # Tests shut down cost
                 @test expr[!, "Test Unit"][end] == 0.75
             else
-                @test expr[!, "Test Unit"][end] == 0.
+                @test expr[!, "Test Unit"][end] == 0.0
             end
         end
     end
@@ -91,7 +91,8 @@ const TIME1 = DateTime("2024-01-01T00:00:00")
             system_to_file = false,
             optimizer_solve_log_print = true,
         )
-        @test build!(model_with_startup; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+        @test build!(model_with_startup; output_dir = test_path) ==
+              PSI.ModelBuildStatus.BUILT
         @test solve!(model_with_startup) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
         results_with_startup = OptimizationProblemResults(model_with_startup)
@@ -104,9 +105,9 @@ const TIME1 = DateTime("2024-01-01T00:00:00")
 
         # Verify startup actually occurred
         start_vars = read_variable(
-            results_with_startup, 
-            "StartVariable__ThermalStandard", 
-            table_format = TableFormat.WIDE
+            results_with_startup,
+            "StartVariable__ThermalStandard";
+            table_format = TableFormat.WIDE,
         )
         @test start_vars[1, "Test Unit"] > 0.5  # Startup in first timestep
 

@@ -63,7 +63,7 @@ function verify_market_bid_cost_models(
     test_unit::PSY.Component,
     cost_reference::Float64,
     no_load_cost::Float64,
-    my_initial_input::Float64
+    my_initial_input::Float64,
 )
     results = test_market_bid_cost_models(
         sys,
@@ -75,7 +75,7 @@ function verify_market_bid_cost_models(
     component_df = @rsubset(expr, :name == get_name(test_unit))
     shutdown_cost = PSY.get_shut_down(PSY.get_operation_cost(test_unit))
     var_unit_cost =
-        sum(@rsubset(component_df, :value != shutdown_cost)[:,:value])
+        sum(@rsubset(component_df, :value != shutdown_cost)[:, :value])
     unit_cost_due_to_initial =
         nrow(@rsubset(component_df, :value != shutdown_cost)) * my_initial_input
     @test isapprox(
@@ -100,7 +100,7 @@ end
                 unit1,
                 cost_reference,
                 my_no_load,
-                my_initial_input
+                my_initial_input,
             )
         end
     end
@@ -852,7 +852,7 @@ end
         vom_value = LinearCurve(5.0)  # $/MWh
         new_var_cost = CostCurve(value_curve, power_units, vom_value)
 
-        new_op_cost = PSY.ThermalGenerationCost(
+        new_op_cost = PSY.ThermalGenerationCost(;
             variable = new_var_cost,
             fixed = get_fixed(op_cost),
             start_up = get_start_up(op_cost),
@@ -900,7 +900,7 @@ end
         vom_value_30 = LinearCurve(5.0)  # $/MWh
         new_var_cost_30 = CostCurve(value_curve_30, power_units_30, vom_value_30)
 
-        new_op_cost_30 = PSY.ThermalGenerationCost(
+        new_op_cost_30 = PSY.ThermalGenerationCost(;
             variable = new_var_cost_30,
             fixed = get_fixed(op_cost_30),
             start_up = get_start_up(op_cost_30),
