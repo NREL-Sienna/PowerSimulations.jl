@@ -149,13 +149,13 @@ function add_linear_ramp_constraints!(
     return
 end
 
-function add_linear_ramp_constraints!(
+# Helper function containing the shared ramp constraint logic
+function _add_linear_ramp_constraints_impl!(
     container::OptimizationContainer,
     T::Type{<:ConstraintType},
     U::Type{<:VariableType},
     devices::IS.FlattenIteratorWrapper{V},
     model::DeviceModel{V, W},
-    X::Type{<:PM.AbstractPowerModel},
 ) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
     parameters = built_for_recurrent_solves(container)
     time_steps = get_time_steps(container)
@@ -216,6 +216,97 @@ function add_linear_ramp_constraints!(
             )
         end
     end
+    return
+end
+
+function add_linear_ramp_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{<:VariableType},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.Component, W <: AbstractDeviceFormulation}
+    return _add_linear_ramp_constraints_impl!(container, T, U, devices, model)
+end
+
+function add_linear_ramp_constraints!(
+    container::OptimizationContainer,
+    T::Type{<:ConstraintType},
+    U::Type{ActivePowerVariable},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    X::Type{<:PM.AbstractPowerModel},
+) where {V <: PSY.ThermalGen, W <: AbstractThermalDispatchFormulation}
+
+    # Fallback to generic implementation if OnStatusParameter is not present
+    if !has_container_key(container, OnStatusParameter, V)
+        return _add_linear_ramp_constraints_impl!(container, T, U, devices, model)
+    end
+
+    time_steps = get_time_steps(container)
+    variable = get_variable(container, U(), V)
+    ramp_devices = _get_ramp_constraint_devices(container, devices)
+    minutes_per_period = _get_minutes_per_period(container)
+    IC = _get_initial_condition_type(T, V, W)
+    initial_conditions_power = get_initial_condition(container, IC(), V)
+
+    # Commitment path from UC as a PARAMETER (fixed 0/1)
+    on_param = get_parameter(container, OnStatusParameter(), V)
+    on_status = on_param.parameter_array  # on_status[name, t] ∈ {0,1} (fixed)
+
+    set_name = [PSY.get_name(r) for r in ramp_devices]
+    con_up =
+        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "up")
+    con_down =
+        add_constraints_container!(container, T(), V, set_name, time_steps; meta = "dn")
+
+    jump_model = get_jump_model(container)
+
+    for dev in ramp_devices
+        name = PSY.get_name(dev)
+        ramp_limits = PSY.get_ramp_limits(dev)
+        power_limits = PSY.get_active_power_limits(dev)
+
+        # --- t = 1: Use ic_power to determine starting ramp condition
+        ic_idx = findfirst(ic -> get_component_name(ic) == name, initial_conditions_power)
+        ic_power = get_value(initial_conditions_power[ic_idx])
+        ycur = on_status[name, 1]
+        sl_ub, sl_lb = _get_ramp_slack_vars(container, model, name, 1)
+
+        # Ramp UP from IC
+        con_up[name, 1] = JuMP.@constraint(jump_model,
+            variable[name, 1] - ic_power - sl_ub <=
+            ramp_limits.up * minutes_per_period + power_limits.max * (1 - ycur)
+        )
+
+        # Ramp DOWN from IC  
+        con_down[name, 1] = JuMP.@constraint(jump_model,
+            ic_power - variable[name, 1] - sl_lb <=
+            ramp_limits.down * minutes_per_period + power_limits.max * (1 - ycur)
+        )
+
+        # --- t ≥ 2: gate by previous status y_{t-1}
+        for t in time_steps[2:end]
+            yprev = on_status[name, t - 1]   # 0/1 fixed from UC
+            ycur = on_status[name, t]       # 0/1 fixed from UC
+            sl_ub, sl_lb = _get_ramp_slack_vars(container, model, name, t)
+
+            # Ramp UP when already ON previously
+            con_up[name, t] = JuMP.@constraint(jump_model,
+                variable[name, t] - variable[name, t - 1] - sl_ub <=
+                ramp_limits.up * minutes_per_period + power_limits.max * (2 - yprev - ycur)
+            )
+
+            # Ramp DOWN when already ON previously
+            con_down[name, t] = JuMP.@constraint(jump_model,
+                variable[name, t - 1] - variable[name, t] - sl_lb <=
+                ramp_limits.down * minutes_per_period +
+                power_limits.max * (2 - yprev - ycur)
+            )
+        end
+    end
+
     return
 end
 
