@@ -444,10 +444,16 @@ function build_sys_decr2(
     return sys
 end
 
-function create_multistart_sys(with_increments::Bool, load_mult, therm_mult; add_ts = true)
+function create_multistart_sys(
+    with_increments::Bool,
+    load_pow_mult,
+    therm_pow_mult,
+    therm_price_mult;
+    add_ts = true,
+)
     @assert add_ts || !with_increments
     c_sys5_pglib = load_and_fix_system(PSITestSystems, "c_sys5_pglib")
-    tweak_system!(c_sys5_pglib, load_mult, 1.0, therm_mult)
+    tweak_system!(c_sys5_pglib, load_pow_mult, therm_pow_mult, therm_price_mult)
     ms_comp = get_component(SEL_MULTISTART, c_sys5_pglib)
     old_op = get_operation_cost(ms_comp)
     old_ic = IncrementalCurve(get_value_curve(get_variable(old_op)))

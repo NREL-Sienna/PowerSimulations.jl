@@ -268,14 +268,6 @@ function construct_device!(
         )
     end
 
-    add_variables!(
-        container,
-        FlowActivePowerVariable,
-        network_model,
-        devices,
-        StaticBranch(),
-    )
-
     if haskey(get_time_series_names(model), DynamicBranchRatingTimeSeriesParameter)
         add_parameters!(container, DynamicBranchRatingTimeSeriesParameter, devices, model)
     end
@@ -314,7 +306,6 @@ function construct_device!(
         network_model,
     )
 
-    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, FlowRateConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, PTDFPowerModel)
@@ -424,13 +415,14 @@ function construct_device!(
         network_model,
     )
 
-    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     branch_rate_bounds!(
         container,
         devices,
         model,
         network_model,
     )
+
+    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
     add_constraint_dual!(container, sys, model)
     return
@@ -444,13 +436,6 @@ function construct_device!(
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACTransmission}
     devices = get_available_components(model, sys)
-    add_variables!(
-        container,
-        FlowActivePowerVariable,
-        network_model,
-        devices,
-        StaticBranchUnbounded(),
-    )
     add_feedforward_arguments!(container, model, devices)
     return
 end
@@ -1573,7 +1558,7 @@ function _get_branch_map(
     all_branch_maps_by_type = net_reduction_data.all_branch_maps_by_type
     inter_area_branch_map =
     # This method uses ACBranch to support HVDC
-        Dict{Tuple{String, String}, Dict{DataType, Vector{<:PSY.ACBranch}}}()
+        Dict{Tuple{String, String}, Dict{DataType, Vector{String}}}()
     name_to_arc_maps = PNM.get_name_to_arc_maps(net_reduction_data)
     for br_type in network_model.modeled_branch_types
         !haskey(name_to_arc_maps, br_type) && continue
@@ -1585,9 +1570,9 @@ function _get_branch_map(
                 branch_typed_dict = get!(
                     inter_area_branch_map,
                     (PSY.get_name(area_from), PSY.get_name(area_to)),
-                    Dict{DataType, Vector{<:PSY.ACBranch}}(),
+                    Dict{DataType, Vector{String}}(),
                 )
-                _add_to_branch_map!(branch_typed_dict, reduction_entry)
+                _add_to_branch_map!(branch_typed_dict, reduction_entry, name)
             end
         end
     end
@@ -1595,14 +1580,23 @@ function _get_branch_map(
 end
 
 function _add_to_branch_map!(
-    branch_typed_dict::Dict{DataType, Vector{<:PSY.ACBranch}},
+    branch_typed_dict::Dict{DataType, Vector{String}},
     reduction_entry::T,
+    name::String,
 ) where {T <: PSY.ACBranch}
     if !haskey(branch_typed_dict, T)
-        branch_typed_dict[T] = [reduction_entry]
+        branch_typed_dict[T] = [name]
     else
-        push!(branch_typed_dict[T], reduction_entry)
+        push!(branch_typed_dict[T], name)
     end
+end
+
+function _add_to_branch_map!(
+    branch_typed_dict::Dict{DataType, Vector{String}},
+    reduction_entry::Union{PNM.BranchesParallel, PNM.BranchesSeries},
+    name::String,
+)
+    _add_to_branch_map!(branch_typed_dict, first(reduction_entry), name)
 end
 
 # This method uses ACBranch to support 2T - HVDC
@@ -1617,7 +1611,7 @@ function _get_area_from_to(reduction_entry::PNM.ThreeWindingTransformerWinding)
     winding_int = PNM.get_winding_number(reduction_entry)
     if winding_int == 1
         area_from = PSY.get_area(PSY.get_primary_star_arc(tfw).from)
-        area_to = PSY.get_area(PSY.primary_star_arc(tfw).to)
+        area_to = PSY.get_area(PSY.get_primary_star_arc(tfw).to)
     elseif winding_int == 2
         area_from = PSY.get_area(PSY.get_secondary_star_arc(tfw).from)
         area_to = PSY.get_area(PSY.get_secondary_star_arc(tfw).to_index)

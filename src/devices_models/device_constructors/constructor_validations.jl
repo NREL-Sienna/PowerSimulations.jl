@@ -9,6 +9,6 @@ function validate_available_devices(
     if isempty(devices)
         return false
     end
-    PSY.check_components(system, devices)
+    #PSY.check_components(system, devices)
     return true
 end
