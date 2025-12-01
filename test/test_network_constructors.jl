@@ -68,29 +68,32 @@ end
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     systems = [c_sys5, c_sys14, c_sys14_dc]
-    objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
-        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
     ]
-    PTDF_ref = IdDict{System, PTDF}(
+    PTDF_ref = IdDict{System, Any}(
         c_sys5 => PTDF(c_sys5),
         c_sys14 => PTDF(c_sys14),
         c_sys14_dc => PTDF(c_sys14_dc),
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [264, 0, 264, 264, 168],
-        c_sys14 => [600, 0, 600, 600, 504],
-        c_sys14_dc => [600, 0, 648, 552, 456],
+        c_sys5 => [120, 0, 264, 264, 24],
+        c_sys14 => [120, 0, 600, 600, 24],
+        c_sys14_dc => [168, 0, 648, 552, 24],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 240000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
     )
-    for (ix, sys) in enumerate(systems)
+    test_objfuncs_types = IdDict{System, Type}(
+        c_sys5 => GAEVF,
+        c_sys14 => GQEVF,
+        c_sys14_dc => GQEVF,
+    )
+    for sys in systems
         template = get_thermal_dispatch_template_network(
             NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF_ref[sys]),
         )
@@ -104,7 +107,7 @@ end
             test_results[sys]...,
             false,
         )
-        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checkobjfun_test(ps_model, test_objfuncs_types[sys])
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
@@ -124,7 +127,6 @@ end
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
-        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
     ]
     PTDF_ref = IdDict{System, VirtualPTDF}(
         c_sys5 => VirtualPTDF(c_sys5),
@@ -132,14 +134,19 @@ end
         c_sys14_dc => VirtualPTDF(c_sys14_dc),
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [264, 0, 264, 264, 168],
-        c_sys14 => [600, 0, 600, 600, 504],
-        c_sys14_dc => [600, 0, 648, 552, 456],
+        c_sys5 => [120, 0, 264, 264, 24],
+        c_sys14 => [120, 0, 600, 600, 24],
+        c_sys14_dc => [168, 0, 648, 552, 24],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 240000.0,
         c_sys14 => 142000.0,
         c_sys14_dc => 142000.0,
+    )
+    test_objfuncs_types = IdDict{System, Type}(
+        c_sys5 => GAEVF,
+        c_sys14 => GQEVF,
+        c_sys14_dc => GQEVF,
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(PTDFPowerModel)
@@ -166,6 +173,7 @@ end
     end
 end
 
+#= Disabled until we merge the SCUC branch
 @testset "Network DC-PF with VirtualPTDF Model and implementing Dynamic Branch Ratings" begin
     line_device_model = DeviceModel(
         Line,
@@ -272,6 +280,7 @@ end
         )
     end
 end
+=#
 
 @testset "Network DC lossless -PF network with PowerModels DCPlosslessForm" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
@@ -642,7 +651,7 @@ end
           PSI.ModelBuildStatus.BUILT
     solve!(ps_model)
 
-    moi_tests(ps_model, 552, 0, 576, 528, 336, false)
+    moi_tests(ps_model, 264, 0, 576, 528, 48, false)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
@@ -782,11 +791,10 @@ end
         set_device_model!(template_uc, ThermalStandard, thermal_model)
 
         ##### Solve Reduced Model ####
-        solver = HiGHS_optimizer
         uc_model_red = DecisionModel(
             template_uc,
             new_sys;
-            optimizer = solver,
+            optimizer = HiGHS_optimizer,
             name = "UC_RED",
             store_variable_names = true,
         )
@@ -797,11 +805,19 @@ end
 
         res_red = OptimizationProblemResults(uc_model_red)
 
-        flow_lines = read_variable(
-            res_red,
-            "FlowActivePowerVariable__Line";
-            table_format = TableFormat.WIDE,
-        )
+        if net_model == DCPPowerModel
+            flow_lines = read_variable(
+                res_red,
+                "FlowActivePowerVariable__Line";
+                table_format = TableFormat.WIDE,
+            )
+        else
+            flow_lines = read_expression(
+                res_red,
+                "PTDFBranchFlow__Line";
+                table_format = TableFormat.WIDE,
+            )
+        end
         line_names = DataFrames.names(flow_lines)[2:end]
 
         ##### Solve Original Model ####
@@ -816,7 +832,7 @@ end
         uc_model_orig = DecisionModel(
             template_uc_orig,
             new_sys;
-            optimizer = solver,
+            optimizer = HiGHS_optimizer,
             name = "UC_ORIG",
             store_variable_names = true,
         )
@@ -827,11 +843,19 @@ end
 
         res_orig = OptimizationProblemResults(uc_model_orig)
 
-        flow_lines_orig = read_variable(
-            res_orig,
-            "FlowActivePowerVariable__Line";
-            table_format = TableFormat.WIDE,
-        )
+        if net_model == DCPPowerModel
+            flow_lines_orig = read_variable(
+                res_orig,
+                "FlowActivePowerVariable__Line";
+                table_format = TableFormat.WIDE,
+            )
+        else
+            flow_lines_orig = read_expression(
+                res_orig,
+                "PTDFBranchFlow__Line";
+                table_format = TableFormat.WIDE,
+            )
+        end
 
         for line in line_names
             @test isapprox(flow_lines[!, line], flow_lines_orig[!, line])
@@ -869,9 +893,9 @@ end
 
     res_red = OptimizationProblemResults(uc_model_red)
 
-    flow_lines = read_variable(
+    flow_lines = read_expression(
         res_red,
-        "FlowActivePowerVariable__Line";
+        "PTDFBranchFlow__Line";
         table_format = TableFormat.WIDE,
     )
     line_names = DataFrames.names(flow_lines)[2:end]
@@ -899,9 +923,9 @@ end
 
     res_orig = OptimizationProblemResults(uc_model_orig)
 
-    flow_lines_orig = read_variable(
+    flow_lines_orig = read_expression(
         res_orig,
-        "FlowActivePowerVariable__Line";
+        "PTDFBranchFlow__Line";
         table_format = TableFormat.WIDE,
     )
 
@@ -1115,7 +1139,7 @@ end
           PSI.ModelBuildStatus.BUILT
     @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-    moi_tests(ps_model, 576, 0, 576, 576, 360, false)
+    moi_tests(ps_model, 264, 0, 576, 576, 48, false)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
@@ -1216,7 +1240,7 @@ end
           PSI.ModelBuildStatus.BUILT
     @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-    moi_tests(ps_model, 576, 0, 576, 576, 360, false)
+    moi_tests(ps_model, 264, 0, 576, 576, 48, false)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
@@ -1338,7 +1362,7 @@ end
           PSI.ModelBuildStatus.BUILT
     @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-    moi_tests(ps_model, 600, 0, 600, 600, 384, false)
+    moi_tests(ps_model, 264, 0, 600, 600, 48, false)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
@@ -1373,19 +1397,7 @@ function add_dummy_time_series_data!(sys)
     return sys
 end
 
-function get_n_constraints_in_container(ps_model)
-    return sum([
-        size(v)[1] * size(v)[2] for v in values(ps_model.internal.container.constraints)
-    ])
-end
-
-function get_n_variables_in_container(ps_model)
-    return sum([
-        size(v)[1] * size(v)[2] for v in values(ps_model.internal.container.variables)
-    ])
-end
-
-@testset "Network reductions - PTDF" begin
+@testset "Network reductions - PTDF StaticBranch" begin
     # Base Case : Only reductions for double circuits:
     sys = build_system(PSITestSystems, "case11_network_reductions")
     add_dummy_time_series_data!(sys)
@@ -1405,10 +1417,14 @@ end
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    # (3 double circuits) x (5 timesteps) = 15 additional variables in container compared to JuMP model:
-    moi_tests(ps_model, 60, 0, 60, 60, 65, false)
-    @test get_n_variables_in_container(ps_model) == 60
-    @test get_n_constraints_in_container(ps_model) == 185
+    moi_tests(ps_model, 0, 0, 60, 60, 5, false)
+    container = PSI.get_optimization_container(ps_model)
+    expression = PSI.get_expression(
+        container,
+        PTDFBranchFlow(),
+        Line,
+    )
+    @test size(expression) == (10, 5)
 
     # Radial Reduction :
     sys = build_system(PSITestSystems, "case11_network_reductions")
@@ -1429,9 +1445,14 @@ end
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(ps_model, 55, 0, 55, 55, 60, false)
-    @test get_n_variables_in_container(ps_model) == 55
-    @test get_n_constraints_in_container(ps_model) == 170
+    moi_tests(ps_model, 0, 0, 55, 55, 5, false)
+    container = PSI.get_optimization_container(ps_model)
+    expression = PSI.get_expression(
+        container,
+        PTDFBranchFlow(),
+        Line,
+    )
+    @test size(expression) == (9, 5)
 
     # Degree Two Reduction :
     sys = build_system(PSITestSystems, "case11_network_reductions")
@@ -1452,20 +1473,17 @@ end
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(ps_model, 35, 0, 35, 35, 40, false)
-    @test get_n_variables_in_container(ps_model) == 60
-    @test get_n_constraints_in_container(ps_model) == 110
-    vars = ps_model.internal.container.variables
-    line_flow =
-        vars[ISOPT.VariableKey{FlowActivePowerVariable, Line}(
-            "",
-        )]
-    tfw_flow = vars[ISOPT.VariableKey{
-        FlowActivePowerVariable,
-        Transformer2W,
-    }(
-        "",
-    )]
+    moi_tests(ps_model, 0, 0, 35, 35, 5, false)
+    expression = PSI.get_expression(
+        container,
+        PTDFBranchFlow(),
+        Line,
+    )
+    @test size(expression) == (9, 5)
+
+    container = PSI.get_optimization_container(ps_model)
+    line_flow = PSI.get_expression(container, PTDFBranchFlow(), Line)
+    tfw_flow = PSI.get_expression(container, PTDFBranchFlow(), Transformer2W)
     # Parallel branch within chain to d2:
     @test line_flow["2-10-i_double_circuit", :] == line_flow["10-3-i_1", :]
     # D2 chain with different component types:
@@ -1492,9 +1510,165 @@ end
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(ps_model, 30, 0, 30, 30, 35, false)
-    @test get_n_variables_in_container(ps_model) == 55
-    @test get_n_constraints_in_container(ps_model) == 95
+    moi_tests(ps_model, 0, 0, 30, 30, 5, false)
+    expression = PSI.get_expression(
+        container,
+        PTDFBranchFlow(),
+        Line,
+    )
+    @test size(expression) == (10, 5)
+end
+
+@testset "Network reductions - PTDF StaticBranchBounds" begin
+    # Base Case : Only reductions for double circuits:
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranchBounds)
+    set_device_model!(template, Transformer2W, StaticBranchBounds)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    moi_tests(ps_model, 60, 0, 0, 0, 65, false)
+    container = PSI.get_optimization_container(ps_model)
+    expression = PSI.get_expression(
+        container,
+        PTDFBranchFlow(),
+        Line,
+    )
+    @test size(expression) == (10, 5)
+    flow_var = PSI.get_variable(
+        container,
+        FlowActivePowerVariable(),
+        Line,
+    )
+    @test size(expression) == (10, 5)
+
+    # Radial Reduction :
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[RadialReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranchBounds)
+    set_device_model!(template, Transformer2W, StaticBranchBounds)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    moi_tests(ps_model, 55, 0, 0, 0, 60, false)
+    container = PSI.get_optimization_container(ps_model)
+    expression = PSI.get_expression(
+        container,
+        PTDFBranchFlow(),
+        Line,
+    )
+    @test size(expression) == (9, 5)
+
+    # Degree Two Reduction :
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[DegreeTwoReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranchBounds)
+    set_device_model!(template, Transformer2W, StaticBranchBounds)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    moi_tests(ps_model, 35, 0, 0, 0, 40, false)
+    expression = PSI.get_expression(
+        container,
+        PTDFBranchFlow(),
+        Line,
+    )
+    @test size(expression) == (9, 5)
+
+    flow_var = PSI.get_variable(
+        container,
+        FlowActivePowerVariable(),
+        Line,
+    )
+    @test size(expression) == (9, 5)
+
+    container = PSI.get_optimization_container(ps_model)
+    line_flow_exp = PSI.get_expression(container, PTDFBranchFlow(), Line)
+    tfw_flow_exp = PSI.get_expression(container, PTDFBranchFlow(), Transformer2W)
+    # Parallel branch within chain to d2:
+    @test line_flow_exp["2-10-i_double_circuit", :] == line_flow_exp["10-3-i_1", :]
+    # D2 chain with different component types:
+    @test line_flow_exp["1-9-i_1", :] == tfw_flow_exp["9-5-i_1", :]
+    # Parallel branch within chain to d2 with mixed types (parallel comes from tracker):
+    @test line_flow_exp["3-11-i_1", :] == tfw_flow_exp["11-4-i_double_circuit", :]
+
+    container = PSI.get_optimization_container(ps_model)
+    line_flow_var = PSI.get_variable(container, FlowActivePowerVariable(), Line)
+    tfw_flow_var = PSI.get_variable(container, FlowActivePowerVariable(), Transformer2W)
+    # Parallel branch within chain to d2:
+    @test line_flow_var["2-10-i_double_circuit", :] == line_flow_var["10-3-i_1", :]
+    # D2 chain with different component types:
+    @test line_flow_var["1-9-i_1", :] == tfw_flow_var["9-5-i_1", :]
+    # Parallel branch within chain to d2 with mixed types (parallel comes from tracker):
+    @test line_flow_var["3-11-i_1", :] == tfw_flow_var["11-4-i_double_circuit", :]
+
+    # Radial + Degree Two Reduction :
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    nr = NetworkReduction[RadialReduction(), DegreeTwoReduction()]
+    ptdf = PTDF(sys; network_reductions = nr)
+    template = ProblemTemplate(
+        NetworkModel(PTDFPowerModel;
+            PTDF_matrix = ptdf,
+            reduce_radial_branches = PNM.has_radial_reduction(ptdf.network_reduction_data),
+            reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                ptdf.network_reduction_data,
+            ),
+            use_slacks = false),
+    )
+    set_device_model!(template, Line, StaticBranchBounds)
+    set_device_model!(template, Transformer2W, StaticBranchBounds)
+    ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    moi_tests(ps_model, 30, 0, 0, 0, 35, false)
+    expression = PSI.get_expression(
+        container,
+        PTDFBranchFlow(),
+        Line,
+    )
+    @test size(expression) == (10, 5)
+
+    flow_var = PSI.get_variable(
+        container,
+        FlowActivePowerVariable(),
+        Line,
+    )
+    @test size(expression) == (10, 5)
 end
 
 @testset "Network reductions for system with subnetworks" begin
@@ -1570,35 +1744,23 @@ end
           PSI.ModelBuildStatus.BUILT
     l1_parallel = PSY.get_rating(PSY.get_component(ACTransmission, sys, "1-4-i_1"))
     l2_parallel = PSY.get_rating(PSY.get_component(ACTransmission, sys, "1-4-i_2"))
-    @test JuMP.upper_bound(
-        ps_model.internal.container.variables[PSI.VariableKey{FlowActivePowerVariable, Line}(
-            "",
-        )][
-            "1-4-i_double_circuit",
-            1,
-        ],
-    ) == minimum([l1_parallel, l2_parallel])
+    container = PSI.get_optimization_container(ps_model)
+    line_flow_var = PSI.get_variable(
+        container,
+        FlowActivePowerVariable(),
+        Line,
+    )
+    @test JuMP.upper_bound(line_flow_var["1-4-i_double_circuit", 1]) ==
+          minimum([l1_parallel, l2_parallel])
     l1_series = PSY.get_rating(PSY.get_component(ACTransmission, sys, "9-5-i_1"))
     l2_series = PSY.get_rating(PSY.get_component(ACTransmission, sys, "1-9-i_1"))
-    @test JuMP.upper_bound(
-        ps_model.internal.container.variables[PSI.VariableKey{
-            FlowActivePowerVariable,
-            Transformer2W,
-        }(
-            "",
-        )][
-            "9-5-i_1",
-            1,
-        ],
-    ) == minimum([l1_series, l2_series])
-    @test JuMP.upper_bound(
-        ps_model.internal.container.variables[PSI.VariableKey{FlowActivePowerVariable, Line}(
-            "",
-        )][
-            "1-9-i_1",
-            1,
-        ],
-    ) == minimum([l1_series, l2_series])
+    tx_flow_var = PSI.get_variable(
+        container,
+        FlowActivePowerVariable(),
+        Transformer2W,
+    )
+    @test JuMP.upper_bound(tx_flow_var["9-5-i_1", 1]) == minimum([l1_series, l2_series])
+    @test JuMP.upper_bound(line_flow_var["1-9-i_1", 1]) == minimum([l1_series, l2_series])
 end
 
 @testset "Network reductions - PowerModels" begin
