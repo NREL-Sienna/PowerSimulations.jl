@@ -17,7 +17,6 @@ abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
 
 abstract type AbstractStandardUnitCommitment <: AbstractThermalUnitCommitment end
 abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
-abstract type AbstractSecurityConstrainedUnitCommitment <: AbstractThermalUnitCommitment end
 
 """
 Formulation type to enable basic unit commitment representation without any intertemporal (ramp, min on/off time) constraints
@@ -27,12 +26,6 @@ struct ThermalBasicUnitCommitment <: AbstractStandardUnitCommitment end
 Formulation type to enable standard unit commitment with intertemporal constraints and simplified startup profiles
 """
 struct ThermalStandardUnitCommitment <: AbstractStandardUnitCommitment end
-
-"""
-Formulation type to enable Security-Constrained (G-1) standard unit commitment with intertemporal constraints and simplified startup profiles
-"""
-struct ThermalSecurityConstrainedStandardUnitCommitment <:
-       AbstractSecurityConstrainedUnitCommitment end
 
 """
 Formulation type to enable basic dispatch without any intertemporal (ramp) constraints
@@ -146,6 +139,13 @@ Branch formulation for PhaseShiftingTransformer flow control
 """
 struct PhaseAngleControl <: AbstractBranchFormulation end
 
+abstract type AbstractSecurityConstrainedStaticBranch <: AbstractBranchFormulation end
+
+"""
+Branch formulation for PSY.ACTransmission Branches that allows to model security-constrained UC/ED by adding outage supplemental attributes to the branches.
+"""
+struct SecurityConstrainedStaticBranch <: AbstractSecurityConstrainedStaticBranch end
+
 ############################### DC Branch Formulations #####################################
 abstract type AbstractTwoTerminalDCLineFormulation <: AbstractBranchFormulation end
 """
@@ -250,7 +250,13 @@ struct RangeReserve <: AbstractReservesFormulation end
 """
 Struct for to add reserves to be larger than a specified requirement and map how those should be allocated and deployed considering generators outages
 """
-struct RangeReserveWithDeliverabilityConstraints <:
+struct RampReserveWithDeliverabilityConstraints <:
+       AbstractSecurityConstrainedReservesFormulation end
+
+"""
+Struct for to add reserves implicit reserve requirement from generation outages and map how those should be allocated and deployed in each outage at each time-step
+"""
+struct ContingencyReserveWithDeliverabilityConstraints <:
        AbstractSecurityConstrainedReservesFormulation end
 
 """
