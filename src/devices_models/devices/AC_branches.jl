@@ -27,8 +27,7 @@ get_parameter_multiplier(::UpperBoundValueParameter, ::PSY.ACTransmission, ::Abs
 
 get_variable_multiplier(::PhaseShifterAngle, d::PSY.PhaseShiftingTransformer, ::PhaseAngleControl) = 1.0/PSY.get_x(d)
 
-get_multiplier_value(::AbstractDynamicBranchRatingTimeSeriesParameter, d::PSY.ACTransmission, ::StaticBranch) = 1.0/PSY.get_base_power(d)
-
+get_multiplier_value(::AbstractDynamicBranchRatingTimeSeriesParameter, d::PSY.ACTransmission, ::StaticBranch) = PSY.get_rating(d)
 
 get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, U}) where {T <: PSY.ACTransmission, U <: AbstractBranchFormulation} = DeviceModel(T, U)
 
@@ -458,6 +457,265 @@ function get_min_max_limits(
     return (min = -π / 2, max = π / 2)
 end
 
+function get_dynamic_branch_rating(
+    param_container::ParameterContainer,
+    branch::U,
+    ts_name::String,
+    ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
+) where {U <: PSY.ACTransmission}
+    if PSY.has_time_series(branch, ts_type, ts_name)
+        branch_dlr_params = get_parameter_column_refs(param_container, get_name(branch))
+        return branch_dlr_params[t] * mult[ci_name, t]
+    end
+
+    return get_rating(branch)
+end
+
+"""
+Min and max limits for Abstract Branch Formulation with DLR
+"""
+function _get_device_dynamic_branch_rating_limits(
+    param_container::ParameterContainer,
+    double_circuit::PNM.BranchesParallel{<:PSY.ACTransmission},
+    ts_name::String,
+    ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    min_max_by_circuit = [
+        _get_device_dynamic_branch_rating_limits(
+            param_container,
+            device,
+            ts_name,
+            ts_type,
+            t,
+            ci_name,
+            mult,
+        ) for
+        device in double_circuit
+    ]
+    min_by_circuit = [x.min for x in min_max_by_circuit]
+    max_by_circuit = [x.max for x in min_max_by_circuit]
+    # Limit by most restictive circuit:
+    return (min = maximum(min_by_circuit), max = minimum(max_by_circuit))
+end
+
+"""
+Min and max limits for Abstract Branch Formulation with DLR
+"""
+function get_min_max_limits(
+    param_container::ParameterContainer,
+    transformer_entry::PNM.ThreeWindingTransformerWinding,
+    ts_name::String,
+    ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
+    #constraint_type::Type{<:ConstraintType},
+    #branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    return get_min_max_limits(
+        transformer_entry,
+        FlowRateConstraint,
+        StaticBranch,
+    )
+end
+
+"""
+Min and max limits for Abstract Branch Formulation with DLR
+"""
+function _get_device_dynamic_branch_rating_limits(
+    param_container::ParameterContainer,
+    series_chain::PNM.BranchesSeries,
+    ts_name::String,
+    ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    min_max_by_segment = [
+        _get_device_dynamic_branch_rating_limits(
+            param_container,
+            segment,
+            ts_name,
+            ts_type,
+            t,
+            ci_name,
+            mult,
+        ) for
+        segment in series_chain
+    ]
+    min_by_segment = [x.min for x in min_max_by_segment]
+    max_by_segment = [x.max for x in min_max_by_segment]
+    # Limit by most restictive segment:
+    return (min = maximum(min_by_segment), max = minimum(max_by_segment))
+end
+
+"""
+Min and max limits for monitored line
+"""
+function get_min_max_limits(
+    param_container::ParameterContainer,
+    device::PSY.MonitoredLine,
+    ts_name::String,
+    ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
+)
+    return get_min_max_limits(
+        device,
+        FlowRateConstraint,
+        StaticBranch,
+    )
+end
+
+function _get_device_dynamic_branch_rating_limits(
+    param_container::ParameterContainer,
+    branch::U,
+    ts_name::String,
+    ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
+) where {U <: PSY.ACTransmission}
+    rating = get_dynamic_branch_rating(
+        param_container,
+        branch,
+        ts_name,
+        ts_type,
+        t,
+        ci_name,
+        mult,
+    )
+    return (min = -1 * rating, max = rating)
+end
+
+"""
+Min and max limits for Abstract Branch Formulation
+"""
+function get_emergency_min_max_limits(
+    double_circuit::PNM.BranchesParallel{<:PSY.ACTransmission},
+    constraint_type::Type{<:PostContingencyConstraintType},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    min_max_by_circuit = [
+        get_emergency_min_max_limits(device, constraint_type, branch_formulation) for
+        device in double_circuit
+    ]
+    min_by_circuit = [x.min for x in min_max_by_circuit]
+    max_by_circuit = [x.max for x in min_max_by_circuit]
+    # Limit by most restictive circuit:
+    return (min = maximum(min_by_circuit), max = minimum(max_by_circuit))
+end
+
+"""
+Min and max limits for Abstract Branch Formulation
+"""
+function get_emergency_min_max_limits(#TODO review this
+    transformer_entry::PNM.ThreeWindingTransformerWinding,
+    constraint_type::Type{<:PostContingencyConstraintType},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    transformer = PNM.get_transformer(transformer_entry)
+    winding_number = PNM.get_winding_number(transformer_entry)
+    if winding_number == 1
+        limits = (
+            min = -1 * PSY.get_rating_primary(transformer),
+            max = PSY.get_rating_primary(transformer),
+        )
+    elseif winding_number == 2
+        limits = (
+            min = -1 * PSY.get_rating_secondary(transformer),
+            max = PSY.get_rating_secondary(transformer),
+        )
+    elseif winding_number == 3
+        limits = (
+            min = -1 * PSY.get_rating_tertiary(transformer),
+            max = PSY.get_rating_tertiary(transformer),
+        )
+    end
+    return limits
+end
+
+"""
+Min and max limits for Abstract Branch Formulation
+"""
+function get_emergency_min_max_limits(
+    series_chain::PNM.BranchesSeries,
+    constraint_type::Type{<:PostContingencyConstraintType},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    min_max_by_segment = [
+        get_emergency_min_max_limits(segment, constraint_type, branch_formulation) for
+        segment in series_chain
+    ]
+    min_by_segment = [x.min for x in min_max_by_segment]
+    max_by_segment = [x.max for x in min_max_by_segment]
+    # Limit by most restictive segment:
+    return (min = maximum(min_by_segment), max = minimum(max_by_segment))
+end
+
+"""
+Min and max limits for Abstract Branch Formulation and Post-Contingency conditions
+"""
+function get_emergency_min_max_limits(
+    device::PSY.ACTransmission,
+    ::Type{<:PostContingencyConstraintType},
+    ::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    if PSY.get_rating_b(device) === nothing
+        @warn "Branch $(get_name(device)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
+            \n Consider including post-contingency limits using set_rating_b!()."
+        return (min = -1 * PSY.get_rating(device), max = PSY.get_rating(device))
+    end
+    return (min = -1 * PSY.get_rating_b(device), max = PSY.get_rating_b(device))
+end
+
+function get_emergency_min_max_limits(
+    entry::PSY.PhaseShiftingTransformer,
+    ::Type{PhaseAngleControlLimit},
+    ::Type{PhaseAngleControl},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    return get_min_max_limits(entry, PhaseAngleControlLimit, PhaseAngleControl)
+end
+
+"""
+Min and max limits for monitored line
+"""
+function get_emergency_min_max_limits(
+    device::PSY.MonitoredLine,
+    ::Type{<:PostContingencyConstraintType},
+    ::Type{<:AbstractBranchFormulation},
+)
+    if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to
+        @warn(
+            "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
+        )
+    end
+
+    rating = PSY.get_rating(device)
+    rating_b = PSY.get_rating_b(device)
+    if rating_b === nothing
+        @warn "MonitoredLine $(get_name(device)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
+            \n Consider including post-contingency limits using set_rating_b!()."
+    else
+        rating = rating_b
+    end
+
+    limit = min(
+        rating,
+        PSY.get_flow_limits(device).to_from,
+        PSY.get_flow_limits(device).from_to,
+    )
+    minmax = (min = -1 * limit, max = limit)
+    return minmax
+end
+
 function _get_device_dynamic_branch_rating_time_series(
     param_container::ParameterContainer,
     device::PSY.ACTransmission,
@@ -470,6 +728,7 @@ function _get_device_dynamic_branch_rating_time_series(
     end
     return device_dlr_params
 end
+
 
 """
 Add branch rate limit constraints for ACBranch with AbstractActivePowerModel
@@ -522,6 +781,18 @@ function add_constraints!(
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
+
+    has_dlr_ts =
+        haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
+    if has_dlr_ts
+        ts_name =
+            get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
+        ts_type = get_default_time_series_type(container)
+        param_container =
+            get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
+        mult = get_multiplier_array(param_container)
+    end
+
     for (name, (arc, reduction)) in
         get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][T]
         # TODO: entry is not type stable here, it can return any type ACTransmission.
@@ -529,6 +800,17 @@ function add_constraints!(
         reduction_entry = all_branch_maps_by_type[reduction][T][arc]
         limits = get_min_max_limits(reduction_entry, FlowRateConstraint, U)
         for t in time_steps
+             if has_dlr_ts
+                limits =
+                    _get_device_dynamic_branch_rating_limits(
+                        param_container,
+                        reduction_entry,
+                        ts_name,
+                        ts_type,
+                        t,
+                        name,
+                        mult)
+            end
             con_ub[name, t] =
                 JuMP.@constraint(get_jump_model(container),
                     array[name, t] -
@@ -696,6 +978,30 @@ function _make_flow_expressions!(
     return name, expressions
     # change when using the not concurrent version
     # return expressions
+end
+
+function _make_branch_scuc_postcontingency_flow_expressions!(
+    jump_model::JuMP.Model,
+    name::String,
+    outage_id::String,
+    time_steps::UnitRange{Int},
+    lodf::Float64,
+    precontingency_outage_flow_variables::Vector{JuMP.VariableRef},
+    pre_contingency_flow::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
+) where {T}
+    # @debug "Making Flow Expression on thread $(Threads.threadid()) for branch $name"
+
+    expressions = Vector{JuMP.AffExpr}(undef, length(time_steps))
+    for t in time_steps
+        expressions[t] = JuMP.@expression(
+            jump_model,
+            pre_contingency_flow[name, t] +
+            (lodf * precontingency_outage_flow_variables[t])
+        )
+    end
+    return name, expressions
+    # change when using the not concurrent version
+    #return expressions
 end
 
 function _add_expression_to_container!(
