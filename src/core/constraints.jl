@@ -271,12 +271,7 @@ The specified constraint is formulated as:
 ```
 """
 struct FlowRateConstraint <: ConstraintType end
-struct PostContingencyEmergencyRateLimitConstrain <: PostContingencyConstraintType end
-
-"""
-Struct to create the constraint for branch flow rate limits from the 'from' bus to the 'to' bus.
-For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
-"""
+struct PostContingencyEmergencyFlowRateConstraint <: PostContingencyConstraintType end
 struct FlowRateConstraintFromTo <: ConstraintType end
 
 """
@@ -595,7 +590,7 @@ struct ReactivePowerOutageConstraint <: EventConstraint end
 Struct to create the constraints that set the current flowing through a DC line.
 ```math
 \\begin{align*}
-& i_l^{dc} = \\frac{1}{r_l} (v_{from,l} - v_{to,l}), \\quad \\forall t \\in \\{1,\\dots, T\\} 
+& i_l^{dc} = \\frac{1}{r_l} (v_{from,l} - v_{to,l}), \\quad \\forall t \\in \\{1,\\dots, T\\}
 \\end{align*}
 ```
 """
@@ -696,7 +691,7 @@ The specified constraint is formulated as:
 \\begin{align*}
 & i_c^{dc} = i_c^+ - i_c^-, \\quad \\forall t \\in \\{1,\\dots, T\\}  \\\\
 & i_c^+ \\le I_{max} \\cdot \\nu_c,  \\quad \\forall t \\in \\{1,\\dots, T\\}  \\\\
-& i_c^+ \\le I_{max} \\cdot (1 - \\nu_c),  \\quad \\forall t \\in \\{1,\\dots, T\\}  
+& i_c^+ \\le I_{max} \\cdot (1 - \\nu_c),  \\quad \\forall t \\in \\{1,\\dots, T\\}
 \\end{align*}
 ```
 """

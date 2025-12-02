@@ -23,8 +23,6 @@ export PTDFPowerModel
 export CopperPlatePowerModel
 export AreaBalancePowerModel
 export AreaPTDFPowerModel
-export SecurityConstrainedPTDFPowerModel
-export SecurityConstrainedAreaPTDFPowerModel
 
 # HVDC Network Relevant exports
 export TransportHVDCNetworkModel
@@ -53,6 +51,7 @@ export VariableMaxInterfaceFlow
 export StaticBranch
 export StaticBranchBounds
 export StaticBranchUnbounded
+export SecurityConstrainedStaticBranch
 export HVDCTwoTerminalLossless
 export HVDCTwoTerminalDispatch
 export HVDCTwoTerminalUnbounded
@@ -334,7 +333,7 @@ export RangeLimitConstraint
 export FlowRateConstraint
 export FlowRateConstraintFromTo
 export FlowRateConstraintToFrom
-export PostContingencyEmergencyRateLimitConstrain
+export PostContingencyEmergencyFlowRateConstraint
 export ReactivePowerVariableLimitsConstraint
 export RegulationLimitsConstraint
 export RequirementConstraint
