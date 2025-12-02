@@ -271,12 +271,7 @@ The specified constraint is formulated as:
 ```
 """
 struct FlowRateConstraint <: ConstraintType end
-struct PostContingencyEmergencyRateLimitConstrain <: PostContingencyConstraintType end
-
-"""
-Struct to create the constraint for branch flow rate limits from the 'from' bus to the 'to' bus.
-For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
-"""
+struct PostContingencyEmergencyFlowRateConstraint <: PostContingencyConstraintType end
 struct FlowRateConstraintFromTo <: ConstraintType end
 
 """
