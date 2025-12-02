@@ -83,7 +83,7 @@ end
 
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
-    ::ParameterType,
+    ::W,
     attributes::TimeSeriesAttributes{U},
     service::V,
     model::DecisionModel,
@@ -92,6 +92,7 @@ function _update_parameter_values!(
     T <: Union{JuMP.VariableRef, Float64},
     U <: PSY.AbstractDeterministic,
     V <: PSY.Service,
+    W <: ParameterType,
 }
     initial_forecast_time = get_current_time(model) # Function not well defined for DecisionModels
     horizon = get_time_steps(get_optimization_container(model))[end]
@@ -106,11 +107,13 @@ function _update_parameter_values!(
         horizon,
     )
     for (t, value) in enumerate(ts_vector)
-        if !isfinite(value)
-            error("The value for the time series $(ts_name) is not finite. \
+        unwrapped_value =
+            _unwrap_for_param(W(), value, lookup_additional_axes(parameter_array))
+        if !all(isfinite.(unwrapped_value))
+            warn("The value for the time series $(ts_name) is not finite. \
                   Check that the data in the time series is valid.")
         end
-        _set_param_value!(parameter_array, value, ts_uuid, t)
+        _set_param_value!(parameter_array, unwrapped_value, ts_uuid, t)
     end
 end
 
@@ -541,7 +544,7 @@ function update_container_parameter_values!(
     # Multiplier is only needed for the objective function since `_update_parameter_values!` also updates the objective function
     parameter_multiplier = get_parameter_multiplier_array(optimization_container, key)
     parameter_attributes = get_parameter_attributes(optimization_container, key)
-    _update_parameter_values!(
+    _update_service_cost_parameter_values!(
         parameter_array,
         T(),
         parameter_multiplier,
@@ -549,6 +552,7 @@ function update_container_parameter_values!(
         U,
         model,
         input,
+        key.meta, # name
     )
     return
 end

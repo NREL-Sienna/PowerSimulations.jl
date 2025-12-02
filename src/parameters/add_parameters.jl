@@ -72,6 +72,23 @@ end
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
+    service::U,
+    model::ServiceModel{U, V},
+) where {
+    T <: DecrementalPiecewiseLinearSlopeParameter,
+    U <: PSY.Service,
+    V <: AbstractServiceFormulation}
+    if get_rebuild_model(get_settings(container)) &&
+       has_container_key(container, T(), U, PSY.get_name(service))
+        return
+    end
+    _add_parameters!(container, T, service, model)
+    return
+end
+
+function add_parameters!(
+    container::OptimizationContainer,
+    ::Type{T},
     ff::AbstractAffectFeedforward,
     model::DeviceModel{D, W},
     devices::V,
@@ -313,6 +330,13 @@ end
 _get_time_series_name(::T, ::PSY.Component, model::DeviceModel) where {T <: ParameterType} =
     get_time_series_names(model)[T]
 
+_get_time_series_name(
+    ::T,
+    ::PSY.Component,
+    model::ServiceModel,
+) where {T <: ParameterType} =
+    get_time_series_names(model)[T]
+
 _get_time_series_name(::StartupCostParameter, device::PSY.Component, ::DeviceModel) =
     get_name(PSY.get_start_up(PSY.get_operation_cost(device)))
 
@@ -353,6 +377,16 @@ _get_time_series_name(
 ) =
     get_name(get_input_offer_curves(PSY.get_operation_cost(device)))
 
+_get_time_series_name(
+    ::Union{
+        DecrementalPiecewiseLinearSlopeParameter,
+        DecrementalPiecewiseLinearBreakpointParameter,
+    },
+    service::PSY.ReserveDemandCurve,
+    ::ServiceModel,
+) =
+    get_name(PSY.get_variable(service))
+
 # Layer of indirection to figure out what eltype we expect to find in various time series
 # (we could just read the time series and figure it out dynamically if this becomes too brittle)
 _get_expected_time_series_eltype(::T) where {T <: ParameterType} = Float64
@@ -381,6 +415,22 @@ _param_to_vars(
     ::AbstractDeviceFormulation,
 ) =
     (PiecewiseLinearBlockDecrementalOffer,)
+_param_to_vars(
+    ::Union{
+        IncrementalPiecewiseLinearSlopeParameter,
+        IncrementalPiecewiseLinearBreakpointParameter,
+    },
+    ::AbstractServiceFormulation,
+) =
+    (PiecewiseLinearBlockIncrementalOffer,)
+_param_to_vars(
+    ::Union{
+        DecrementalPiecewiseLinearSlopeParameter,
+        DecrementalPiecewiseLinearBreakpointParameter,
+    },
+    ::AbstractServiceFormulation,
+) =
+    (PiecewiseLinearBlockDecrementalOffer,)
 
 # Layer of indirection to handle possible additional axes. Most parameters have just the two
 # usual axes (device, timestamp), but some have a third (e.g., piecewise tranche)
@@ -406,12 +456,23 @@ calc_additional_axes(
     W <: AbstractServiceFormulation,
 } where {D <: PSY.Service} = ()
 
+calc_additional_axes(
+    ::OptimizationContainer,
+    ::T,
+    ::U,
+    ::ServiceModel{U, W},
+) where {
+    T <: ParameterType,
+    U <: PSY.Service,
+    W <: AbstractServiceFormulation,
+} = ()
+
 _get_max_tranches(data::Vector{IS.PiecewiseStepData}) = maximum(length.(data))
 _get_max_tranches(data::TimeSeries.TimeArray) = _get_max_tranches(values(data))
 _get_max_tranches(data::AbstractDict) = maximum(_get_max_tranches.(values(data)))
 
 # Iterate through all periods of a piecewise time series and return the maximum number of tranches
-function get_max_tranches(device::PSY.Device, piecewise_ts::IS.TimeSeriesKey)
+function get_max_tranches(device::PSY.Component, piecewise_ts::IS.TimeSeriesKey)
     data = PSY.get_data(PSY.get_time_series(device, piecewise_ts))
     max_tranches = _get_max_tranches(data)
     return max_tranches
@@ -450,6 +511,38 @@ function calc_additional_axes(
     curves = _get_parameter_field.((P(),), PSY.get_operation_cost.(devices))
     max_tranches = maximum(get_max_tranches.(devices, curves))
     return (make_tranche_axis(max_tranches + 1),)  # one more breakpoint than tranches
+end
+
+# Find the global maximum number of tranches we'll have to handle and create the parameter with an axis of that length
+function calc_additional_axes(
+    ::OptimizationContainer,
+    ::P,
+    service::U,
+    ::ServiceModel{U, W},
+) where {
+    P <: AbstractPiecewiseLinearSlopeParameter,
+    U <: PSY.ReserveDemandCurve,
+    W <: AbstractServiceFormulation,
+}
+    curves = PSY.get_variable(service)
+    max_tranches = get_max_tranches(service, curves)
+    return (make_tranche_axis(max_tranches),)
+end
+
+# Find the global maximum number of tranches we'll have to handle and create the parameter with an axis of that length
+function calc_additional_axes(
+    ::OptimizationContainer,
+    ::P,
+    service::U,
+    ::ServiceModel{U, W},
+) where {
+    P <: AbstractPiecewiseLinearBreakpointParameter,
+    U <: PSY.ReserveDemandCurve,
+    W <: AbstractServiceFormulation,
+}
+    curves = PSY.get_variable(service)
+    max_tranches = get_max_tranches(service, curves)
+    return (make_tranche_axis(max_tranches + 1),)
 end
 
 """
@@ -574,12 +667,12 @@ function _add_parameters!(
     if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
     end
-    ts_name = get_time_series_names(model)[T]
+    ts_name = _get_time_series_name(T(), service, model)
     time_steps = get_time_steps(container)
     name = PSY.get_name(service)
     ts_uuid = string(IS.get_time_series_uuid(ts_type, service, ts_name))
     @debug "adding" T U _group = LOG_GROUP_OPTIMIZATION_CONTAINER
-    additional_axes = calc_additional_axes(container, T(), [service], model)
+    additional_axes = calc_additional_axes(container, T(), service, model)
     parameter_container = add_param_container!(
         container,
         T(),
@@ -595,13 +688,62 @@ function _add_parameters!(
 
     set_subsystem!(get_attributes(parameter_container), get_subsystem(model))
     jump_model = get_jump_model(container)
-    ts_vector = get_time_series(container, service, T(), name)
     multiplier = get_multiplier_value(T(), service, V())
+    raw_ts_vals = get_time_series_initial_values!(container, ts_type, service, ts_name)
+    ts_vals = _unwrap_for_param.(Ref(T()), raw_ts_vals, Ref(additional_axes))
+    @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
     for t in time_steps
         set_multiplier!(parameter_container, multiplier, name, t)
-        set_parameter!(parameter_container, jump_model, ts_vector[t], ts_uuid, t)
+        set_parameter!(parameter_container, jump_model, ts_vals[t], ts_uuid, t)
     end
     add_component_name!(get_attributes(parameter_container), name, ts_uuid)
+    return
+end
+
+function _add_parameters!(
+    container::OptimizationContainer,
+    ::Type{T},
+    service::U,
+    model::ServiceModel{U, V},
+) where {
+    T <: DecrementalPiecewiseLinearSlopeParameter,
+    U <: PSY.Service,
+    V <: AbstractServiceFormulation,
+}
+    ts_type = get_default_time_series_type(container)
+    ts_name = _get_time_series_name(T(), service, model)
+    ts_uuid = string(IS.get_time_series_uuid(ts_type, service, ts_name))
+    if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
+        error(
+            "add_parameters! for DecrementalPiecewiseLinearSlopeParameter is not compatible with $ts_type",
+        )
+    end
+    time_steps = get_time_steps(container)
+    name = PSY.get_name(service)
+    additional_axes = calc_additional_axes(container, T(), service, model)
+    parameter_container = add_param_container!(
+        container,
+        T(),
+        U,
+        ts_type,
+        _param_to_vars(T(), V()),
+        ts_name,
+        [ts_uuid],
+        [name],
+        additional_axes,
+        time_steps;
+        meta = name,
+    )
+
+    jump_model = get_jump_model(container)
+    multiplier = get_multiplier_value(T(), service, V())
+    raw_ts_vals = get_time_series_initial_values!(container, ts_type, service, ts_name)
+    ts_vals = _unwrap_for_param.(Ref(T()), raw_ts_vals, Ref(additional_axes))
+    @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
+    for t in time_steps
+        set_multiplier!(parameter_container, multiplier, name, t)
+        set_parameter!(parameter_container, jump_model, ts_vals[t], name, t)
+    end
     return
 end
 
