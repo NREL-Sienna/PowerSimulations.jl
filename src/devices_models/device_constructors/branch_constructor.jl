@@ -325,66 +325,6 @@ end
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
-    ::ModelConstructStage,
-    model::DeviceModel{V, StaticBranch},
-    network_model::NetworkModel{T},
-) where {V <: PSY.ACTransmission, T <: AbstractSecurityConstrainedPTDFModel}
-    devices = get_available_components(model, sys)
-    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
-    add_constraints!(container, FlowRateConstraint, devices, model, network_model)
-
-    # TODO: Security constrained. Remove this line. Method not defined
-    valid_outages = _get_all_scuc_valid_outages(sys, network_model)
-
-    if isempty(valid_outages)
-        throw(
-            ArgumentError(
-                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ACTransmission)
-                to add the LODF expressions/constraints for the requested network model: $network_model.",
-            ))
-    end
-
-    lodf = get_LODF_matrix(network_model)
-    removed_branches = PNM.get_removed_branches(lodf.network_reduction_data)
-    # TODO: Security constrained. This method might not be needed. Analyze why is here
-    branches = get_available_components(
-        b -> PSY.get_name(b) ∉ removed_branches,
-        PSY.ACTransmission,
-        sys,
-    )
-
-    #TODO Handle also N-2 cases
-    branches_outages =
-        _get_all_single_outage_branches_by_type(sys, valid_outages, branches, V)
-    if !isempty(branches_outages)
-        add_to_expression!(
-            container,
-            PostContingencyBranchFlow,
-            FlowActivePowerVariable,
-            branches,
-            branches_outages,
-            model,
-            network_model,
-        )
-
-        add_constraints!(
-            container,
-            PostContingencyEmergencyFlowRateConstraint,
-            branches,
-            branches_outages,
-            model,
-            network_model,
-        )
-    end
-    add_feedforward_constraints!(container, model, devices)
-    objective_function!(container, devices, model, SecurityConstrainedPTDFPowerModel)
-    add_constraint_dual!(container, sys, model)
-    return
-end
-
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
     ::ArgumentConstructStage,
     model::DeviceModel{T, StaticBranchBounds},
     network_model::NetworkModel{<:AbstractPTDFModel},
