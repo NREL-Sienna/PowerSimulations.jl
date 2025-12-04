@@ -54,9 +54,12 @@ function construct_device!(
     ::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, StaticBranch},
-    network_model::NetworkModel{CopperPlatePowerModel},
+    network_model::Union{
+        NetworkModel{CopperPlatePowerModel},
+        NetworkModel{AreaBalancePowerModel},
+    },
 ) where {T <: PSY.ACTransmission}
-    @debug "No model construction needed for CopperPlatePowerModel and DeviceModel{$T, StaticBranch}" _group =
+    @debug "No model construction needed for CopperPlatePowerModel or AreaBalancePowerModel and DeviceModel{$T, StaticBranch}" _group =
         LOG_GROUP_BRANCH_CONSTRUCTIONS
     return
 end
