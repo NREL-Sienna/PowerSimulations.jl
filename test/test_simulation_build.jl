@@ -218,10 +218,10 @@ end
 @testset "Test Upper/Lower Bound Feedforwards" begin
     template_uc = get_template_basic_uc_simulation()
     set_network_model!(template_uc, NetworkModel(PTDFPowerModel; use_slacks = true))
-    set_device_model!(template_uc, DeviceModel(Line, StaticBranchUnbounded))
+    set_device_model!(template_uc, DeviceModel(Line, StaticBranchBounds))
     template_ed =
         get_template_nomin_ed_simulation(NetworkModel(PTDFPowerModel; use_slacks = true))
-    set_device_model!(template_ed, DeviceModel(Line, StaticBranchUnbounded))
+    set_device_model!(template_ed, DeviceModel(Line, StaticBranchBounds))
     c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
     c_sys5_hy_ed = PSB.build_system(PSITestSystems, "c_sys5_hy_ed")
     models = SimulationModels(;

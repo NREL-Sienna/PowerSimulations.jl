@@ -1152,13 +1152,12 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     device_model::DeviceModel{V, W},
-    network_model::NetworkModel{X},
+    network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: SystemBalanceExpressions,
     U <: TimeSeriesParameter,
     V <: PSY.StaticInjection,
     W <: AbstractDeviceFormulation,
-    X <: CopperPlatePowerModel,
 }
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
@@ -1200,13 +1199,12 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     device_model::DeviceModel{V, W},
-    network_model::NetworkModel{X},
+    network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: ActivePowerTimeSeriesParameter,
     V <: PSY.MotorLoad,
     W <: StaticPowerLoad,
-    X <: CopperPlatePowerModel,
 }
     expression = get_expression(container, T(), PSY.System)
     for d in devices
@@ -1229,13 +1227,12 @@ function add_to_expression!(
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
-    network_model::NetworkModel{X},
+    network_model::NetworkModel{CopperPlatePowerModel},
 ) where {
     T <: ActivePowerBalance,
     U <: OnStatusParameter,
     V <: PSY.ThermalGen,
     W <: AbstractDeviceFormulation,
-    X <: CopperPlatePowerModel,
 }
     parameter = get_parameter_array(container, U(), V)
     expression = get_expression(container, T(), PSY.System)
@@ -1660,7 +1657,7 @@ function add_to_expression!(
 ) where {
     T <: ActivePowerBalance,
     U <: FlowActivePowerVariable,
-    V <: PSY.ACBranch,
+    V <: PSY.TwoTerminalHVDC,
     W <: AbstractBranchFormulation,
     X <: Union{PTDFPowerModel, SecurityConstrainedPTDFPowerModel},
 }
@@ -1928,6 +1925,92 @@ function add_to_expression!(
     return
 end
 
+function _is_interchanges_interfaces(
+    contributing_devices_map::Dict{Type{<:PSY.Component}, Vector{<:PSY.Component}},
+)
+    if PSY.AreaInterchange ∈ keys(contributing_devices_map)
+        @assert length(keys(contributing_devices_map)) == 1
+        return true
+    end
+    return false
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{InterfaceTotalFlow},
+    ::Type{FlowActivePowerVariable},
+    service::PSY.TransmissionInterface,
+    model::ServiceModel{PSY.TransmissionInterface, V},
+    network_model::NetworkModel{AreaPTDFPowerModel},
+) where {V <: Union{ConstantMaxInterfaceFlow, VariableMaxInterfaceFlow}}
+    net_reduction_data = get_network_reduction(network_model)
+    expression = get_expression(container, InterfaceTotalFlow(), PSY.TransmissionInterface)
+    service_name = get_service_name(model)
+    direction_map = PSY.get_direction_mapping(service)
+    contributing_devices_map = get_contributing_devices_map(model)
+    # Ignore interfaces over lines for AreaPTDFModel
+    if !_is_interchanges_interfaces(contributing_devices_map)
+        return
+    end
+    variable = get_variable(container, FlowActivePowerVariable(), PSY.AreaInterchange)
+    _handle_nodal_or_zonal_interfaces(
+        PSY.AreaInterchange,
+        net_reduction_data,
+        direction_map,
+        contributing_devices_map[PSY.AreaInterchange],
+        variable,
+        expression[service_name, :],
+    )
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{InterfaceTotalFlow},
+    ::Type{PTDFBranchFlow},
+    service::PSY.TransmissionInterface,
+    model::ServiceModel{PSY.TransmissionInterface, V},
+    network_model::NetworkModel{<:AbstractPTDFModel},
+) where {V <: Union{ConstantMaxInterfaceFlow, VariableMaxInterfaceFlow}}
+    net_reduction_data = get_network_reduction(network_model)
+    expression = get_expression(container, InterfaceTotalFlow(), PSY.TransmissionInterface)
+    service_name = get_service_name(model)
+    direction_map = PSY.get_direction_mapping(service)
+    contributing_devices_map = get_contributing_devices_map(model)
+    # Interfaces over interchanges
+    if _is_interchanges_interfaces(contributing_devices_map)
+        return
+    end
+
+    for (br_type, contributing_devices) in contributing_devices_map
+        flow_expression = get_expression(container, PTDFBranchFlow(), br_type)
+        all_branch_maps_by_type = net_reduction_data.all_branch_maps_by_type
+        for (name, (arc, reduction)) in PNM.get_name_to_arc_map(net_reduction_data, br_type)
+            reduction_entry = all_branch_maps_by_type[reduction][br_type][arc]
+            if _reduced_entry_in_interface(reduction_entry, contributing_devices)
+                if isempty(direction_map)
+                    direction = 1.0
+                else
+                    direction = _get_direction(
+                        arc,
+                        reduction_entry,
+                        direction_map,
+                        net_reduction_data,
+                    )
+                end
+                for t in axes(flow_expression, 2)
+                    JuMP.add_to_expression!(
+                        expression[service_name, t],
+                        flow_expression[name, t],
+                        Float64(direction),
+                    )
+                end
+            end
+        end
+    end
+    return
+end
+
 function _get_direction(
     ::Tuple{Int, Int},
     reduction_entry::PSY.ACTransmission,
@@ -1936,7 +2019,7 @@ function _get_direction(
 )
     name = PSY.get_name(reduction_entry)
     if !haskey(direction_map, name)
-        @error "Direction not found for $(summary(d)). Will use the default from -> to direction"
+        @warn "Direction not found for $(summary(reduction_entry)). Will use the default from -> to direction"
         return 1.0
     else
         return direction_map[name]
@@ -1956,13 +2039,12 @@ function _get_direction(
     ]
     if allequal(directions)
         return first(directions)
-    else
-        throw(
-            ArgumentError(
-                "The interface direction mapping contains a double circuit with opposite directions. Modify the data to have consistent directions for double circuits.",
-            ),
-        )
     end
+    throw(
+        ArgumentError(
+            "The interface direction mapping contains a double circuit with opposite directions. Modify the data to have consistent directions for double circuits.",
+        ),
+    )
 end
 
 function _get_direction(
@@ -2021,7 +2103,7 @@ function _reduced_entry_in_interface(
     if !allequal(in_interface)
         throw(
             ArgumentError(
-                "An interface is specified with only portion of a double-circuit that has not been reduced. Modify the data to include all parallel segements.",
+                "An interface is specified with only part of a double-circuit that has been reduced. Modify the data to include all parallel segements.",
             ),
         )
     end

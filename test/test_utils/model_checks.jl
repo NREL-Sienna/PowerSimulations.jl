@@ -175,11 +175,66 @@ function check_flow_variable_values(
     ::Type{T},
     ::Type{U},
     device_name::String,
+    limit::Float64,
+) where {T <: PSI.FlowActivePowerVariable, U <: PSY.Component}
+    psi_cont = PSI.get_optimization_container(model)
+    template = model.template
+    device_model = PSI.get_model(template, U)
+    dev_formulation = PSI.get_formulation(device_model)
+    net_formulation = PSI.get_network_formulation(template)
+    if dev_formulation <: Union{PSI.StaticBranch, PSI.StaticBranchUnbounded} &&
+       net_formulation <: PSI.PTDFPowerModel
+        variable = PSI.get_expression(psi_cont, PSI.PTDFBranchFlow(), U)
+    else
+        variable = PSI.get_variable(psi_cont, T(), U)
+    end
+    for var in variable[device_name, :]
+        if !(PSI.jump_value(var) <= (limit + 1e-2))
+            @error "$device_name out of bounds $(PSI.jump_value(var))"
+            return false
+        end
+    end
+    return true
+end
+
+function check_flow_variable_values(
+    model::DecisionModel,
+    ::Type{T},
+    ::Type{U},
+    device_name::String,
     limit_min::Float64,
     limit_max::Float64,
 ) where {T <: PSI.VariableType, U <: PSY.Component}
     psi_cont = PSI.get_optimization_container(model)
     variable = PSI.get_variable(psi_cont, T(), U)
+    for var in variable[device_name, :]
+        if !(PSI.jump_value(var) <= (limit_max + 1e-2)) ||
+           !(PSI.jump_value(var) >= (limit_min - 1e-2))
+            return false
+        end
+    end
+    return true
+end
+
+function check_flow_variable_values(
+    model::DecisionModel,
+    ::Type{T},
+    ::Type{U},
+    device_name::String,
+    limit_min::Float64,
+    limit_max::Float64,
+) where {T <: PSI.FlowActivePowerVariable, U <: PSY.Component}
+    psi_cont = PSI.get_optimization_container(model)
+    template = model.template
+    device_model = PSI.get_model(template, U)
+    dev_formulation = PSI.get_formulation(device_model)
+    net_formulation = PSI.get_network_formulation(template)
+    if dev_formulation <: Union{PSI.StaticBranch, PSI.StaticBranchUnbounded} &&
+       net_formulation <: PSI.PTDFPowerModel
+        variable = PSI.get_expression(psi_cont, PSI.PTDFBranchFlow(), U)
+    else
+        variable = PSI.get_variable(psi_cont, T(), U)
+    end
     for var in variable[device_name, :]
         if !(PSI.jump_value(var) <= (limit_max + 1e-2)) ||
            !(PSI.jump_value(var) >= (limit_min - 1e-2))

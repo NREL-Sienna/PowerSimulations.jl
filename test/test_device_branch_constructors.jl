@@ -9,7 +9,6 @@
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
               PSI.ModelBuildStatus.BUILT
         @test check_variable_bounded(model_m, FlowActivePowerVariable, MonitoredLine)
-        @test check_variable_unbounded(model_m, FlowActivePowerVariable, Line)
 
         @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
         @test check_flow_variable_values(
@@ -58,8 +57,6 @@ end
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
               PSI.ModelBuildStatus.BUILT
 
-        @test check_variable_unbounded(model_m, FlowActivePowerVariable, MonitoredLine)
-
         @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
         @test check_flow_variable_values(model_m, FlowActivePowerVariable, Line, "2", 1.5)
     end
@@ -78,7 +75,6 @@ end
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
               PSI.ModelBuildStatus.BUILT
 
-        @test check_variable_unbounded(model_m, FlowActivePowerVariable, MonitoredLine)
         @test check_variable_bounded(model_m, FlowActivePowerVariable, Line)
 
         @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
@@ -117,9 +113,6 @@ end
         model_m = DecisionModel(template, system; optimizer = ipopt_optimizer)
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
               PSI.ModelBuildStatus.BUILT
-
-        @test check_variable_unbounded(model_m, FlowActivePowerVariable, TapTransformer)
-        @test check_variable_unbounded(model_m, FlowActivePowerVariable, Transformer2W)
 
         psi_constraint_test(model_m, ratelimit_constraint_keys)
 
@@ -495,10 +488,6 @@ end
     @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
 
-    @test !check_variable_bounded(model_m, FlowActivePowerVariable, TapTransformer)
-    @test !check_variable_bounded(model_m, FlowActivePowerVariable, Transformer2W)
-    @test check_variable_unbounded(model_m, FlowActivePowerVariable, Line)
-
     psi_constraint_test(model_m, ratelimit_constraint_keys)
 
     @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
@@ -557,7 +546,6 @@ end
     @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
 
-    @test check_variable_unbounded(model_m, FlowActivePowerVariable, Line)
     @test check_variable_unbounded(
         model_m,
         FlowActivePowerVariable,
@@ -859,9 +847,6 @@ end
         model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
         @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
               PSI.ModelBuildStatus.BUILT
-
-        # Test that variables are created for the transformer
-        @test check_variable_unbounded(model_m, FlowActivePowerVariable, Transformer3W)
 
         @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 

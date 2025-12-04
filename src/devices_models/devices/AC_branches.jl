@@ -62,7 +62,6 @@ function get_default_attributes(
     return Dict{String, Any}()
 end
 #################################### Flow Variable Bounds ##################################################
-# Additional Method to be able to filter the branches that are not in the PTDF matrix
 
 function add_variables!(
     container::OptimizationContainer,
@@ -113,6 +112,19 @@ function add_variables!(
             variable_container[name, t] = tracker_container[t]
         end
     end
+    return
+end
+
+function add_variables!(
+    ::OptimizationContainer,
+    ::Type{T},
+    network_model::NetworkModel{<:AbstractPTDFModel},
+    devices::IS.FlattenIteratorWrapper{U},
+    formulation::StaticBranchUnbounded,
+) where {
+    T <: AbstractACActivePowerFlow,
+    U <: PSY.ACTransmission}
+    @debug "PTDF Branch Flows with StaticBranchUnbounded do not require flow variables $T. Flow values are given by PTDFBranchFlow expression."
     return
 end
 
@@ -240,118 +252,6 @@ function _check_pwl_loss_model(devices)
         end
     end
     return
-end
-
-function _add_dense_pwl_loss_variables!(
-    container::OptimizationContainer,
-    devices,
-    model::DeviceModel{D, HVDCTwoTerminalPiecewiseLoss},
-) where {D <: PSY.TwoTerminalHVDC}
-    # Check if type and length of PWL loss model are the same for all devices
-    _check_pwl_loss_model(devices)
-
-    # Create Variables
-    time_steps = get_time_steps(container)
-    settings = get_settings(container)
-    formulation = HVDCTwoTerminalPiecewiseLoss()
-    T = HVDCPiecewiseLossVariable
-    binary = get_variable_binary(T(), D, formulation)
-    first_loss = PSY.get_loss(first(devices))
-    if isa(first_loss, PSY.LinearCurve)
-        len_segments = 4 # 2*1 + 2
-    elseif isa(first_loss, PSY.PiecewiseIncrementalCurve)
-        len_segments = 2 * length(PSY.get_slopes(first_loss)) + 2
-    else
-        error("Should not be here")
-    end
-
-    segments = ["pwl_$i" for i in 1:len_segments]
-    T = HVDCPiecewiseLossVariable
-    variable = add_variable_container!(
-        container,
-        T(),
-        D,
-        PSY.get_name.(devices),
-        segments,
-        time_steps,
-    )
-
-    for t in time_steps, s in segments, d in devices
-        name = PSY.get_name(d)
-        variable[name, s, t] = JuMP.@variable(
-            get_jump_model(container),
-            base_name = "$(T)_$(D)_{$(name), $(s), $(t)}",
-            binary = binary
-        )
-        ub = get_variable_upper_bound(T(), d, formulation)
-        ub !== nothing && JuMP.set_upper_bound(variable[name, s, t], ub)
-
-        lb = get_variable_lower_bound(T(), d, formulation)
-        lb !== nothing && JuMP.set_lower_bound(variable[name, s, t], lb)
-
-        if get_warm_start(settings)
-            init = get_variable_warm_start_value(T(), d, formulation)
-            init !== nothing && JuMP.set_start_value(variable[name, s, t], init)
-        end
-    end
-end
-
-# Full Binary
-function _add_sparse_pwl_loss_variables!(
-    container::OptimizationContainer,
-    devices,
-    ::DeviceModel{D, HVDCTwoTerminalPiecewiseLoss},
-) where {D <: PSY.TwoTerminalHVDC}
-    # Check if type and length of PWL loss model are the same for all devices
-    #_check_pwl_loss_model(devices)
-
-    # Create Variables
-    time_steps = get_time_steps(container)
-    settings = get_settings(container)
-    formulation = HVDCTwoTerminalPiecewiseLoss()
-    T = HVDCPiecewiseLossVariable
-    binary_T = get_variable_binary(T(), D, formulation)
-    U = HVDCPiecewiseBinaryLossVariable
-    binary_U = get_variable_binary(U(), D, formulation)
-    first_loss = PSY.get_loss(first(devices))
-    if isa(first_loss, PSY.LinearCurve)
-        len_segments = 3 # 2*1 + 1
-    elseif isa(first_loss, PSY.PiecewiseIncrementalCurve)
-        len_segments = 2 * length(PSY.get_slopes(first_loss)) + 1
-    else
-        error("Should not be here")
-    end
-
-    var_container = lazy_container_addition!(container, T(), D)
-    var_container_binary = lazy_container_addition!(container, U(), D)
-
-    for d in devices
-        name = PSY.get_name(d)
-        for t in time_steps
-            pwlvars = Array{JuMP.VariableRef}(undef, len_segments)
-            pwlvars_bin = Array{JuMP.VariableRef}(undef, len_segments)
-            for i in 1:len_segments
-                pwlvars[i] =
-                    var_container[(name, i, t)] = JuMP.@variable(
-                        get_jump_model(container),
-                        base_name = "$(T)_$(name)_{pwl_$(i), $(t)}",
-                        binary = binary_T
-                    )
-                ub = get_variable_upper_bound(T(), d, formulation)
-                ub !== nothing && JuMP.set_upper_bound(var_container[name, i, t], ub)
-
-                lb = get_variable_lower_bound(T(), d, formulation)
-                lb !== nothing && JuMP.set_lower_bound(var_container[name, i, t], lb)
-
-                pwlvars_bin[i] =
-                    var_container_binary[(name, i, t)] = JuMP.@variable(
-                        get_jump_model(container),
-                        base_name = "$(U)_$(name)_{pwl_$(i), $(t)}",
-                        binary = binary_U
-                    )
-            end
-        end
-    end
 end
 
 ################################## Rate Limits constraint_infos ############################
@@ -546,28 +446,70 @@ end
 
 function add_constraints!(
     container::OptimizationContainer,
-    ::Type{FlowRateConstraint},
+    cons_type::Type{FlowRateConstraint},
     devices::IS.FlattenIteratorWrapper{T},
-    model::DeviceModel{T, U},
-    network_model::NetworkModel{CopperPlatePowerModel},
-) where {T <: PSY.ACTransmission, U <: AbstractBranchFormulation}
-    inter_network_branches = T[]
-    for d in devices
-        ref_bus_from = get_reference_bus(network_model, PSY.get_arc(d).from)
-        ref_bus_to = get_reference_bus(network_model, PSY.get_arc(d).to)
-        if ref_bus_from != ref_bus_to
-            push!(inter_network_branches, d)
-        end
-    end
-    if !isempty(inter_network_branches)
-        add_range_constraints!(
+    device_model::DeviceModel{T, U},
+    network_model::NetworkModel{V},
+) where {
+    T <: PSY.ACTransmission,
+    U <: AbstractBranchFormulation,
+    V <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    net_reduction_data = network_model.network_reduction
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    branch_names = get_branch_argument_constraint_axis(
+        net_reduction_data,
+        reduced_branch_tracker,
+        devices,
+        cons_type,
+    )
+    all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
+
+    con_lb =
+        add_constraints_container!(
             container,
-            FlowRateConstraint,
-            FlowActivePowerVariable,
-            devices,
-            model,
-            CopperPlatePowerModel,
+            cons_type(),
+            T,
+            branch_names,
+            time_steps;
+            meta = "lb",
         )
+    con_ub =
+        add_constraints_container!(
+            container,
+            cons_type(),
+            T,
+            branch_names,
+            time_steps;
+            meta = "ub",
+        )
+
+    array = get_expression(container, PTDFBranchFlow(), T)
+
+    use_slacks = get_use_slacks(device_model)
+    if use_slacks
+        slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
+        slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
+    end
+    for (name, (arc, reduction)) in
+        get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][T]
+        # TODO: entry is not type stable here, it can return any type ACTransmission.
+        # It might have performance implications. Possibly separate this into other functions
+        reduction_entry = all_branch_maps_by_type[reduction][T][arc]
+        limits = get_min_max_limits(reduction_entry, FlowRateConstraint, U)
+        for t in time_steps
+            con_ub[name, t] =
+                JuMP.@constraint(get_jump_model(container),
+                    array[name, t] -
+                    (use_slacks ? slack_ub[name, t] : 0.0) <=
+                    limits.max)
+            con_lb[name, t] =
+                JuMP.@constraint(get_jump_model(container),
+                    array[name, t] +
+                    (use_slacks ? slack_lb[name, t] : 0.0) >=
+                    limits.min)
+        end
     end
     return
 end
@@ -843,7 +785,7 @@ function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{NetworkFlowConstraint},
     devices::IS.FlattenIteratorWrapper{B},
-    model::DeviceModel{B, <:AbstractBranchFormulation},
+    ::DeviceModel{B, StaticBranchBounds},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {B <: PSY.ACTransmission}
     time_steps = get_time_steps(container)
@@ -873,6 +815,17 @@ function add_constraints!(
             )
         end
     end
+    return
+end
+
+function add_constraints!(
+    ::OptimizationContainer,
+    cons_type::Type{NetworkFlowConstraint},
+    ::IS.FlattenIteratorWrapper{B},
+    ::DeviceModel{B, T},
+    ::NetworkModel{<:AbstractPTDFModel},
+) where {B <: PSY.ACTransmission, T <: Union{StaticBranchUnbounded, StaticBranch}}
+    @debug "PTDF Branch Flows with $T do not require network flow constraints $cons_type. Flow values are given by PTDFBranchFlow."
     return
 end
 
