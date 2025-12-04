@@ -27,7 +27,6 @@ Formulation type to enable standard unit commitment with intertemporal constrain
 """
 struct ThermalStandardUnitCommitment <: AbstractStandardUnitCommitment end
 
-
 """
 Formulation type to enable basic dispatch without any intertemporal (ramp) constraints
 """
