@@ -161,65 +161,14 @@ end
     # reductions. we'd have to pass kwargs all the way down to add_power_flow_data!.
 end
 
-"""
-Remove components from a system while preserving time series data on other components.
-(There ought to be a better way to do this than this roundabout method, but I have yet to find one:
-simply removing the time series on the components to be removed is not sufficient.)
-"""
-function remove_components!(sys::System, components::Vector{PSY.StaticInjection})
-    # record the time series
-    key_to_comp = Dict{TimeSeriesKey, Vector{PSY.Component}}()
-    key_to_ts = Dict{TimeSeriesKey, Union{AbstractDeterministic, SingleTimeSeries}}()
-    for comp in get_components(PSY.Device, sys)
-        for key in PSY.get_time_series_keys(comp)
-            a = get!(key_to_comp, key, [])
-            push!(a, comp)
-            ts = PSY.get_time_series(comp, key)
-            if key in keys(key_to_ts)
-                @assert ts == key_to_ts[key] "Mismatched time series for key $key"
-            end
-            key_to_ts[key] = deepcopy(ts)
-        end
-    end
-    # remove all time series
-    clear_time_series!(sys)
-    # remove the components
-    removed_components = Set{PSY.Component}()
-    for c in components
-        push!(removed_components, c)
-        remove_component!(sys, c)
-    end
-    # add back the time series
-    for (key, comps) in key_to_comp
-        for comp in comps
-            if comp ∉ removed_components
-                ts = key_to_ts[key]
-                if !(ts isa DeterministicSingleTimeSeries)
-                    add_time_series!(sys, comp, ts)
-                end
-            end
-        end
-    end
-    for ts in values(key_to_ts)
-        if ts isa AbstractDeterministic
-            transform_single_time_series!(sys, get_horizon(ts), get_interval(ts))
-            break
-        end
-    end
-    return
-end
-
-# failing due to changes in PowerFlows.jl: HVDC flows are stored separately, and not
-# currently reported.
-#=
 @testset "HVDC with AC PF in the loop" begin
     sys = build_system(PSISystems, "RTS_GMLC_DA_sys")
 
-hvdc = only(get_components(TwoTerminalGenericHVDCLine, sys))
+    hvdc = only(get_components(TwoTerminalGenericHVDCLine, sys))
     from = get_from(get_arc(hvdc))
     to = get_to(get_arc(hvdc))
 
-    # remove components that impact total bus power at the HVDC line buses
+    # remove components that impact total bus power at the HVDC line buses.
     components = collect(
         get_components(
             x -> get_number(get_bus(x)) ∈ (get_number(from), get_number(to)),
@@ -227,7 +176,7 @@ hvdc = only(get_components(TwoTerminalGenericHVDCLine, sys))
             sys,
         ),
     )
-    remove_components!(sys, components)
+    foreach(x -> remove_component!(sys, x), components)
     change_to_PQ = ["Chifa", "Arne"]
     for bus_name in change_to_PQ
         bus = get_component(PSY.ACBus, sys, bus_name)
@@ -265,20 +214,28 @@ hvdc = only(get_components(TwoTerminalGenericHVDCLine, sys))
 
     # test that the power flow results for the HVDC buses match the HVDC power transfer from the simulation
     bus_lookup = PFS.get_bus_lookup(data)
+
+    from_to = vd["FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine"][:, :value]
+    to_from = vd["FlowActivePowerToFromVariable__TwoTerminalGenericHVDCLine"][:, :value]
+
+    # needed to add -1 .* here.
     @test isapprox(
-        data.bus_active_power_injections[bus_lookup[get_number(from)], :] * base_power,
-        vd["FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine"][:, "DC1"],
+        data.bus_active_power_injection[bus_lookup[get_number(from)], :] * base_power,
+        -1 .* from_to,
         atol = 1e-9,
         rtol = 0,
     )
-    @test isapprox(
-        data.bus_active_power_injections[bus_lookup[get_number(to)], :] * base_power,
-        vd["FlowActivePowerToFromVariable__TwoTerminalGenericHVDCLine"][:, "DC1"],
-        atol = 1e-9,
-        rtol = 0,
-    )
+    # take into account losses in the HVDC line here. [Why does the above pass, then?]
+    hvdc_loss_curve = get_loss(hvdc)
+    # check that our hard-coded numbers are correct.
+    @assert  hvdc_loss_curve isa PSY.LinearCurve
+    @assert get_proportional_term(hvdc_loss_curve) == 0.1
+    @assert get_constant_term(hvdc_loss_curve) == 0.0
+    nonzeros = (abs.(from_to) .> 1e-9) .| (abs.(to_from) .> 1e-9)
+    loss_ratios = (from_to .+ to_from) ./ maximum.(zip(abs.(from_to), abs.(to_from)))
+    ten_percent_loss = abs.(loss_ratios .- 0.1) .< 1e-9
+    @test all(ten_percent_loss[nonzeros])
 end
-=#
 
 @testset "Test AC power flow in the loop: small system UCED, PSS/E export" for calculate_loss_factors in
                                                                                (true, false)

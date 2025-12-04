@@ -83,6 +83,7 @@ end
     iec_obj_fun_test_wrapper(sys_constant, sys_varying_export_slopes)
 end
 
+# FIXME triggers "different decisions" assertion. Tweak the numbers.
 @testset "ImportExportCost with time varying export breakpoints, reservation off" begin
     import_scalar = 1.0
     export_scalar = 50.0  # NOTE this maxes out ActivePowerInVariable
