@@ -58,7 +58,7 @@ function add_constraints!(
 
     expressions = get_expression(container, PostContingencyBranchFlow(), V)
 
-    #Deactivating PostContingencyDynamicBranchRatingTimeSeriesParameter for now
+    # Deactivating this since it does not seem that the industry or we have data for this
     #param_keys = get_parameter_keys(container)
     # param_key = ParameterKey(
     #     PostContingencyDynamicBranchRatingTimeSeriesParameter,
@@ -157,7 +157,7 @@ function add_post_contingency_flow_expressions!(
         end
 
         pre_contingency_flow =
-            get_variable(container, FlowActivePowerVariable(), b_type)
+            get_expression(container, PTDFBranchFlow(), b_type)
         name_to_arc_map =
             get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
 
@@ -176,13 +176,13 @@ function add_post_contingency_flow_expressions!(
                     "Outage $(outage_id) is associated with $(length(associated_devices)) devices of type $V. Expected only one associated device per outage for contingency analysis. It is being considered only component $(PSY.get_name(contingency_device_name))."
                 )
             end
-            index_lodf_outage = (contingency_device.arc.from.number,
-                contingency_device.arc.to.number,
-            )
+            from_number = PSY.get_number(PSY.get_from(PSY.get_arc(contingency_device)))
+            to_number = PSY.get_number(PSY.get_to(PSY.get_arc(contingency_device)))
+            index_lodf_outage = (from_number, to_number)
 
-            contingency_variables =
-                reduced_branch_tracker.variable_dict[FlowActivePowerVariable][index_lodf_outage]
-
+            #TODO how we should handle reductions now?
+            precontingency_outage_flow =
+                get_expression(container, PTDFBranchFlow(), V)[contingency_device_name, :]
             tasks = map(collect(name_to_arc_map)) do pair
                 (name, (arc, _)) = pair
                 lodf_factor = lodf[arc, index_lodf_outage]
@@ -192,7 +192,7 @@ function add_post_contingency_flow_expressions!(
                     outage_id,
                     time_steps,
                     lodf_factor,
-                    contingency_variables,
+                    precontingency_outage_flow,
                     pre_contingency_flow,
                 )
             end
@@ -213,7 +213,7 @@ function add_post_contingency_flow_expressions!(
         end
 
         pre_contingency_flow =
-            get_variable(container, FlowActivePowerVariable(), b_type)
+            get_expression(container, PTDFBranchFlow(), b_type)
 
         for outage in associated_outages
             outage_id = string(IS.get_uuid(outage))
@@ -230,11 +230,12 @@ function add_post_contingency_flow_expressions!(
                     "Outage $(outage_id) is associated with $(length(associated_devices)) devices of type $V. Expected only one associated device per outage for contingency analysis. It is being considered only component $(PSY.get_name(contingency_device_name))."
                 )
             end
-            index_lodf_outage = (contingency_device.arc.from.number,
-                contingency_device.arc.to.number,
-            )
-            contingency_variables =
-                precontingency_outage_flow_variables[contingency_device_name, :]
+            from_number = PSY.get_number(PSY.get_from(PSY.get_arc(contingency_device)))
+            to_number = PSY.get_number(PSY.get_to(PSY.get_arc(contingency_device)))
+            index_lodf_outage = (from_number, to_number)
+            
+            precontingency_outage_flow =
+                get_expression(container, PTDFBranchFlow(), V)[contingency_device_name, :]
 
             for (name, (arc, reduction)) in
                 get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
@@ -246,7 +247,7 @@ function add_post_contingency_flow_expressions!(
                         outage_id,
                         time_steps,
                         lodf_factor,
-                        contingency_variables.data,
+                        precontingency_outage_flow,
                         pre_contingency_flow,
                     )
             end
@@ -333,7 +334,6 @@ function construct_device!(
         network_model,
     )
 
-    add_constraints!(container, NetworkFlowConstraint, devices, model, network_model)
     add_constraints!(container, FlowRateConstraint, devices, model, network_model)
     add_feedforward_constraints!(container, model, devices)
     objective_function!(container, devices, model, X)
