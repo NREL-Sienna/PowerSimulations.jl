@@ -2019,7 +2019,7 @@ function _get_direction(
 )
     name = PSY.get_name(reduction_entry)
     if !haskey(direction_map, name)
-        @warn "Direction not found for $(summary(d)). Will use the default from -> to direction"
+        @warn "Direction not found for $(summary(reduction_entry)). Will use the default from -> to direction"
         return 1.0
     else
         return direction_map[name]
@@ -2103,7 +2103,7 @@ function _reduced_entry_in_interface(
     if !allequal(in_interface)
         throw(
             ArgumentError(
-                "An interface is specified with only portion of a double-circuit that has not been reduced. Modify the data to include all parallel segements.",
+                "An interface is specified with only part of a double-circuit that has been reduced. Modify the data to include all parallel segements.",
             ),
         )
     end
