@@ -17,7 +17,6 @@ abstract type AbstractThermalUnitCommitment <: AbstractThermalFormulation end
 
 abstract type AbstractStandardUnitCommitment <: AbstractThermalUnitCommitment end
 abstract type AbstractCompactUnitCommitment <: AbstractThermalUnitCommitment end
-abstract type AbstractSecurityConstrainedUnitCommitment <: AbstractThermalUnitCommitment end
 
 """
 Formulation type to enable basic unit commitment representation without any intertemporal (ramp, min on/off time) constraints
@@ -28,11 +27,6 @@ Formulation type to enable standard unit commitment with intertemporal constrain
 """
 struct ThermalStandardUnitCommitment <: AbstractStandardUnitCommitment end
 
-"""
-Formulation type to enable Security-Constrained (G-1) standard unit commitment with intertemporal constraints and simplified startup profiles
-"""
-struct ThermalSecurityConstrainedStandardUnitCommitment <:
-       AbstractSecurityConstrainedUnitCommitment end
 
 """
 Formulation type to enable basic dispatch without any intertemporal (ramp) constraints
