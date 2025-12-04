@@ -960,6 +960,7 @@ end
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
 
+    # FIXME builds successfully under PNM 0.16.
     # Test bad direction data for interface on double circuit:
     set_direction_mapping!(interface_series_chain, Dict("CA-1" => 1, "C35" => -1))
     ps_model =
@@ -1025,6 +1026,7 @@ end
             store_variable_names = true,
             optimizer_solve_log_print = true,
         )
+    # FIXME builds successfully under PNM 0.16.
     @test build!(
         ps_model;
         console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
