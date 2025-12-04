@@ -228,7 +228,7 @@ end
     # take into account losses in the HVDC line here. [Why does the above pass, then?]
     hvdc_loss_curve = get_loss(hvdc)
     # check that our hard-coded numbers are correct.
-    @assert  hvdc_loss_curve isa PSY.LinearCurve
+    @assert hvdc_loss_curve isa PSY.LinearCurve
     @assert get_proportional_term(hvdc_loss_curve) == 0.1
     @assert get_constant_term(hvdc_loss_curve) == 0.0
     nonzeros = (abs.(from_to) .> 1e-9) .| (abs.(to_from) .> 1e-9)
