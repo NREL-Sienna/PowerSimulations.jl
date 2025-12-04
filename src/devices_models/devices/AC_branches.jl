@@ -124,7 +124,7 @@ function add_variables!(
 ) where {
     T <: AbstractACActivePowerFlow,
     U <: PSY.ACTransmission}
-    @debug "PTDF Branch Flows with StaticBranchUnbounded do not require flow variables $T. Flow values are given by PTDFBranchFlow."
+    @debug "PTDF Branch Flows with StaticBranchUnbounded do not require flow variables $T. Flow values are given by PTDFBranchFlow expression."
     return
 end
 
