@@ -281,17 +281,18 @@ function construct_device!(
         add_parameters!(container, DynamicBranchRatingTimeSeriesParameter, devices, model)
     end
 
-    if haskey(
-        get_time_series_names(model),
-        PostContingencyDynamicBranchRatingTimeSeriesParameter,
-    )
-        add_parameters!(
-            container,
-            PostContingencyDynamicBranchRatingTimeSeriesParameter,
-            devices,
-            model,
-        )
-    end
+    # Deactivating this since it does not seem that the industry or we have data for this
+    # if haskey(
+    #     get_time_series_names(model),
+    #     PostContingencyDynamicBranchRatingTimeSeriesParameter,
+    # )
+    #     add_parameters!(
+    #         container,
+    #         PostContingencyDynamicBranchRatingTimeSeriesParameter,
+    #         devices,
+    #         model,
+    #     )
+    # end
 
     add_feedforward_arguments!(container, model, devices)
     return
