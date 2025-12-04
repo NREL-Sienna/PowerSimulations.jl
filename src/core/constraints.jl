@@ -49,7 +49,7 @@ The specified constraint is generally formulated as:
 ```
 """
 struct CopperPlateBalanceConstraint <: ConstraintType end
-
+struct PostContingencyCopperPlateBalanceConstraint <: PostContingencyConstraintType end
 """
 Struct to create the constraint to balance active power.
 For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations).
@@ -253,7 +253,6 @@ r_{d,t} \\le R^\\text{th,dn} \\cdot \\text{TF}\\quad  \\forall d\\in \\mathcal{D
 ```
 """
 struct RampConstraint <: ConstraintType end
-struct PostContingencyRampConstraint <: PostContingencyConstraintType end
 struct RampLimitConstraint <: ConstraintType end
 struct RangeLimitConstraint <: ConstraintType end
 """
@@ -503,7 +502,8 @@ in its most basic formulation is of the form:
 P^\\text{min} \\le p_t + \\Delta p_{c, t}  \\le P^\\text{max}, \\quad \\forall c \\in \\mathcal{C} \\ \\forall t \\in \\{1,\\dots,T\\}
 ```
 """
-struct PostContingencyActivePowerVariableLimitsConstraint <:
+
+struct PostContingencyActivePowerGenerationLimitsConstraint <:
        PostContingencyVariableLimitsConstraint end
 
 """

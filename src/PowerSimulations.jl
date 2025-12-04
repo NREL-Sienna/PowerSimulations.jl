@@ -39,7 +39,8 @@ export EventModel
 export ServiceModel
 export RangeReserve
 export RampReserve
-export RangeReserveWithDeliverabilityConstraints
+export RampReserveWithDeliverabilityConstraints
+export ContingencyReserveWithDeliverabilityConstraints
 export StepwiseCostReserve
 export NonSpinningReserve
 export PIDSmoothACE
@@ -255,7 +256,7 @@ export InterfaceFlowSlackDown
 export PiecewiseLinearCostVariable
 export RateofChangeConstraintSlackUp
 export RateofChangeConstraintSlackDown
-export PostContingencyActivePowerChangeVariable
+
 export PostContingencyActivePowerReserveDeploymentVariable
 export DCVoltage
 export DCLineCurrent
@@ -343,10 +344,10 @@ export SACEPIDAreaConstraint
 export StartTypeConstraint
 export StartupInitialConditionConstraint
 export StartupTimeLimitTemperatureConstraint
-export PostContingencyActivePowerVariableLimitsConstraint
 export PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint
+export PostContingencyActivePowerGenerationLimitsConstraint
 export PostContingencyGenerationBalanceConstraint
-export PostContingencyRampConstraint
+export PostContingencyCopperPlateBalanceConstraint
 export ImportExportBudgetConstraint
 export PiecewiseLinearBlockIncrementalOfferConstraint
 export PiecewiseLinearBlockDecrementalOfferConstraint
@@ -368,7 +369,7 @@ export ActivePowerInTimeSeriesParameter
 export ReactivePowerTimeSeriesParameter
 export DynamicBranchRatingTimeSeriesParameter
 export FuelCostParameter
-export PostContingencyDynamicBranchRatingTimeSeriesParameter
+export PostContingencyDynamicBranchRatingTimeSeriesParameter#TODO review idf this should remain
 export RequirementTimeSeriesParameter
 export FromToFlowLimitParameter
 export ToFromFlowLimitParameter
@@ -405,6 +406,7 @@ export ActivePowerRangeExpressionUB
 export PostContingencyBranchFlow
 export PostContingencyActivePowerGeneration
 export PostContingencyActivePowerBalance
+export PostContingencyAreaActivePowerDeployment
 export NetActivePower
 export DCCurrentBalance
 

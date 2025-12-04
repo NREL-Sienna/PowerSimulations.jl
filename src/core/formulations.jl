@@ -257,7 +257,13 @@ struct RangeReserve <: AbstractReservesFormulation end
 """
 Struct for to add reserves to be larger than a specified requirement and map how those should be allocated and deployed considering generators outages
 """
-struct RangeReserveWithDeliverabilityConstraints <:
+struct RampReserveWithDeliverabilityConstraints <:
+       AbstractSecurityConstrainedReservesFormulation end
+
+"""
+Struct for to add reserves implicit reserve requirement from generation outages and map how those should be allocated and deployed in each outage at each time-step
+"""
+struct ContingencyReserveWithDeliverabilityConstraints <:
        AbstractSecurityConstrainedReservesFormulation end
 
 """
