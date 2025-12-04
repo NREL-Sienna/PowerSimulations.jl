@@ -628,7 +628,6 @@ function _get_device_dynamic_branch_rating_time_series(
     return device_dlr_params
 end
 
-
 """
 Add branch rate limit constraints for ACBranch with AbstractActivePowerModel
 """
@@ -699,7 +698,7 @@ function add_constraints!(
         reduction_entry = all_branch_maps_by_type[reduction][T][arc]
         limits = get_min_max_limits(reduction_entry, FlowRateConstraint, U)
         for t in time_steps
-             if has_dlr_ts
+            if has_dlr_ts
                 limits =
                     _get_device_dynamic_branch_rating_limits(
                         param_container,
@@ -927,7 +926,7 @@ function _make_branch_scuc_postcontingency_flow_expressions!(
     outage_id::String,
     time_steps::UnitRange{Int},
     lodf::Float64,
-    precontingency_outage_flow_variables::Vector{JuMP.VariableRef},
+    precontingency_outage_flow::DenseAxisArray{T, 1, <:Tuple{UnitRange{Int}}},#Vector{JuMP.VariableRef},
     pre_contingency_flow::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
 ) where {T}
     # @debug "Making Flow Expression on thread $(Threads.threadid()) for branch $name"
@@ -937,7 +936,7 @@ function _make_branch_scuc_postcontingency_flow_expressions!(
         expressions[t] = JuMP.@expression(
             jump_model,
             pre_contingency_flow[name, t] +
-            (lodf * precontingency_outage_flow_variables[t])
+            (lodf * precontingency_outage_flow[t])
         )
     end
     return name, expressions
