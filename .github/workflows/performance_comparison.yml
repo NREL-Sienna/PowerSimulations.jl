@@ -42,7 +42,7 @@ jobs:
           body="${body//$'\r'/'%0D'}"
           echo "::set-output name=body::$body"
       - name: Find Comment
-        uses: peter-evans/find-comment@v5
+        uses: peter-evans/find-comment@v4
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}

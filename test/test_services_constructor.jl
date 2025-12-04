@@ -437,10 +437,10 @@ end
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 312, 0, 288, 288, 168, false)
+    moi_tests(model, 168, 0, 288, 288, 24, false)
 
-    #= TODO: Fix this tes6
-    template = get_thermal_dispatch_template_network(ACPPowerModel; use_slacks = true) where
+    #= TODO: Implement Interfaces in AC
+    template = get_thermal_dispatch_template_network(ACPPowerModel)
     set_service_model!(
         template,
         ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow; use_slacks = true),
@@ -521,7 +521,7 @@ end
     model = DecisionModel(template, c_sys5_uc)
     @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
-    moi_tests(model, 312, 0, 288, 288, 168, false)
+    moi_tests(model, 168, 0, 288, 288, 24, false)
 end
 
 @testset "Test Transmission Interface with Feedforwards" begin
@@ -858,7 +858,7 @@ end
           PSI.ModelBuildStatus.BUILT
     @test solve!(ps_model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
-    moi_tests(ps_model, 10944, 0, 2160, 1440, 4896, false)
+    moi_tests(ps_model, 8712, 0, 2160, 1440, 2664, false)
 
     opt_container = PSI.get_optimization_container(ps_model)
     copper_plate_constraints =
@@ -919,12 +919,14 @@ end
         violation_penalty = 1000.0,
         direction_mapping = Dict("CA-1" => -1, "C35" => -1),
     )
+    # Order matters here; must compute the ptdf before adding the service for the lines that 
+    # are included in the interface to be reduced (in order to test the bad data checking)
+    ptdf = PTDF(sys_rts_da; network_reductions = NetworkReduction[DegreeTwoReduction()])
     add_service!(
         sys_rts_da,
         interface_series_chain,
         [series_chain_1, series_chain_2],
     )
-    ptdf = PTDF(sys_rts_da; network_reductions = NetworkReduction[DegreeTwoReduction()])
     template = ProblemTemplate(
         NetworkModel(
             AreaPTDFPowerModel;
@@ -960,7 +962,7 @@ end
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
 
-    # Test bad direction data for interface on double circuit:
+    # Test bad direction data for interface on series chain :
     set_direction_mapping!(interface_series_chain, Dict("CA-1" => 1, "C35" => -1))
     ps_model =
         DecisionModel(
@@ -969,7 +971,6 @@ end
             resolution = Hour(1),
             optimizer = HiGHS_optimizer,
             store_variable_names = true,
-            optimizer_solve_log_print = true,
         )
     @test build!(
         ps_model;
@@ -977,7 +978,7 @@ end
         output_dir = mktempdir(; cleanup = true),
     ) == PSI.ModelBuildStatus.FAILED
 
-    # Test bad direction data for interface on series chain:
+    # Test bad direction data for interface on double circuit:
     set_direction_mapping!(interface_series_chain, Dict("CA-1" => 1, "C35" => 1))
     set_direction_mapping!(interface_double_circuit, Dict("A33-1" => 1, "A33-2" => -1))
     ps_model =
@@ -1005,7 +1006,6 @@ end
             resolution = Hour(1),
             optimizer = HiGHS_optimizer,
             store_variable_names = true,
-            optimizer_solve_log_print = true,
         )
     @test build!(
         ps_model;
@@ -1023,7 +1023,6 @@ end
             resolution = Hour(1),
             optimizer = HiGHS_optimizer,
             store_variable_names = true,
-            optimizer_solve_log_print = true,
         )
     @test build!(
         ps_model;

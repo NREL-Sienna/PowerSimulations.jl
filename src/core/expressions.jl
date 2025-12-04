@@ -42,3 +42,4 @@ should_write_resulting_value(::Type{PostContingencyActivePowerGeneration}) = tru
 convert_result_to_natural_units(::Type{InterfaceTotalFlow}) = true
 convert_result_to_natural_units(::Type{PostContingencyBranchFlow}) = true
 convert_result_to_natural_units(::Type{PostContingencyActivePowerGeneration}) = true
+convert_result_to_natural_units(::Type{PTDFBranchFlow}) = true

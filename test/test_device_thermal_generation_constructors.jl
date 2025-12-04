@@ -37,8 +37,83 @@ const TIME1 = DateTime("2024-01-01T00:00:00")
             )
             var_unit_cost = sum(expr[!, "Test Unit"])
             @test isapprox(var_unit_cost, cost_reference; atol = 1)
-            @test expr[!, "Test Unit"][end] == 0.0
+            if thermal_formulation == ThermalBasicUnitCommitment
+                # Tests shut down cost
+                @test expr[!, "Test Unit"][end] == 0.75
+            else
+                @test expr[!, "Test Unit"][end] == 0.0
+            end
         end
+    end
+
+    @testset "Test startup cost tracking - compare with and without startup" begin
+        # Run 1: Normal case (units already ON, no startup)
+        sys_no_startup = build_system(PSITestSystems, "c_linear_cost_test")
+
+        template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+        set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+        set_device_model!(template, PowerLoad, StaticPowerLoad)
+
+        model_no_startup = DecisionModel(
+            template,
+            sys_no_startup;
+            name = "UC_no_startup",
+            optimizer = HiGHS_optimizer,
+            system_to_file = false,
+            optimizer_solve_log_print = true,
+        )
+        @test build!(model_no_startup; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+        @test solve!(model_no_startup) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+        results_no_startup = OptimizationProblemResults(model_no_startup)
+        expr_no_startup = read_expression(
+            results_no_startup,
+            "ProductionCostExpression__ThermalStandard";
+            table_format = TableFormat.WIDE,
+        )
+        cost_no_startup = expr_no_startup[1, "Test Unit"]
+
+        # Run 2: With startup (units initially OFF)
+        sys_with_startup = build_system(PSITestSystems, "c_linear_cost_test")
+
+        # Set thermal units to initially be OFF to force a startup
+        thermal_units = collect(get_components(ThermalStandard, sys_with_startup))
+        for unit in thermal_units
+            set_status!(unit, false)  # Set unit to OFF initially
+            set_time_at_status!(unit, 10.0)  # Set time at OFF status > min down time
+        end
+
+        model_with_startup = DecisionModel(
+            template,
+            sys_with_startup;
+            name = "UC_with_startup",
+            optimizer = HiGHS_optimizer,
+            system_to_file = false,
+            optimizer_solve_log_print = true,
+        )
+        @test build!(model_with_startup; output_dir = test_path) ==
+              PSI.ModelBuildStatus.BUILT
+        @test solve!(model_with_startup) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+        results_with_startup = OptimizationProblemResults(model_with_startup)
+        expr_with_startup = read_expression(
+            results_with_startup,
+            "ProductionCostExpression__ThermalStandard";
+            table_format = TableFormat.WIDE,
+        )
+        cost_with_startup = expr_with_startup[1, "Test Unit"]
+
+        # Verify startup actually occurred
+        start_vars = read_variable(
+            results_with_startup,
+            "StartVariable__ThermalStandard";
+            table_format = TableFormat.WIDE,
+        )
+        @test start_vars[1, "Test Unit"] > 0.5  # Startup in first timestep
+
+        # The key test: cost with startup should be greater than without startup
+        # because it includes the startup cost in addition to generation costs
+        @test cost_with_startup > cost_no_startup
     end
 end
 
@@ -473,12 +548,12 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 120, 0, 168, 168, 0, false)
+    moi_tests(model, 120, 0, 216, 120, 0, false)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 120, 0, 192, 168, 0, false)
+    moi_tests(model, 120, 0, 240, 120, 0, false)
 
     device_model = DeviceModel(ThermalStandard, ThermalStandardDispatch)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -500,12 +575,12 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 240, 0, 288, 288, 0, false)
+    moi_tests(model, 240, 0, 336, 240, 0, false)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 312, 288, 0, false, 24)
+    moi_tests(model, 240, 0, 360, 240, 0, false, 24)
 
     device_model = DeviceModel(ThermalStandard, ThermalStandardDispatch)
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
@@ -527,12 +602,12 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 240, 0, 96, 96, 96, false)
+    moi_tests(model, 240, 0, 144, 48, 96, false)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 240, 0, 120, 96, 96, false)
+    moi_tests(model, 240, 0, 168, 48, 96, false)
 end
 
 @testset "ThermalMultiStart with ThermalStandardDispatch With AC - PF" begin
@@ -544,12 +619,12 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 288, 0, 144, 144, 96, false)
+    moi_tests(model, 288, 0, 192, 96, 96, false)
     psi_constraint_test(model, constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, ACPPowerModel, c_sys5_uc;)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 288, 0, 168, 144, 96, false, 24)
+    moi_tests(model, 288, 0, 216, 96, 96, false, 24)
 end
 
 ################################### ThermalMultiStart Testing ##############################
@@ -809,7 +884,7 @@ end
         initialize_model = false,
     )
     @test build!(ED; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
-    moi_tests(ED, 10, 0, 15, 15, 5, false)
+    moi_tests(ED, 10, 0, 20, 10, 5, false)
     psi_checksolve_test(ED, [MOI.OPTIMAL], 11191.00)
 end
 
@@ -874,7 +949,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
-    moi_tests(model, 365, 0, 264, 144, 0, false)
+    moi_tests(model, 365, 0, 288, 120, 0, false)
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(
         model,
@@ -882,7 +957,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 413, 0, 288, 144, 0, false)
+    moi_tests(model, 413, 0, 312, 120, 0, false)
 end
 
 @testset "Test Feedforwards to ThermalStandard with ThermalBasicDispatch" begin
@@ -964,7 +1039,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_pglib")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(model, device_model; built_for_recurrent_solves = true)
-    moi_tests(model, 338, 0, 144, 96, 96, false)
+    moi_tests(model, 338, 0, 192, 48, 96, false)
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5)
     mock_construct_device!(
         model,
@@ -972,7 +1047,7 @@ end
         built_for_recurrent_solves = true,
         add_event_model = true,
     )
-    moi_tests(model, 386, 0, 168, 96, 96, false)
+    moi_tests(model, 386, 0, 216, 48, 96, false)
 end
 
 @testset "Test Feedforwards to ThermalMultiStart with ThermalBasicDispatch" begin
@@ -1327,12 +1402,12 @@ end
     c_sys5_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
     mock_construct_device!(model, device_model)
-    moi_tests(model, 360, 0, 168, 168, 0, false)
+    moi_tests(model, 360, 0, 216, 120, 0, false)
     psi_constraint_test(model, uc_constraint_keys)
     psi_checkobjfun_test(model, GAEVF)
     model = DecisionModel(MockOperationProblem, DCPPowerModel, c_sys5_uc)
     mock_construct_device!(model, device_model; add_event_model = true)
-    moi_tests(model, 360, 0, 192, 168, 0, false)
+    moi_tests(model, 360, 0, 240, 120, 0, false)
 
     device_model =
         DeviceModel(ThermalStandard, ThermalStandardDispatch; use_slacks = true)

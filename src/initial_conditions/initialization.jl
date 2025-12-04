@@ -46,6 +46,8 @@ function get_initial_conditions_template(model::OperationModel, number_of_steps:
 
     for service_model in values(model.template.services)
         base_model = get_initial_conditions_service_model(model, service_model)
+        base_model.service_name = service_model.service_name
+        base_model.contributing_devices_map = service_model.contributing_devices_map
         base_model.use_slacks = service_model.use_slacks
         base_model.time_series_names = service_model.time_series_names
         base_model.attributes = service_model.attributes

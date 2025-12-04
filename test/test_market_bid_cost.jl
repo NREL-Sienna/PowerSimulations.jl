@@ -58,7 +58,8 @@ function test_market_bid_cost_models(sys::PSY.System,
     return OptimizationProblemResults(model)
 end
 
-function verify_market_bid_cost_models(sys::PSY.System,
+function verify_market_bid_cost_models(
+    sys::PSY.System,
     test_unit::PSY.Component,
     cost_reference::Float64,
     no_load_cost::Float64,
@@ -72,12 +73,13 @@ function verify_market_bid_cost_models(sys::PSY.System,
     )
     expr = read_expression(results, "ProductionCostExpression__ThermalStandard")
     component_df = @rsubset(expr, :name == get_name(test_unit))
+    shutdown_cost = PSY.get_shut_down(PSY.get_operation_cost(test_unit))
     var_unit_cost =
-        only(@combine(component_df, :var_unit_cost = sum(:value)).var_unit_cost)
+        sum(@rsubset(component_df, :value != shutdown_cost)[:, :value])
     unit_cost_due_to_initial =
-        nrow(@rsubset(component_df, :value != 0)) * my_initial_input
+        nrow(@rsubset(component_df, :value != shutdown_cost)) * my_initial_input
     @test isapprox(
-        var_unit_cost,
+        var_unit_cost - PSY.get_start_up(PSY.get_operation_cost(test_unit))[:hot],
         cost_reference + unit_cost_due_to_initial;
         atol = 1,
     )
@@ -91,7 +93,7 @@ end
     ]
     for (name, sys_name, cost_reference, my_no_load, my_initial_input) in test_cases
         @testset "$name" begin
-            sys = build_system(PSITestSystems, "c_$(sys_name)")
+            sys = PSB.build_system(PSITestSystems, "c_$(sys_name)")
             unit1 = get_component(ThermalStandard, sys, "Test Unit1")
             verify_market_bid_cost_models(
                 sys,
@@ -440,18 +442,39 @@ end
     # enough to change the decisions that form the correct solution
 
     # Scenario 1: hot and warm starts
-    load_mult_a = 1.0
-    therm_mult_a = 7.4
-    c_sys5_pglib0a = create_multistart_sys(false, load_mult_a, therm_mult_a; add_ts = false)
-    c_sys5_pglib1a = create_multistart_sys(false, load_mult_a, therm_mult_a)
-    c_sys5_pglib2a = create_multistart_sys(true, load_mult_a, therm_mult_a)
+    # TODO the process to empirically tune these values so the tests work everywhere is
+    # absolutely horrible, we need a more robust system ASAP
+    # https://github.com/NREL-Sienna/PowerSimulations.jl/issues/1460
+    load_pow_mult_a = 1.01
+    therm_pow_mult_a = 1.07
+    therm_price_mult_a = 7.40
+    c_sys5_pglib0a = create_multistart_sys(
+        false,
+        load_pow_mult_a,
+        therm_pow_mult_a,
+        therm_price_mult_a;
+        add_ts = false,
+    )
+    c_sys5_pglib1a =
+        create_multistart_sys(false, load_pow_mult_a, therm_pow_mult_a, therm_price_mult_a)
+    c_sys5_pglib2a =
+        create_multistart_sys(true, load_pow_mult_a, therm_pow_mult_a, therm_price_mult_a)
 
     # Scenario 2: hot and cold starts
-    load_mult_b = 1.05
-    therm_mult_b = 7.4
-    c_sys5_pglib0b = create_multistart_sys(false, load_mult_b, therm_mult_b; add_ts = false)
-    c_sys5_pglib1b = create_multistart_sys(false, load_mult_b, therm_mult_b)
-    c_sys5_pglib2b = create_multistart_sys(true, load_mult_b, therm_mult_b)
+    load_pow_mult_b = 1.05
+    therm_pow_mult_b = 1.0
+    therm_price_mult_b = 7.4
+    c_sys5_pglib0b = create_multistart_sys(
+        false,
+        load_pow_mult_b,
+        therm_pow_mult_b,
+        therm_price_mult_b;
+        add_ts = false,
+    )
+    c_sys5_pglib1b =
+        create_multistart_sys(false, load_pow_mult_b, therm_pow_mult_b, therm_price_mult_b)
+    c_sys5_pglib2b =
+        create_multistart_sys(true, load_pow_mult_b, therm_pow_mult_b, therm_price_mult_b)
 
     test_generic_mbc_equivalence(c_sys5_pglib0a, c_sys5_pglib1a; multistart = true)
     test_generic_mbc_equivalence(c_sys5_pglib0b, c_sys5_pglib1b; multistart = true)
@@ -471,6 +494,7 @@ end
             multistart = true,
             simulation = use_simulation,
         )
+        @test all(isapprox.(decisions1, decisions2))
         @test all(isapprox.(decisions1_2, decisions2_2))
         # Make sure our tests included all types of startups and shutdowns
         @test all(approx_geq_1.(decisions1 .+ decisions1_2))
@@ -804,4 +828,137 @@ end
         sys_constant_ts;
         device_to_formulation = device_to_formulation,
     )
+end
+
+@testset "Test VOM cost time normalization across different resolutions" begin
+    # Test that VOM costs scale correctly with time resolution
+    # This validates the bugfix in common.jl lines 188-196
+
+    # Build system at hourly resolution
+    sys_hourly = build_system(PSITestSystems, "c_sys5")
+
+    # Add VOM cost to a thermal unit
+    thermal_unit = first(get_components(ThermalStandard, sys_hourly))
+    op_cost = get_operation_cost(thermal_unit)
+
+    # Modify the VOM cost on the existing variable cost structure
+    # VOM cost is stored in the CostCurve's vom_cost field
+    if op_cost isa PSY.ThermalGenerationCost
+        var_cost = PSY.get_variable(op_cost)
+        value_curve = PSY.get_value_curve(var_cost)
+        power_units = PSY.get_power_units(var_cost)
+
+        # Create new CostCurve with non-zero VOM (LinearCurve with proportional term = 5.0)
+        vom_value = LinearCurve(5.0)  # $/MWh
+        new_var_cost = CostCurve(value_curve, power_units, vom_value)
+
+        new_op_cost = PSY.ThermalGenerationCost(;
+            variable = new_var_cost,
+            fixed = get_fixed(op_cost),
+            start_up = get_start_up(op_cost),
+            shut_down = get_shut_down(op_cost),
+        )
+        set_operation_cost!(thermal_unit, new_op_cost)
+    end
+
+    # Build and solve at hourly resolution
+    template_hourly = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+    set_device_model!(template_hourly, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template_hourly, PowerLoad, StaticPowerLoad)
+
+    model_hourly = DecisionModel(
+        template_hourly,
+        sys_hourly;
+        name = "VOM_hourly",
+        optimizer = HiGHS_optimizer,
+        system_to_file = false,
+        optimizer_solve_log_print = false,
+    )
+    @test build!(model_hourly; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+    @test solve!(model_hourly) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    results_hourly = OptimizationProblemResults(model_hourly)
+    expr_hourly = read_expression(
+        results_hourly,
+        "ProductionCostExpression__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+
+    # Build system at 30-minute resolution (same system, different model resolution)
+    sys_30min = build_system(PSITestSystems, "c_sys5")
+
+    # Add same VOM cost to thermal unit
+    thermal_unit_30 = first(get_components(ThermalStandard, sys_30min))
+    op_cost_30 = get_operation_cost(thermal_unit_30)
+
+    if op_cost_30 isa PSY.ThermalGenerationCost
+        var_cost_30 = PSY.get_variable(op_cost_30)
+        value_curve_30 = PSY.get_value_curve(var_cost_30)
+        power_units_30 = PSY.get_power_units(var_cost_30)
+
+        # Create new CostCurve with same VOM cost
+        vom_value_30 = LinearCurve(5.0)  # $/MWh
+        new_var_cost_30 = CostCurve(value_curve_30, power_units_30, vom_value_30)
+
+        new_op_cost_30 = PSY.ThermalGenerationCost(;
+            variable = new_var_cost_30,
+            fixed = get_fixed(op_cost_30),
+            start_up = get_start_up(op_cost_30),
+            shut_down = get_shut_down(op_cost_30),
+        )
+        set_operation_cost!(thermal_unit_30, new_op_cost_30)
+    end
+
+    # Build and solve at 30-minute resolution
+    template_30min = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+    set_device_model!(template_30min, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template_30min, PowerLoad, StaticPowerLoad)
+
+    model_30min = DecisionModel(
+        template_30min,
+        sys_30min;
+        name = "VOM_30min",
+        optimizer = HiGHS_optimizer,
+        system_to_file = false,
+        optimizer_solve_log_print = false,
+        resolution = Dates.Minute(30),  # Set 30-minute resolution here
+    )
+    @test build!(model_30min; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+    @test solve!(model_30min) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    results_30min = OptimizationProblemResults(model_30min)
+    expr_30min = read_expression(
+        results_30min,
+        "ProductionCostExpression__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+
+    # Get active power values to compute expected VOM costs
+    p_hourly = read_variable(
+        results_hourly,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+    p_30min = read_variable(
+        results_30min,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+
+    # Verify VOM costs scale with resolution
+    # For 30-min resolution, each time step is 0.5 hours, so VOM cost = vom_value * power * 0.5
+    # For hourly resolution, each time step is 1.0 hours, so VOM cost = vom_value * power * 1.0
+
+    unit_name = get_name(thermal_unit)
+
+    # Sum total costs over all time steps
+    total_cost_hourly = sum(expr_hourly[!, unit_name])
+    total_cost_30min = sum(expr_30min[!, unit_name])
+
+    # The total costs should be approximately equal because:
+    # - Hourly: 24 steps × power × VOM × 1.0 hour
+    # - 30-min: 48 steps × power × VOM × 0.5 hour
+    # Both should sum to roughly the same total cost over 24 hours
+
+    @test isapprox(total_cost_hourly, total_cost_30min; rtol = 0.05)
 end

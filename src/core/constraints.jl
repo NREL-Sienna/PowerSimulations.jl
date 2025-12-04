@@ -273,6 +273,11 @@ The specified constraint is formulated as:
 struct FlowRateConstraint <: ConstraintType end
 struct PostContingencyEmergencyFlowRateConstraint <: PostContingencyConstraintType end
 struct FlowRateConstraintFromTo <: ConstraintType end
+
+"""
+Struct to create the constraint for branch flow rate limits from the 'to' bus to the 'from' bus.
+For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
+"""
 struct FlowRateConstraintToFrom <: ConstraintType end
 struct RegulationLimitsConstraint <: ConstraintType end
 
@@ -450,6 +455,17 @@ P^\\text{min} \\le p_t^\\text{in} \\le P^\\text{max}, \\quad \\forall t \\in \\{
 
 abstract type PostContingencyVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 
+"""
+Struct to create the constraint to limit active power input expressions.
+For more information check [Device Formulations](@ref formulation_intro).
+
+The specified constraint depends on the UpperBound and LowerBound expressions, but
+in its most basic formulation is of the form:
+
+```math
+P^\\text{min} \\le p_t^\\text{in} \\le P^\\text{max}, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
 struct InputActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
 """
 Struct to create the constraint to limit active power output expressions.
@@ -574,7 +590,7 @@ struct ReactivePowerOutageConstraint <: EventConstraint end
 Struct to create the constraints that set the current flowing through a DC line.
 ```math
 \\begin{align*}
-& i_l^{dc} = \\frac{1}{r_l} (v_{from,l} - v_{to,l}), \\quad \\forall t \\in \\{1,\\dots, T\\} 
+& i_l^{dc} = \\frac{1}{r_l} (v_{from,l} - v_{to,l}), \\quad \\forall t \\in \\{1,\\dots, T\\}
 \\end{align*}
 ```
 """
@@ -675,7 +691,7 @@ The specified constraint is formulated as:
 \\begin{align*}
 & i_c^{dc} = i_c^+ - i_c^-, \\quad \\forall t \\in \\{1,\\dots, T\\}  \\\\
 & i_c^+ \\le I_{max} \\cdot \\nu_c,  \\quad \\forall t \\in \\{1,\\dots, T\\}  \\\\
-& i_c^+ \\le I_{max} \\cdot (1 - \\nu_c),  \\quad \\forall t \\in \\{1,\\dots, T\\}  
+& i_c^+ \\le I_{max} \\cdot (1 - \\nu_c),  \\quad \\forall t \\in \\{1,\\dots, T\\}
 \\end{align*}
 ```
 """
