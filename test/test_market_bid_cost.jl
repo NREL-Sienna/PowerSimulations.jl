@@ -1017,4 +1017,6 @@ end
         "ActivePowerVariable__ThermalStandard";
         table_format = TableFormat.WIDE,
     )
+
+    @test isapprox(sum(p_var[!, "Alta"][15:24]), 0.0, atol = 1e-4)
 end
