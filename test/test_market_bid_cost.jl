@@ -971,9 +971,9 @@ end
         "max_active_power",
     )
     tstamps = timestamp(existing_ts)
-    psd1 = PiecewiseStepData([0.0, 600.0], [5.0])
-    psd2 = PiecewiseStepData([0.0, 300.0, 600.0], [10.0, 20.0])
-    psd3 = PiecewiseStepData([0.0, 600.0], [500.0])
+    psd1 = PiecewiseStepData([0.0, 40.0], [5.0])
+    psd2 = PiecewiseStepData([0.0, 30.0, 400.0], [10.0, 20.0])
+    psd3 = PiecewiseStepData([0.0, 40.0], [500.0])
 
     # Cheap the first 10 hours, moderate next 4 hours, expensive last 34 hours
     total_step_data = vcat([psd1 for x in 1:10], [psd2 for x in 1:4], [psd3 for x in 1:34])
