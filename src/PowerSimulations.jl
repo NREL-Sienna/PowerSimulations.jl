@@ -133,6 +133,7 @@ export run_parallel_simulation
 ## Template Exports
 export template_economic_dispatch
 export template_unit_commitment
+export template_agc_reserve_deployment
 export EconomicDispatchProblem
 export UnitCommitmentProblem
 export AGCReserveDeployment
@@ -241,6 +242,7 @@ export ReserveRequirementSlack
 export VoltageMagnitude
 export VoltageAngle
 export FlowActivePowerVariable
+export ScheduledFlowActivePowerVariable
 export FlowActivePowerSlackUpperBound
 export FlowActivePowerSlackLowerBound
 export FlowActivePowerFromToVariable
@@ -389,6 +391,10 @@ export AvailableStatusChangeCountdownParameter
 export ActivePowerOffsetParameter
 export ReactivePowerOffsetParameter
 
+# Left Hand Side Parameters 
+#export ParticipationFactorUp
+#export ParticipationFactorDown
+
 # Expressions
 export SystemBalanceExpressions
 export RangeConstraintLBExpressions
@@ -398,6 +404,10 @@ export ActivePowerBalance
 export ReactivePowerBalance
 export EmergencyUp
 export EmergencyDown
+export DeltaActivePowerUpExpression
+export DeltaActivePowerDownExpression
+export AdditionalDeltaActivePowerUpExpression
+export AdditionalDeltaActivePowerDownExpression
 export RawACE
 export ProductionCostExpression
 export FuelConsumptionExpression
@@ -682,7 +692,7 @@ include("devices_models/devices/source.jl")
 #include("devices_models/devices/regulation_device.jl")
 
 # Services Models
-#include("services_models/agc.jl")
+include("services_models/agc.jl")
 include("services_models/reserves.jl")
 include("services_models/reserve_group.jl")
 include("services_models/transmission_interface.jl")

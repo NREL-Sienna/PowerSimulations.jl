@@ -78,6 +78,7 @@ Docs abbreviation: ``e``
 struct EnergyVariable <: VariableType end
 
 struct LiftVariable <: VariableType end
+struct ActivePowerImbalance <: VariableType end
 
 """
 Struct to dispatch the creation of a binary commitment status variable
@@ -309,6 +310,9 @@ Struct to dispatch the creation of bidirectional Active Power Flow Variables
 Docs abbreviation: ``f``
 """
 struct FlowActivePowerVariable <: AbstractACActivePowerFlow end
+
+struct ScheduledFlowActivePowerVariable <: AbstractACActivePowerFlow end
+
 
 # This Variable Type doesn't make sense since there are no lossless NetworkModels with ReactivePower.
 # struct FlowReactivePowerVariable <: VariableType end
@@ -608,6 +612,7 @@ convert_result_to_natural_units(::Type{SystemBalanceSlackUp}) = true
 convert_result_to_natural_units(::Type{SystemBalanceSlackDown}) = true
 convert_result_to_natural_units(::Type{ReserveRequirementSlack}) = true
 convert_result_to_natural_units(::Type{FlowActivePowerVariable}) = true
+convert_result_to_natural_units(::Type{ScheduledFlowActivePowerVariable}) = true
 convert_result_to_natural_units(::Type{FlowActivePowerFromToVariable}) = true
 convert_result_to_natural_units(::Type{FlowActivePowerToFromVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerFromToVariable}) = true

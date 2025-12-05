@@ -93,7 +93,6 @@ function template_economic_dispatch(; kwargs...)
     return template
 end
 
-#=
 """
     template_agc_reserve_deployment(; kwargs...)
 
@@ -111,25 +110,10 @@ function template_agc_reserve_deployment(; kwargs...)
     set_device_model!(template, PSY.ThermalStandard, FixedOutput)
     set_device_model!(template, PSY.RenewableDispatch, FixedOutput)
     set_device_model!(template, PSY.PowerLoad, StaticPowerLoad)
-    set_device_model!(template, PSY.HydroEnergyReservoir, FixedOutput)
+    set_device_model!(template, PSY.HydroTurbine, FixedOutput)
     set_device_model!(template, PSY.HydroDispatch, FixedOutput)
     set_device_model!(template, PSY.RenewableNonDispatch, FixedOutput)
-    set_device_model!(
-        template,
-        DeviceModel(PSY.RegulationDevice{PSY.ThermalStandard}, DeviceLimitedRegulation),
-    )
-    set_device_model!(
-        template,
-        DeviceModel(PSY.RegulationDevice{PSY.HydroDispatch}, ReserveLimitedRegulation),
-    )
-    set_device_model!(
-        template,
-        DeviceModel(
-            PSY.RegulationDevice{PSY.HydroEnergyReservoir},
-            ReserveLimitedRegulation,
-        ),
-    )
+    set_service_model!(template, ServiceModel(PSY.AGC, PIDSmoothACE))
     set_service_model!(template, ServiceModel(PSY.AGC, PIDSmoothACE))
     return template
 end
-=#

@@ -64,6 +64,7 @@ get_variable_upper_bound(::PostContingencyActivePowerChangeVariable, d::PSY.Ther
 
 ########################### Parameter related set functions ################################
 get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.ThermalGen, ::AbstractThermalFormulation) = PSY.get_max_active_power(d)
+get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.ThermalGen, ::FixedOutput) = PSY.get_max_active_power(d)
 get_multiplier_value(::FuelCostParameter, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 1.0
 get_parameter_multiplier(::VariableValueParameter, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 1.0
 get_initial_parameter_value(::VariableValueParameter, d::PSY.ThermalGen, ::AbstractThermalFormulation) = 1.0

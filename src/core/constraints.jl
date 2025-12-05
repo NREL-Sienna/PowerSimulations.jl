@@ -51,6 +51,19 @@ The specified constraint is generally formulated as:
 struct CopperPlateBalanceConstraint <: ConstraintType end
 
 """
+Struct to create the constraint to balance power in the copperplate model.
+Allows for a net imbalance of power in the system
+For more information check [Network Formulations](@ref network_formulations).
+
+The specified constraint is generally formulated as:
+
+```math
+\\sum_{c \\in \\text{components}} p_t^c = Pimbalance_t, \\quad \\forall t \\in \\{1, \\dots, T\\}
+```
+"""
+struct CopperPlateImbalanceConstraint <: ConstraintType end
+
+"""
 Struct to create the constraint to balance active power.
 For more information check [ThermalGen Formulations](@ref ThermalGen-Formulations).
 

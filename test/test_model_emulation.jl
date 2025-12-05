@@ -382,3 +382,24 @@ end
     test_ic_serialization_outputs(model; ic_file_exists = false, message = "skip")
     @test run!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
+
+@testset "Run EmulationModel with auto-build" begin
+    for serialize in (true, false)
+        template = get_thermal_dispatch_template_network()
+        c_sys5 = PSB.build_system(
+            PSITestSystems,
+            "c_sys5_uc";
+            add_single_time_series = true,
+            force_build = true,
+        )
+
+        model = EmulationModel(template, c_sys5; optimizer = HiGHS_optimizer)
+        @test_throws ErrorException run!(model, executions = 10)
+        @test run!(
+            model;
+            executions = 10,
+            output_dir = mktempdir(; cleanup = true),
+            export_optimization_model = serialize,
+        ) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    end
+end

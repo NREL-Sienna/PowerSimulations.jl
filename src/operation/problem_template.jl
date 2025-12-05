@@ -223,9 +223,9 @@ function _populate_contributing_devices!(template::ProblemTemplate, sys::PSY.Sys
     branch_models = get_branch_models(template)
     modeled_devices = Set(get_component_type(m) for m in values(device_models))
     union!(modeled_devices, Set(get_component_type(m) for m in values(branch_models)))
-    incompatible_device_types = get_incompatible_devices(device_models)
-    services_mapping = PSY.get_contributing_device_mapping(sys)
-    if isempty(keys(services_mapping))
+    contributing_device_mapping = PSY.get_contributing_device_mapping(sys)
+    contributing_reserves_mapping = PSY.get_contributing_reserve_mapping(sys)
+    if isempty(keys(contributing_device_mapping))
         @warn "The system doesn't include any services. No services will be modeled, consider removing the service models from the template." _group =
             LOG_GROUP_SERVICE_CONSTUCTORS
         empty!(service_models)
@@ -234,16 +234,16 @@ function _populate_contributing_devices!(template::ProblemTemplate, sys::PSY.Sys
     for (service_key, service_model) in service_models
         @debug "Populating service $(service_key)"
         empty!(get_contributing_devices_map(service_model))
-        S = get_component_type(service_model)
-        service = PSY.get_component(S, sys, get_service_name(service_model))
-        if service === nothing
-            @info "The data doesn't include services of type $(S) and name $(get_service_name(service_model)), consider changing the service models" _group =
-                LOG_GROUP_SERVICE_CONSTUCTORS
-            continue
-        end
-        service_devices_key = (type = S, name = PSY.get_name(service))
-        contributing_devices_ =
-            services_mapping[service_devices_key].contributing_devices
+        service_type = get_component_type(service_model)
+        service_name = get_service_name(service_model)
+        incompatible_device_types = get_incompatible_devices(device_models, service_type)
+        contributing_devices_ = _get_contributing_devices(
+            service_type,
+            service_name,
+            contributing_device_mapping,
+            contributing_reserves_mapping,
+            sys,
+        )
         for d in contributing_devices_
             _add_contributing_device_by_type!(
                 service_model,
@@ -259,6 +259,51 @@ function _populate_contributing_devices!(template::ProblemTemplate, sys::PSY.Sys
         end
     end
     return
+end
+
+function _get_contributing_devices(
+    service_type::Type{S},
+    service_name::String,
+    contributing_device_mapping::PSY.ServiceContributingDevicesMapping,
+    ::PSY.AGCContributingReservesMapping,
+    ::PSY.System,
+) where {S <: PSY.Service}
+    service_devices_key = (type = service_type, name = service_name)
+    contributing_devices_ =
+        contributing_device_mapping[service_devices_key].contributing_devices
+    return contributing_devices_
+end
+
+function _get_contributing_devices(
+    service_type::Type{PSY.AGC},
+    ::String,
+    contributing_device_mapping::PSY.ServiceContributingDevicesMapping,
+    contributing_reserves_mapping::PSY.AGCContributingReservesMapping,
+    sys::PSY.System,
+) 
+    contributing_devices_ = Vector{PSY.Device}()
+    for agc in PSY.get_components(PSY.AGC, sys)
+        !(PSY.get_available(agc)) && continue
+        name = PSY.get_name(agc)
+        service_devices_key = (type = service_type, name = name)
+        contributing_reserves_ =
+            contributing_reserves_mapping[service_devices_key].contributing_reserves
+        for reserve in contributing_reserves_
+            reserve_type = typeof(reserve)
+            reserve_name = PSY.get_name(reserve)
+            union!(
+                contributing_devices_,
+                _get_contributing_devices(
+                    reserve_type,
+                    reserve_name,
+                    contributing_device_mapping,
+                    contributing_reserves_mapping,
+                    sys,
+                ),
+            )
+        end
+    end
+    return contributing_devices_
 end
 
 function _modify_device_model!(

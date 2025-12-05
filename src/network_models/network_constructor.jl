@@ -53,7 +53,7 @@ function construct_network!(
     container::OptimizationContainer,
     sys::PSY.System,
     model::NetworkModel{<:AbstractPTDFModel},
-    ::ProblemTemplate,
+    template::ProblemTemplate,
 )
     if get_use_slacks(model)
         add_variables!(container, SystemBalanceSlackUp, sys, model)
@@ -68,10 +68,23 @@ function construct_network!(
         )
         objective_function!(container, sys, model)
     end
-    add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
+    # Temporary solution to bypass Balance constraints with AGC
+    # Possible alternative is a new network formulation:
+    if !_has_agc_model(template)
+        add_constraints!(container, CopperPlateBalanceConstraint, sys, model)
+    end 
     add_constraint_dual!(container, sys, model)
     return
 end
+
+function _has_agc_model(template::ProblemTemplate)
+    for service_model in values(get_service_models(template))
+        if get_component_type(service_model) == PSY.AGC
+            return true
+        end 
+    end 
+    return false 
+end  
 
 function construct_network!(
     container::OptimizationContainer,

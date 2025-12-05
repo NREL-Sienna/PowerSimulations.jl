@@ -137,22 +137,6 @@ function update_initial_conditions!(
     return
 end
 
-#= Unused without the AGC model enabled
-function update_initial_conditions!(
-    ics::Vector{T},
-    store::EmulationModelStore,
-    ::Dates.Millisecond,
-) where {
-    T <: InitialCondition{AreaControlError, S},
-} where {S <: Union{Float64, JuMP.VariableRef}}
-    for ic in ics
-        var_val = get_value(store, AreaMismatchVariable(), get_component_type(ic))
-        set_ic_quantity!(ic, get_last_recorded_value(var_val)[get_component_name(ic)])
-    end
-    return
-end
-=#
-
 function update_initial_conditions!(
     ics::T,
     store::EmulationModelStore,
@@ -175,6 +159,23 @@ function update_initial_conditions!(
 }
     for ic in ics
         var_val = get_value(store, EnergyVariable(), get_component_type(ic))
+        set_ic_quantity!(ic, get_last_recorded_value(var_val)[get_component_name(ic)])
+    end
+    return
+end
+
+function update_initial_conditions!(
+    ics::Vector{
+        Union{
+            InitialCondition{PowerSimulations.AreaControlError, Nothing},
+            InitialCondition{PowerSimulations.AreaControlError, JuMP.VariableRef},
+        },
+    },
+    store::EmulationModelStore,
+    ::Dates.Millisecond,
+)
+    for ic in ics
+        var_val = get_value(store, AreaMismatchVariable(), get_component_type(ic))
         set_ic_quantity!(ic, get_last_recorded_value(var_val)[get_component_name(ic)])
     end
     return

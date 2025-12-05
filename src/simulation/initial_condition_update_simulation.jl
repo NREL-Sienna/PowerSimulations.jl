@@ -229,3 +229,20 @@ function update_initial_conditions!(
     end
     return
 end
+
+function update_initial_conditions!(
+    ics::Vector{
+        Union{
+            InitialCondition{PowerSimulations.AreaControlError, Nothing},
+            InitialCondition{PowerSimulations.AreaControlError, JuMP.VariableRef},
+        },
+    },
+    state::SimulationState,
+    ::Dates.Millisecond,
+)
+    for ic in ics
+        var_val = get_system_state_value(state, SmoothACE(), get_component_type(ic))
+        set_ic_quantity!(ic, var_val[get_component_name(ic)])
+    end
+    return
+end

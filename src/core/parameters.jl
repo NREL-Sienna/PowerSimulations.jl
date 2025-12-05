@@ -1,6 +1,6 @@
 abstract type ParameterAttributes end
 
-struct NoAttributes end
+struct NoAttributes <: ParameterAttributes end
 
 struct TimeSeriesAttributes{T <: PSY.TimeSeriesData} <: ParameterAttributes
     name::String
@@ -398,6 +398,19 @@ Parameter to record that the component changed in the availability status
 """
 struct AvailableStatusChangeCountdownParameter <: EventParameter end
 
+# TODO - JDL
+#= abstract type LeftHandSideParameter <: ParameterType end
+
+"""
+Parameter to define participation factor in upward regulation.
+"""
+struct ParticipationFactorUp <: LeftHandSideParameter end
+
+"""
+Parameter to define participation factor in upward regulation.
+"""
+struct ParticipationFactorDown <: LeftHandSideParameter end =#
+
 should_write_resulting_value(::Type{<:RightHandSideParameter}) = true
 should_write_resulting_value(::Type{<:EventParameter}) = true
 
@@ -416,3 +429,4 @@ convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{RequirementTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{UpperBoundValueParameter}) = true
 convert_result_to_natural_units(::Type{LowerBoundValueParameter}) = true
+convert_result_to_natural_units(::Type{ActivePowerOffsetParameter}) = true

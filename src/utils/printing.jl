@@ -331,7 +331,7 @@ end
 function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwargs...)
     println(io)
     table = [
-        "Simulation Step Interval" Dates.Hour(get_step_resolution(sequence))
+        "Simulation Step Interval" Dates.canonicalize(Dates.CompoundPeriod(get_step_resolution(sequence)))
         "Number of Problems" length(sequence.executions_by_model)
     ]
 

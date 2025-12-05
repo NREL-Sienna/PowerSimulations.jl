@@ -143,9 +143,13 @@ end
 function add_proportional_cost!(
     container::OptimizationContainer,
     ::U,
-    devices::IS.FlattenIteratorWrapper{T},
+    devices::Union{Vector{T}, IS.FlattenIteratorWrapper{T}},
     ::V,
-) where {T <: PSY.Component, U <: VariableType, V <: AbstractDeviceFormulation}
+) where {
+    T <: PSY.Component,
+    U <: VariableType,
+    V <: Union{AbstractDeviceFormulation, AbstractServiceFormulation},
+}
     # NOTE: anything time-varying should implement its own method.
     multiplier = objective_function_multiplier(U(), V())
     for d in devices

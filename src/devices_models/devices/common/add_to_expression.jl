@@ -2592,7 +2592,131 @@ function add_to_expression!(
     return
 end
 
-#=
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    areas::IS.FlattenIteratorWrapper{V},
+    devices::Union{Vector{W}, IS.FlattenIteratorWrapper{W}},
+    area_device_map,
+    model::ServiceModel{PSY.AGC, X},
+) where {
+    T <: Union{
+        DeltaActivePowerUpExpression,
+        DeltaActivePowerDownExpression,
+        AdditionalDeltaActivePowerUpExpression,
+        AdditionalDeltaActivePowerDownExpression,
+    },
+    U <:
+    Union{
+        DeltaActivePowerUpVariable,
+        DeltaActivePowerDownVariable,
+        AdditionalDeltaActivePowerUpVariable,
+        AdditionalDeltaActivePowerDownVariable,
+    },
+    V <: PSY.Area,
+    W <: PSY.Generator,
+    X <: AbstractServiceFormulation,
+}
+    area_names = PSY.get_name.(areas)
+    time_steps = get_time_steps(container)
+
+    if !has_container_key(container, T, W)
+        expression = add_expression_container!(container, T(), V, area_names, time_steps)
+    end
+    expression = get_expression(container, T(), V)
+    variable = get_variable(container, U(), W)
+    for n in area_names, d in area_device_map[n], t in time_steps
+        _add_to_jump_expression!(expression[n, t], variable[PSY.get_name(d), t], 1.0)
+    end
+    return
+end
+
+# TODO - Should no longer need this if we add to active power balance at the device level? 
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{ActivePowerBalance},
+    ::Type{U},
+    areas::IS.FlattenIteratorWrapper{V},
+    devices::Union{Vector{W}, IS.FlattenIteratorWrapper{W}},
+    area_device_map,
+    model::ServiceModel{PSY.AGC, X},
+) where {
+    U <:
+    Union{
+        DeltaActivePowerUpVariable,
+        DeltaActivePowerDownVariable,
+        AdditionalDeltaActivePowerUpVariable,
+        AdditionalDeltaActivePowerDownVariable,
+    },
+    V <: PSY.Area,
+    W <: PSY.Generator,
+    X <: AbstractServiceFormulation,
+}
+    area_names = PSY.get_name.(areas)
+    time_steps = get_time_steps(container)
+    mult = get_variable_multiplier(U(), W, X())
+    expression = get_expression(container, ActivePowerBalance(), V)
+    variable = get_variable(container, U(), W)
+    for n in area_names, d in area_device_map[n], t in time_steps
+        _add_to_jump_expression!(expression[n, t], variable[PSY.get_name(d), t], mult)
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{ActivePowerBalance},
+    ::Type{U},
+    devices::Union{Vector{W}, IS.FlattenIteratorWrapper{W}},
+    model::ServiceModel{PSY.AGC, X},
+    network_model::NetworkModel{Y},  
+) where {
+    U <:
+    Union{
+        DeltaActivePowerUpVariable,
+        DeltaActivePowerDownVariable,
+        AdditionalDeltaActivePowerUpVariable,
+        AdditionalDeltaActivePowerDownVariable,
+    },
+    W <: PSY.Generator,
+    X <: AbstractServiceFormulation,
+    Y <: AreaPTDFPowerModel, 
+}
+    network_reduction = get_network_reduction(network_model)
+    time_steps = get_time_steps(container)
+    mult = get_variable_multiplier(U(), W, X())
+    expression = get_expression(container, ActivePowerBalance(), PSY.ACBus)
+    variable = get_variable(container, U(), W)
+    for d in devices
+        bus_no = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(d))
+        for t in time_steps
+            _add_to_jump_expression!(expression[bus_no, t], variable[PSY.get_name(d), t], mult)
+        end 
+    end 
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{ActivePowerBalance},
+    ::Type{ActivePowerImbalance},
+    areas::IS.FlattenIteratorWrapper{V},
+    model::ServiceModel{PSY.AGC, X},
+) where {
+    V <: PSY.Area,
+    X <: AbstractServiceFormulation,
+}
+    area_names = PSY.get_name.(areas)
+    time_steps = get_time_steps(container)
+    expression = get_expression(container, ActivePowerBalance(), V)
+    variable = get_variable(container, ActivePowerImbalance(), PSY.Area)
+    for n in area_names, t in time_steps
+        _add_to_jump_expression!(expression[n, t], variable[n, t], -1.0)
+    end
+    return
+end
+
 function add_to_expression!(
     container::OptimizationContainer,
     ::Type{T},
@@ -2648,4 +2772,58 @@ function add_to_expression!(
     end
     return
 end
-=#
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    services::IS.FlattenIteratorWrapper{V},
+    model::ServiceModel{V, W},
+    area_interchange_map::Dict{String, Dict{Symbol, Vector{PSY.AreaInterchange}}},
+) where {
+    T <: RawACE,
+    U <: FlowActivePowerVariable,
+    V <: PSY.AGC,
+    W <: AbstractServiceFormulation,
+}
+    names = PSY.get_name.(services)
+    time_steps = get_time_steps(container)
+    if !has_container_key(container, T, V)
+        expression = add_expression_container!(container, T(), PSY.AGC, names, time_steps)
+    end
+    expression = get_expression(container, T(), PSY.AGC)
+    variable = get_variable(container, FlowActivePowerVariable(), PSY.AreaInterchange)
+    scheduled = get_variable(container, ScheduledFlowActivePowerVariable(), PSY.AreaInterchange)
+    for (area_name, map) in area_interchange_map 
+        for t in time_steps 
+            exp = expression[area_name, t]
+            for interchange in map[:from_areas]
+                interchange_name = PSY.get_name(interchange)
+                _add_to_jump_expression!(
+                    exp,
+                    variable[interchange_name, t],
+                    1.0,
+                )
+                _add_to_jump_expression!(
+                    exp,
+                    scheduled[interchange_name, t],
+                    -1.0,
+                )
+            end 
+            for interchange in map[:to_areas]
+                interchange_name = PSY.get_name(interchange)
+                _add_to_jump_expression!(
+                    exp,
+                    variable[interchange_name, t],
+                    -1.0,
+                )
+                _add_to_jump_expression!(
+                    exp,
+                    scheduled[interchange_name, t],
+                    1.0,
+                )
+            end 
+        end 
+    end 
+    return
+end
