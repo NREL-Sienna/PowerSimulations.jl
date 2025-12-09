@@ -10,11 +10,43 @@ using PowerNetworkMatrices
 using HydroPowerSimulations
 using HiGHS
 using Dates
+using PowerFlows
 
 @info pkgdir(PowerSimulations)
 
+#=
 open("precompile_time.txt", "a") do io
     write(io, "| $(ARGS[1]) | $(precompile_time.time) |\n")
+end
+=#
+
+function set_device_models!(template::ProblemTemplate, uc::Bool = true)
+    if uc
+        # unique to UC
+        set_device_model!(template, ThermalMultiStart, ThermalStandardUnitCommitment)
+        set_device_model!(template, ThermalStandard, ThermalStandardUnitCommitment)
+        set_device_model!(template, HydroDispatch, FixedOutput)
+    else
+        # unique to ED
+        set_device_model!(template, ThermalMultiStart, ThermalBasicDispatch)
+        set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
+        set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
+    end
+
+    set_device_model!(template, RenewableDispatch, RenewableFullDispatch)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, DeviceModel(Line, StaticBranch))
+    set_device_model!(template, Transformer2W, StaticBranchUnbounded)
+    set_device_model!(template, TapTransformer, StaticBranchUnbounded)
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+    )
+    set_service_model!(
+        template,
+        ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+    )
+    return template
 end
 
 try
@@ -36,31 +68,29 @@ try
                 duals = [CopperPlateBalanceConstraint],
             ),
         )
+        set_device_models!(template_uc)
 
-        set_device_model!(template_uc, ThermalMultiStart, ThermalStandardUnitCommitment)
-        set_device_model!(template_uc, ThermalStandard, ThermalStandardUnitCommitment)
-        set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch)
-        set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
-        set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
-        set_device_model!(template_uc, Transformer2W, StaticBranchUnbounded)
-        set_device_model!(template_uc, TapTransformer, StaticBranchUnbounded)
-        set_device_model!(template_uc, HydroDispatch, FixedOutput)
-        set_service_model!(
-            template_uc,
-            ServiceModel(VariableReserve{ReserveUp}, RangeReserve),
+        template_ed = ProblemTemplate(
+            NetworkModel(
+                PTDFPowerModel;
+                use_slacks = true,
+                PTDF_matrix = PTDF(sys_rts_da),
+                duals = [CopperPlateBalanceConstraint],
+                power_flow_evaluation = DCPowerFlow()
+            ),
         )
-        set_service_model!(
-            template_uc,
-            ServiceModel(VariableReserve{ReserveDown}, RangeReserve),
+        set_device_models!(template_ed, false)
+
+        
+        template_em = ProblemTemplate(
+            NetworkModel(
+                PTDFPowerModel;
+                use_slacks = true,
+                PTDF_matrix = PTDF(sys_rts_da),
+                duals = [CopperPlateBalanceConstraint],
+            ),
         )
-
-        template_ed = deepcopy(template_uc)
-        set_device_model!(template_ed, ThermalMultiStart, ThermalBasicDispatch)
-        set_device_model!(template_ed, ThermalStandard, ThermalBasicDispatch)
-        set_device_model!(template_ed, HydroDispatch, HydroDispatchRunOfRiver)
-
-        template_em = deepcopy(template_ed)
-        set_device_model!(template_ed, Line, StaticBranchUnbounded)
+        set_device_models!(template_em, false)
         empty!(template_em.services)
 
         models = SimulationModels(;
