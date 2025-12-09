@@ -173,7 +173,6 @@ end
     end
 end
 
-
 @testset "Network DC-PF with VirtualPTDF Model and implementing Dynamic Branch Ratings" begin
     line_device_model = DeviceModel(
         Line,
@@ -280,7 +279,6 @@ end
         )
     end
 end
-
 
 @testset "Network DC lossless -PF network with PowerModels DCPlosslessForm" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")

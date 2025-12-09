@@ -1141,6 +1141,7 @@ function add_post_contingency_flow_expressions!(
         reduced_branch_tracker,
         modeled_branch_types,
         PostContingencyEmergencyFlowRateConstraint,
+        FlowRateConstraint,
     )
 
     expression_container = add_expression_container!(
@@ -1276,6 +1277,84 @@ function add_constraints!(
     return
 end
 
+function get_branch_argument_constraint_axis(
+    net_reduction_data::PNM.NetworkReductionData,
+    reduced_branch_tracker::BranchReductionOptimizationTracker,
+    ::Type{T},
+    ::Type{U},
+    ::Type{V},
+) where {
+    T <: PSY.ACTransmission,
+    U <: PostContingencyEmergencyFlowRateConstraint,
+    V <: FlowRateConstraint,
+}
+    constraint_tracker = get_constraint_dict(reduced_branch_tracker)
+    constraint_map_by_type = get_constraint_map_by_type(reduced_branch_tracker)
+    name_axis = net_reduction_data.name_to_arc_map[T]
+    arc_tuples_with_constraints =
+        get!(constraint_tracker, U, Set{Tuple{Int, Int}}())
+    arc_tuples_with_aux_constraints = get!(constraint_tracker, U, Set{Tuple{Int, Int}}())
+    constraint_map = get!(
+        constraint_map_by_type,
+        U,
+        Dict{
+            Type{<:PSY.ACTransmission},
+            SortedDict{String, Tuple{Tuple{Int, Int}, String}},
+        }(),
+    )
+    aux_constraint_map = get!(
+        constraint_map_by_type,
+        V,
+        Dict{
+            Type{<:PSY.ACTransmission},
+            SortedDict{String, Tuple{Tuple{Int, Int}, String}},
+        }(),
+    )
+    constraint_submap =
+        get!(constraint_map, T, SortedDict{String, Tuple{Tuple{Int, Int}, String}}())
+    aux_constraint_submap =
+        get!(aux_constraint_map, T, SortedDict{String, Tuple{Tuple{Int, Int}, String}}())
+    for (branch_name, name_axis_tuple) in name_axis
+        arc_tuple = name_axis_tuple[1]
+        if !(arc_tuple in arc_tuples_with_constraints)
+            if haskey(aux_constraint_submap, branch_name)
+                constraint_submap[branch_name] = name_axis_tuple
+            end
+            push!(arc_tuples_with_constraints, arc_tuple)
+        end
+    end
+    return collect(keys(constraint_submap))
+end
+
+function get_branch_argument_constraint_axis(
+    net_reduction_data::PNM.NetworkReductionData,
+    reduced_branch_tracker::BranchReductionOptimizationTracker,
+    branch_types::Vector{DataType},
+    ::Type{U},
+    ::Type{V},
+) where {U <: PostContingencyEmergencyFlowRateConstraint, V <: FlowRateConstraint}
+    all_names = []
+    for branch_type in branch_types
+        if !haskey(
+            net_reduction_data.name_to_arc_map,
+            branch_type,
+        )
+            continue
+        end
+
+        names_by_type = get_branch_argument_constraint_axis(
+            net_reduction_data,
+            reduced_branch_tracker,
+            branch_type,
+            U,
+            V,
+        )
+        push!(all_names, names_by_type)
+    end
+
+    return reduce(vcat, all_names)
+end
+
 """
 Add branch post-contingency rate limit constraints for ACTransmission after a G-k outage for G-k with reserves formulation (SecurityConstrainedReservesFormulation)
 """
@@ -1306,6 +1385,7 @@ function add_constraints!(
         reduced_branch_tracker,
         modeled_branch_types,
         cons_type,
+        FlowRateConstraint,
     )
     service_name = PSY.get_name(service)
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
