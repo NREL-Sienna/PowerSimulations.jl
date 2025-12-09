@@ -66,6 +66,7 @@ try
                 use_slacks = true,
                 PTDF_matrix = PTDF(sys_rts_da),
                 duals = [CopperPlateBalanceConstraint],
+                power_flow_evaluation = DCPowerFlow(),
             ),
         )
         set_device_models!(template_uc)
