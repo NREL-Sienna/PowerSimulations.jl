@@ -14,11 +14,9 @@ using PowerFlows
 
 @info pkgdir(PowerSimulations)
 
-#=
 open("precompile_time.txt", "a") do io
     write(io, "| $(ARGS[1]) | $(precompile_time.time) |\n")
 end
-=#
 
 function set_device_models!(template::ProblemTemplate, uc::Bool = true)
     if uc
