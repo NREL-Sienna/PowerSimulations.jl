@@ -50,7 +50,7 @@ function write_model_dual_results!(
         write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&
-           should_export_dual(export_params[:exports], index, model_name, key)
+           should_export_dual(export_params[:exports], update_timestamp, model_name, key)
             horizon_count = export_params[:horizon_count]
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
