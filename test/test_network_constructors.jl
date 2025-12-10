@@ -73,7 +73,7 @@ end
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
     ]
-    PTDF_ref = IdDict{System, Any}(
+    PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => PTDF(c_sys5),
         c_sys14 => PTDF(c_sys14),
         c_sys14_dc => PTDF(c_sys14_dc),

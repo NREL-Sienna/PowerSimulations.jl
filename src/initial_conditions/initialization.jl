@@ -54,6 +54,9 @@ function get_initial_conditions_template(model::OperationModel, number_of_steps:
         set_service_model!(ic_template, get_service_name(service_model), base_model)
     end
     set_number_of_steps!(network_model.reduced_branch_tracker, number_of_steps)
+    if !isempty(model.template.services)
+        _add_services_to_device_model!(ic_template)
+    end
     return ic_template
 end
 

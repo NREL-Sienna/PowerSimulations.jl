@@ -50,37 +50,16 @@ function construct_device!(
 end
 
 function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ModelConstructStage,
-    model::DeviceModel{T, StaticBranch},
-    network_model::NetworkModel{AreaBalancePowerModel},
-) where {T <: PSY.ACTransmission}
-    devices = get_available_components(model, sys)
-    if has_subnetworks(network_model)
-        devices =
-            get_available_components(model, sys)
-        add_constraints!(
-            container,
-            FlowRateConstraint,
-            devices,
-            model,
-            network_model,
-        )
-        add_constraint_dual!(container, sys, model)
-    end
-    add_feedforward_constraints!(container, model, devices)
-    return
-end
-
-function construct_device!(
     ::OptimizationContainer,
     ::PSY.System,
     ::ModelConstructStage,
     model::DeviceModel{T, StaticBranch},
-    network_model::NetworkModel{CopperPlatePowerModel},
+    network_model::Union{
+        NetworkModel{CopperPlatePowerModel},
+        NetworkModel{AreaBalancePowerModel},
+    },
 ) where {T <: PSY.ACTransmission}
-    @debug "No model construction needed for CopperPlatePowerModel and DeviceModel{$T, StaticBranch}" _group =
+    @debug "No model construction needed for CopperPlatePowerModel or AreaBalancePowerModel and DeviceModel{$T, StaticBranch}" _group =
         LOG_GROUP_BRANCH_CONSTRUCTIONS
     return
 end
