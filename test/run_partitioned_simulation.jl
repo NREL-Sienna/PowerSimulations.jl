@@ -32,9 +32,10 @@ if get(ENV, "CI", nothing) != "true"
     include(joinpath(BASE_DIR, "test/test_utils/common_operation_model.jl"))
     include(joinpath(BASE_DIR, "test/test_utils/model_checks.jl"))
     include(joinpath(BASE_DIR, "test/test_utils/mock_operation_models.jl"))
-    include(joinpath(BASE_DIR, "test/test_utils/solver_definitions.jl"))
     include(joinpath(BASE_DIR, "test/test_utils/operations_problem_templates.jl"))
 end
+
+include(joinpath(BASE_DIR, "test/test_utils/solver_definitions.jl"))
 
 function build_simulation(
     output_dir::AbstractString,
