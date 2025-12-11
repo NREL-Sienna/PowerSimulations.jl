@@ -215,7 +215,7 @@ function run_generic_mbc_sim(
 
     test_success && @test build!(sim; serialize = false) == PSI.SimulationBuildStatus.BUILT
     test_success &&
-        @test execute!(sim; enable_progress_bar = true, in_memory = in_memory_store) ==
+        @test execute!(sim; in_memory = in_memory_store) ==
               PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     sim_res = SimulationResults(sim)

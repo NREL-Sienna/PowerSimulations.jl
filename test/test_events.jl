@@ -31,7 +31,6 @@ end
 
 function _add_interruptible_power_load!(sys)
     b = get_component(ACBus, sys, "nodeA")
-    show_components(sys, PowerLoad)
     pl = get_component(PowerLoad, sys, "Bus4")
     ipl = InterruptiblePowerLoad(;
         name = "test_ipl",
@@ -57,7 +56,6 @@ end
 #=
 function _add_energy_reservoir_storage!(sys)
     b = get_component(ACBus, sys, "nodeA")
-    show_components(sys, PowerLoad)
     pl = get_component(PowerLoad, sys, "Bus4")
     ers = EnergyReservoirStorage(;
         name = "test_ers",
