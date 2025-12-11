@@ -441,7 +441,7 @@ function get_branch_to_pm(
     T::Type{StaticBranchUnbounded},
     U::Type{<:PM.AbstractPowerModel},
 )
-    equivalent_branch = PNM.get_equivalent_physical_branch_parameters(double_circuitn)
+    equivalent_branch = PNM.get_equivalent_physical_branch_parameters(double_circuit)
     PM_branch = Dict{String, Any}(
         "br_r" => PNM.get_equivalent_r(equivalent_branch),
         "shift" => 0.0,
