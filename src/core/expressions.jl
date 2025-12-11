@@ -23,6 +23,7 @@ struct PTDFBranchFlow <: ExpressionType end
 struct PostContingencyBranchFlow <: PostContingencyExpressions end
 struct PostContingencyActivePowerGeneration <: PostContingencyExpressions end
 struct PostContingencyNodalActivePowerDeployment <: PostContingencyExpressions end
+struct PostContingencyAreaActivePowerDeployment <: PostContingencyExpressions end
 struct NetActivePower <: ExpressionType end
 """
 Struct for DC current balance in multi-terminal DC networks
@@ -36,9 +37,8 @@ should_write_resulting_value(::Type{RawACE}) = true
 should_write_resulting_value(::Type{ActivePowerBalance}) = true
 should_write_resulting_value(::Type{ReactivePowerBalance}) = true
 should_write_resulting_value(::Type{DCCurrentBalance}) = true
-should_write_resulting_value(::Type{PTDFBranchFlow}) = true
-#should_write_resulting_value(::Type{PostContingencyBranchFlow}) = true
-#should_write_resulting_value(::Type{PostContingencyActivePowerGeneration}) = true
+should_write_resulting_value(::Type{PostContingencyBranchFlow}) = true
+should_write_resulting_value(::Type{PostContingencyActivePowerGeneration}) = true
 
 convert_result_to_natural_units(::Type{InterfaceTotalFlow}) = true
 convert_result_to_natural_units(::Type{PostContingencyBranchFlow}) = true
