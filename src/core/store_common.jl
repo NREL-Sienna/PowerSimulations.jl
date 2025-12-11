@@ -88,7 +88,7 @@ function write_model_parameter_results!(
         write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&
-           should_export_parameter(export_params[:exports], index, model_name, key)
+           should_export_parameter(export_params[:exports], update_timestamp, model_name, key)
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
             df = to_dataframe(data, key)
@@ -126,7 +126,7 @@ function write_model_variable_results!(
         write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&
-           should_export_variable(export_params[:exports], index, model_name, key)
+           should_export_variable(export_params[:exports], update_timestamp, model_name, key)
             horizon_count = export_params[:horizon_count]
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
@@ -159,7 +159,7 @@ function write_model_aux_variable_results!(
         write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&
-           should_export_aux_variable(export_params[:exports], index, model_name, key)
+           should_export_aux_variable(export_params[:exports], update_timestamp, model_name, key)
             horizon_count = export_params[:horizon_count]
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
@@ -198,7 +198,7 @@ function write_model_expression_results!(
         write_result!(store, model_name, key, index, update_timestamp, data)
 
         if export_params !== nothing &&
-           should_export_expression(export_params[:exports], index, model_name, key)
+           should_export_expression(export_params[:exports], update_timestamp, model_name, key)
             horizon_count = export_params[:horizon_count]
             resolution = export_params[:resolution]
             file_type = export_params[:file_type]
