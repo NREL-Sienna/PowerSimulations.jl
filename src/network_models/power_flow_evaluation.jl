@@ -644,27 +644,14 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
         end
     end
     for (arc, parallel_brs) in PNM.get_parallel_branch_map(nrd) # parallel_brs is Set{ACTransmission}
-        sample_line = first(parallel_brs)
-        impedance = PSY.get_r(sample_line) + im * PSY.get_x(sample_line)
-        n_branches = length(parallel_brs)
         for br in parallel_brs
             if br isa U
                 @assert T <: LineFlowAuxVariableType "Only LineFlowAuxVariableType aux vars " *
                                                      "can be used for parallel branches: got $T"
-                if !isapprox(PSY.get_r(br) + im * PSY.get_x(br), impedance)
-                    throw(
-                        error(
-                            "All parallel branches must have the same impedance: " *
-                            "got $(PSY.get_name(br)) with impedance " *
-                            "$(PSY.get_r(br) + im * PSY.get_x(br)) and " *
-                            "$(PSY.get_name(sample_line)) with impedance $impedance.",
-                        ),
-                    )
-                end
                 name = PSY.get_name(br)
-                # arc from parallel branch map may be different than get_arc_tuple(br, nrd)
+                multiplier = PNM.compute_parallel_multiplier(parallel_brs, name)
                 arc_ix = arc_lookup[arc]
-                dest[name, :] = 1 / n_branches .* src[arc_ix, :]
+                dest[name, :] = multiplier .* src[arc_ix, :]
             end
         end
     end
