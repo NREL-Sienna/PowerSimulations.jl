@@ -567,4 +567,5 @@ function add_pm_constraint_refs!(
             end
         end
     end
+    return
 end
