@@ -654,7 +654,7 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
                                                      "can be used for parallel branches: got $T"
                 if !isapprox(PSY.get_r(br) + im * PSY.get_x(br), impedance)
                     @debug "Parallel branches with different impedances found: " *
-                          "$name and $first_name. Check your data inputs."
+                           "$name and $first_name. Check your data inputs."
                 end
                 multiplier = PNM.compute_parallel_multiplier(parallel_brs, name)
                 arc_ix = arc_lookup[arc]
