@@ -475,12 +475,17 @@ end
             ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
             @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-                PSI.ModelBuildStatus.BUILT
-            constraints = ps_model.internal.container.constraints# [PSI.ConstraintKey{PostContingencyEmergencyFlowRateConstraint, VariableReserve{ReserveUp}}("Reserve1 -lb")]
-            flow_rate_cons = constraints[PSI.ConstraintKey{PostContingencyEmergencyFlowRateConstraint, VariableReserve{ReserveUp}}("Reserve1 -lb")]
-            @test size(flow_rate_cons) == (1,5,24)
+                  PSI.ModelBuildStatus.BUILT
+            constraints = ps_model.internal.container.constraints
+            flow_rate_cons = constraints[PSI.ConstraintKey{
+                PostContingencyEmergencyFlowRateConstraint,
+                VariableReserve{ReserveUp},
+            }(
+                "Reserve1 -lb",
+            )]
+            @test size(flow_rate_cons) == (1, 5, 24)
         end
-    end 
+    end
 end
 
 @testset "Test if G-n with Contingency reserve deliverability constraints builds when there is a device without set_device_model!()" begin
