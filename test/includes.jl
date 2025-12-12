@@ -53,6 +53,8 @@ include("test_utils/add_market_bid_cost.jl")
 include("test_utils/mbc_system_utils.jl")
 include("test_utils/mbc_simulation_utils.jl")
 include("test_utils/iec_simulation_utils.jl")
+include("test_utils/add_components_to_system.jl")
+include("test_utils/scuc_models_checks.jl")
 
 ENV["RUNNING_PSI_TESTS"] = "true"
 ENV["SIENNA_RANDOM_SEED"] = 1234  # Set a fixed seed for reproducibility in tests
