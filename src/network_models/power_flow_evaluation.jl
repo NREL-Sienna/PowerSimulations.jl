@@ -653,7 +653,7 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
                 @assert T <: LineFlowAuxVariableType "Only LineFlowAuxVariableType aux vars " *
                                                      "can be used for parallel branches: got $T"
                 if !isapprox(PSY.get_r(br) + im * PSY.get_x(br), impedance)
-                    @warn "Parallel branches with different impedances found: " *
+                    @debug "Parallel branches with different impedances found: " *
                           "$name and $first_name. Check your data inputs."
                 end
                 multiplier = PNM.compute_parallel_multiplier(parallel_brs, name)
