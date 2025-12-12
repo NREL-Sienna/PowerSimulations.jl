@@ -130,7 +130,7 @@ function construct_device!(
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACTransmission}
     devices = get_available_components(device_model, sys)
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             FlowActivePowerSlackUpperBound,
@@ -147,7 +147,7 @@ function construct_device!(
         )
     end
 
-    if haskey(get_time_series_names(model), DynamicBranchRatingTimeSeriesParameter)
+    if haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
         add_parameters!(
             container,
             DynamicBranchRatingTimeSeriesParameter,
@@ -274,7 +274,7 @@ function construct_device!(
         StaticBranchBounds(),
     )
 
-    if get_use_slacks(model)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             FlowActivePowerSlackUpperBound,
@@ -291,7 +291,7 @@ function construct_device!(
         )
     end
 
-    add_feedforward_arguments!(container, devicemodel, devices)
+    add_feedforward_arguments!(container, device_model, devices)
     return
 end
 
