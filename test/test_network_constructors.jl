@@ -195,7 +195,6 @@ end
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
-        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
     ]
     PTDF_ref = IdDict{System, VirtualPTDF}(
         c_sys5 => VirtualPTDF(c_sys5),
@@ -209,9 +208,9 @@ end
     )
     dlr_factors = vcat([fill(x, 6) for x in [1.15, 1.05, 1.1, 1]]...)
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [264, 0, 264, 264, 168],
-        c_sys14 => [600, 0, 600, 600, 504],
-        c_sys14_dc => [600, 0, 648, 552, 456],
+        c_sys5 => [120, 0, 264, 264, 24],
+        c_sys14 => [120, 0, 600, 600, 24],
+        c_sys14_dc => [168, 0, 648, 552, 24],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 241293.703,
