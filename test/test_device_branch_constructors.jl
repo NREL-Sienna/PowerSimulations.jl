@@ -703,7 +703,17 @@ end
         model_m;
         console_level = Logging.AboveMaxLevel,
         output_dir = mktempdir(; cleanup = true),
-    ) == PSI.ModelBuildStatus.FAILED
+    ) == PSI.ModelBuildStatus.BUILT
+
+    @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    res = OptimizationProblemResults(model_m)
+    vars = read_variable(
+        res,
+        "FlowActivePowerSlackUpperBound__Line";
+        table_format = TableFormat.WIDE,
+    )
+    # some relaxations will find a solution with 0.0 slack
+    @test sum(vars[!, "2"]) >= -1e-6
 
     template = get_thermal_dispatch_template_network(
         NetworkModel(PTDFPowerModel; use_slacks = true),
