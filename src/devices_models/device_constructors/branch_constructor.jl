@@ -1481,10 +1481,10 @@ function construct_device!(
                 )
             end
         end
-        add_parameters!(container, FromToFlowLimitParameter, devices, model)
-        add_parameters!(container, ToFromFlowLimitParameter, devices, model)
+        add_parameters!(container, FromToFlowLimitParameter, devices, device_model)
+        add_parameters!(container, ToFromFlowLimitParameter, devices, device_model)
     end
-    add_feedforward_arguments!(container, model, devices)
+    add_feedforward_arguments!(container, device_model, devices)
     return
 end
 
