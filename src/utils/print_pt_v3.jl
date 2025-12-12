@@ -137,8 +137,8 @@ function _show_method(io::IO, network_model::NetworkModel, backend::Symbol; kwar
     PrettyTables.pretty_table(
         io,
         table;
-        backend = Val(backend),
-        header = ["Field", "Value"],
+        backend = backend,
+        column_labels = ["Field", "Value"],
         title = "Network Model",
         alignment = :l,
         kwargs...,
