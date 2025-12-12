@@ -205,7 +205,6 @@ end
 
 function branch_rate_bounds!(
     container::OptimizationContainer,
-    ::IS.FlattenIteratorWrapper{B},
     ::DeviceModel{B, T},
     network_model::NetworkModel{<:PM.AbstractPowerModel},
 ) where {B <: PSY.ACTransmission, T <: AbstractBranchFormulation}
@@ -784,13 +783,13 @@ Add network flow constraints for ACBranch and NetworkModel with <: AbstractPTDFM
 function add_constraints!(
     container::OptimizationContainer,
     cons_type::Type{NetworkFlowConstraint},
-    devices::IS.FlattenIteratorWrapper{B},
-    ::DeviceModel{B, StaticBranchBounds},
+    devices::IS.FlattenIteratorWrapper{T},
+    device_model::DeviceModel{T, StaticBranchBounds},
     network_model::NetworkModel{<:AbstractPTDFModel},
-) where {B <: PSY.ACTransmission}
+) where {T <: PSY.ACTransmission}
     time_steps = get_time_steps(container)
-    branch_flow_expr = get_expression(container, PTDFBranchFlow(), B)
-    flow_variables = get_variable(container, FlowActivePowerVariable(), B)
+    branch_flow_expr = get_expression(container, PTDFBranchFlow(), T)
+    flow_variables = get_variable(container, FlowActivePowerVariable(), T)
     net_reduction_data = network_model.network_reduction
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     branches = get_branch_argument_constraint_axis(
@@ -802,16 +801,26 @@ function add_constraints!(
     branch_flow = add_constraints_container!(
         container,
         NetworkFlowConstraint(),
-        B,
+        T,
         branches,
         time_steps,
     )
     jump_model = get_jump_model(container)
+
+    use_slacks = get_use_slacks(device_model)
+    if use_slacks
+        slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
+        slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
+    end
+
     for name in branches
         for t in time_steps
             branch_flow[name, t] = JuMP.@constraint(
                 jump_model,
-                branch_flow_expr[name, t] - flow_variables[name, t] == 0.0
+                branch_flow_expr[name, t] -
+                flow_variables[name, t]
+                ==
+                (use_slacks ? slack_ub[name, t] - slack_lb[name, t] : 0.0)
             )
         end
     end
