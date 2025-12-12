@@ -66,9 +66,7 @@ end
     system = PSB.build_system(PSITestSystems, "c_sys5_ml")
     set_rating!(PSY.get_component(Line, system, "2"), 1.5)
     for model in [DCPPowerModel, PTDFPowerModel]
-        template = get_thermal_dispatch_template_network(
-            NetworkModel(model; PTDF_matrix = PTDF(system)),
-        )
+        template = get_thermal_dispatch_template_network(NetworkModel(model))
         set_device_model!(template, DeviceModel(Line, StaticBranchBounds))
         set_device_model!(template, DeviceModel(MonitoredLine, StaticBranchUnbounded))
         model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
@@ -80,6 +78,26 @@ end
         @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
         @test check_flow_variable_values(model_m, FlowActivePowerVariable, Line, "2", 1.5)
     end
+
+    # Test the addition of slacks
+    template = get_thermal_dispatch_template_network(NetworkModel(PTDFPowerModel))
+    set_device_model!(template, DeviceModel(Line, StaticBranchBounds; use_slacks = true))
+    set_device_model!(
+        template,
+        DeviceModel(MonitoredLine, StaticBranchBounds; use_slacks = true),
+    )
+    model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
+    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+
+    @test !check_variable_bounded(model_m, FlowActivePowerVariable, Line)
+    @test !check_variable_bounded(model_m, FlowActivePowerVariable, MonitoredLine)
+    @test !check_variable_bounded(model_m, FlowActivePowerSlackLowerBound, Line)
+    @test !check_variable_bounded(model_m, FlowActivePowerSlackUpperBound, Line)
+    @test !check_variable_bounded(model_m, FlowActivePowerSlackLowerBound, MonitoredLine)
+    @test !check_variable_bounded(model_m, FlowActivePowerSlackUpperBound, MonitoredLine)
+
+    @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
 
 @testset "DC Power Flow Models for TwoTerminalGenericHVDCLine  with with Line Flow Constraints, TapTransformer & Transformer2W Unbounded" begin
