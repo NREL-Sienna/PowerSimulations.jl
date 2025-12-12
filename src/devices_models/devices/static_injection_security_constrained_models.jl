@@ -1445,9 +1445,17 @@ function add_to_expression!(
 
     service_name = PSY.get_name(service)
     associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+    net_reduction_data = network_model.network_reduction
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
 
-    network_reduction = get_network_reduction(network_model)
-    branches_names = PNM.get_retained_branches_names(network_reduction)
+    modeled_ac_branch_types = network_model.modeled_ac_branch_types
+
+    branch_names = get_branch_argument_constraint_axis(
+        net_reduction_data,
+        reduced_branch_tracker,
+        modeled_ac_branch_types,
+        PostContingencyEmergencyFlowRateConstraint,
+    )
 
     expression = lazy_container_addition!(
         container,
@@ -1464,22 +1472,61 @@ function add_to_expression!(
     jump_model = get_jump_model(container)
     ptdf = get_PTDF_matrix(network_model)
 
-    for branch in branches_names
-        ptdf_col = ptdf[branch, :]
+    for b_type in modeled_ac_branch_types
+        #!(b_type <: PSY.ACTransmission) && continue
+        pre_contingency_flow = get_expression(container, PTDFBranchFlow(), b_type)
+
+        name_to_arc_map =
+            get_constraint_map_by_type(reduced_branch_tracker)[PostContingencyEmergencyFlowRateConstraint][b_type]
 
         for outage in associated_outages
             name_outage = IS.get_uuid(outage)
 
-            expression[name_outage, branch, :] .= _make_post_contingency_flow_expressions!(
-                jump_model,
-                branch * string(name_outage),
-                time_steps,
-                ptdf_col,
-                nodal_power_deployment_expressions[name_outage, :, :].data,
-            )
+            tasks = map(collect(name_to_arc_map)) do pair
+                (name, (arc, _)) = pair
+                ptdf_col = ptdf[arc, :]
+                Threads.@spawn _make_postcontingency_flow_expressions!(
+                    jump_model,
+                    name,
+                    outage_id,
+                    time_steps,
+                    ptdf_col,
+                    post_cont_expr.data,
+                    pre_contingency_flow,
+                )
+            end
+            for task in tasks
+                name, expressions = fetch(task)
+                expression_container[outage_id, name, :] .= expressions
+            end
         end
     end
+    #= Leaving serial code commented out for debugging purposes in the future
+    for b_type in modeled_ac_branch_types
+        pre_contingency_flow = get_expression(container, PTDFBranchFlow(), b_type)
 
+        for outage in associated_outages
+            outage_id = string(IS.get_uuid(outage))
+            post_cont_expr = post_contingency_deployment_expr[outage_id, :, :]
+
+            for (name, (arc, reduction)) in
+                get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
+                ptdf_col = ptdf[arc, :]
+
+                expression_container[outage_id, name, :] .=
+                    _make_postcontingency_flow_expressions!(
+                        jump_model,
+                        name,
+                        outage_id,
+                        time_steps,
+                        ptdf_col,
+                        post_cont_expr.data,
+                        pre_contingency_flow,
+                    )
+            end
+        end
+    end
+    =#
     return
 end
 
@@ -1518,21 +1565,83 @@ function add_to_expression!(
         meta = service_name,
     )
 
-    for branch in branches_names
-        flow_variables = get_variable(
+    j_model = get_jump_model(container)
+
+    for t in time_steps, outage in associated_outages
+        name_outage = string(IS.get_uuid(outage))
+        constraint[name_outage, t] =
+            JuMP.@constraint(j_model, expressions[name_outage, t] == 0)
+    end
+    return
+end
+
+"""
+Add branch post-contingency rate limit constraints for ACTransmission after a G-k outage for G-k with reserves formulation (SecurityConstrainedReservesFormulation)
+"""
+function add_constraints!(
+    container::OptimizationContainer,
+    cons_type::Type{T},
+    ::Type{U},
+    service::R,
+    device_model::ServiceModel{R, F},
+    network_model::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: PostContingencyEmergencyFlowRateConstraint,
+    U <: PostContingencyBranchFlow,
+    R <: PSY.AbstractReserve,
+    F <: AbstractSecurityConstrainedReservesFormulation,
+}
+    time_steps = get_time_steps(container)
+    net_reduction_data = network_model.network_reduction
+
+    name_to_arc_maps = PNM.get_name_to_arc_maps(net_reduction_data)
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
+
+    modeled_ac_branch_types = network_model.modeled_ac_branch_types
+
+    branch_names = get_branch_argument_constraint_axis(
+        net_reduction_data,
+        reduced_branch_tracker,
+        modeled_ac_branch_types,
+        cons_type,
+    )
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+
+    con_lb =
+        add_constraints_container!(
             container,
             U(),
             typeof(get_component(PSY.ACTransmission, sys, branch)),
         )
-        for outage in associated_outages
-            name_outage = IS.get_uuid(outage)
 
-            for t in time_steps
-                _add_to_jump_expression!(
-                    expression[name_outage, branch, t],
-                    flow_variables[branch, t],
-                    1.0,
+    post_cont_flow_expressions = get_expression(container, U(), R, service_name)
+
+    for outage in associated_outages
+        outage_id = string(IS.get_uuid(outage))
+
+        for b_type in modeled_ac_branch_types
+            for (name, (arc, reduction)) in
+                get_constraint_map_by_type(reduced_branch_tracker)[PostContingencyEmergencyFlowRateConstraint][b_type]
+                # TODO: entry is not type stable here, it can return any type ACTransmission.
+                # It might have performance implications. Possibly separate this into other functions
+                reduction_entry = all_branch_maps_by_type[reduction][b_type][arc]
+                limits = get_emergency_min_max_limits(
+                    reduction_entry,
+                    PostContingencyEmergencyFlowRateConstraint,
+                    StaticBranch,
                 )
+                for t in time_steps
+                    con_ub[outage_id, name, t] =
+                        JuMP.@constraint(get_jump_model(container),
+                            post_cont_flow_expressions[outage_id, name, t] <=
+                            limits.max)
+                    con_lb[outage_id, name, t] =
+                        JuMP.@constraint(get_jump_model(container),
+                            post_cont_flow_expressions[outage_id, name, t] >=
+                            limits.min)
+                end
             end
         end
     end

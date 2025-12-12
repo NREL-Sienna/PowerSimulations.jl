@@ -1437,15 +1437,19 @@ function construct_device!(
     return
 end
 
-function _get_branch_map(network_model::NetworkModel)
-    @assert !isempty(network_model.modeled_branch_types)
+function _get_branch_map(
+    container::OptimizationContainer,
+    network_model::NetworkModel,
+    sys::PSY.System,
+)
+    @assert !isempty(network_model.modeled_ac_branch_types)
     net_reduction_data = get_network_reduction(network_model)
     all_branch_maps_by_type = net_reduction_data.all_branch_maps_by_type
     inter_area_branch_map =
     # This method uses ACBranch to support HVDC
         Dict{Tuple{String, String}, Dict{DataType, Vector{String}}}()
     name_to_arc_maps = PNM.get_name_to_arc_maps(net_reduction_data)
-    for br_type in network_model.modeled_branch_types
+    for br_type in network_model.modeled_ac_branch_types
         !haskey(name_to_arc_maps, br_type) && continue
         name_to_arc_map = PNM.get_name_to_arc_map(net_reduction_data, br_type)
         for (name, (arc, reduction)) in name_to_arc_map

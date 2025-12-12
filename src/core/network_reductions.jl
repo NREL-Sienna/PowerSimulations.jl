@@ -148,12 +148,6 @@ function get_branch_argument_constraint_axis(
 ) where {U <: ISOPT.ConstraintType}
     all_names = []
     for branch_type in branch_types
-        if !haskey(
-            net_reduction_data.name_to_arc_map,
-            branch_type,
-        )
-            continue
-        end
 
         names_by_type = get_branch_argument_constraint_axis(
             net_reduction_data,
