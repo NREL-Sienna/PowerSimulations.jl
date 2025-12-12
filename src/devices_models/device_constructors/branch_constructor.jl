@@ -315,7 +315,7 @@ function construct_device!(
     if !get_use_slacks(device_model)
         branch_rate_bounds!(container, device_model, network_model)
     else
-        @info "Adding Slacks to StaticBranchBounds formulation for $StaticBranchBounds devices bypasses the addition of bounds"
+        @info "Adding Slacks to StaticBranchBounds formulation for StaticBranchBounds devices bypasses the addition of bounds"
     end
 
     add_constraints!(container, NetworkFlowConstraint, devices, device_model, network_model)
@@ -707,7 +707,7 @@ function construct_device!(
     devices = get_available_components(device_model, sys)
     add_constraints!(container, FlowRateConstraint, devices, device_model, network_model)
     add_constraint_dual!(container, sys, device_model)
-    add_feedforward_constraints!(container, model, devices)
+    add_feedforward_constraints!(container, device_model, devices)
     return
 end
 
@@ -822,9 +822,9 @@ function construct_device!(
         device_model,
         network_model,
     )
-    add_constraints!(container, HVDCPowerBalance, devices, model, network_model)
-    add_constraint_dual!(container, sys, model)
-    add_feedforward_constraints!(container, model, devices)
+    add_constraints!(container, HVDCPowerBalance, devices, device_model, network_model)
+    add_constraint_dual!(container, sys, device_model)
+    add_feedforward_constraints!(container, device_model, devices)
     return
 end
 
@@ -1161,7 +1161,7 @@ function construct_device!(
         container,
         HVDCInverterACCurrentVariable,
         devices,
-        device_model,
+        HVDCTwoTerminalLCC(),
     )
     add_variables!(
         container,
