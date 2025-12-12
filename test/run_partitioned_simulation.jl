@@ -27,6 +27,8 @@ const IS = InfrastructureSystems
 const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))
 const DATA_DIR = joinpath(BASE_DIR, "test/test_data")
 
+include(joinpath(BASE_DIR, "test/test_utils/solver_definitions.jl"))
+
 # avoid redefinition of functions and constants when running on CI
 if get(ENV, "CI", nothing) != "true"
     include(joinpath(BASE_DIR, "test/test_utils/common_operation_model.jl"))
@@ -34,8 +36,6 @@ if get(ENV, "CI", nothing) != "true"
     include(joinpath(BASE_DIR, "test/test_utils/mock_operation_models.jl"))
     include(joinpath(BASE_DIR, "test/test_utils/operations_problem_templates.jl"))
 end
-
-include(joinpath(BASE_DIR, "test/test_utils/solver_definitions.jl"))
 
 function build_simulation(
     output_dir::AbstractString,
