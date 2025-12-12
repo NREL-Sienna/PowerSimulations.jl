@@ -90,8 +90,8 @@ end
     @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
 
-    @test !check_variable_bounded(model_m, FlowActivePowerVariable, Line)
-    @test !check_variable_bounded(model_m, FlowActivePowerVariable, MonitoredLine)
+    @test check_variable_bounded(model_m, FlowActivePowerVariable, Line)
+    @test check_variable_bounded(model_m, FlowActivePowerVariable, MonitoredLine)
     @test !check_variable_bounded(model_m, FlowActivePowerSlackLowerBound, Line)
     @test !check_variable_bounded(model_m, FlowActivePowerSlackUpperBound, Line)
     @test !check_variable_bounded(model_m, FlowActivePowerSlackLowerBound, MonitoredLine)

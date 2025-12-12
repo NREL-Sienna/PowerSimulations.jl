@@ -312,12 +312,7 @@ function construct_device!(
         network_model,
     )
 
-    if !get_use_slacks(device_model)
-        branch_rate_bounds!(container, device_model, network_model)
-    else
-        @info "Adding Slacks to StaticBranchBounds formulation for StaticBranchBounds devices bypasses the addition of bounds"
-    end
-
+    branch_rate_bounds!(container, device_model, network_model)
     add_constraints!(container, NetworkFlowConstraint, devices, device_model, network_model)
     add_feedforward_constraints!(container, device_model, devices)
     add_constraint_dual!(container, sys, device_model)
