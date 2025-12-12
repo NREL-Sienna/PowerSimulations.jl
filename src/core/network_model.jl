@@ -41,7 +41,7 @@ Establishes the NetworkModel for a given PowerModels formulation type.
     Power-flow evaluation model(s). A single model is flattened to a vector internally.
 
 # Notes
-- `modeled_branch_types` and `reduced_branch_tracker` are internal fields managed by the model.
+- `modeled_ac_branch_types` and `reduced_branch_tracker` are internal fields managed by the model.
 - `subsystem` can be set after construction via `set_subsystem!(model, id)`.
 - PTDF/LODF inputs are validated against the requested reduction flags and may raise
   a ConflictingInputsError if they are inconsistent with `reduce_radial_branches`
@@ -67,7 +67,7 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
     power_flow_evaluation::Vector{PFS.PowerFlowEvaluationModel}
     subsystem::Union{Nothing, String}
     hvdc_network_model::Union{Nothing, AbstractHVDCNetworkModel}
-    modeled_branch_types::Vector{DataType}
+    modeled_ac_branch_types::Vector{DataType}
     reduced_branch_tracker::BranchReductionOptimizationTracker
 
     function NetworkModel(
