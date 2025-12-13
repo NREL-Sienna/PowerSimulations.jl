@@ -247,7 +247,7 @@ function _check_steps(
             throw(
                 IS.ConflictingInputsError(
                     "The number of available time series ($(forecast_count)) is not enough to perform the
-desired amount of simulation steps ($(sim.steps*get_execution_count(model))).",
+desired amount of simulation steps ($(sim.steps*execution_counts)).",
                 ),
             )
         end

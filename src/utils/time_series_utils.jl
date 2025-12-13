@@ -1,6 +1,9 @@
 apply_maybe_across_time_series(fn::Function, ts_data::AbstractVector) =
     fn.(ts_data)
 
+apply_maybe_across_time_series(fn::Function, ts_data::TimeSeries.TimeArray) =
+    fn.(values(ts_data))
+
 apply_maybe_across_time_series(fn::Function, ts_data::AbstractDict) =
     apply_maybe_across_time_series.(Ref(fn), values(ts_data))
 

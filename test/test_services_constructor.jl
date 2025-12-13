@@ -919,12 +919,14 @@ end
         violation_penalty = 1000.0,
         direction_mapping = Dict("CA-1" => -1, "C35" => -1),
     )
+    # Order matters here; must compute the ptdf before adding the service for the lines that 
+    # are included in the interface to be reduced (in order to test the bad data checking)
+    ptdf = PTDF(sys_rts_da; network_reductions = NetworkReduction[DegreeTwoReduction()])
     add_service!(
         sys_rts_da,
         interface_series_chain,
         [series_chain_1, series_chain_2],
     )
-    ptdf = PTDF(sys_rts_da; network_reductions = NetworkReduction[DegreeTwoReduction()])
     template = ProblemTemplate(
         NetworkModel(
             AreaPTDFPowerModel;
@@ -960,8 +962,7 @@ end
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
           PSI.ModelBuildStatus.BUILT
 
-    # Test bad direction data for interface on double circuit:
-    # The model should build and keep the buses in the system
+    # Test bad direction data for interface on series chain :
     set_direction_mapping!(interface_series_chain, Dict("CA-1" => 1, "C35" => -1))
     ps_model =
         DecisionModel(
@@ -975,9 +976,9 @@ end
         ps_model;
         console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
         output_dir = mktempdir(; cleanup = true),
-    ) == PSI.ModelBuildStatus.BUILT
+    ) == PSI.ModelBuildStatus.FAILED
 
-    # Test bad direction data for interface on series chain:
+    # Test bad direction data for interface on double circuit:
     set_direction_mapping!(interface_series_chain, Dict("CA-1" => 1, "C35" => 1))
     set_direction_mapping!(interface_double_circuit, Dict("A33-1" => 1, "A33-2" => -1))
     ps_model =
@@ -1027,5 +1028,5 @@ end
         ps_model;
         console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
         output_dir = mktempdir(; cleanup = true),
-    ) == PSI.ModelBuildStatus.BUILT
+    ) == PSI.ModelBuildStatus.FAILED
 end

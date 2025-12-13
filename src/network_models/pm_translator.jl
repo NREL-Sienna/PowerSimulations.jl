@@ -441,7 +441,7 @@ function get_branch_to_pm(
     T::Type{StaticBranchUnbounded},
     U::Type{<:PM.AbstractPowerModel},
 )
-    equivalent_branch = PNM.get_equivalent_physical_branch_parameters(double_circuitn)
+    equivalent_branch = PNM.get_equivalent_physical_branch_parameters(double_circuit)
     PM_branch = Dict{String, Any}(
         "br_r" => PNM.get_equivalent_r(equivalent_branch),
         "shift" => 0.0,
@@ -451,11 +451,11 @@ function get_branch_to_pm(
         "rate_a" => PNM.get_equivalent_rating(double_circuit),
         "rate_b" => PNM.get_equivalent_rating(double_circuit),
         "rate_c" => PNM.get_equivalent_rating(double_circuit),
-        "b_fr" => PNM.get_equivalent_b(double_circuit).from,
+        "b_fr" => PNM.get_equivalent_b_from(equivalent_branch),
         "f_bus" => arc_tuple[1],
         "br_status" => Float64(PNM.get_equivalent_available(double_circuit)),
         "t_bus" => arc_tuple[2],
-        "b_to" => PNM.get_equivalent_b(double_circuit).to,
+        "b_to" => PNM.get_equivalent_b_to(equivalent_branch),
         "index" => ix,
         "angmin" => -π / 2,
         "angmax" => π / 2,
@@ -512,7 +512,7 @@ function get_branch_to_pm(
         "f_bus" => arc_tuple[1],
         "br_status" => Float64(PNM.get_equivalent_available(double_circuit)),
         "t_bus" => arc_tuple[2],
-        "b_to" => PNM.get_equivalent_b_to(double_circuit),
+        "b_to" => PNM.get_equivalent_b_to(equivalent_branch),
         "index" => ix,
         "angmin" => -π / 2,
         "angmax" => π / 2,

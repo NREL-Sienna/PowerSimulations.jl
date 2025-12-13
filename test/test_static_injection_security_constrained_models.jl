@@ -419,6 +419,74 @@ end
               PSI.ModelBuildStatus.BUILT
     end
 end
+@testset "Test ContingencyReserveWithDeliverabilityConstraints with different BranchFormulations" begin
+    for line_formulation in [StaticBranch, StaticBranchUnbounded, StaticBranchBounds]
+        c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
+        l4 = get_component(Line, c_sys5, "4")
+        add_equivalent_ac_transmission_with_parallel_circuits!(
+            c_sys5,
+            l4,
+            PSY.Line,
+            PSY.MonitoredLine,
+        )
+        remove_component!(c_sys5, l4)
+
+        systems = [c_sys5]
+
+        PTDF_ref = IdDict{System, PTDF}(
+            c_sys5 => PTDF(c_sys5),
+        )
+
+        components_outages_cases = IdDict{System, Vector{String}}(
+            c_sys5 => ["Alta"],
+        )
+        for (ix, sys) in enumerate(systems)
+            components_outages_names = components_outages_cases[sys]
+            for component_name in components_outages_names
+                # --- Create Outage Data ---
+                transition_data = GeometricDistributionForcedOutage(;
+                    mean_time_to_recovery = 10,
+                    outage_transition_probability = 0.9999,
+                )
+                # --- Add Outage Supplemental attribute to device and services that should respond ---
+                component = get_component(ThermalStandard, sys, component_name)
+                add_supplemental_attribute!(sys, component, transition_data)
+                reserve_up = get_component(VariableReserve{ReserveUp}, sys, "Reserve1")
+                add_supplemental_attribute!(sys, reserve_up, transition_data)
+            end
+
+            template =
+                ProblemTemplate(NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF_ref[sys]))
+            set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
+            set_device_model!(template, PowerLoad, StaticPowerLoad)
+            #set_device_model!(template, MonitoredLine, StaticBranchBounds)
+            set_device_model!(template, Line, line_formulation)
+            set_device_model!(template, Transformer2W, StaticBranch)
+            set_device_model!(template, TapTransformer, StaticBranch)
+            set_device_model!(template, TwoTerminalGenericHVDCLine, HVDCTwoTerminalLossless)
+
+            set_service_model!(template,
+                ServiceModel(
+                    VariableReserve{ReserveUp},
+                    ContingencyReserveWithDeliverabilityConstraints,
+                    "Reserve1",
+                ))
+
+            ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+
+            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
+            constraints = ps_model.internal.container.constraints
+            flow_rate_cons = constraints[PSI.ConstraintKey{
+                PostContingencyEmergencyFlowRateConstraint,
+                VariableReserve{ReserveUp},
+            }(
+                "Reserve1 -lb",
+            )]
+            @test size(flow_rate_cons) == (1, 5, 24)
+        end
+    end
+end
 
 @testset "Test if G-n with Contingency reserve deliverability constraints builds when there is a device without set_device_model!()" begin
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_uc"; add_reserves = true)
@@ -702,7 +770,7 @@ end
         c_sys5_2area => PTDF(c_sys5_2area),
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5_2area => [744, 0, 1488, 1152, 168],
+        c_sys5_2area => [744, 0, 1536, 1200, 168],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5_2area => 497000.0,
@@ -845,7 +913,7 @@ end
         c_sys5_2area => PTDF(c_sys5_2area),
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5_2area => [744, 0, 1488, 1152, 168],
+        c_sys5_2area => [744, 0, 1536, 1200, 168],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5_2area => 497000.0,
@@ -978,7 +1046,7 @@ end
         c_sys5_2area => PTDF(c_sys5_2area),
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5_2area => [504, 0, 1296, 1296, 216],
+        c_sys5_2area => [504, 0, 1344, 1344, 216],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5_2area => 497000.0,
