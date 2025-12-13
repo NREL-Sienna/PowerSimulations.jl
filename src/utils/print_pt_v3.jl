@@ -8,7 +8,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/html", input::Union{ServiceModel, DeviceModel})
     # The tf_html_simple format was eliminated from PrettyTables and it was added to PowerSystems
-    _show_method(io, input, :html; standalone = false, tf = PSY.tf_html_simple)
+    _show_method(io, input, :html; stand_alone = false, table_format = PSY.tf_html_simple)
 end
 
 function _show_method(
@@ -85,7 +85,7 @@ function _show_method(
         PrettyTables.pretty_table(
             io,
             table;
-            show_header = false,
+            show_column_labels = false,
             backend = backend,
             title = "Duals",
             alignment = :l,
@@ -123,7 +123,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/html", input::NetworkModel)
     # The tf_html_simple format was eliminated from PrettyTables and it was added to PowerSystems
-    _show_method(io, input, :html; standalone = false, tf = PSY.tf_html_simple)
+    _show_method(io, input, :html; stand_alone = false, table_format = PSY.tf_html_simple)
 end
 
 function _show_method(io::IO, network_model::NetworkModel, backend::Symbol; kwargs...)
@@ -152,7 +152,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/html", input::OperationModel)
     # The tf_html_simple format was eliminated from PrettyTables and it was added to PowerSystems
-    _show_method(io, input, :html; standalone = false, tf = PSY.tf_html_simple)
+    _show_method(io, input, :html; stand_alone = false, table_format = PSY.tf_html_simple)
 end
 
 function _show_method(io::IO, model::OperationModel, backend::Symbol; kwargs...)
@@ -165,7 +165,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/html", input::ProblemTemplate)
     # The tf_html_simple format was eliminated from PrettyTables and it was added to PowerSystems
-    _show_method(io, input, :html; standalone = false, tf = PSY.tf_html_simple)
+    _show_method(io, input, :html; stand_alone = false, table_format = PSY.tf_html_simple)
 end
 
 function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs...)
@@ -181,7 +181,7 @@ function _show_method(io::IO, template::ProblemTemplate, backend::Symbol; kwargs
         io,
         table;
         backend = backend,
-        show_header = false,
+        show_column_labels = false,
         title = "Network Model",
         alignment = :l,
         kwargs...,
@@ -273,7 +273,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/html", input::SimulationModels)
     # The tf_html_simple format was eliminated from PrettyTables and it was added to PowerSystems
-    _show_method(io, input, :html; standalone = false, tf = PSY.tf_html_simple)
+    _show_method(io, input, :html; stand_alone = false, table_format = PSY.tf_html_simple)
 end
 
 _get_model_type(::DecisionModel{T}) where {T <: DecisionProblem} = T
@@ -331,7 +331,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/html", input::SimulationSequence)
     # The tf_html_simple format was eliminated from PrettyTables and it was added to PowerSystems
-    _show_method(io, input, :html; standalone = false, tf = PSY.tf_html_simple)
+    _show_method(io, input, :html; stand_alone = false, table_format = PSY.tf_html_simple)
 end
 
 function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwargs...)
@@ -345,7 +345,7 @@ function _show_method(io::IO, sequence::SimulationSequence, backend::Symbol; kwa
         io,
         table;
         backend = backend,
-        show_header = false,
+        show_column_labels = false,
         title = "Simulation Sequence",
         alignment = :l,
         kwargs...,
@@ -397,7 +397,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/html", input::Simulation)
     # The tf_html_simple format was eliminated from PrettyTables and it was added to PowerSystems
-    _show_method(io, input, :html; standalone = false, tf = PSY.tf_html_simple)
+    _show_method(io, input, :html; stand_alone = false, table_format = PSY.tf_html_simple)
 end
 
 function _get_initial_time_for_show(sim::Simulation)
@@ -440,7 +440,7 @@ function _show_method(io::IO, sim::Simulation, backend::Symbol; kwargs...)
         io,
         table;
         backend = backend,
-        show_header = false,
+        show_column_labels = false,
         title = "Simulation",
         alignment = :l,
         kwargs...,
@@ -456,7 +456,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/html", input::SimulationResults)
     # The tf_html_simple format was eliminated from PrettyTables and it was added to PowerSystems
-    _show_method(io, input, :html; standalone = false, tf = PSY.tf_html_simple)
+    _show_method(io, input, :html; stand_alone = false, table_format = PSY.tf_html_simple)
 end
 
 function _show_method(io::IO, results::SimulationResults, backend::Symbol; kwargs...)
@@ -488,7 +488,7 @@ function _show_method(io::IO, results::SimulationResults, backend::Symbol; kwarg
     PrettyTables.pretty_table(
         io,
         table;
-        show_header = false,
+        show_column_labels = false,
         backend = backend,
         title = "Emulator Results",
         alignment = :l,
@@ -503,7 +503,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/html", input::ProblemResultsTypes)
     # The tf_html_simple format was eliminated from PrettyTables and it was added to PowerSystems
-    _show_method(io, input, :html; standalone = false, tf = PSY.tf_html_simple)
+    _show_method(io, input, :html; stand_alone = false, table_format = PSY.tf_html_simple)
 end
 
 function _show_method(
@@ -547,7 +547,7 @@ function _show_method(
             PrettyTables.pretty_table(
                 io,
                 val;
-                show_header = false,
+                show_column_labels = false,
                 backend = backend,
                 title = "$name Problem $k Results",
                 alignment = :l,
