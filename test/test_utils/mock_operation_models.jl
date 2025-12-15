@@ -146,6 +146,7 @@ function mock_construct_device!(
         PSI.get_optimization_container(problem),
         PSI.get_network_model(template),
         PSI.get_network_model(template).subnetworks,
+        PSI.get_branch_models(template),
         PSI.get_system(problem),
         Dict{Int64, Set{Int64}}(),
     )

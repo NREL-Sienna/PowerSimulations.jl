@@ -32,7 +32,12 @@ function psi_constraint_test(
     constraints = PSI.get_constraints(model)
     for con in constraint_keys
         if get(constraints, con, nothing) !== nothing
-            @test true
+            # Ensure constraint container does not have undefined entries:
+            if typeof(constraints[con]) == DenseAxisArray
+                @test all(x -> isassigned(constraints[con], x), eachindex(constraints[con]))
+            else
+                @test true
+            end
         else
             @error con
             @test false

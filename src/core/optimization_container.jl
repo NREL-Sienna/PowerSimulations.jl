@@ -551,6 +551,7 @@ function initialize_system_expressions!(
     container::OptimizationContainer,
     network_model::NetworkModel{T},
     subnetworks::Dict{Int, Set{Int}},
+    ::BranchModelContainer,
     system::PSY.System,
     bus_reduction_map::Dict{Int64, Set{Int64}},
 ) where {T <: PM.AbstractPowerModel}
@@ -598,6 +599,7 @@ function initialize_system_expressions!(
     container::OptimizationContainer,
     network_model::NetworkModel{AreaBalancePowerModel},
     subnetworks::Dict{Int, Set{Int}},
+    branch_models::BranchModelContainer,
     system::PSY.System,
     ::Dict{Int64, Set{Int64}},
 )
@@ -610,12 +612,10 @@ function initialize_system_expressions!(
         )
     end
     area_interchanges = PSY.get_available_components(PSY.AreaInterchange, system)
-    if isempty(area_interchanges) ||
-       PSY.AreaInterchange ∉ network_model.modeled_branch_types
+    if isempty(area_interchanges) || !haskey(branch_models, :AreaInterchange)
         @warn "The system does not contain any AreaInterchanges. The model won't have any power flowing between the areas."
     end
-    if !isempty(area_interchanges) &&
-       PSY.AreaInterchange ∉ network_model.modeled_branch_types
+    if !isempty(area_interchanges) && !haskey(branch_models, :AreaInterchange)
         @warn "AreaInterchanges are not included in the model template. The model won't have any power flowing between the areas."
     end
     _verify_area_subnetwork_topology(system, subnetworks)
@@ -627,6 +627,7 @@ function initialize_system_expressions!(
     container::OptimizationContainer,
     network_model::NetworkModel{T},
     subnetworks::Dict{Int, Set{Int}},
+    ::BranchModelContainer,
     system::PSY.System,
     bus_reduction_map::Dict{Int64, Set{Int64}},
 ) where {T <: AreaPTDFPowerModel}
@@ -709,6 +710,7 @@ function build_impl!(
         container,
         get_network_model(template),
         transmission_model.subnetworks,
+        get_branch_models(template),
         sys,
         transmission_model.network_reduction.bus_reduction_map)
 

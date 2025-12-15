@@ -962,3 +962,61 @@ end
 
     @test isapprox(total_cost_hourly, total_cost_30min; rtol = 0.05)
 end
+
+@testset "Test Market Bid Cost With Single Time Serie" begin
+    sys = build_system(PSITestSystems, "c_sys5_uc"; add_single_time_series = true)
+    existing_ts = get_time_series_array(
+        SingleTimeSeries,
+        first(get_components(PowerLoad, sys)),
+        "max_active_power",
+    )
+    tstamps = timestamp(existing_ts)
+    psd1 = PiecewiseStepData([0.0, 40.0], [5.0])
+    psd2 = PiecewiseStepData([0.0, 30.0, 400.0], [10.0, 20.0])
+    psd3 = PiecewiseStepData([0.0, 40.0], [500.0])
+
+    # Cheap the first 10 hours, moderate next 4 hours, expensive last 34 hours
+    total_step_data = vcat([psd1 for x in 1:10], [psd2 for x in 1:4], [psd3 for x in 1:34])
+    mbid_tarray = TimeArray(tstamps, total_step_data)
+    ts_mbid = SingleTimeSeries(; name = "variable_cost", data = mbid_tarray)
+
+    th = get_component(ThermalStandard, sys, "Alta")
+    # Create an empty market bid and set it
+    th_cost = MarketBidCost(;
+        no_load_cost = 0.0,
+        start_up = (hot = 0.0, warm = 0.0, cold = 0.0),
+        shut_down = 0.0,
+    )
+    set_operation_cost!(th, th_cost)
+    # Wrapper for adding the timeseries in incremental market bid cost
+    set_variable_cost!(sys, th, ts_mbid, UnitSystem.NATURAL_UNITS)
+
+    # It is also needed to create the initial input time series for market bid. That is the cost at 0 power at each time step. We will use zero for now.
+    zero_input = zeros(length(tstamps))
+    zero_tarray = TimeArray(tstamps, zero_input)
+    ts_zero = SingleTimeSeries(; name = "initial_input", data = zero_tarray)
+    set_incremental_initial_input!(sys, th, ts_zero)
+
+    transform_single_time_series!(sys, Hour(24), Hour(24))
+
+    template = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+    set_device_model!(template, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template, HydroDispatch, HydroDispatchRunOfRiver)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+
+    model = DecisionModel(
+        template,
+        sys;
+        name = "UC_MBCost",
+        optimizer = HiGHS_optimizer)
+    @test build!(model; output_dir = mktempdir()) == PSI.ModelBuildStatus.BUILT
+    @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    p_var = read_variable(
+        OptimizationProblemResults(model),
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+
+    @test isapprox(sum(p_var[!, "Alta"][15:24]), 0.0, atol = 1e-4)
+end
