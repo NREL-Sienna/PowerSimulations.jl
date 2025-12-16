@@ -17,7 +17,8 @@ In this documentation, we first specify the available `Services` in the grid, an
  5. [`NonSpinningReserve`](#NonSpinningReserve)
  6. [`ConstantMaxInterfaceFlow`](#ConstantMaxInterfaceFlow)
  7. [`VariableMaxInterfaceFlow`](#VariableMaxInterfaceFlow)
- 8. [Changes on Expressions](#Changes-on-Expressions-due-to-Service-models)
+ 8. [`RangeReserveWithDeliverabilityConstraints`](#RangeReserveWithDeliverabilityConstraints)
+ 9. [Changes on Expressions](#Changes-on-Expressions-due-to-Service-models)
 
 * * *
 
@@ -549,6 +550,14 @@ It adds the constraint to limit the `InterfaceTotalFlow` by the specified bounds
 ```math
 F^\text{min} \cdot \text{MinInterfaceFlowLimitParameter}_t \le f^\text{sl,up}_t - f^\text{sl,dn}_t + \sum_{d\in\mathcal{D}_s} \text{Dir}_d f_{d,t} \le F^\text{max}\cdot \text{MaxInterfaceFlowLimitParameter}_t, \quad \forall t \in \{1,\dots,T\}
 ```
+
+## `RangeReserveWithDeliverabilityConstraints`
+
+```@docs
+RangeReserveWithDeliverabilityConstraints
+```
+
+TODO
 
 ## Changes on Expressions due to Service models
 
