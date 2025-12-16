@@ -203,3 +203,8 @@ function PSI.objective_function!(
     PSI.add_variable_cost!(container, PSI.ActivePowerInVariable(), devices, U())
     return
 end
+
+get_initial_conditions_device_model(
+    ::OperationModel,
+    model::DeviceModel{T, <:AbstractSourceFormulation},
+) where {T <: PSY.Source} = model
