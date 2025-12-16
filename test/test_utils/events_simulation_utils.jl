@@ -7,7 +7,6 @@ function run_fixed_forced_outage_sim_with_timeseries(;
     device_type,
     device_names,
     renewable_formulation,
-   # add_storage_formulation = false,
 )
     sys_em = deepcopy(sys)
     sys_d1 = deepcopy(sys)
@@ -126,7 +125,7 @@ function run_events_simulation(;
     sys_em = deepcopy(sys_emulator)
     sys_d1 = build_system(PSITestSystems, "c_sys5_events")
     transform_single_time_series!(sys_d1, Day(2), Day(1))
-    sys_d2 =  build_system(PSITestSystems, "c_sys5_events") 
+    sys_d2 = build_system(PSITestSystems, "c_sys5_events")
     transform_single_time_series!(sys_d2, Hour(4), Hour(1))
 
     event_model = EventModel(

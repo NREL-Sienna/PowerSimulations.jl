@@ -114,7 +114,7 @@ end
 
 @testset "5 min; uc basic; ed basic; ff" begin
     res = run_events_simulation(;
-        sys_emulator = build_system(PSITestSystems, "c_sys5_events_rt"), 
+        sys_emulator = build_system(PSITestSystems, "c_sys5_events_rt"),
         networks = repeat([PSI.CopperPlatePowerModel], 3),
         optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_time = DateTime("2024-01-01T18:00:00"),
@@ -173,7 +173,7 @@ end
     outage_data[23:22] .= 1
     outage_timeseries = TimeArray(dates_ts, outage_data)
     res = run_fixed_forced_outage_sim_with_timeseries(;
-        sys =  build_system(PSITestSystems, "c_sys5_events"),
+        sys = build_system(PSITestSystems, "c_sys5_events"),
         networks = repeat([PSI.CopperPlatePowerModel], 3),
         optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_status_timeseries = outage_timeseries,
@@ -247,7 +247,7 @@ end
     outage_data[23:22] .= 1
     outage_timeseries = TimeArray(dates_ts, outage_data)
     res = run_fixed_forced_outage_sim_with_timeseries(;
-        sys =build_system(PSITestSystems, "c_sys5_events"),
+        sys = build_system(PSITestSystems, "c_sys5_events"),
         networks = repeat([PSI.CopperPlatePowerModel], 3),
         optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_status_timeseries = outage_timeseries,
@@ -282,7 +282,7 @@ end
     outage_data = fill!(Vector{Int64}(undef, 48), 0)
     outage_timeseries = TimeArray(dates_ts, outage_data)
     res = run_fixed_forced_outage_sim_with_timeseries(;
-        sys =build_system(PSITestSystems, "c_sys5_events"),
+        sys = build_system(PSITestSystems, "c_sys5_events"),
         networks = repeat([PSI.CopperPlatePowerModel], 3),
         optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_status_timeseries = outage_timeseries,
@@ -348,7 +348,7 @@ end
     outage_data = fill!(Vector{Int64}(undef, 48), 0)
     outage_timeseries = TimeArray(dates_ts, outage_data)
     res = run_fixed_forced_outage_sim_with_timeseries(;
-        sys =build_system(PSITestSystems, "c_sys5_events"),
+        sys = build_system(PSITestSystems, "c_sys5_events"),
         networks = repeat([PSI.CopperPlatePowerModel], 3),
         optimizers = repeat([HiGHS_optimizer_small_gap], 3),
         outage_status_timeseries = outage_timeseries,
