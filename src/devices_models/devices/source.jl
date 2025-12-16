@@ -206,5 +206,5 @@ end
 
 get_initial_conditions_device_model(
     ::OperationModel,
-    model::DeviceModel{T, <:AbstractSourceFormulation},
-) where {T <: PSY.Source} = model
+    model::DeviceModel{PSY.Source, T},
+) where {T <: <:AbstractSourceFormulation} = DeviceModel(PSY.Source, T)
