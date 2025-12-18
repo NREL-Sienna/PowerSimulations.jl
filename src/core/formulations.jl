@@ -204,6 +204,9 @@ Lossy Line Abstract Model
 """
 struct DCLossyLine <: AbstractDCLineFormulation end
 
+"""
+Lossless Line struct formulation
+"""
 struct LosslessLine <: AbstractDCLineFormulation end
 
 ############################## HVDC Network Model Formulations ##################################
