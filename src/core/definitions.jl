@@ -161,7 +161,3 @@ Base.convert(::Type{SimulationBuildStatus}, val::String) =
 Base.convert(::Type{ModelBuildStatus}, val::String) = get_enum_value(ModelBuildStatus, val)
 Base.convert(::Type{RunStatus}, val::String) = get_enum_value(RunStatus, val)
 Base.convert(::Type{SOSStatusVariable}, x::String) = get_enum_value(SOSStatusVariable, x)
-
-#TODO - extend to Hydro once outages are made in HydroPowerSimulations
-const EVENTS_COMPATIBLE_INJECTORS =
-    Union{PSY.ThermalGen, PSY.RenewableGen, PSY.ElectricLoad, PSY.Storage}

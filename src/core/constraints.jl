@@ -600,7 +600,7 @@ struct NodalBalanceCurrentConstraint <: ConstraintType end
 
 """
 Struct to create the constraints that compute the converter DC power based on current and voltage.
-For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+
 The specified constraints are formulated as:
 ```math
 \\begin{align*}
@@ -613,7 +613,7 @@ struct ConverterPowerCalculationConstraint <: ConstraintType end
 
 """
 Struct to create the constraints that decide the balance of AC and DC power of the converter.
-For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+
 The specified constraints are formulated as:
 ```math
 \\begin{align*}
@@ -626,7 +626,7 @@ struct ConverterLossConstraint <: ConstraintType end
 
 """
 Struct to create the McCormick envelopes constraints that decide the bounds on the DC active power.
-For more information check [Converter Formulations](@ref PowerSystems.Converter-Formulations).
+
 The specified constraints are formulated as:
 ```math
 \\begin{align*}

@@ -221,8 +221,9 @@ function _populate_contributing_devices!(template::ProblemTemplate, sys::PSY.Sys
 
     device_models = get_device_models(template)
     branch_models = get_branch_models(template)
-    modeled_devices = Set(get_component_type(m) for m in values(device_models))
-    union!(modeled_devices, Set(get_component_type(m) for m in values(branch_models)))
+    # Type stability: explicitly type the Set to avoid widening to Set{Type}
+    modeled_devices = Set{DataType}(get_component_type(m) for m in values(device_models))
+    union!(modeled_devices, (get_component_type(m) for m in values(branch_models)))
     incompatible_device_types = get_incompatible_devices(device_models)
     services_mapping = PSY.get_contributing_device_mapping(sys)
     if isempty(keys(services_mapping))
@@ -266,11 +267,13 @@ function _modify_device_model!(
     service_model::ServiceModel{<:PSY.Reserve, <:AbstractReservesFormulation},
     contributing_devices::Vector{<:PSY.Component},
 )
-    for dt in Set(typeof.(contributing_devices))
+    # Type stability: explicitly type the Set to avoid widening
+    for dt in Set{DataType}(typeof.(contributing_devices))
         for device_model in values(devices_template)
             # add message here when it exists
             get_component_type(device_model) != dt && continue
             service_model in device_model.services && continue
+            # type instability: pushing to vector of abstract type
             push!(device_model.services, service_model)
         end
     end

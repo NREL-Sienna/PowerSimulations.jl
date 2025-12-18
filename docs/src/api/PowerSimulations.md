@@ -29,6 +29,27 @@ DeviceModel
 
 Refer to the [Formulations Page](@ref formulation_library) for each Abstract Device Formulation.
 
+HVDC formulations will be moved to tis own section in future releases
+
+### HVDC Formulations
+
+```@docs
+TransportHVDCNetworkModel
+VoltageDispatchHVDCNetworkModel
+```
+
+### Converter Formulations
+
+```@docs
+QuadraticLossConverter
+```
+
+### DC Lines Formulations
+
+```@docs
+DCLossyLine
+```
+
 ### Problem Templates
 
 ```@autodocs
@@ -150,6 +171,7 @@ ReactivePowerVariable
 PiecewiseLinearCostVariable
 RateofChangeConstraintSlackUp
 RateofChangeConstraintSlackDown
+PostContingencyActivePowerChangeVariable
 ```
 
 ### Thermal Unit Variables
@@ -190,6 +212,27 @@ VoltageMagnitude
 VoltageAngle
 ```
 
+### Two Terminal and Multi-Terminal HVDC Variables
+
+```@docs
+InterpolationBinarySquaredCurrentVariable
+SquaredDCVoltage
+DCLineCurrent
+InterpolationSquaredVoltageVariable
+InterpolationBinarySquaredVoltageVariable
+AuxBilinearConverterVariable
+AuxBilinearSquaredConverterVariable
+InterpolationSquaredBilinearVariable
+InterpolationBinarySquaredBilinearVariable
+InterpolationSquaredCurrentVariable
+DCVoltage
+ConverterCurrent
+SquaredConverterCurrent
+ConverterPositiveCurrent
+ConverterNegativeCurrent
+ConverterPowerDirection
+```
+
 ### Services Variables
 
 ```@docs
@@ -200,6 +243,7 @@ SystemBalanceSlackDown
 ReserveRequirementSlack
 InterfaceFlowSlackUp
 InterfaceFlowSlackDown
+PostContingencyActivePowerReserveDeploymentVariable
 ```
 
 ### Feedforward Variables
@@ -277,6 +321,8 @@ ReactivePowerVariableLimitsConstraint
 ActivePowerVariableTimeSeriesLimitsConstraint
 InputActivePowerVariableLimitsConstraint
 OutputActivePowerVariableLimitsConstraint
+ActivePowerInVariableTimeSeriesLimitsConstraint
+ActivePowerOutVariableTimeSeriesLimitsConstraint
 ```
 
 ### Services Constraints
@@ -304,6 +350,12 @@ StartupTimeLimitTemperatureConstraint
 EqualityConstraint
 ```
 
+## Source Constraints
+
+```@docs
+ImportExportBudgetConstraint
+```
+
 ### Branches Constraints
 
 ```@docs
@@ -314,6 +366,35 @@ FlowRateConstraintToFrom
 HVDCPowerBalance
 NetworkFlowConstraint
 PhaseAngleControlLimit
+```
+
+### Two Terminal and Multi-Terminal HVDC Constraints
+
+```@docs
+ConverterLossConstraint
+InterpolationVoltageConstraints
+InterpolationCurrentConstraints
+InterpolationBilinearConstraints
+CurrentAbsoluteValueConstraint
+ConverterPowerCalculationConstraint
+ConverterMcCormickEnvelopes
+DCLineCurrentConstraint
+DCCurrentBalance
+```
+
+### Contingency Constraints
+
+```@docs
+PostContingencyGenerationBalanceConstraint
+PostContingencyActivePowerVariableLimitsConstraint
+PostContingencyActivePowerReserveDeploymentVariableLimitsConstraint
+```
+
+### Market Bid Cost Constraints
+
+```@docs
+PiecewiseLinearBlockIncrementalOfferConstraint
+PiecewiseLinearBlockDecrementalOfferConstraint
 ```
 
 ### Feedforward Constraints
@@ -339,6 +420,12 @@ FeedforwardLowerBoundConstraint
 ActivePowerTimeSeriesParameter
 ReactivePowerTimeSeriesParameter
 RequirementTimeSeriesParameter
+ReactivePowerOffsetParameter
+ActivePowerOutTimeSeriesParameter
+ActivePowerInTimeSeriesParameter
+FuelCostParameter
+FromToFlowLimitParameter
+ToFromFlowLimitParameter
 ```
 
 ### Variable Value Parameters
@@ -354,6 +441,16 @@ FixValueParameter
 
 ```@docs
 CostFunctionParameter
+```
+
+### Events Parameters
+
+```@docs
+AvailableStatusChangeCountdownParameter
+AvailableStatusParameter
+ActivePowerOffsetParameter
+DynamicBranchRatingTimeSeriesParameter
+PostContingencyDynamicBranchRatingTimeSeriesParameter
 ```
 
 ## Results

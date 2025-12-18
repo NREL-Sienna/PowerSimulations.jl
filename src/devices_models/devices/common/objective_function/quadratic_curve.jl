@@ -41,11 +41,12 @@ end
 function _add_quadraticcurve_variable_cost!(
     container::OptimizationContainer,
     ::T,
+    ::U,
     component::PSY.Component,
     proportional_term_per_unit::Vector{Float64},
     quadratic_term_per_unit::Vector{Float64},
-) where {T <: VariableType}
-    lb, ub = PSY.get_active_power_limits(component)
+) where {T <: VariableType, U <: AbstractDeviceFormulation}
+    lb, ub = get_min_max_limits(component, ActivePowerVariableLimitsConstraint, U)
     for t in get_time_steps(container)
         _check_quadratic_monotonicity(
             PSY.get_name(component),
@@ -70,11 +71,12 @@ end
 function _add_quadraticcurve_variable_cost!(
     container::OptimizationContainer,
     ::T,
+    ::U,
     component::PSY.Component,
     proportional_term_per_unit::Float64,
     quadratic_term_per_unit::Float64,
-) where {T <: VariableType}
-    lb, ub = PSY.get_active_power_limits(component)
+) where {T <: VariableType, U <: AbstractDeviceFormulation}
+    lb, ub = get_min_max_limits(component, ActivePowerVariableLimitsConstraint, U)
     _check_quadratic_monotonicity(PSY.get_name(component),
         quadratic_term_per_unit,
         proportional_term_per_unit,
@@ -162,6 +164,7 @@ function _add_variable_cost_to_objective!(
     _add_quadraticcurve_variable_cost!(
         container,
         T(),
+        U(),
         component,
         multiplier * proportional_term_per_unit,
         multiplier * quadratic_term_per_unit,
@@ -190,14 +193,16 @@ end
 function _add_fuel_quadratic_variable_cost!(
     container::OptimizationContainer,
     ::T,
+    ::U,
     component::PSY.Component,
     proportional_fuel_curve::Float64,
     quadratic_fuel_curve::Float64,
     fuel_cost::Float64,
-) where {T <: VariableType}
+) where {T <: VariableType, U <: AbstractDeviceFormulation}
     _add_quadraticcurve_variable_cost!(
         container,
         T(),
+        U(),
         component,
         proportional_fuel_curve * fuel_cost,
         quadratic_fuel_curve * fuel_cost,
@@ -207,6 +212,7 @@ end
 function _add_fuel_quadratic_variable_cost!(
     container::OptimizationContainer,
     ::T,
+    ::AbstractDeviceFormulation,
     component::PSY.Component,
     proportional_fuel_curve::Float64,
     quadratic_fuel_curve::Float64,
@@ -268,6 +274,7 @@ function _add_variable_cost_to_objective!(
     _add_fuel_quadratic_variable_cost!(
         container,
         T(),
+        U(),
         component,
         multiplier * proportional_term_per_unit,
         multiplier * quadratic_term_per_unit,
