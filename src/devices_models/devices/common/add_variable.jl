@@ -38,6 +38,7 @@ function add_variables!(
     contributing_devices::Union{Vector{V}, IS.FlattenIteratorWrapper{V}},
     formulation::AbstractReservesFormulation,
 ) where {T <: VariableType, U <: PSY.AbstractReserve, V <: PSY.Component}
+    # PERF: compilation hotspot. Switch to TSC.
     add_service_variable!(container, T(), service, contributing_devices, formulation)
     return
 end
