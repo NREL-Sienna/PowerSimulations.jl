@@ -14,7 +14,14 @@ using PowerFlows
 
 @info pkgdir(PowerSimulations)
 
+function is_running_on_ci()
+    return get(ENV, "CI", "false") == "true" || haskey(ENV, "GITHUB_ACTIONS")
+end
+
 open("precompile_time.txt", "a") do io
+    if length(ARGS) == 0 && !is_running_on_ci()
+        push!(ARGS, "Local Test")
+    end
     write(io, "| $(ARGS[1]) | $(precompile_time.time) |\n")
 end
 
@@ -186,5 +193,15 @@ catch e
     rethrow(e)
     open("build_time.txt", "a") do io
         write(io, "| $(ARGS[1])- Build Time | FAILED TO TEST |\n")
+    end
+end
+
+if !is_running_on_ci()
+    for file in ["precompile_time.txt", "build_time.txt", "solve_time.txt"]
+        name = replace(file, "_" => " ")[begin:(end - 4)]
+        println("$name:")
+        for line in eachline(open(file))
+            println("\t", line)
+        end
     end
 end
