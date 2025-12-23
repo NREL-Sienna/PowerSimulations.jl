@@ -34,6 +34,12 @@ Manifest.toml
 .vscode
 *.h5
 data
+
+# profiling results
+**/build_time.txt
+**/precompile_time.txt
+**/solve_time.txt
+
 ################################################################################
 #                              Operating systems                               #
 ################################################################################
