@@ -1033,6 +1033,7 @@ function deserialize_metadata!(
     return
 end
 
+# PERF: compilation hotspot. from string conversion at the container[key] = value line?
 function _assign_container!(container::OrderedDict, key::OptimizationContainerKey, value)
     if haskey(container, key)
         @error "$(ISOPT.encode_key(key)) is already stored" sort!(
@@ -1684,12 +1685,19 @@ function _add_initial_condition_container!(
     length_devices::Int,
 ) where {T <: InitialConditionType, U <: Union{PSY.Component, PSY.System}}
     if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
-        param_type = JuMP.VariableRef
+        ini_conds = Vector{
+            Union{InitialCondition{T, JuMP.VariableRef}, InitialCondition{T, Nothing}},
+        }(
+            undef,
+            length_devices,
+        )
     else
-        param_type = Float64
+        ini_conds =
+            Vector{Union{InitialCondition{T, Float64}, InitialCondition{T, Nothing}}}(
+                undef,
+                length_devices,
+            )
     end
-    ini_type = Union{InitialCondition{T, param_type}, InitialCondition{T, Nothing}}
-    ini_conds = Vector{ini_type}(undef, length_devices)
     _assign_container!(container.initial_conditions, ic_key, ini_conds)
     return ini_conds
 end

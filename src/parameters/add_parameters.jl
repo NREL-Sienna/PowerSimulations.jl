@@ -209,6 +209,7 @@ _size_wrapper(elem) = size(elem)
 _size_wrapper(::Tuple) = ()
 
 # NOTE direct equivalent of _add_parameters! on ObjectiveFunctionParameter
+# PERF: compilation hotspot. Switch to TSC.
 function _add_time_series_parameters!(
     container::OptimizationContainer,
     param::T,
@@ -285,8 +286,9 @@ function _add_time_series_parameters!(
     set_subsystem!(get_attributes(param_container), get_subsystem(model))
 
     jump_model = get_jump_model(container)
+    param_instance = T()
     for (ts_uuid, raw_ts_vals) in initial_values
-        ts_vals = _unwrap_for_param.(Ref(T()), raw_ts_vals, Ref(additional_axes))
+        ts_vals = _unwrap_for_param.(Ref(param_instance), raw_ts_vals, Ref(additional_axes))
         @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
 
         for step in time_steps
@@ -496,6 +498,7 @@ function _unwrap_for_param(
     return padded_x_coords
 end
 
+# PERF: compilation hotspot. Switch to TSC.
 # NOTE direct equivalent of _add_time_series_parameters! for TimeSeriesParameter
 function _add_parameters!(
     container::OptimizationContainer,
@@ -547,9 +550,10 @@ function _add_parameters!(
         time_steps,
     )
 
+    param_instance = T()
     for (ts_name, device_name, device) in zip(ts_names, device_names, active_devices)
         raw_ts_vals = get_time_series_initial_values!(container, ts_type, device, ts_name)
-        ts_vals = _unwrap_for_param.(Ref(T()), raw_ts_vals, Ref(additional_axes))
+        ts_vals = _unwrap_for_param.(Ref(param_instance), raw_ts_vals, Ref(additional_axes))
         @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
         for step in time_steps
             set_parameter!(param_container, jump_model, ts_vals[step], device_name, step)

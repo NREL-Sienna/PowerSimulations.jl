@@ -391,15 +391,20 @@ validate_occ_component(
 ) = nothing
 
 # Validates and adds parameters for a given OfferCurveCost-related ParameterType
+# PERF: could switch to a TSC here.
 function _process_occ_parameters_helper(
     ::P,
     container::OptimizationContainer,
     model,
     devices,
 ) where {P <: ParameterType}
-    validate_occ_component.(Ref(P()), devices)
-    if _consider_parameter(P(), container, model)
-        ts_devices = filter(device -> _has_parameter_time_series(P(), device), devices)
+    param_instance = P()
+    for device in devices
+        validate_occ_component(param_instance, device)
+    end
+    if _consider_parameter(param_instance, container, model)
+        ts_devices =
+            filter(device -> _has_parameter_time_series(param_instance, device), devices)
         (length(ts_devices) > 0) && add_parameters!(container, P, ts_devices, model)
     end
 end

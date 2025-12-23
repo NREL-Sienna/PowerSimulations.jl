@@ -935,6 +935,7 @@ function _add_parameterized_upper_bound_range_constraints_impl!(
     time_steps = get_time_steps(container)
     ts_name = get_time_series_names(model)[P]
     ts_type = get_default_time_series_type(container)
+    # PERF: compilation hotspot. Switch to TSC.
     names = [PSY.get_name(d) for d in devices if PSY.has_time_series(d, ts_type, ts_name)]
     if isempty(names)
         @debug "There are no $V devices with time series data $ts_type, $ts_name"
