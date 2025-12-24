@@ -148,7 +148,12 @@ function construct_device!(
     end
 
     if haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
-        add_parameters!(container, DynamicBranchRatingTimeSeriesParameter, devices, device_model)
+        add_parameters!(
+            container,
+            DynamicBranchRatingTimeSeriesParameter,
+            devices,
+            device_model,
+        )
     end
 
     # Deactivating this since it does not seem that the industry or we have data for this

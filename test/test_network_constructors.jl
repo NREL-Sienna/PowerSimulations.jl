@@ -283,17 +283,16 @@ end
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = Dict(
         StaticBranch => [
-        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
-        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
-        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
-    ]
-    ,
-    StaticBranchBounds => [
-        PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line, ""),
-        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
-    ],
+            PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+            PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
+            PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        ],
+        StaticBranchBounds => [
+            PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line, ""),
+            PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+        ],
     )
-    branches_dlr =  ["1", "2", "6"]
+    branches_dlr = ["1", "2", "6"]
     dlr_factors = vcat([fill(x, 6) for x in [1.15, 1.05, 1.1, 1]]...)
     test_results = Dict(
         StaticBranch => [120, 0, 264, 264, 24],
@@ -312,7 +311,11 @@ end
         for (ix, add_parallel_line_name) in enumerate(parallel_lines_names_to_add)
             sys = PSB.build_system(PSITestSystems, "c_sys5")
             line_to_add_parallel = get_component(Line, sys, add_parallel_line_name)
-            add_equivalent_ac_transmission_with_parallel_circuits!(sys, line_to_add_parallel, PSY.Line)
+            add_equivalent_ac_transmission_with_parallel_circuits!(
+                sys,
+                line_to_add_parallel,
+                PSY.Line,
+            )
             template = get_thermal_dispatch_template_network(
                 NetworkModel(
                     PTDFPowerModel;
@@ -354,7 +357,7 @@ end
             end
 
             @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-                PSI.ModelBuildStatus.BUILT
+                  PSI.ModelBuildStatus.BUILT
             psi_constraint_test(ps_model, constraint_keys[branch_formulation])
 
             moi_tests(

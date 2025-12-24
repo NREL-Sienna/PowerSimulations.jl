@@ -319,7 +319,7 @@ function get_min_max_limits(
     device::PSY.MonitoredLine,
     ::Type{<:ConstraintType},
     ::Type{T},
-)where {T <: AbstractBranchFormulation}
+) where {T <: AbstractBranchFormulation}
     if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to
         @warn(
             "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
@@ -376,17 +376,17 @@ function get_equivalent_dynamic_branch_rating(
     ci_name::String,
     mult,
 )
-    return sum( 
-            get_equivalent_dynamic_branch_rating(
-                param_container,
-                branch,
-                ts_name,
-                ts_type,
-                t,
-                ci_name,
-                mult,
-            ) for branch in bp.branches
-        ) / length(bp.branches)
+    return sum(
+        get_equivalent_dynamic_branch_rating(
+            param_container,
+            branch,
+            ts_name,
+            ts_type,
+            t,
+            ci_name,
+            mult,
+        ) for branch in bp.branches
+    ) / length(bp.branches)
 end
 
 """
@@ -404,17 +404,17 @@ function get_equivalent_dynamic_branch_rating(
     ci_name::String,
     mult,
 )
-    return minimum( 
-            get_equivalent_dynamic_branch_rating(
-                param_container,
-                branch,
-                ts_name,
-                ts_type,
-                t,
-                ci_name,
-                mult,
-            ) for branch in bs.branches
-        )
+    return minimum(
+        get_equivalent_dynamic_branch_rating(
+            param_container,
+            branch,
+            ts_name,
+            ts_type,
+            t,
+            ci_name,
+            mult,
+        ) for branch in bs.branches
+    )
 end
 
 """
@@ -596,7 +596,7 @@ function get_emergency_min_max_limits(
     device::PSY.MonitoredLine,
     ::Type{<:PostContingencyConstraintType},
     ::Type{T},
-)where {T <: AbstractBranchFormulation}
+) where {T <: AbstractBranchFormulation}
     if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to
         @warn(
             "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
@@ -1169,7 +1169,6 @@ function add_constraints!(
     end
     return
 end
-
 
 ############################## Flow Limits Constraints #####################################
 """
