@@ -24,7 +24,6 @@ function add_constraints!(
     net_reduction_data = network_model.network_reduction
     all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
-
     modeled_branch_types = network_model.modeled_branch_types
 
     branches_names = get_branch_argument_constraint_axis(
@@ -77,14 +76,14 @@ function add_constraints!(
 
         for b_type in modeled_branch_types
             if !haskey(
-                get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
+                get_constraint_map_by_type(reduced_branch_tracker)[PostContingencyEmergencyFlowRateConstraint],
                 b_type,
             )
                 continue
             end
-
-            for (name, (arc, reduction)) in
-                get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
+            name_to_arc_map =
+                get_constraint_map_by_type(reduced_branch_tracker)[PostContingencyEmergencyFlowRateConstraint][b_type]
+            for (name, (arc, reduction)) in name_to_arc_map
                 reduction_entry = all_branch_maps_by_type[reduction][b_type][arc]
                 limits =
                     get_emergency_min_max_limits(reduction_entry, T, U)
@@ -127,7 +126,6 @@ function add_post_contingency_flow_expressions!(
 
     net_reduction_data = network_model.network_reduction
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
-
     modeled_branch_types = network_model.modeled_branch_types
 
     branches_names = get_branch_argument_constraint_axis(
@@ -150,7 +148,7 @@ function add_post_contingency_flow_expressions!(
 
     for b_type in modeled_branch_types
         if !haskey(
-            get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
+            get_constraint_map_by_type(reduced_branch_tracker)[PostContingencyEmergencyFlowRateConstraint],
             b_type,
         )
             continue
@@ -159,7 +157,7 @@ function add_post_contingency_flow_expressions!(
         pre_contingency_flow =
             get_expression(container, PTDFBranchFlow(), b_type)
         name_to_arc_map =
-            get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
+            get_constraint_map_by_type(reduced_branch_tracker)[PostContingencyEmergencyFlowRateConstraint][b_type]
 
         for outage in associated_outages
             outage_id = string(IS.get_uuid(outage))
@@ -180,7 +178,6 @@ function add_post_contingency_flow_expressions!(
             to_number = PSY.get_number(PSY.get_to(PSY.get_arc(contingency_device)))
             index_lodf_outage = (from_number, to_number)
 
-            #TODO how we should handle reductions now?
             precontingency_outage_flow =
                 get_expression(container, PTDFBranchFlow(), V)[contingency_device_name, :]
             tasks = map(collect(name_to_arc_map)) do pair
@@ -262,11 +259,11 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ArgumentConstructStage,
-    model::DeviceModel{T, F},
+    device_model::DeviceModel{T, F},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {T <: PSY.ACTransmission, F <: AbstractSecurityConstrainedStaticBranch}
-    devices = get_available_components(model, sys)
-    if get_use_slacks(model)
+    devices = get_available_components(device_model, sys)
+    if get_use_slacks(device_model)
         add_variables!(
             container,
             FlowActivePowerSlackUpperBound,
@@ -283,16 +280,13 @@ function construct_device!(
         )
     end
 
-    add_variables!(
-        container,
-        FlowActivePowerVariable,
-        network_model,
-        devices,
-        F(),
-    )
-
-    if haskey(get_time_series_names(model), DynamicBranchRatingTimeSeriesParameter)
-        add_parameters!(container, DynamicBranchRatingTimeSeriesParameter, devices, model)
+    if haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
+        add_parameters!(
+            container,
+            DynamicBranchRatingTimeSeriesParameter,
+            devices,
+            device_model,
+        )
     end
 
     # Deactivating this since it does not seem that the industry or we have data for this
@@ -308,7 +302,18 @@ function construct_device!(
     #     )
     # end
 
-    add_feedforward_arguments!(container, model, devices)
+    add_feedforward_arguments!(container, device_model, devices)
+
+    # The order of these methods is important. The add_expressions! must be before the constraints
+    # Since now there is no FlowVariable this expression must be added in the ArgumentConstructStage to ensure all expressions are created before the constraints
+    add_expressions!(
+        container,
+        PTDFBranchFlow,
+        devices,
+        device_model,
+        network_model,
+    )
+
     return
 end
 
@@ -316,28 +321,19 @@ function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,
-    model::DeviceModel{V, F},
+    device_model::DeviceModel{V, F},
     network_model::NetworkModel{X},
 ) where {
     V <: PSY.ACTransmission,
     F <: AbstractSecurityConstrainedStaticBranch,
     X <: AbstractPTDFModel,
 }
-    devices = get_available_components(model, sys)
+    devices = get_available_components(device_model, sys)
 
-    # The order of these methods is important. The add_expressions! must be before the constraints
-    add_expressions!(
-        container,
-        PTDFBranchFlow,
-        devices,
-        model,
-        network_model,
-    )
-
-    add_constraints!(container, FlowRateConstraint, devices, model, network_model)
-    add_feedforward_constraints!(container, model, devices)
-    objective_function!(container, devices, model, X)
-    add_constraint_dual!(container, sys, model)
+    add_constraints!(container, FlowRateConstraint, devices, device_model, network_model)
+    add_feedforward_constraints!(container, device_model, devices)
+    objective_function!(container, devices, device_model, X)
+    add_constraint_dual!(container, sys, device_model)
 
     associated_outages = PSY.get_associated_supplemental_attributes(
         sys,
@@ -350,13 +346,13 @@ function construct_device!(
         return
     end
 
-    branches = get_available_components(model, sys)
+    branches = get_available_components(device_model, sys)
 
     add_post_contingency_flow_expressions!(
         container,
         sys,
         PostContingencyBranchFlow,
-        model,
+        device_model,
         network_model,
     )
 
@@ -364,7 +360,7 @@ function construct_device!(
         container,
         sys,
         PostContingencyEmergencyFlowRateConstraint,
-        model,
+        device_model,
         network_model,
     )
 
