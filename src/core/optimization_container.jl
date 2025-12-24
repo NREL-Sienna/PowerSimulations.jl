@@ -1047,44 +1047,59 @@ function _assign_container!(container::OrderedDict, key::OptimizationContainerKe
 end
 
 ####################################### Variable Container #################################
-function _add_variable_container!(
+function _add_sparse_variable_container!(
     container::OptimizationContainer,
     var_key::VariableKey{T, U},
-    sparse::Bool,
     axs...,
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    if sparse
-        var_container = sparse_container_spec(JuMP.VariableRef, axs...)
-    else
-        var_container = container_spec(JuMP.VariableRef, axs...)
-    end
+) where {T <: SparseVariableType, U <: Union{PSY.Component, PSY.System}}
+    var_container = sparse_container_spec(JuMP.VariableRef, axs...)
     _assign_container!(container.variables, var_key, var_container)
     return var_container
 end
 
-function add_variable_container!(
+function _add_variable_container!(
+    container::OptimizationContainer,
+    var_key::VariableKey{T, U},
+    axs...,
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
+    var_container = container_spec(JuMP.VariableRef, axs...)
+    _assign_container!(container.variables, var_key, var_container)
+    return var_container
+end
+
+add_variable_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
     axs...;
-    sparse = false,
     meta = ISOPT.CONTAINER_KEY_EMPTY_META,
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    var_key = VariableKey(T, U, meta)
-    return _add_variable_container!(container, var_key, sparse, axs...)
-end
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}} = _add_variable_container!(container, VariableKey(T, U, meta), axs...)
 
-function add_variable_container!(
+add_sparse_variable_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    axs...;
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: SparseVariableType, U <: Union{PSY.Component, PSY.System}} = _add_sparse_variable_container!(container, VariableKey(T, U, meta), axs...)
+
+add_variable_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
     meta::String,
-    axs...;
-    sparse = false,
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    var_key = VariableKey(T, U, meta)
-    return _add_variable_container!(container, var_key, sparse, axs...)
-end
+    axs...
+) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}} =
+    _add_variable_container!(container, VariableKey(T, U, meta), axs...)
+
+add_sparse_variable_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    meta::String,
+    axs...
+) where {T <: SparseVariableType, U <: Union{PSY.Component, PSY.System}} =
+    _add_sparse_variable_container!(container, VariableKey(T, U, meta), axs...)
 
 function _get_pwl_variables_container()
     contents = Dict{Tuple{String, Int, Int}, Any}()
@@ -1126,20 +1141,28 @@ function get_variable(
 end
 
 ##################################### AuxVariable Container ################################
+function add_sparse_aux_variable_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    axs...;
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: AuxVariableType, U <: PSY.Component}
+    var_key = AuxVarKey(T, U, meta)
+    aux_variable_container = sparse_container_spec(Float64, axs...)
+    _assign_container!(container.aux_variables, var_key, aux_variable_container)
+    return aux_variable_container
+end
+
 function add_aux_variable_container!(
     container::OptimizationContainer,
     ::T,
     ::Type{U},
     axs...;
-    sparse = false,
     meta = ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {T <: AuxVariableType, U <: PSY.Component}
     var_key = AuxVarKey(T, U, meta)
-    if sparse
-        aux_variable_container = sparse_container_spec(Float64, axs...)
-    else
-        aux_variable_container = container_spec(Float64, axs...)
-    end
+    aux_variable_container = container_spec(Float64, axs...)
     _assign_container!(container.aux_variables, var_key, aux_variable_container)
     return aux_variable_container
 end
@@ -1168,12 +1191,11 @@ function get_aux_variable(
 end
 
 ##################################### DualVariable Container ################################
-function add_dual_container!(
+function add_sparse_dual_container!(
     container::OptimizationContainer,
     ::Type{T},
     ::Type{U},
     axs...;
-    sparse = false,
     meta = ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     if is_milp(container)
@@ -1182,11 +1204,25 @@ function add_dual_container!(
               which increases simulation time and the results could be innacurate.")
     end
     const_key = ConstraintKey(T, U, meta)
-    if sparse
-        dual_container = sparse_container_spec(Float64, axs...)
-    else
-        dual_container = container_spec(Float64, axs...)
+    dual_container = sparse_container_spec(Float64, axs...)
+    _assign_container!(container.duals, const_key, dual_container)
+    return dual_container
+end
+
+function add_dual_container!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    axs...;
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    if is_milp(container)
+        @warn("The model has resulted in a MILP, \\
+              dual value retrieval requires solving an additional Linear Program \\
+              which increases simulation time and the results could be innacurate.")
     end
+    const_key = ConstraintKey(T, U, meta)
+    dual_container = container_spec(Float64, axs...)
     _assign_container!(container.duals, const_key, dual_container)
     return dual_container
 end
@@ -1196,19 +1232,35 @@ function get_dual_keys(container::OptimizationContainer)
 end
 
 ##################################### Constraint Container #################################
+function _add_sparse_constraints_container!(
+    container::OptimizationContainer,
+    cons_key::ConstraintKey,
+    axs...
+)
+    cons_container = sparse_container_spec(JuMP.ConstraintRef, axs...)
+    _assign_container!(container.constraints, cons_key, cons_container)
+    return cons_container
+end
+
 function _add_constraints_container!(
     container::OptimizationContainer,
     cons_key::ConstraintKey,
-    axs...;
-    sparse = false,
+    axs...
 )
-    if sparse
-        cons_container = sparse_container_spec(JuMP.ConstraintRef, axs...)
-    else
-        cons_container = container_spec(JuMP.ConstraintRef, axs...)
-    end
+    cons_container = container_spec(JuMP.ConstraintRef, axs...)
     _assign_container!(container.constraints, cons_key, cons_container)
     return cons_container
+end
+
+function add_sparse_constraints_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    axs...;
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
+    cons_key = ConstraintKey(T, U, meta)
+    return _add_sparse_constraints_container!(container, cons_key, axs...)
 end
 
 function add_constraints_container!(
@@ -1216,11 +1268,10 @@ function add_constraints_container!(
     ::T,
     ::Type{U},
     axs...;
-    sparse = false,
     meta = ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
     cons_key = ConstraintKey(T, U, meta)
-    return _add_constraints_container!(container, cons_key, axs...; sparse = sparse)
+    return _add_constraints_container!(container, cons_key, axs...)
 end
 
 function get_constraint_keys(container::OptimizationContainer)
@@ -1252,21 +1303,15 @@ function read_duals(container::OptimizationContainer)
 end
 
 ##################################### Parameter Container ##################################
-function _add_param_container!(
+function _add_sparse_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
     attribute::VariableValueAttributes{<:OptimizationContainerKey},
     param_type::DataType,
-    axs...;
-    sparse = false,
+    axs...
 ) where {T <: VariableValueParameter, U <: PSY.Component}
-    if sparse
-        param_array = sparse_container_spec(param_type, axs...)
-        multiplier_array = sparse_container_spec(Float64, axs...)
-    else
-        param_array = DenseAxisArray{param_type}(undef, axs...)
-        multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
-    end
+    param_array = sparse_container_spec(param_type, axs...)
+    multiplier_array = sparse_container_spec(Float64, axs...)
     param_container = ParameterContainer(attribute, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
     return param_container
@@ -1276,8 +1321,22 @@ function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
     attribute::VariableValueAttributes{<:OptimizationContainerKey},
-    axs...;
-    sparse = false,
+    param_type::DataType,
+    axs...
+) where {T <: VariableValueParameter, U <: PSY.Component}
+    param_array = container_spec(param_type, axs...)
+    param_array = DenseAxisArray{param_type}(undef, axs...)
+    multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
+    param_container = ParameterContainer(attribute, param_array, multiplier_array)
+    _assign_container!(container.parameters, key, param_container)
+    return param_container
+end
+
+function _add_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+    attribute::VariableValueAttributes{<:OptimizationContainerKey},
+    axs...
 ) where {T <: VariableValueParameter, U <: PSY.Component}
     if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
         param_type = JuMP.VariableRef
@@ -1289,8 +1348,27 @@ function _add_param_container!(
         key,
         attribute,
         param_type,
-        axs...;
-        sparse = sparse,
+        axs...
+    )
+end
+
+function _add_sparse_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+    attribute::VariableValueAttributes{<:OptimizationContainerKey},
+    axs...
+) where {T <: VariableValueParameter, U <: PSY.Component}
+    if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
+        param_type = JuMP.VariableRef
+    else
+        param_type = Float64
+    end
+    return _add_sparse_param_container!(
+        container,
+        key,
+        attribute,
+        param_type,
+        axs...
     )
 end
 
@@ -1301,33 +1379,48 @@ function _add_param_container!(
     param_axs,
     multiplier_axs,
     additional_axs,
-    time_steps::UnitRange{Int};
-    sparse = false,
+    time_steps::UnitRange{Int}
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
         param_type = JuMP.VariableRef
     else
         param_type = Float64
     end
-    if sparse
-        param_array =
-            sparse_container_spec(param_type, param_axs, additional_axs..., time_steps)
-        multiplier_array =
-            sparse_container_spec(Float64, multiplier_axs, additional_axs..., time_steps)
+    param_array =
+        DenseAxisArray{param_type}(undef, param_axs, additional_axs..., time_steps)
+    multiplier_array =
+        fill!(
+            DenseAxisArray{Float64}(
+                undef,
+                multiplier_axs,
+                additional_axs...,
+                time_steps,
+            ),
+            NaN,
+        )
+    param_container = ParameterContainer(attribute, param_array, multiplier_array)
+    _assign_container!(container.parameters, key, param_container)
+    return param_container
+end
+
+function _add_sparse_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+    attribute::TimeSeriesAttributes{V},
+    param_axs,
+    multiplier_axs,
+    additional_axs,
+    time_steps::UnitRange{Int};
+) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
+    if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
+        param_type = JuMP.VariableRef
     else
-        param_array =
-            DenseAxisArray{param_type}(undef, param_axs, additional_axs..., time_steps)
-        multiplier_array =
-            fill!(
-                DenseAxisArray{Float64}(
-                    undef,
-                    multiplier_axs,
-                    additional_axs...,
-                    time_steps,
-                ),
-                NaN,
-            )
+        param_type = Float64
     end
+    param_array =
+        sparse_container_spec(param_type, param_axs, additional_axs..., time_steps)
+    multiplier_array =
+        sparse_container_spec(Float64, multiplier_axs, additional_axs..., time_steps)
     param_container = ParameterContainer(attribute, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
     return param_container
@@ -1338,8 +1431,7 @@ function _add_param_container!(
     key::ParameterKey{T, U},
     attribute::EventParametersAttributes{V, T},
     param_axs,
-    time_steps;
-    sparse = false,
+    time_steps
 ) where {T <: EventParameter, U <: PSY.Component, V <: PSY.Contingency}
     if built_for_recurrent_solves(container) && !get_rebuild_model(get_settings(container))
         param_type = JuMP.VariableRef
@@ -1347,32 +1439,46 @@ function _add_param_container!(
         param_type = Float64
     end
 
-    if sparse
-        error("Sparse parameter container is not supported for $V")
-    else
-        param_array = DenseAxisArray{param_type}(undef, param_axs, time_steps)
-        multiplier_array =
-            fill!(DenseAxisArray{Float64}(undef, param_axs, time_steps), NaN)
-    end
+    param_array = DenseAxisArray{param_type}(undef, param_axs, time_steps)
+    multiplier_array =
+        fill!(DenseAxisArray{Float64}(undef, param_axs, time_steps), NaN)
     param_container = ParameterContainer(attribute, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
     return param_container
+end
+
+function _add_sparse_param_container!(
+    ::OptimizationContainer,
+    ::ParameterKey{T, U},
+    ::EventParametersAttributes{V, T},
+    ::Any,
+    ::Any
+) where {T <: EventParameter, U <: PSY.Component, V <: PSY.Contingency}
+    error("Sparse parameter container is not supported for $V")
 end
 
 function _add_param_container!(
     container::OptimizationContainer,
     key::ParameterKey{T, U},
     attributes::CostFunctionAttributes{R},
-    axs...;
-    sparse = false,
+    axs...
 ) where {R, T <: ObjectiveFunctionParameter, U <: PSY.Component}
-    if sparse
-        param_array = sparse_container_spec(R, axs...)
-        multiplier_array = sparse_container_spec(Float64, axs...)
-    else
-        param_array = DenseAxisArray{R}(undef, axs...)
-        multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
-    end
+    param_array = DenseAxisArray{R}(undef, axs...)
+    multiplier_array = fill!(DenseAxisArray{Float64}(undef, axs...), NaN)
+    param_container = ParameterContainer(attributes, param_array, multiplier_array)
+    _assign_container!(container.parameters, key, param_container)
+    return param_container
+end
+
+
+function _add_sparse_param_container!(
+    container::OptimizationContainer,
+    key::ParameterKey{T, U},
+    attributes::CostFunctionAttributes{R},
+    axs...
+) where {R, T <: ObjectiveFunctionParameter, U <: PSY.Component}
+    param_array = sparse_container_spec(R, axs...)
+    multiplier_array = sparse_container_spec(Float64, axs...)
     param_container = ParameterContainer(attributes, param_array, multiplier_array)
     _assign_container!(container.parameters, key, param_container)
     return param_container
@@ -1388,7 +1494,6 @@ function add_param_container!(
     multiplier_axs,
     additional_axs,
     time_steps::UnitRange{Int};
-    sparse = false,
     meta = ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
     param_key = ParameterKey(T, U, meta)
@@ -1403,8 +1508,35 @@ function add_param_container!(
         param_axs,
         multiplier_axs,
         additional_axs,
-        time_steps;
-        sparse = sparse,
+        time_steps
+    )
+end
+
+function add_sparse_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    ::Type{V},
+    name::String,
+    param_axs,
+    multiplier_axs,
+    additional_axs,
+    time_steps::UnitRange{Int};
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: TimeSeriesParameter, U <: PSY.Component, V <: PSY.TimeSeriesData}
+    param_key = ParameterKey(T, U, meta)
+    if isabstracttype(V)
+        error("$V can't be abstract: $param_key")
+    end
+    attributes = TimeSeriesAttributes(V, name)
+    return _add_sparse_param_container!(
+        container,
+        param_key,
+        attributes,
+        param_axs,
+        multiplier_axs,
+        additional_axs,
+        time_steps
     )
 end
 
@@ -1417,13 +1549,29 @@ function add_param_container!(
     uses_compact_power::Bool = false,
     data_type::DataType = Float64,
     axs...;
-    sparse = false,
     meta = ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
     param_key = ParameterKey(T, U, meta)
     attributes =
         CostFunctionAttributes{data_type}(variable_types, sos_variable, uses_compact_power)
-    return _add_param_container!(container, param_key, attributes, axs...; sparse = sparse)
+    return _add_param_container!(container, param_key, attributes, axs...)
+end
+
+function add_sparse_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    variable_types::Tuple{Vararg{Type}},
+    sos_variable::SOSStatusVariable = NO_VARIABLE,
+    uses_compact_power::Bool = false,
+    data_type::DataType = Float64,
+    axs...;
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
+    param_key = ParameterKey(T, U, meta)
+    attributes =
+        CostFunctionAttributes{data_type}(variable_types, sos_variable, uses_compact_power)
+    return _add_sparse_param_container!(container, param_key, attributes, axs...)
 end
 
 function add_param_container!(
@@ -1432,12 +1580,24 @@ function add_param_container!(
     ::Type{U},
     ::Type{V},
     axs...;
-    sparse = false,
     meta = ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {T <: EventParameter, U <: PSY.Component, V <: PSY.Contingency}
     param_key = ParameterKey(T, U, meta)
     attributes = EventParametersAttributes{V, T}(U[])
-    return _add_param_container!(container, param_key, attributes, axs...; sparse = sparse)
+    return _add_param_container!(container, param_key, attributes, axs...)
+end
+
+function add_sparse_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    ::Type{V},
+    axs...;
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: EventParameter, U <: PSY.Component, V <: PSY.Contingency}
+    param_key = ParameterKey(T, U, meta)
+    attributes = EventParametersAttributes{V, T}(U[])
+    return _add_sparse_param_container!(container, param_key, attributes, axs...)
 end
 
 function add_param_container!(
@@ -1446,12 +1606,24 @@ function add_param_container!(
     ::Type{U},
     source_key::V,
     axs...;
-    sparse = false,
     meta = ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {T <: VariableValueParameter, U <: PSY.Component, V <: OptimizationContainerKey}
     param_key = ParameterKey(T, U, meta)
     attributes = VariableValueAttributes(source_key)
-    return _add_param_container!(container, param_key, attributes, axs...; sparse = sparse)
+    return _add_param_container!(container, param_key, attributes, axs...)
+end
+
+function add_sparse_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    source_key::V,
+    axs...;
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: VariableValueParameter, U <: PSY.Component, V <: OptimizationContainerKey}
+    param_key = ParameterKey(T, U, meta)
+    attributes = VariableValueAttributes(source_key)
+    return _add_sparse_param_container!(container, param_key, attributes, axs...)
 end
 
 # FixValue parameters are created using Float64 since we employ JuMP.fix to fix the downstream
@@ -1462,7 +1634,6 @@ function add_param_container!(
     ::Type{U},
     source_key::V,
     axs...;
-    sparse = false,
     meta = ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {T <: FixValueParameter, U <: PSY.Component, V <: OptimizationContainerKey}
     if meta == ISOPT.CONTAINER_KEY_EMPTY_META
@@ -1475,8 +1646,29 @@ function add_param_container!(
         param_key,
         attributes,
         Float64,
-        axs...;
-        sparse = sparse,
+        axs...
+    )
+end
+
+function add_sparse_param_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    source_key::V,
+    axs...;
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: FixValueParameter, U <: PSY.Component, V <: OptimizationContainerKey}
+    if meta == ISOPT.CONTAINER_KEY_EMPTY_META
+        error("$T parameters require passing the VariableType to the meta field")
+    end
+    param_key = ParameterKey(T, U, meta)
+    attributes = VariableValueAttributes(source_key)
+    return _add_sparse_param_container!(
+        container,
+        param_key,
+        attributes,
+        Float64,
+        axs...
     )
 end
 
@@ -1594,13 +1786,20 @@ function _add_expression_container!(
     expr_key::ExpressionKey,
     ::Type{T},
     axs...;
-    sparse = false,
 ) where {T <: JuMP.AbstractJuMPScalar}
-    if sparse
-        expr_container = sparse_container_spec(T, axs...)
-    else
-        expr_container = container_spec(T, axs...)
-    end
+    expr_container = container_spec(T, axs...)
+    remove_undef!(expr_container)
+    _assign_container!(container.expressions, expr_key, expr_container)
+    return expr_container
+end
+
+function _add_sparse_expression_container!(
+    container::OptimizationContainer,
+    expr_key::ExpressionKey,
+    ::Type{T},
+    axs...
+) where {T <: JuMP.AbstractJuMPScalar}
+    expr_container = sparse_container_spec(T, axs...)
     remove_undef!(expr_container)
     _assign_container!(container.expressions, expr_key, expr_container)
     return expr_container
@@ -1612,7 +1811,6 @@ function add_expression_container!(
     ::Type{U},
     axs...;
     expr_type = GAE,
-    sparse = false,
     meta = ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
     expr_key = ExpressionKey(T, U, meta)
@@ -1620,8 +1818,24 @@ function add_expression_container!(
         container,
         expr_key,
         expr_type,
-        axs...;
-        sparse = sparse,
+        axs...
+    )
+end
+
+function add_sparse_expression_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    axs...;
+    expr_type = GAE,
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: ExpressionType, U <: Union{PSY.Component, PSY.System}}
+    expr_key = ExpressionKey(T, U, meta)
+    return _add_sparse_expression_container!(
+        container,
+        expr_key,
+        expr_type,
+        axs...
     )
 end
 
@@ -1630,7 +1844,6 @@ function add_expression_container!(
     ::T,
     ::Type{U},
     axs...;
-    sparse = false,
     meta = ISOPT.CONTAINER_KEY_EMPTY_META,
 ) where {T <: ProductionCostExpression, U <: Union{PSY.Component, PSY.System}}
     expr_key = ExpressionKey(T, U, meta)
@@ -1639,8 +1852,24 @@ function add_expression_container!(
         container,
         expr_key,
         expr_type,
-        axs...;
-        sparse = sparse,
+        axs...
+    )
+end
+
+function add_sparse_expression_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    axs...;
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: ProductionCostExpression, U <: Union{PSY.Component, PSY.System}}
+    expr_key = ExpressionKey(T, U, meta)
+    expr_type = JuMP.QuadExpr
+    return _add_sparse_expression_container!(
+        container,
+        expr_key,
+        expr_type,
+        axs...
     )
 end
 

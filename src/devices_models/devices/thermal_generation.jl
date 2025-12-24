@@ -1148,22 +1148,20 @@ function add_constraints!(
     names = PSY.get_name.(devices)
 
     con = [
-        add_constraints_container!(
+        add_sparse_constraints_container!(
             container,
             StartupTimeLimitTemperatureConstraint(),
             T,
             names,
             time_steps;
-            sparse = true,
             meta = "hot",
         ),
-        add_constraints_container!(
+        add_sparse_constraints_container!(
             container,
             StartupTimeLimitTemperatureConstraint(),
             T,
             names,
             time_steps;
-            sparse = true,
             meta = "warm",
         ),
     ]
@@ -1276,24 +1274,22 @@ function add_constraints!(
         get_variable(container, WarmStartVariable(), T),
     ]
 
-    con_ub = add_constraints_container!(
+    con_ub = add_sparse_constraints_container!(
         container,
         StartupInitialConditionConstraint(),
         T,
         device_name_set,
         time_steps,
         1:(MAX_START_STAGES - 1);
-        sparse = true,
         meta = "ub",
     )
-    con_lb = add_constraints_container!(
+    con_lb = add_sparse_constraints_container!(
         container,
         StartupInitialConditionConstraint(),
         T,
         device_name_set,
         time_steps,
         1:(MAX_START_STAGES - 1);
-        sparse = true,
         meta = "lb",
     )
 
