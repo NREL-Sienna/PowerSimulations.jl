@@ -664,7 +664,7 @@ function add_constraints!(
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
 
-    @show has_dlr_ts =
+    has_dlr_ts =
         haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
     if has_dlr_ts
         ts_name =

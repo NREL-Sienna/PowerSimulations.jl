@@ -38,6 +38,7 @@ should_write_resulting_value(::Type{ReactivePowerBalance}) = true
 should_write_resulting_value(::Type{DCCurrentBalance}) = true
 should_write_resulting_value(::Type{PostContingencyBranchFlow}) = true
 should_write_resulting_value(::Type{PostContingencyActivePowerGeneration}) = true
+should_write_resulting_value(::Type{PTDFBranchFlow}) = true
 
 convert_result_to_natural_units(::Type{InterfaceTotalFlow}) = true
 convert_result_to_natural_units(::Type{PostContingencyBranchFlow}) = true
