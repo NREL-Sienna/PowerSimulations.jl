@@ -477,7 +477,7 @@ function _make_system_expressions!(
     ::Vector{Int},
     ::Type{T},
     bus_reduction_map::Dict{Int64, Set{Int64}},
-) where {(T <: Union{PTDFPowerModel, SecurityConstrainedPTDFPowerModel})}
+) where {T <: PTDFPowerModel}
     time_steps = get_time_steps(container)
     if isempty(bus_reduction_map)
         ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
@@ -538,43 +538,6 @@ function _make_system_expressions!(
     if length(subnetworks) > 1
         @warn "The system contains $(length(subnetworks)) synchronous regions. \
                When combined with AreaPTDFPowerModel, the model can be infeasible if the data doesn't \
-               have a well defined topology"
-        subnetworks_ref_buses = collect(keys(subnetworks))
-        container.expressions[ExpressionKey(ActivePowerBalance, PSY.System)] =
-            _make_container_array(subnetworks_ref_buses, time_steps)
-    end
-
-    return
-end
-
-#TODO Check if for SecurityConstrainedAreaPTDFPowerModel need something else
-function _make_system_expressions!(
-    container::OptimizationContainer,
-    subnetworks::Dict{Int, Set{Int}},
-    ::Vector{Int},
-    ::Type{SecurityConstrainedAreaPTDFPowerModel},
-    areas::IS.FlattenIteratorWrapper{PSY.Area},
-    bus_reduction_map::Dict{Int64, Set{Int64}},
-)
-    time_steps = get_time_steps(container)
-    if isempty(bus_reduction_map)
-        ac_bus_numbers = collect(Iterators.flatten(values(subnetworks)))
-    else
-        ac_bus_numbers = collect(keys(bus_reduction_map))
-    end
-    container.expressions = Dict(
-        # Enforces the balance by Area
-        ExpressionKey(ActivePowerBalance, PSY.Area) =>
-            _make_container_array(PSY.get_name.(areas), time_steps),
-        # Keeps track of the Injections by bus.
-        ExpressionKey(ActivePowerBalance, PSY.ACBus) =>
-        # Bus numbers are sorted to guarantee consistency in the order between the
-        # containers
-            _make_container_array(sort!(ac_bus_numbers), time_steps),
-    )
-    if length(subnetworks) > 1
-        @warn "The system contains $(length(subnetworks)) synchronous regions. \
-               When combined with SecurityConstrainedAreaPTDFPowerModel, the model can be infeasible if the data doesn't \
                have a well defined topology"
         subnetworks_ref_buses = collect(keys(subnetworks))
         container.expressions[ExpressionKey(ActivePowerBalance, PSY.System)] =
@@ -666,12 +629,12 @@ function initialize_system_expressions!(
     subnetworks::Dict{Int, Set{Int}},
     system::PSY.System,
     bus_reduction_map::Dict{Int64, Set{Int64}},
-) where {T <: Union{AreaPTDFPowerModel, SecurityConstrainedAreaPTDFPowerModel}}
+) where {T <: AreaPTDFPowerModel}
     areas = get_available_components(network_model, PSY.Area, system)
     if isempty(areas)
         throw(
             IS.ConflictingInputsError(
-                "AreaPTDFPowerModel/SecurityConstrainedAreaPTDFPowerModel doesn't support systems with no Areas",
+                "AreaPTDFPowerModel doesn't support systems with no Areas",
             ),
         )
     end

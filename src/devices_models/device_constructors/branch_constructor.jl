@@ -156,17 +156,18 @@ function construct_device!(
         )
     end
 
-    if haskey(
-        get_time_series_names(device_model),
-        PostContingencyDynamicBranchRatingTimeSeriesParameter,
-    )
-        add_parameters!(
-            container,
-            PostContingencyDynamicBranchRatingTimeSeriesParameter,
-            devices,
-            device_model,
-        )
-    end
+    # Deactivating this since it does not seem that the industry or we have data for this
+    # if haskey(
+    #     get_time_series_names(device_model),
+    #     PostContingencyDynamicBranchRatingTimeSeriesParameter,
+    # )
+    #     add_parameters!(
+    #         container,
+    #         PostContingencyDynamicBranchRatingTimeSeriesParameter,
+    #         devices,
+    #         device_model,
+    #     )
+    # end
 
     add_feedforward_arguments!(container, device_model, devices)
     return
@@ -193,66 +194,6 @@ function construct_device!(
     add_constraints!(container, FlowRateConstraint, devices, device_model, network_model)
     add_feedforward_constraints!(container, device_model, devices)
     objective_function!(container, devices, device_model, PTDFPowerModel)
-    add_constraint_dual!(container, sys, device_model)
-    return
-end
-
-function construct_device!(
-    container::OptimizationContainer,
-    sys::PSY.System,
-    ::ModelConstructStage,
-    device_model::DeviceModel{V, StaticBranch},
-    network_model::NetworkModel{T},
-) where {V <: PSY.ACTransmission, T <: AbstractSecurityConstrainedPTDFModel}
-    devices = get_available_components(device_model, sys)
-    add_constraints!(container, NetworkFlowConstraint, devices, device_model, network_model)
-    add_constraints!(container, FlowRateConstraint, devices, device_model, network_model)
-
-    # TODO: Security constrained. Remove this line. Method not defined
-    valid_outages = _get_all_scuc_valid_outages(sys, network_model)
-
-    if isempty(valid_outages)
-        throw(
-            ArgumentError(
-                "System $(PSY.get_name(sys)) has no valid supplemental attributes associated to devices $(PSY.ACTransmission)
-                to add the LODF expressions/constraints for the requested network model: $network_model.",
-            ))
-    end
-
-    lodf = get_LODF_matrix(network_model)
-    removed_branches = PNM.get_removed_branches(lodf.network_reduction_data)
-    # TODO: Security constrained. This method might not be needed. Analyze why is here
-    branches = get_available_components(
-        b -> PSY.get_name(b) ∉ removed_branches,
-        PSY.ACTransmission,
-        sys,
-    )
-
-    #TODO Handle also N-2 cases
-    branches_outages =
-        _get_all_single_outage_branches_by_type(sys, valid_outages, branches, V)
-    if !isempty(branches_outages)
-        add_to_expression!(
-            container,
-            PostContingencyBranchFlow,
-            FlowActivePowerVariable,
-            branches,
-            branches_outages,
-            device_model,
-            network_model,
-        )
-
-        add_constraints!(
-            container,
-            PostContingencyEmergencyRateLimitConstrain,
-            branches,
-            branches_outages,
-            device_model,
-            network_model,
-        )
-    end
-    add_feedforward_constraints!(container, device_model, devices)
-    objective_function!(container, devices, device_model, SecurityConstrainedPTDFPowerModel)
     add_constraint_dual!(container, sys, device_model)
     return
 end
