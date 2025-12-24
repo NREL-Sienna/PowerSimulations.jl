@@ -29,7 +29,7 @@
         c_sys14_dc => ["Line1", "Line9", "Line10", "Line12", "Trans2"],
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [264, 0, 696, 696, 24],
+        c_sys5 => [120, 0, 696, 696, 24],
         c_sys14 => [600, 0, 3480, 3480, 504],
         c_sys14_dc => [600, 0, 2688, 2592, 456],
     )
@@ -110,7 +110,7 @@ end
         c_sys14_dc => ["Line1", "Line9", "Line10", "Line12", "Trans2"],
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [264, 0, 696, 696, 24],
+        c_sys5 => [120, 0, 696, 696, 24],
         c_sys14 => [600, 0, 3480, 3480, 504],
         c_sys14_dc => [600, 0, 2688, 2592, 456],
     )
@@ -186,7 +186,7 @@ end
         c_sys5 => ["1", "2", "3"],
     )
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [264, 0, 696, 696, 24],
+        c_sys5 => [120, 0, 696, 696, 24],
     )
 
     test_obj_values = IdDict{System, Float64}(
