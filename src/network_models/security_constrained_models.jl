@@ -119,6 +119,7 @@ function add_post_contingency_flow_expressions!(
     net_reduction_data = network_model.network_reduction
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     modeled_branch_types = network_model.modeled_branch_types
+    all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
 
     branches_names = get_branch_argument_constraint_axis(
         net_reduction_data,
@@ -136,6 +137,9 @@ function add_post_contingency_flow_expressions!(
         time_steps,
     )
 
+    name_to_arc_map_contingency =
+        get_constraint_map_by_type(reduced_branch_tracker)[PostContingencyEmergencyFlowRateConstraint][V]
+
     jump_model = get_jump_model(container)
 
     for b_type in modeled_branch_types
@@ -145,7 +149,6 @@ function add_post_contingency_flow_expressions!(
         )
             continue
         end
-
         pre_contingency_flow =
             get_expression(container, PTDFBranchFlow(), b_type)
         name_to_arc_map =
@@ -161,17 +164,47 @@ function add_post_contingency_flow_expressions!(
                 )
             contingency_device = first(associated_devices)
             contingency_device_name = PSY.get_name(contingency_device)
+            #HERE IS THE PROBLEM I GET THE NORMAL NAME FROM ASSOCIATED DEVICES Y NEED TO LINK THE DEVICE TO THE PROPER KEY
             if length(associated_devices) != 1
                 @warn(
                     "Outage $(outage_id) is associated with $(length(associated_devices)) devices of type $V. Expected only one associated device per outage for contingency analysis. It is being considered only component $(PSY.get_name(contingency_device_name))."
                 )
             end
+
             from_number = PSY.get_number(PSY.get_from(PSY.get_arc(contingency_device)))
             to_number = PSY.get_number(PSY.get_to(PSY.get_arc(contingency_device)))
             index_lodf_outage = (from_number, to_number)
 
+            precontingency_outage_flow_exp =
+                get_expression(container, PTDFBranchFlow(), V)
+            if !haskey(name_to_arc_map_contingency, contingency_device_name) # Check if branch was reduced
+                @warn(
+                    "An outage was added to branch $contingency_device_name of type $V , but this branch has been reduced.\nThe outage will be treated as affecting the entire arc $index_lodf_outage for N-1 analysis."
+                )
+                ##############################
+                # THIS CODE IS TEMPORARY TO HANDLE THE CASE WHERE OUTAGES ARE ADDED TO BRANCHES THAT WERE REDUCED
+                #Find key
+                matching_key = ""
+                for key in collect(keys(name_to_arc_map_contingency))
+                    if startswith(key, contingency_device_name)
+                        matching_key = key
+                        contingency_device_name = matching_key
+                        break
+                    end
+                end
+                # For parallel devices such as PhaseShiftTransformer it is not adding "double_circuit" to the key
+                if matching_key == ""
+                    contingency_device =
+                        net_reduction_data.direct_branch_map[index_lodf_outage]
+                    contingency_device_name = PSY.get_name(contingency_device)
+                end
+                ##############################
+
+            end
+
             precontingency_outage_flow =
-                get_expression(container, PTDFBranchFlow(), V)[contingency_device_name, :]
+                precontingency_outage_flow_exp[contingency_device_name, :]
+
             tasks = map(collect(name_to_arc_map)) do pair
                 (name, (arc, _)) = pair
                 lodf_factor = lodf[arc, index_lodf_outage]
@@ -223,8 +256,28 @@ function add_post_contingency_flow_expressions!(
             to_number = PSY.get_number(PSY.get_to(PSY.get_arc(contingency_device)))
             index_lodf_outage = (from_number, to_number)
 
-            precontingency_outage_flow =
-                get_expression(container, PTDFBranchFlow(), V)[contingency_device_name, :]
+            precontingency_outage_flow_exp =
+                get_expression(container, PTDFBranchFlow(), V)
+
+            ##############################
+                # THIS CODE IS TEMPORARY TO HANDLE THE CASE WHERE OUTAGES ARE ADDED TO BRANCHES THAT WERE REDUCED
+                #Find key
+                matching_key = ""
+                for key in collect(keys(name_to_arc_map_contingency))
+                    if startswith(key, contingency_device_name)
+                        matching_key = key
+                        contingency_device_name = matching_key
+                        break
+                    end
+                end
+                # For parallel devices such as PhaseShiftTransformer it is not adding "double_circuit" to the key
+                if matching_key == ""
+                    contingency_device = net_reduction_data.direct_branch_map[index_lodf_outage]
+                    contingency_device_name = PSY.get_name(contingency_device)
+                end
+                ##############################
+
+            precontingency_outage_flow = precontingency_outage_flow_exp[contingency_device_name, :]
 
             for (name, (arc, reduction)) in
                 get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
