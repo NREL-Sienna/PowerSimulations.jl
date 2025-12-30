@@ -3,13 +3,12 @@
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    systems = [c_sys5]#, c_sys14, c_sys14_dc] #TODO Highs does not find a solution for 14 buses but Xpress does. Check why.
+    systems = [c_sys5, c_sys14]#, c_sys14_dc] #TODO Highs does not find a solution for 14 buses but Xpress does. Check why.
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
-        #PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
         PSI.ConstraintKey(PostContingencyEmergencyFlowRateConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(PostContingencyEmergencyFlowRateConstraint, PSY.Line, "ub"),
     ]
@@ -30,13 +29,13 @@
     )
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [120, 0, 696, 696, 24],
-        c_sys14 => [600, 0, 3480, 3480, 504],
-        c_sys14_dc => [600, 0, 2688, 2592, 456],
+        c_sys14 => [120, 0, 3480, 3480, 24],
+        c_sys14_dc => [600, 0, 2808, 2712, 24],
     )
 
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 355231.0,
-        c_sys14 => 141964.156,
+        c_sys14 => 152839.40,
         c_sys14_dc => 141964.156,
     )
     for (ix, sys) in enumerate(systems)
@@ -85,7 +84,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    systems = [c_sys5]#, c_sys14, c_sys14_dc] #TODO Highs does not find a solution for 14 buses but Xpress does. Check why.
+    systems = [c_sys5, c_sys14]#, c_sys14_dc] #TODO Highs does not find a solution for 14 buses but Xpress does. Check why.
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
@@ -111,14 +110,14 @@ end
     )
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [120, 0, 696, 696, 24],
-        c_sys14 => [600, 0, 3480, 3480, 504],
-        c_sys14_dc => [600, 0, 2688, 2592, 456],
+        c_sys14 => [120, 0, 3480, 3480, 24],
+        c_sys14_dc => [168, 0, 2808, 2712, 24],
     )
 
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 355231,
-        c_sys14 => 141964.156,
-        c_sys14_dc => 141964.156,
+        c_sys14 => 152839.4,
+        c_sys14_dc => 154585.1,
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(
