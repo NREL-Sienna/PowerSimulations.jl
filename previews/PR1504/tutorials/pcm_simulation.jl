@@ -222,5 +222,3 @@ rm(path; force = true, recursive = true)
 # ## Plotting
 #
 # Take a look at the plotting capabilities in [PowerGraphics.jl](https://github.com/nrel-siip/powergraphics.jl)
-
-
