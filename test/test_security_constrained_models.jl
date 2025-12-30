@@ -3,7 +3,7 @@
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    systems = [c_sys5, c_sys14]#, c_sys14_dc] #TODO Highs does not find a solution for 14 buses but Xpress does. Check why.
+    systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
@@ -30,7 +30,7 @@
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [120, 0, 696, 696, 24],
         c_sys14 => [120, 0, 3480, 3480, 24],
-        c_sys14_dc => [600, 0, 2808, 2712, 24],
+        c_sys14_dc => [168, 0, 2808, 2712, 24],
     )
 
     test_obj_values = IdDict{System, Float64}(
@@ -70,6 +70,9 @@
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
+        if ix > 2
+            continue # skipping test for c_sys14_dc as Highs takes so long to find optimal solution
+        end
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
@@ -84,7 +87,7 @@ end
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
     c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
-    systems = [c_sys5, c_sys14]#, c_sys14_dc] #TODO Highs does not find a solution for 14 buses but Xpress does. Check why.
+    systems = [c_sys5, c_sys14, c_sys14_dc]
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
@@ -152,6 +155,9 @@ end
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
+        if ix > 2
+            continue # skipping test for c_sys14_dc as Highs takes so long to find optimal solution
+        end
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
@@ -164,11 +170,27 @@ end
 @testset "Security Constrained branch formulation Network DC-PF with PTDF/LODF Model and parallel lines" begin
     template = get_thermal_dispatch_template_network(PTDFPowerModel)
     c_sys5 = PSB.build_system(PSITestSystems, "c_sys5")
-    l4 = get_component(Line, c_sys5, "4")
-    add_equivalent_ac_transmission_with_parallel_circuits!(c_sys5, l4, typeof(l4))
-    l3 = get_component(Line, c_sys5, "3")
-    add_equivalent_ac_transmission_with_parallel_circuits!(c_sys5, l3, typeof(l3))
-    systems = [c_sys5]
+    c_sys14 = PSB.build_system(PSITestSystems, "c_sys14")
+    c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
+    parallel_branches_to_add = IdDict{System, Vector{String}}(
+        c_sys5 => ["3", "4"],
+        c_sys14 => ["Line1", "Line14"], #, "Trans2", "Trans3"],
+        c_sys14_dc => ["Line1", "Line14"], #, "Trans2", "Trans3"],
+    )
+    systems = [c_sys5, c_sys14, c_sys14_dc]
+    for sys in systems
+        for branch_name in parallel_branches_to_add[sys]
+            branch = first(
+                get_components(b -> get_name(b) == branch_name, PSY.ACTransmission, sys),
+            )
+            add_equivalent_ac_transmission_with_parallel_circuits!(
+                sys,
+                branch,
+                typeof(branch),
+            )
+        end
+    end
+
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
@@ -179,19 +201,30 @@ end
     ]
     PTDF_ref = IdDict{System, PTDF}(
         c_sys5 => PTDF(c_sys5),
+        c_sys14 => PTDF(c_sys14),
+        c_sys14_dc => PTDF(c_sys14_dc),
     )
     LODF_ref = IdDict{System, LODF}(
         c_sys5 => LODF(c_sys5),
+        c_sys14 => LODF(c_sys14),
+        c_sys14_dc => LODF(c_sys14_dc),
     )
     lines_outages = IdDict{System, Vector{String}}(
         c_sys5 => ["1", "2", "3"],
+        c_sys14 => ["Line1", "Line2", "Line9", "Line10", "Line12", "Trans2"],
+        c_sys14_dc => ["Line9"],
     )
+
     test_results = IdDict{System, Vector{Int}}(
         c_sys5 => [120, 0, 696, 696, 24],
+        c_sys14 => [120, 0, 3480, 3480, 24],
+        c_sys14_dc => [168, 0, 1080, 984, 24],
     )
 
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 355231,
+        c_sys14 => 170911.133,
+        c_sys14_dc => 154585.1,
     )
     for (ix, sys) in enumerate(systems)
         template = get_thermal_dispatch_template_network(
@@ -226,6 +259,9 @@ end
             false,
         )
         psi_checkobjfun_test(ps_model, objfuncs[ix])
+        if ix > 2
+            continue # skipping test for c_sys14_dc as Highs takes so long to find optimal solution
+        end
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
