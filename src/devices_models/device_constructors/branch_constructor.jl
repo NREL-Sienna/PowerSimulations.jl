@@ -315,6 +315,7 @@ function construct_device!(
     branch_rate_bounds!(container, device_model, network_model)
     add_constraints!(container, NetworkFlowConstraint, devices, device_model, network_model)
     add_feedforward_constraints!(container, device_model, devices)
+    objective_function!(container, devices, device_model, PTDFPowerModel)
     add_constraint_dual!(container, sys, device_model)
     return
 end
