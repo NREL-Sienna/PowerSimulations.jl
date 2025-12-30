@@ -5,13 +5,6 @@ using DataStructures
 using DocumenterInterLinks
 using Literate
 
-Literate.markdown(
-    "docs/src/tutorials/decision_problem.jl",
-    "docs/src/tutorials";
-    name = "decision_problem",
-    flavor = Literate.DocumenterFlavor(),
-)
-
 links = InterLinks(
     "Julia" => "https://docs.julialang.org/en/v1/",
     "InfrastructureSystems" => "https://nrel-sienna.github.io/InfrastructureSystems.jl/stable/",
@@ -21,11 +14,77 @@ links = InterLinks(
     "HydroPowerSimulations" => "https://nrel-sienna.github.io/HydroPowerSimulations.jl/dev/",
 )
 
+# Function to clean up old generated files
+function clean_old_generated_files(dir::String; remove_all_md::Bool=false)
+    if !isdir(dir)
+        @warn "Directory does not exist: $dir"
+        return
+    end
+    if remove_all_md
+        generated_files = filter(f -> endswith(f, ".md"), readdir(dir))
+    else
+        generated_files = filter(f -> startswith(f, "generated_") && endswith(f, ".md"), readdir(dir))
+    end
+    for file in generated_files
+        rm(joinpath(dir, file), force=true)
+        @info "Removed old generated file: $file"
+    end
+end
+
+# Function to add download links to generated markdown
+function add_download_links(content, jl_file, ipynb_file)
+    download_section = """
+
+*To follow along, you can download this tutorial as a [Julia script (.jl)](../$(jl_file)) or [Jupyter notebook (.ipynb)]($(ipynb_file)).*
+
+"""
+    m = match(r"^(#+ .+)$"m, content)
+    if m !== nothing
+        heading = m.match
+        content = replace(content, r"^(#+ .+)$"m => heading * download_section, count=1)
+    end
+    return content
+end
+
+# Process tutorials with Literate
+tutorial_files = filter(x -> occursin(".jl", x), readdir("docs/src/tutorials"))
+if !isempty(tutorial_files)
+    tutorial_outputdir = joinpath(pwd(), "docs", "src", "tutorials", "generated")
+    clean_old_generated_files(tutorial_outputdir; remove_all_md=true)
+    mkpath(tutorial_outputdir)
+    
+    for file in tutorial_files
+        @show file
+        infile_path = joinpath(pwd(), "docs", "src", "tutorials", file)
+        execute = occursin("EXECUTE = TRUE", uppercase(readline(infile_path))) ? true : false
+        execute && include(infile_path)
+        
+        outputfile = replace("$file", ".jl" => "")
+        
+        # Generate markdown
+        Literate.markdown(infile_path,
+                          tutorial_outputdir;
+                          name = outputfile,
+                          credit = false,
+                          flavor = Literate.DocumenterFlavor(),
+                          documenter = true,
+                          postprocess = (content -> add_download_links(content, file, string(outputfile, ".ipynb"))),
+                          execute = execute)
+        
+        # Generate notebook
+        Literate.notebook(infile_path,
+                          tutorial_outputdir;
+                          name = outputfile,
+                          credit = false,
+                          execute = false)
+    end
+end
+
 pages = OrderedDict(
     "Welcome Page" => "index.md",
     "Tutorials" => Any[
-        "Single-step Problem" => "tutorials/decision_problem.md",
-        "Multi-stage Production Cost Simulation" => "tutorials/pcm_simulation.md",
+        "Single-step Problem" => "tutorials/generated/decision_problem.md",
+        "Multi-stage Production Cost Simulation" => "tutorials/generated/pcm_simulation.md",
     ],
     "How to..." => Any[
         "...register a variable in a custom operation model" => "how_to/register_variable.md",
