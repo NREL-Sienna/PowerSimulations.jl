@@ -8,11 +8,11 @@ function has_security_model(device_model::DeviceModel)::Bool
     return true
 end
 
-function _handle_common_thermal_parameters!(
+@inline function _handle_common_thermal_parameters!(
     container::OptimizationContainer,
-    devices,
-    model::DeviceModel,
-)
+    devices::IS.FlattenIteratorWrapper{T},
+    model::DeviceModel{T},
+) where {T <: PSY.ThermalGen}
     if haskey(get_time_series_names(model), FuelCostParameter)
         add_parameters!(container, FuelCostParameter, devices, model)
     end
