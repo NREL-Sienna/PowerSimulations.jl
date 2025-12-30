@@ -25,12 +25,12 @@ function add_constraints!(
     all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
 
-    modeled_branch_types = network_model.modeled_branch_types
+    modeled_ac_branch_types = network_model.modeled_ac_branch_types
 
     branches_names = get_branch_argument_constraint_axis(
         net_reduction_data,
         reduced_branch_tracker,
-        modeled_branch_types,
+        modeled_ac_branch_types,
         PostContingencyEmergencyFlowRateConstraint,
     )
 
@@ -75,7 +75,7 @@ function add_constraints!(
         contingency_device = first(associated_devices)
         contingency_device_name = PSY.get_name(contingency_device)
 
-        for b_type in modeled_branch_types
+        for b_type in modeled_ac_branch_types
             if !haskey(
                 get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
                 b_type,
@@ -128,12 +128,12 @@ function add_post_contingency_flow_expressions!(
     net_reduction_data = network_model.network_reduction
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
 
-    modeled_branch_types = network_model.modeled_branch_types
+    modeled_ac_branch_types = network_model.modeled_ac_branch_types
 
     branches_names = get_branch_argument_constraint_axis(
         net_reduction_data,
         reduced_branch_tracker,
-        modeled_branch_types,
+        modeled_ac_branch_types,
         PostContingencyEmergencyFlowRateConstraint,
     )
 
@@ -148,7 +148,7 @@ function add_post_contingency_flow_expressions!(
 
     jump_model = get_jump_model(container)
 
-    for b_type in modeled_branch_types
+    for b_type in modeled_ac_branch_types
         if !haskey(
             get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
             b_type,
@@ -204,13 +204,7 @@ function add_post_contingency_flow_expressions!(
     end
 
     #= Leaving serial code commented out for debugging purposes in the future
-    for b_type in modeled_branch_types
-        if !haskey(
-            get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
-            b_type,
-        )
-            continue
-        end
+    for b_type in modeled_ac_branch_types
 
         pre_contingency_flow =
             get_expression(container, PTDFBranchFlow(), b_type)

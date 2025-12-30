@@ -1134,12 +1134,12 @@ function add_post_contingency_flow_expressions!(
     net_reduction_data = network_model.network_reduction
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
 
-    modeled_branch_types = network_model.modeled_branch_types
+    modeled_ac_branch_types = network_model.modeled_ac_branch_types
 
     branch_names = get_branch_argument_constraint_axis(
         net_reduction_data,
         reduced_branch_tracker,
-        modeled_branch_types,
+        modeled_ac_branch_types,
         PostContingencyEmergencyFlowRateConstraint,
     )
 
@@ -1163,17 +1163,12 @@ function add_post_contingency_flow_expressions!(
     ptdf = get_PTDF_matrix(network_model)
     jump_model = get_jump_model(container)
 
-    for b_type in modeled_branch_types
-        if !haskey(
-            get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
-            b_type,
-        )
-            continue
-        end
+    for b_type in modeled_ac_branch_types
+        #!(b_type <: PSY.ACTransmission) && continue
         pre_contingency_flow = get_expression(container, PTDFBranchFlow(), b_type)
 
         name_to_arc_map =
-            get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
+            get_constraint_map_by_type(reduced_branch_tracker)[PostContingencyEmergencyFlowRateConstraint][b_type]
 
         for outage in associated_outages
             outage_id = string(IS.get_uuid(outage))
@@ -1199,13 +1194,7 @@ function add_post_contingency_flow_expressions!(
         end
     end
     #= Leaving serial code commented out for debugging purposes in the future
-    for b_type in modeled_branch_types
-        if !haskey(
-            get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
-            b_type,
-        )
-            continue
-        end
+    for b_type in modeled_ac_branch_types
         pre_contingency_flow = get_expression(container, PTDFBranchFlow(), b_type)
 
         for outage in associated_outages
@@ -1299,12 +1288,12 @@ function add_constraints!(
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
 
-    modeled_branch_types = network_model.modeled_branch_types
+    modeled_ac_branch_types = network_model.modeled_ac_branch_types
 
     branch_names = get_branch_argument_constraint_axis(
         net_reduction_data,
         reduced_branch_tracker,
-        modeled_branch_types,
+        modeled_ac_branch_types,
         cons_type,
     )
     service_name = PSY.get_name(service)
@@ -1337,16 +1326,9 @@ function add_constraints!(
     for outage in associated_outages
         outage_id = string(IS.get_uuid(outage))
 
-        for b_type in modeled_branch_types
-            if !haskey(
-                get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint],
-                b_type,
-            )
-                continue
-            end
-
+        for b_type in modeled_ac_branch_types
             for (name, (arc, reduction)) in
-                get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
+                get_constraint_map_by_type(reduced_branch_tracker)[PostContingencyEmergencyFlowRateConstraint][b_type]
                 # TODO: entry is not type stable here, it can return any type ACTransmission.
                 # It might have performance implications. Possibly separate this into other functions
                 reduction_entry = all_branch_maps_by_type[reduction][b_type][arc]

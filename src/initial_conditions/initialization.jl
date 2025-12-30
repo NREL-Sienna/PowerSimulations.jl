@@ -25,8 +25,8 @@ function get_initial_conditions_template(model::OperationModel, number_of_steps:
     if !isempty(bus_area_map)
         network_model.bus_area_map = get_bus_area_map(get_network_model(model.template))
     end
-    network_model.modeled_branch_types =
-        get_network_model(model.template).modeled_branch_types
+    network_model.modeled_ac_branch_types =
+        get_network_model(model.template).modeled_ac_branch_types
     ic_template = ProblemTemplate(network_model)
     # Do not copy events here for initialization
     for device_model in values(model.template.devices)
@@ -54,6 +54,9 @@ function get_initial_conditions_template(model::OperationModel, number_of_steps:
         set_service_model!(ic_template, get_service_name(service_model), base_model)
     end
     set_number_of_steps!(network_model.reduced_branch_tracker, number_of_steps)
+    if !isempty(model.template.services)
+        _add_services_to_device_model!(ic_template)
+    end
     return ic_template
 end
 
