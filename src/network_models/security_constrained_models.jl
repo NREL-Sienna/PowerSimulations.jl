@@ -65,14 +65,6 @@ function add_constraints!(
     # )
     for outage in associated_outages
         outage_id = string(IS.get_uuid(outage))
-        associated_devices =
-            PSY.get_associated_components(
-                sys,
-                outage;
-                component_type = V,
-            )
-        contingency_device = first(associated_devices)
-        contingency_device_name = PSY.get_name(contingency_device)
 
         for b_type in modeled_branch_types
             if !haskey(
