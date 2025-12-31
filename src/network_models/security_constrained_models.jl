@@ -120,7 +120,7 @@ function add_post_contingency_flow_expressions!(
     net_reduction_data = network_model.network_reduction
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     modeled_ac_branch_types = network_model.modeled_ac_branch_types
-    
+
     branches_names = get_branch_argument_constraint_axis(
         net_reduction_data,
         reduced_branch_tracker,

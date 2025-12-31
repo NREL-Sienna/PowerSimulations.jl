@@ -551,7 +551,7 @@ function initialize_system_expressions!(
     container::OptimizationContainer,
     network_model::NetworkModel{T},
     subnetworks::Dict{Int, Set{Int}},
-    ::BranchModelContainer, 
+    ::BranchModelContainer,
     system::PSY.System,
     bus_reduction_map::Dict{Int64, Set{Int64}},
 ) where {T <: PM.AbstractPowerModel}
@@ -599,7 +599,7 @@ function initialize_system_expressions!(
     container::OptimizationContainer,
     network_model::NetworkModel{AreaBalancePowerModel},
     subnetworks::Dict{Int, Set{Int}},
-    branch_models::BranchModelContainer, 
+    branch_models::BranchModelContainer,
     system::PSY.System,
     ::Dict{Int64, Set{Int64}},
 )
@@ -627,7 +627,7 @@ function initialize_system_expressions!(
     container::OptimizationContainer,
     network_model::NetworkModel{T},
     subnetworks::Dict{Int, Set{Int}},
-    ::BranchModelContainer, 
+    ::BranchModelContainer,
     system::PSY.System,
     bus_reduction_map::Dict{Int64, Set{Int64}},
 ) where {T <: AreaPTDFPowerModel}
