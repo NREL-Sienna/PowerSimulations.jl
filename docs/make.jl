@@ -48,7 +48,9 @@ function add_download_links(content, jl_file, ipynb_file)
 end
 
 # Process tutorials with Literate
-tutorial_files = filter(x -> occursin(".jl", x), readdir("docs/src/tutorials"))
+# Exclude helper scripts that start with "_"
+tutorial_files =
+    filter(x -> occursin(".jl", x) && !startswith(x, "_"), readdir("docs/src/tutorials"))
 if !isempty(tutorial_files)
     tutorial_outputdir = joinpath(pwd(), "docs", "src", "tutorials", "generated")
     clean_old_generated_files(tutorial_outputdir; remove_all_md = true)
