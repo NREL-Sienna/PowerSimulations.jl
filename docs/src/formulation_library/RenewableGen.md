@@ -14,7 +14,8 @@ Renewable generation formulations define the optimization models that describe r
 
  1. [`RenewableFullDispatch`](#RenewableFullDispatch)
  2. [`RenewableConstantPowerFactor`](#RenewableConstantPowerFactor)
- 3. [Valid configurations](#Valid-configurations)
+ 3. [`RenewableSecurityConstrainedFullDispatch`](#RenewableSecurityConstrainedFullDispatch)
+ 4. [Valid configurations](#Valid-configurations)
 
 * * *
 
@@ -138,6 +139,12 @@ Adds ``p^\text{re}`` and ``q^\text{re}`` terms to the respective active and reac
 &  P^\text{re,min} \le p_t^\text{re} \le \text{ActivePowerTimeSeriesParameter}_t, \quad \forall t \in \{1,\dots, T\} \\
 &  q_t^\text{re} = \text{pf} \cdot p_t^\text{re}, \quad \forall t \in \{1,\dots, T\}
 \end{aligned}
+```
+
+## `RenewableSecurityConstrainedFullDispatch`
+
+```@docs
+RenewableSecurityConstrainedFullDispatch
 ```
 
 * * *

@@ -57,6 +57,7 @@ pages = OrderedDict(
         "Renewable Generation" => "formulation_library/RenewableGen.md",
         "Load" => "formulation_library/Load.md",
         "Branch" => "formulation_library/Branch.md",
+        "Source" => "formulation_library/Source.md",
         "Services" => "formulation_library/Service.md",
         "Feedforwards" => "formulation_library/Feedforward.md",
         "Piecewise Linear Cost" => "formulation_library/Piecewise.md",

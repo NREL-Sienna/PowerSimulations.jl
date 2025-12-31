@@ -131,7 +131,7 @@ function apply_affect!(
     sim_time = get_current_time(simulation)
     rng = get_rng(simulation)
     for (dtype, device_names) in device_type_maps
-        if !(dtype <: EVENTS_COMPATIBLE_INJECTORS)
+        if !supports_outages(dtype)
             continue
         end
         em_model = get_emulation_model(get_models(simulation))

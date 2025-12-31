@@ -364,6 +364,7 @@ struct IncrementalPiecewiseLinearSlopeParameter <: AbstractPiecewiseLinearSlopeP
 "[`AbstractPiecewiseLinearSlopeParameter`](@ref) for the decremental case (power sink)"
 struct DecrementalPiecewiseLinearSlopeParameter <: AbstractPiecewiseLinearSlopeParameter end
 
+"Parameters to define the breakpoints of a piecewise linear function"
 abstract type AbstractPiecewiseLinearBreakpointParameter <: TimeSeriesParameter end
 
 "[`AbstractPiecewiseLinearBreakpointParameter`](@ref) for the incremental case (power source)"
