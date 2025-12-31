@@ -1437,11 +1437,7 @@ function construct_device!(
     return
 end
 
-function _get_branch_map(
-    container::OptimizationContainer,
-    network_model::NetworkModel,
-    sys::PSY.System,
-)
+function _get_branch_map(network_model::NetworkModel)
     @assert !isempty(network_model.modeled_ac_branch_types)
     net_reduction_data = get_network_reduction(network_model)
     all_branch_maps_by_type = net_reduction_data.all_branch_maps_by_type
