@@ -169,15 +169,40 @@ function add_constraints!(
     },
 ) where {T <: AbstractPTDFModel}
     @assert !isempty(inter_area_branch_map)
-
     time_steps = get_time_steps(container)
-    device_names = PSY.get_name.(devices)
-
+    device_names_with_branches = Vector{String}()
+    interchange_direction_branch_map =
+        Dict{String, Dict{Float64, Dict{DataType, Vector{String}}}}()
+    for area_interchange in devices
+        inter_change_name = PSY.get_name(area_interchange)
+        area_from_name = PSY.get_name(PSY.get_from_area(area_interchange))
+        area_to_name = PSY.get_name(PSY.get_to_area(area_interchange))
+        interchange_direction_branch_map[inter_change_name] =
+            Dict{Float64, Dict{DataType, Vector{String}}}()
+        if haskey(inter_area_branch_map, (area_from_name, area_to_name))
+            # 1 is the multiplier
+            interchange_direction_branch_map[inter_change_name][1.0] =
+                inter_area_branch_map[(area_from_name, area_to_name)]
+        end
+        if haskey(inter_area_branch_map, (area_to_name, area_from_name))
+            # -1 is the multiplier because the direction is reversed
+            interchange_direction_branch_map[inter_change_name][-1.0] =
+                inter_area_branch_map[(area_to_name, area_from_name)]
+        end
+        if isempty(interchange_direction_branch_map[inter_change_name])
+            @warn(
+                "There are no branches modeled in Area InterChange $(summary(area_interchange)) \
+          LineFlowBoundConstraint not created"
+            )
+        else
+            push!(device_names_with_branches, inter_change_name)
+        end
+    end
     con_ub = add_constraints_container!(
         container,
         LineFlowBoundConstraint(),
         PSY.AreaInterchange,
-        device_names,
+        device_names_with_branches,
         time_steps;
         meta = "ub",
     )
@@ -186,7 +211,7 @@ function add_constraints!(
         container,
         LineFlowBoundConstraint(),
         PSY.AreaInterchange,
-        device_names,
+        device_names_with_branches,
         time_steps;
         meta = "lb",
     )
@@ -195,26 +220,8 @@ function add_constraints!(
     jm = get_jump_model(container)
     for area_interchange in devices
         inter_change_name = PSY.get_name(area_interchange)
-        area_from_name = PSY.get_name(PSY.get_from_area(area_interchange))
-        area_to_name = PSY.get_name(PSY.get_to_area(area_interchange))
-        direction_branch_map = Dict{Float64, Dict{DataType, Vector{String}}}()
-        if haskey(inter_area_branch_map, (area_from_name, area_to_name))
-            # 1 is the multiplier
-            direction_branch_map[1.0] =
-                inter_area_branch_map[(area_from_name, area_to_name)]
-        end
-        if haskey(inter_area_branch_map, (area_to_name, area_from_name))
-            # -1 is the multiplier because the direction is reversed
-            direction_branch_map[-1.0] =
-                inter_area_branch_map[(area_to_name, area_from_name)]
-        end
-        if isempty(direction_branch_map)
-            @warn(
-                "There are no branches modeled in Area InterChange $(summary(area_interchange)) \
-          LineFlowBoundConstraint not created"
-            )
-            continue
-        end
+        (inter_change_name ∉ device_names_with_branches) && continue
+        direction_branch_map = interchange_direction_branch_map[inter_change_name]
 
         for t in time_steps
             sum_of_flows = JuMP.AffExpr()
