@@ -11,7 +11,8 @@ Electric load formulations define the optimization models that describe load uni
  1. [`StaticPowerLoad`](#StaticPowerLoad)
  2. [`PowerLoadInterruption`](#PowerLoadInterruption)
  3. [`PowerLoadDispatch`](#PowerLoadDispatch)
- 4. [Valid configurations](#Valid-configurations)
+ 4. [`PowerLoadShift`](#PowerLoadShift)
+ 5. [Valid configurations](#Valid-configurations)
 
 * * *
 
@@ -176,6 +177,73 @@ Creates an objective function term based on the [`FunctionData` Options](@ref) w
 ```
 
 on which ``\text{pf} = \sin(\arctan(Q^\text{ld,max}/P^\text{ld,max}))``.
+
+
+* * *
+
+## `PowerLoadShift`
+
+```@docs
+PowerLoadShift
+```
+
+**Variables:**
+
+  - [`ShiftedActivePowerVariable`](@ref):
+
+      + Default initial value: 0.0
+      + Symbol: ``p^\text{shift}``
+
+  - [`ReactivePowerVariable`](@ref):
+    
+      + Default initial value: 0.0
+      + Symbol: ``q^\text{ld}``
+
+**Static Parameters:**
+
+  - ``P^\text{max}`` = `PowerSystems.get_max_active_power(device)`
+  - ``Q^\text{max}`` = `PowerSystems.get_max_reactive_power(device)`
+  - ``T^\text{b}`` = `PowerSystems.get_load_balance_time_horizon(device)`
+
+**Time Series Parameters:**
+
+```@eval
+using PowerSimulations
+using PowerSystems
+using DataFrames
+using Latexify
+combos = PowerSimulations.get_default_time_series_names(ElectricLoad, PowerLoadShift)
+combo_table = DataFrame(
+    "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
+    "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),
+)
+mdtable(combo_table; latex = false)
+```
+
+**Objective:**
+
+Creates an objective function term based on the [`FunctionData` Options](@ref) where the quantity term is defined as ``p^\text{shift}``.
+
+**Expressions:**
+
+  - Add ``p^\text{shift}`` terms to the active power balance expressions created by the selected [Network Formulations](@ref network_formulations).
+
+**Constraints:**
+
+```math
+\begin{aligned}
+&  p_t^\text{shift} \ge 0, \quad \forall t \in \{1,\dots, T\} \ \text{ if } \ \text{ActivePowerTimeSeriesParameter}_t<0 \\
+&  p_t^\text{shift} + \text{ActivePowerTimeSeriesParameter}_t \ge \max{\{\text{LowerBoundActivePowerTimeSeriesParameter}_t, 0.0\}}, \quad \forall t \in \{1,\dots, T\}\ \text{ if } \ \text{ActivePowerTimeSeriesParameter}_t \ge 0 \\
+&  p_t^\text{shift} + \text{ActivePowerTimeSeriesParameter}_t \le \text{UpperBoundActivePowerTimeSeriesParameter}_t, \quad \forall t \in \{1,\dots, T\} \\
+& \sum\limits_{t \in \mathcal{T}_k } p_t^\text{shift} = 0 , \quad \forall k \in \{1,\dots, \lceil{T/T^\text{b}}\rceil\}, \ \mathcal{T}_k = \{(k-1)T^\text{b}+1, \ldots, \min{\{kT^\text{b}, N \}} \} \\
+&  p_t^\text{shift} \le \begin{cases} 0, &\forall k \in \{1,\dots, \lceil{T/T^\text{b}}\rceil\}, \ t=(k-1)T^{\text{b}}+1 \\[1mm]
+\sum\limits_{j<t \in \mathcal{T}_k } p_j^\text{shift}, &\forall k \in \{1,\dots, \lceil{T/T^\text{b}}\rceil\}, \ \forall t \neq (k-1)T^{\text{b}}+1 \in \{1, \ldots, T \}
+\end{cases}\\
+&  q_t^\text{ld} = \text{pf} \cdot \left( \text{ActivePowerTimeSeriesParameter}_t + p_t^\text{shift} \right), \quad \forall t \in \{1,\dots, T\}
+\end{aligned}
+```
+
+on which ``\text{pf} = \sin(\arctan(Q^\text{max}/P^\text{max}))``.
 
 ## Valid configurations
 
