@@ -253,22 +253,6 @@ function _check_pwl_loss_model(devices)
 end
 
 ################################## Rate Limits constraint_infos ############################
-
-function get_rating(double_circuit::PNM.BranchesParallel)
-    return sum([PSY.get_rating(circuit) for circuit in double_circuit])
-end
-function get_rating(series_chain::PNM.BranchesSeries)
-    return minimum([get_rating(segment) for segment in series_chain])
-end
-function get_rating(device::T) where {T <: PSY.ACTransmission}
-    return PSY.get_rating(device)
-end
-function get_rating(
-    device::PNM.ThreeWindingTransformerWinding{T},
-) where {T <: PSY.ThreeWindingTransformer}
-    return PNM.get_equivalent_rating(device)
-end
-
 """
 Min and max limits for Abstract Branch Formulation
 """
@@ -277,14 +261,9 @@ function get_min_max_limits(
     constraint_type::Type{<:ConstraintType},
     branch_formulation::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    min_max_by_circuit = [
-        get_min_max_limits(device, constraint_type, branch_formulation) for
-        device in double_circuit
-    ]
-    min_by_circuit = [x.min for x in min_max_by_circuit]
-    max_by_circuit = [x.max for x in min_max_by_circuit]
+    equivalent_rating = PNM.get_equivalent_rating(double_circuit)
     # Limit by most restictive circuit:
-    return (min = maximum(min_by_circuit), max = minimum(max_by_circuit))
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
 end
 
 """
@@ -295,25 +274,8 @@ function get_min_max_limits(
     constraint_type::Type{<:ConstraintType},
     branch_formulation::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    transformer = PNM.get_transformer(transformer_entry)
-    winding_number = PNM.get_winding_number(transformer_entry)
-    if winding_number == 1
-        limits = (
-            min = -1 * PSY.get_rating_primary(transformer),
-            max = PSY.get_rating_primary(transformer),
-        )
-    elseif winding_number == 2
-        limits = (
-            min = -1 * PSY.get_rating_secondary(transformer),
-            max = PSY.get_rating_secondary(transformer),
-        )
-    elseif winding_number == 3
-        limits = (
-            min = -1 * PSY.get_rating_tertiary(transformer),
-            max = PSY.get_rating_tertiary(transformer),
-        )
-    end
-    return limits
+    equivalent_rating = PNM.get_equivalent_rating(transformer_entry)
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
 end
 
 """
@@ -324,14 +286,8 @@ function get_min_max_limits(
     constraint_type::Type{<:ConstraintType},
     branch_formulation::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    min_max_by_segment = [
-        get_min_max_limits(segment, constraint_type, branch_formulation) for
-        segment in series_chain
-    ]
-    min_by_segment = [x.min for x in min_max_by_segment]
-    max_by_segment = [x.max for x in min_max_by_segment]
-    # Limit by most restictive segment:
-    return (min = maximum(min_by_segment), max = minimum(max_by_segment))
+    equivalent_rating = PNM.get_equivalent_rating(series_chain)
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
 end
 
 """
@@ -356,7 +312,37 @@ function get_min_max_limits(
     return (min = -π / 2, max = π / 2)
 end
 
-function get_dynamic_branch_rating(
+"""
+Min and max limits for monitored line
+"""
+function get_min_max_limits(
+    device::PSY.MonitoredLine,
+    ::Type{<:ConstraintType},
+    ::Type{T},
+) where {T <: AbstractBranchFormulation}
+    if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to
+        @warn(
+            "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
+        )
+    end
+    limit = min(
+        PSY.get_rating(device),
+        PSY.get_flow_limits(device).to_from,
+        PSY.get_flow_limits(device).from_to,
+    )
+    minmax = (min = -1 * limit, max = limit)
+    return minmax
+end
+
+# ----------------------------------------------------------
+# ------ RATING FUNCTIONS FOR DYNAMIC BRANCH RATINGS -------
+# ----------------------------------------------------------
+"""
+    get_equivalent_dynamic_branch_rating(param_container::ParameterContainer, branch::PSY.ACTransmission, ts_name::String, ts_type::DataType, t::Int, ci_name::String, mult)
+
+Calculate the total rating for PSY.ACTransmission branches that contain Dynamic Branch Rating Time Series.
+"""
+function get_equivalent_dynamic_branch_rating(
     param_container::ParameterContainer,
     branch::U,
     ts_name::String,
@@ -370,43 +356,143 @@ function get_dynamic_branch_rating(
         return branch_dlr_params[t] * mult[ci_name, t]
     end
 
-    return get_rating(branch)
+    return PSY.get_rating(branch)
 end
 
+#TODO sm/further discuss this approach which will cause negligible capacity increasing when more than 2 circuits are in parallel
 """
-Min and max limits for Abstract Branch Formulation with DLR
+    get_equivalent_dynamic_branch_rating(param_container::ParameterContainer, bp::PNM.BranchesParallel{<:PSY.ACTransmission}, ts_name::String, ts_type::DataType, t::Int, ci_name::String, mult)
+
+Calculate the total rating for branches in parallel that contain Dynamic Branch Rating Time Series.
+For parallel circuits, the rating is the sum of individual ratings divided by the number of circuits.
+This provides a conservative estimate that accounts for potential overestimation of total capacity.
 """
-function _get_device_dynamic_branch_rating_limits(
+function get_equivalent_dynamic_branch_rating(
     param_container::ParameterContainer,
-    double_circuit::PNM.BranchesParallel{<:PSY.ACTransmission},
+    bp::PNM.BranchesParallel{<:PSY.ACTransmission},
     ts_name::String,
     ts_type::DataType,
     t::Int,
     ci_name::String,
     mult,
-) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    min_max_by_circuit = [
-        _get_device_dynamic_branch_rating_limits(
+)
+    return sum(
+        get_equivalent_dynamic_branch_rating(
             param_container,
-            device,
+            branch,
             ts_name,
             ts_type,
             t,
             ci_name,
             mult,
-        ) for
-        device in double_circuit
-    ]
-    min_by_circuit = [x.min for x in min_max_by_circuit]
-    max_by_circuit = [x.max for x in min_max_by_circuit]
-    # Limit by most restictive circuit:
-    return (min = maximum(min_by_circuit), max = minimum(max_by_circuit))
+        ) for branch in bp.branches
+    ) / length(bp.branches)
 end
 
 """
-Min and max limits for Abstract Branch Formulation with DLR
+    get_equivalent_dynamic_branch_rating(param_container::ParameterContainer, bs::PNM.BranchesSeries, ts_name::String, ts_type::DataType, t::Int, ci_name::String, mult)
+
+Calculate the rating for branches in series that contain Dynamic Branch Rating Time Series.
+For series circuits, the rating is limited by the weakest link: Rating_total = min(Rating1, Rating2, ..., Ratingn)
 """
-function get_min_max_limits(
+function get_equivalent_dynamic_branch_rating(
+    param_container::ParameterContainer,
+    bs::PNM.BranchesSeries,
+    ts_name::String,
+    ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
+)
+    return minimum(
+        get_equivalent_dynamic_branch_rating(
+            param_container,
+            branch,
+            ts_name,
+            ts_type,
+            t,
+            ci_name,
+            mult,
+        ) for branch in bs.branches
+    )
+end
+
+"""
+Min and max limits considering dynamic branch ratings for Abstract Branch Formulation
+"""
+function get_dynamic_branch_rating_min_max_limits(
+    param_container::ParameterContainer,
+    branch::U,
+    ts_name::String,
+    ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
+) where {U <: PSY.ACTransmission}
+    equivalent_rating = get_equivalent_dynamic_branch_rating(
+        param_container,
+        branch,
+        ts_name,
+        ts_type,
+        t,
+        ci_name,
+        mult,
+    )
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
+end
+
+"""
+Min and max limits considering dynamic branch ratings for Abstract Branch Formulation
+"""
+function get_dynamic_branch_rating_min_max_limits(
+    param_container::ParameterContainer,
+    bp::PNM.BranchesParallel{<:PSY.ACTransmission},
+    ts_name::String,
+    ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
+)
+    equivalent_rating = get_equivalent_dynamic_branch_rating(
+        param_container,
+        bp,
+        ts_name,
+        ts_type,
+        t,
+        ci_name,
+        mult,
+    )
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
+end
+
+"""
+Min and max limits considering dynamic branch ratings for Abstract Branch Formulation
+"""
+function get_dynamic_branch_rating_min_max_limits(
+    param_container::ParameterContainer,
+    bs::PNM.BranchesSeries,
+    ts_name::String,
+    ts_type::DataType,
+    t::Int,
+    ci_name::String,
+    mult,
+)
+    equivalent_rating = get_equivalent_dynamic_branch_rating(
+        param_container,
+        bs,
+        ts_name,
+        ts_type,
+        t,
+        ci_name,
+        mult,
+    )
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
+end
+
+"""
+Min and max limits considering dynamic branch ratings for Abstract Branch Formulation
+"""
+function get_dynamic_branch_rating_min_max_limits(
     param_container::ParameterContainer,
     transformer_entry::PNM.ThreeWindingTransformerWinding,
     ts_name::String,
@@ -414,8 +500,6 @@ function get_min_max_limits(
     t::Int,
     ci_name::String,
     mult,
-    #constraint_type::Type{<:ConstraintType},
-    #branch_formulation::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
     return get_min_max_limits(
         transformer_entry,
@@ -425,39 +509,9 @@ function get_min_max_limits(
 end
 
 """
-Min and max limits for Abstract Branch Formulation with DLR
+Min and max limits considering dynamic branch ratings for monitored line
 """
-function _get_device_dynamic_branch_rating_limits(
-    param_container::ParameterContainer,
-    series_chain::PNM.BranchesSeries,
-    ts_name::String,
-    ts_type::DataType,
-    t::Int,
-    ci_name::String,
-    mult,
-) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    min_max_by_segment = [
-        _get_device_dynamic_branch_rating_limits(
-            param_container,
-            segment,
-            ts_name,
-            ts_type,
-            t,
-            ci_name,
-            mult,
-        ) for
-        segment in series_chain
-    ]
-    min_by_segment = [x.min for x in min_max_by_segment]
-    max_by_segment = [x.max for x in min_max_by_segment]
-    # Limit by most restictive segment:
-    return (min = maximum(min_by_segment), max = minimum(max_by_segment))
-end
-
-"""
-Min and max limits for monitored line
-"""
-function get_min_max_limits(
+function get_dynamic_branch_rating_min_max_limits(
     param_container::ParameterContainer,
     device::PSY.MonitoredLine,
     ts_name::String,
@@ -473,90 +527,43 @@ function get_min_max_limits(
     )
 end
 
-function _get_device_dynamic_branch_rating_limits(
-    param_container::ParameterContainer,
-    branch::U,
-    ts_name::String,
-    ts_type::DataType,
-    t::Int,
-    ci_name::String,
-    mult,
-) where {U <: PSY.ACTransmission}
-    rating = get_dynamic_branch_rating(
-        param_container,
-        branch,
-        ts_name,
-        ts_type,
-        t,
-        ci_name,
-        mult,
-    )
-    return (min = -1 * rating, max = rating)
-end
-
+# -----------------------------------------------------
+# ------ RATING FUNCTIONS FOR EMERGENCY RATINGS -------
+# -----------------------------------------------------
 """
-Min and max limits for Abstract Branch Formulation
+Emergency Min and max limits for Abstract Branch Formulation and Post-Contingency conditions
 """
 function get_emergency_min_max_limits(
     double_circuit::PNM.BranchesParallel{<:PSY.ACTransmission},
     constraint_type::Type{<:PostContingencyConstraintType},
     branch_formulation::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    min_max_by_circuit = [
-        get_emergency_min_max_limits(device, constraint_type, branch_formulation) for
-        device in double_circuit
-    ]
-    min_by_circuit = [x.min for x in min_max_by_circuit]
-    max_by_circuit = [x.max for x in min_max_by_circuit]
-    # Limit by most restictive circuit:
-    return (min = maximum(min_by_circuit), max = minimum(max_by_circuit))
+    equivalent_rating = PNM.get_equivalent_emergency_rating(double_circuit)
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
 end
 
 """
-Min and max limits for Abstract Branch Formulation
+Min and max limits for Abstract Branch Formulation and Post-Contingency conditions
 """
-function get_emergency_min_max_limits(#TODO review this
+function get_emergency_min_max_limits(
     transformer_entry::PNM.ThreeWindingTransformerWinding,
     constraint_type::Type{<:PostContingencyConstraintType},
     branch_formulation::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    transformer = PNM.get_transformer(transformer_entry)
-    winding_number = PNM.get_winding_number(transformer_entry)
-    if winding_number == 1
-        limits = (
-            min = -1 * PSY.get_rating_primary(transformer),
-            max = PSY.get_rating_primary(transformer),
-        )
-    elseif winding_number == 2
-        limits = (
-            min = -1 * PSY.get_rating_secondary(transformer),
-            max = PSY.get_rating_secondary(transformer),
-        )
-    elseif winding_number == 3
-        limits = (
-            min = -1 * PSY.get_rating_tertiary(transformer),
-            max = PSY.get_rating_tertiary(transformer),
-        )
-    end
-    return limits
+    equivalent_rating = PNM.get_equivalent_emergency_rating(transformer_entry)
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
 end
 
 """
-Min and max limits for Abstract Branch Formulation
+Min and max limits for Abstract Branch Formulation and Post-Contingency conditions
 """
 function get_emergency_min_max_limits(
     series_chain::PNM.BranchesSeries,
     constraint_type::Type{<:PostContingencyConstraintType},
     branch_formulation::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    min_max_by_segment = [
-        get_emergency_min_max_limits(segment, constraint_type, branch_formulation) for
-        segment in series_chain
-    ]
-    min_by_segment = [x.min for x in min_max_by_segment]
-    max_by_segment = [x.max for x in min_max_by_segment]
-    # Limit by most restictive segment:
-    return (min = maximum(min_by_segment), max = minimum(max_by_segment))
+    equivalent_rating = PNM.get_equivalent_emergency_rating(series_chain)
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
 end
 
 """
@@ -567,14 +574,13 @@ function get_emergency_min_max_limits(
     ::Type{<:PostContingencyConstraintType},
     ::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    if PSY.get_rating_b(device) === nothing
-        @warn "Branch $(get_name(device)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
-            \n Consider including post-contingency limits using set_rating_b!()."
-        return (min = -1 * PSY.get_rating(device), max = PSY.get_rating(device))
-    end
-    return (min = -1 * PSY.get_rating_b(device), max = PSY.get_rating_b(device))
+    equivalent_rating = PNM.get_equivalent_emergency_rating(device)
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
 end
 
+"""
+Min and max limits for Abstract Branch Formulation and Post-Contingency conditions
+"""
 function get_emergency_min_max_limits(
     entry::PSY.PhaseShiftingTransformer,
     ::Type{PhaseAngleControlLimit},
@@ -589,43 +595,21 @@ Min and max limits for monitored line
 function get_emergency_min_max_limits(
     device::PSY.MonitoredLine,
     ::Type{<:PostContingencyConstraintType},
-    ::Type{<:AbstractBranchFormulation},
-)
+    ::Type{T},
+) where {T <: AbstractBranchFormulation}
     if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to
         @warn(
             "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
         )
     end
-
-    rating = PSY.get_rating(device)
-    rating_b = PSY.get_rating_b(device)
-    if rating_b === nothing
-        @warn "MonitoredLine $(get_name(device)) has no 'rating_b' defined. Post-contingency limit is going to be set using normal-operation rating.
-            \n Consider including post-contingency limits using set_rating_b!()."
-    else
-        rating = rating_b
-    end
-
+    equivalent_rating = PNM.get_equivalent_emergency_rating(device)
     limit = min(
-        rating,
+        equivalent_rating,
         PSY.get_flow_limits(device).to_from,
         PSY.get_flow_limits(device).from_to,
     )
     minmax = (min = -1 * limit, max = limit)
     return minmax
-end
-
-function _get_device_dynamic_branch_rating_time_series(
-    param_container::ParameterContainer,
-    device::PSY.ACTransmission,
-    ts_name::String,
-    ts_type::DataType,
-)
-    device_dlr_params = []
-    if PSY.has_time_series(device, ts_type, ts_name)
-        device_dlr_params = get_parameter_column_refs(param_container, get_name(device))
-    end
-    return device_dlr_params
 end
 
 """
@@ -834,7 +818,7 @@ function add_constraints!(
         # TODO: entry is not type stable here, it can return any type ACTransmission.
         # It might have performance implications. Possibly separate this into other functions
         reduction_entry = all_branch_maps_by_type[reduction][B][arc]
-        branch_rate = get_rating(reduction_entry)
+        branch_rate = PNM.get_equivalent_rating(reduction_entry)
         for t in time_steps
             constraint[name, t] = JuMP.@constraint(
                 get_jump_model(container),
@@ -885,7 +869,7 @@ function add_constraints!(
         # TODO: entry is not type stable here, it can return any type ACTransmission.
         # It might have performance implications. Possibly separate this into other functions
         reduction_entry = all_branch_maps_by_type[reduction][B][arc]
-        branch_rate = get_rating(reduction_entry)
+        branch_rate = PNM.get_equivalent_rating(reduction_entry)
         for t in time_steps
             constraint[name, t] = JuMP.@constraint(
                 get_jump_model(container),
@@ -1208,28 +1192,6 @@ function add_constraints!(
         end
     end
     return
-end
-
-"""
-Min and max limits for monitored line
-"""
-function get_min_max_limits(
-    device::PSY.MonitoredLine,
-    ::Type{<:ConstraintType},
-    ::Type{<:AbstractBranchFormulation},
-)
-    if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to
-        @warn(
-            "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
-        )
-    end
-    limit = min(
-        PSY.get_rating(device),
-        PSY.get_flow_limits(device).to_from,
-        PSY.get_flow_limits(device).from_to,
-    )
-    minmax = (min = -1 * limit, max = limit)
-    return minmax
 end
 
 ############################## Flow Limits Constraints #####################################
