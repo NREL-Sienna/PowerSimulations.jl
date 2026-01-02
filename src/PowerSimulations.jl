@@ -242,6 +242,8 @@ export VoltageAngle
 export FlowActivePowerVariable
 export FlowActivePowerSlackUpperBound
 export FlowActivePowerSlackLowerBound
+export PostContingencyFlowActivePowerSlackUpperBound
+export PostContingencyFlowActivePowerSlackLowerBound
 export FlowActivePowerFromToVariable
 export FlowActivePowerToFromVariable
 export FlowReactivePowerFromToVariable

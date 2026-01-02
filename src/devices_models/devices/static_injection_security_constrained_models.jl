@@ -1,4 +1,106 @@
 # G-1 WITH RESERVES AND DELIVERABILITY CONSTRAINTS
+
+get_variable_upper_bound(
+    ::PostContingencyFlowActivePowerSlackUpperBound,
+    ::PSY.ACTransmission,
+    ::AbstractSecurityConstrainedReservesFormulation,
+) = nothing
+get_variable_lower_bound(
+    ::PostContingencyFlowActivePowerSlackUpperBound,
+    ::PSY.ACTransmission,
+    ::AbstractSecurityConstrainedReservesFormulation,
+) = 0.0
+get_variable_upper_bound(
+    ::PostContingencyFlowActivePowerSlackLowerBound,
+    ::PSY.ACTransmission,
+    ::AbstractSecurityConstrainedReservesFormulation,
+) = nothing
+get_variable_lower_bound(
+    ::PostContingencyFlowActivePowerSlackLowerBound,
+    ::PSY.ACTransmission,
+    ::AbstractSecurityConstrainedReservesFormulation,
+) = 0.0
+
+function add_post_contingency_slack_variables!(
+    container::OptimizationContainer,#YES
+    ::Type{T},#YES
+    service::R,#YES
+    formulation::AbstractSecurityConstrainedReservesFormulation,
+    network_model::NetworkModel{N},
+) where {
+    T <: AbstractContingencySlackVariableType,
+    R <: PSY.AbstractReserve,
+    N <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    service_name = PSY.get_name(service)
+    associated_outages = PSY.get_supplemental_attributes(PSY.UnplannedOutage, service)
+    net_reduction_data = network_model.network_reduction
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+
+    modeled_ac_branch_types = network_model.modeled_ac_branch_types
+    #branch_names = get_branch_argument_variable_axis(net_reduction_data, devices)
+    # We do not have devices here so lets substitute with this
+    branch_names = get_branch_argument_constraint_axis(
+        net_reduction_data,
+        reduced_branch_tracker,
+        modeled_ac_branch_types,
+        PostContingencyEmergencyFlowRateConstraint,
+    )
+
+    all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
+
+    variable_container = add_variable_container!(
+        container,
+        T(),
+        R,
+        string.(IS.get_uuid.(associated_outages)),
+        branch_names,
+        time_steps;
+        meta = service_name,
+    )
+
+    for b_type in modeled_ac_branch_types
+        for outage in associated_outages
+            outage_id = string(IS.get_uuid(outage))
+
+            for (name, (arc, reduction)) in
+                PNM.get_name_to_arc_map(net_reduction_data, b_type)
+                # TODO: entry is not type stable here, it can return any type ACTransmission.
+                # It might have performance implications. Possibly separate this into other functions
+                reduction_entry = all_branch_maps_by_type[reduction][b_type][arc]
+                has_entry, tracker_container = search_for_reduced_branch_variable!(
+                    reduced_branch_tracker,
+                    arc,
+                    T,
+                )
+                if has_entry
+                    @assert !isempty(tracker_container) name arc reduction
+                end
+                ub = get_variable_upper_bound(T(), reduction_entry, formulation)
+                lb = get_variable_lower_bound(T(), reduction_entry, formulation)
+                for t in time_steps
+                    if !has_entry
+                        tracker_container[t] = JuMP.@variable(
+                            get_jump_model(container),
+                            base_name = "$(T)_$(b_type)_$(reduction)_{$(name), $(t)}",
+                        )
+                        ub !== nothing && JuMP.set_upper_bound(tracker_container[t], ub)
+                        lb !== nothing && JuMP.set_lower_bound(tracker_container[t], lb)
+                        JuMP.set_start_value(tracker_container[t], 0.0)
+                    end
+                    variable_container[outage_id, name, t] = tracker_container[t]
+                    add_to_objective_invariant_expression!(
+                        container,
+                        variable_container[outage_id, name, t] *
+                        POST_CONTINGENCY_CONSTRAINT_VIOLATION_SLACK_COST,
+                    )
+                end
+            end
+        end
+    end
+    return variable_container
+end
 # ----------- ContingencyReserveWithDeliverabilityConstraints -----------
 function add_variables!(
     container::OptimizationContainer,
@@ -1273,7 +1375,7 @@ function add_constraints!(
     cons_type::Type{T},
     ::Type{U},
     service::R,
-    device_model::ServiceModel{R, F},
+    service_model::ServiceModel{R, F},
     network_model::NetworkModel{<:AbstractPTDFModel},
 ) where {
     T <: PostContingencyEmergencyFlowRateConstraint,
@@ -1323,6 +1425,26 @@ function add_constraints!(
 
     post_cont_flow_expressions = get_expression(container, U(), R, service_name)
 
+    use_slacks = get_use_slacks(service_model)
+    if use_slacks
+        slack_ub = add_post_contingency_slack_variables!(
+            container,
+            PostContingencyFlowActivePowerSlackUpperBound,
+            service,
+            F(),
+            network_model,
+        )
+        slack_lb = add_post_contingency_slack_variables!(
+            container,
+            PostContingencyFlowActivePowerSlackLowerBound,
+            service,
+            F(),
+            network_model,
+        )
+        #Add objective function penalty for slacks
+        #add_to_objective_invariant_expression!(container, variable[t] * SERVICES_SLACK_COST)
+    end
+
     for outage in associated_outages
         outage_id = string(IS.get_uuid(outage))
 
@@ -1340,17 +1462,18 @@ function add_constraints!(
                 for t in time_steps
                     con_ub[outage_id, name, t] =
                         JuMP.@constraint(get_jump_model(container),
-                            post_cont_flow_expressions[outage_id, name, t] <=
+                            post_cont_flow_expressions[outage_id, name, t] -
+                            (use_slacks ? slack_ub[outage_id, name, t] : 0.0) <=
                             limits.max)
                     con_lb[outage_id, name, t] =
                         JuMP.@constraint(get_jump_model(container),
-                            post_cont_flow_expressions[outage_id, name, t] >=
+                            post_cont_flow_expressions[outage_id, name, t] +
+                            (use_slacks ? slack_lb[outage_id, name, t] : 0.0) >=
                             limits.min)
                 end
             end
         end
     end
-
     return
 end
 

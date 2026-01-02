@@ -1,4 +1,5 @@
 abstract type AbstractContingencyVariableType <: VariableType end
+abstract type AbstractContingencySlackVariableType <: AbstractContingencyVariableType end
 abstract type SparseVariableType <: VariableType end
 abstract type InterpolationVariableType <: SparseVariableType end
 abstract type BinaryInterpolationVariableType <: SparseVariableType end
@@ -24,6 +25,20 @@ Docs abbreviation: ``\\Delta rsv_{r,g,c}``
 """
 struct PostContingencyActivePowerReserveDeploymentVariable <:
        AbstractContingencyVariableType end
+
+"""
+Struct to dispatch the creation of active power flow upper bound slack variables for post contingency conditions in SCUC formulations. Used when there is not enough flow through the branch in the forward direction.
+
+Docs abbreviation: ``f^\\text{pc_sl,up}``
+"""
+struct PostContingencyFlowActivePowerSlackUpperBound <: AbstractContingencySlackVariableType end
+
+"""
+Struct to dispatch the creation of active power flow lower bound slack variables for post contingency conditions in SCUC formulations. Used when there is not enough flow through the branch in the reverse direction.
+
+Docs abbreviation: ``f^\\text{pc_sl,lo}``
+"""
+struct PostContingencyFlowActivePowerSlackLowerBound <: AbstractContingencySlackVariableType end
 
 """
 Struct to dispatch the creation of Active Power Variables above minimum power for Thermal Compact formulations
@@ -612,6 +627,8 @@ convert_result_to_natural_units(::Type{FlowActivePowerFromToVariable}) = true
 convert_result_to_natural_units(::Type{FlowActivePowerToFromVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerFromToVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerToFromVariable}) = true
+convert_result_to_natural_units(::Type{PostContingencyFlowActivePowerSlackUpperBound}) = true
+convert_result_to_natural_units(::Type{PostContingencyFlowActivePowerSlackLowerBound}) = true
 convert_result_to_natural_units(::Type{HVDCLosses}) = true
 convert_result_to_natural_units(::Type{InterfaceFlowSlackUp}) = true
 convert_result_to_natural_units(::Type{InterfaceFlowSlackDown}) = true
