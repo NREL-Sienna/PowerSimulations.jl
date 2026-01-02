@@ -627,8 +627,10 @@ convert_result_to_natural_units(::Type{FlowActivePowerFromToVariable}) = true
 convert_result_to_natural_units(::Type{FlowActivePowerToFromVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerFromToVariable}) = true
 convert_result_to_natural_units(::Type{FlowReactivePowerToFromVariable}) = true
-convert_result_to_natural_units(::Type{PostContingencyFlowActivePowerSlackUpperBound}) = true
-convert_result_to_natural_units(::Type{PostContingencyFlowActivePowerSlackLowerBound}) = true
+convert_result_to_natural_units(::Type{PostContingencyFlowActivePowerSlackUpperBound}) =
+    true
+convert_result_to_natural_units(::Type{PostContingencyFlowActivePowerSlackLowerBound}) =
+    true
 convert_result_to_natural_units(::Type{HVDCLosses}) = true
 convert_result_to_natural_units(::Type{InterfaceFlowSlackUp}) = true
 convert_result_to_natural_units(::Type{InterfaceFlowSlackDown}) = true

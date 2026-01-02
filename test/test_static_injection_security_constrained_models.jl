@@ -693,10 +693,8 @@ end
     end
 end
 
-@testset "G-n with Ramp reserve deliverability constraints with AreaPTDFPowerModel" begin
-    c_sys5_2area = PSB.build_system(PSISystems, "two_area_pjm_DA"; add_reserves = true)
-    transform_single_time_series!(c_sys5_2area, Hour(24), Hour(1))
-    systems = [c_sys5_2area]
+@testset "G-n with Ramp reserve deliverability constraints with AreaPTDFPowerModel w/wo Reserve Slacks" begin
+    reserve_slacks = [false, true]
     objfuncs = [GAEVF]
     constraint_keys = [
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "lb"),
@@ -724,7 +722,6 @@ end
             "Reserve1_2 -ub",
         ),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.Area),
-        #PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
         PSI.ConstraintKey(
             RequirementConstraint,
             PSY.VariableReserve{ReserveUp},
@@ -766,21 +763,23 @@ end
             "Reserve1_2",
         ),
     ]
-    PTDF_ref = IdDict{System, PTDF}(
-        c_sys5_2area => PTDF(c_sys5_2area),
+    test_results = IdDict{Bool, Vector{Int}}(
+        reserve_slacks[1] => [744, 0, 1536, 1200, 168],
+        reserve_slacks[2] => [1416, 0, 1536, 1200, 168],
     )
-    test_results = IdDict{System, Vector{Int}}(
-        c_sys5_2area => [744, 0, 1536, 1200, 168],
+    test_obj_values = IdDict{Bool, Float64}(
+        reserve_slacks[1] => 497000.0,
+        reserve_slacks[2] => 497000.0,
     )
-    test_obj_values = IdDict{System, Float64}(
-        c_sys5_2area => 497000.0,
-    )
-    components_outages_cases = IdDict{System, Tuple{Vector{String}, Vector{String}}}(
-        c_sys5_2area => (["Alta_1", "Alta_2"], ["Reserve1_1", "Reserve1_2"]),
-    )
-    for (ix, sys) in enumerate(systems)
-        components_outages_names, reserve_names = components_outages_cases[sys]
-        for (component_name, reserve_name) in zip(components_outages_names, reserve_names)
+    components_outages_cases = (["Alta_1", "Alta_2"], ["Reserve1_1", "Reserve1_2"])
+
+    for reserve_slack in reserve_slacks
+        sys = PSB.build_system(PSISystems, "two_area_pjm_DA"; add_reserves = true)
+        transform_single_time_series!(sys, Hour(24), Hour(1))
+
+        components_outages_names, reserve_names = components_outages_cases
+        for (component_name, reserve_name) in
+            zip(components_outages_names, reserve_names)
             # --- Create Outage Data ---
             transition_data = GeometricDistributionForcedOutage(;
                 mean_time_to_recovery = 10,
@@ -794,19 +793,21 @@ end
         end
 
         template = get_thermal_dispatch_template_network(
-            NetworkModel(AreaPTDFPowerModel; PTDF_matrix = PTDF_ref[sys]),
+            NetworkModel(AreaPTDFPowerModel; PTDF_matrix = PTDF(sys)),
         )
         set_service_model!(template,
             ServiceModel(
                 VariableReserve{ReserveUp},
                 RampReserveWithDeliverabilityConstraints,
-                "Reserve1_1",
+                "Reserve1_1";
+                use_slacks = reserve_slack,
             ))
         set_service_model!(template,
             ServiceModel(
                 VariableReserve{ReserveUp},
                 RampReserveWithDeliverabilityConstraints,
-                "Reserve1_2",
+                "Reserve1_2";
+                use_slacks = reserve_slack,
             ))
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
@@ -815,14 +816,14 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys]...,
+            test_results[reserve_slack]...,
             false,
         )
-        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checkobjfun_test(ps_model, objfuncs[1])
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
-            test_obj_values[sys],
+            test_obj_values[reserve_slack],
             10000,
         )
         res = OptimizationProblemResults(ps_model)
@@ -837,9 +838,7 @@ end
 end
 
 @testset "G-n with Contingency reserve deliverability constraints with AreaPTDFPowerModel, reserves only up, reserve requirement" begin
-    c_sys5_2area = PSB.build_system(PSISystems, "two_area_pjm_DA"; add_reserves = true)
-    transform_single_time_series!(c_sys5_2area, Hour(24), Hour(1))
-    systems = [c_sys5_2area]
+    reserve_slacks = [false, true]
     objfuncs = [GAEVF]
     constraint_keys = [
         PSI.ConstraintKey(ActivePowerVariableLimitsConstraint, PSY.ThermalStandard, "lb"),
@@ -867,7 +866,6 @@ end
             "Reserve1_2 -ub",
         ),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.Area),
-        #PSI.ConstraintKey(NetworkFlowConstraint, PSY.Line),
         PSI.ConstraintKey(
             RequirementConstraint,
             PSY.VariableReserve{ReserveUp},
@@ -909,20 +907,20 @@ end
             "Reserve1_2",
         ),
     ]
-    PTDF_ref = IdDict{System, PTDF}(
-        c_sys5_2area => PTDF(c_sys5_2area),
+    test_results = IdDict{Bool, Vector{Int}}(
+        reserve_slacks[1] => [744, 0, 1536, 1200, 168],
+        reserve_slacks[2] => [1416, 0, 1536, 1200, 168],
     )
-    test_results = IdDict{System, Vector{Int}}(
-        c_sys5_2area => [744, 0, 1536, 1200, 168],
+    test_obj_values = IdDict{Bool, Float64}(
+        reserve_slacks[1] => 497000.0,
+        reserve_slacks[2] => 497000.0,
     )
-    test_obj_values = IdDict{System, Float64}(
-        c_sys5_2area => 497000.0,
-    )
-    components_outages_cases = IdDict{System, Tuple{Vector{String}, Vector{String}}}(
-        c_sys5_2area => (["Alta_1", "Alta_2"], ["Reserve1_1", "Reserve1_2"]),
-    )
-    for (ix, sys) in enumerate(systems)
-        components_outages_names, reserve_names = components_outages_cases[sys]
+    components_outages_cases = (["Alta_1", "Alta_2"], ["Reserve1_1", "Reserve1_2"])
+
+    for reserve_slack in reserve_slacks
+        sys = PSB.build_system(PSISystems, "two_area_pjm_DA"; add_reserves = true)
+        transform_single_time_series!(sys, Hour(24), Hour(1))
+        components_outages_names, reserve_names = components_outages_cases
         for (component_name, reserve_name) in zip(components_outages_names, reserve_names)
             # --- Create Outage Data ---
             transition_data = GeometricDistributionForcedOutage(;
@@ -937,19 +935,21 @@ end
         end
 
         template = get_thermal_dispatch_template_network(
-            NetworkModel(AreaPTDFPowerModel; PTDF_matrix = PTDF_ref[sys]),
+            NetworkModel(AreaPTDFPowerModel; PTDF_matrix = PTDF(sys)),
         )
         set_service_model!(template,
             ServiceModel(
                 VariableReserve{ReserveUp},
                 ContingencyReserveWithDeliverabilityConstraints,
-                "Reserve1_1",
+                "Reserve1_1";
+                use_slacks = reserve_slack,
             ))
         set_service_model!(template,
             ServiceModel(
                 VariableReserve{ReserveUp},
                 ContingencyReserveWithDeliverabilityConstraints,
-                "Reserve1_2",
+                "Reserve1_2";
+                use_slacks = reserve_slack,
             ))
         ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
@@ -958,14 +958,14 @@ end
         psi_constraint_test(ps_model, constraint_keys)
         moi_tests(
             ps_model,
-            test_results[sys]...,
+            test_results[reserve_slack]...,
             false,
         )
-        psi_checkobjfun_test(ps_model, objfuncs[ix])
+        psi_checkobjfun_test(ps_model, objfuncs[1])
         psi_checksolve_test(
             ps_model,
             [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
-            test_obj_values[sys],
+            test_obj_values[reserve_slack],
             10000,
         )
         res = OptimizationProblemResults(ps_model)
