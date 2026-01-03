@@ -1441,8 +1441,6 @@ function add_constraints!(
             F(),
             network_model,
         )
-        #Add objective function penalty for slacks
-        #add_to_objective_invariant_expression!(container, variable[t] * SERVICES_SLACK_COST)
     end
 
     for outage in associated_outages
