@@ -8,12 +8,12 @@
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(
-            PostContingencyEmergencyRateLimitConstrain,
+            PostContingencyEmergencyFlowRateConstraint,
             PSY.ThermalStandard,
             "lb",
         ),
         PSI.ConstraintKey(
-            PostContingencyEmergencyRateLimitConstrain,
+            PostContingencyEmergencyFlowRateConstraint,
             PSY.ThermalStandard,
             "ub",
         ),
