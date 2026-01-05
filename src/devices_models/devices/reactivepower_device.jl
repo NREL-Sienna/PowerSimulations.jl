@@ -14,7 +14,7 @@ function get_initial_conditions_device_model(
     model::OperationModel,
     ::DeviceModel{T, D},
 ) where {T <: PSY.SynchronousCondenser, D <: AbstractReactivePowerDeviceFormulation}
-    return DeviceModel(T, SynConBasicDispatch)
+    return DeviceModel(T, SynchronousCondenserBasicDispatch)
 end
 
 function get_default_attributes(

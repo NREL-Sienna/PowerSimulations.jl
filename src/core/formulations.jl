@@ -120,7 +120,7 @@ struct ImportExportSourceModel <: AbstractSourceFormulation end
 ########################### Reactive Power Device Formulations ##############################
 abstract type AbstractReactivePowerDeviceFormulation <: AbstractDeviceFormulation end
 
-struct SynConBasicDispatch <: AbstractReactivePowerDeviceFormulation end
+struct SynchronousCondenserBasicDispatch <: AbstractReactivePowerDeviceFormulation end
 
 """
 Abstract type for Branch Formulations (a.k.a Models)

@@ -1,4 +1,4 @@
-@testset "SynConBasicDispatch SynchronousCondenser With ACPPowerModel" begin
+@testset "SynchronousCondenserBasicDispatch SynchronousCondenser With ACPPowerModel" begin
     sys = build_system(PSITestSystems, "c_sys5_uc"; add_single_time_series = true)
 
     syncon = SynchronousCondenser(;
@@ -17,7 +17,7 @@
     set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(template, Line, StaticBranch)
-    set_device_model!(template, SynchronousCondenser, SynConBasicDispatch)
+    set_device_model!(template, SynchronousCondenser, SynchronousCondenserBasicDispatch)
 
     transform_single_time_series!(sys, Hour(24), Hour(24))
     model = DecisionModel(

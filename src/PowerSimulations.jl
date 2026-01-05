@@ -93,7 +93,7 @@ export ReserveLimitedRegulation
 export ImportExportSourceModel
 
 ###### SynCons Formulations ######
-export SynConBasicDispatch
+export SynchronousCondenserBasicDispatch
 
 # feedforward models
 export UpperBoundFeedforward
