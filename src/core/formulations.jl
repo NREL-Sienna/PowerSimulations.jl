@@ -120,6 +120,9 @@ struct ImportExportSourceModel <: AbstractSourceFormulation end
 ########################### Reactive Power Device Formulations ##############################
 abstract type AbstractReactivePowerDeviceFormulation <: AbstractDeviceFormulation end
 
+"""
+Formulation type to add reactive power dispatch variables for `SynchronousCondenser`
+"""
 struct SynchronousCondenserBasicDispatch <: AbstractReactivePowerDeviceFormulation end
 
 """
