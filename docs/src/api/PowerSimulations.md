@@ -50,6 +50,12 @@ QuadraticLossConverter
 DCLossyLine
 ```
 
+### Synchronous Condenser Formulations
+
+```@docs
+SynchronousCondenserBasicDispatch
+```
+
 ### Problem Templates
 
 ```@autodocs
