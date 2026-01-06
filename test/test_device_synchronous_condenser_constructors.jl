@@ -1,4 +1,4 @@
-@testset "SynchronousCondenserBasicDispatch SynchronousCondenser With ACPPowerModel" begin
+@testset "SynchronousCondenserBasicDispatch SynchronousCondenser With Power Models" begin
     sys = build_system(PSITestSystems, "c_sys5_uc"; add_single_time_series = true)
 
     syncon = SynchronousCondenser(;
@@ -27,8 +27,9 @@
         optimizer = Ipopt.Optimizer,
         store_variable_names = true,
     )
-    build!(model; output_dir = mktempdir(; cleanup = true)) == PSI.ModelBuildStatus.BUILT
-    solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
     res = OptimizationProblemResults(model)
     q_syncon = read_variable(
@@ -37,4 +38,21 @@
         table_format = TableFormat.WIDE,
     )
     @test any(q_syncon[!, 2] != 0.0)
+
+    template = ProblemTemplate(PTDFPowerModel)
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+    set_device_model!(template, PowerLoad, StaticPowerLoad)
+    set_device_model!(template, Line, StaticBranch)
+    set_device_model!(template, SynchronousCondenser, SynchronousCondenserBasicDispatch)
+
+    model = DecisionModel(
+        template,
+        sys;
+        name = "UC",
+        optimizer = HiGHS_optimizer,
+        store_variable_names = true,
+    )
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 end
