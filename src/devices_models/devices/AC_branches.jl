@@ -127,7 +127,7 @@ function add_variables!(
     @debug "PTDF Branch Flows with StaticBranchUnbounded do not require flow variables $T. Flow values are given by PTDFBranchFlow expression."
     return
 end
- 
+
 function add_variables!(
     container::OptimizationContainer,
     ::Type{S},
