@@ -354,6 +354,9 @@ function _add_modeled_ac_branches!(template::ProblemTemplate, sys::PSY.System)
     branch_models = get_branch_models(template)
     for v in values(branch_models)
         component_type = get_component_type(v)
+        if !(component_type <: PSY.ACTransmission)
+            continue
+        end
         if isempty(get_available_components(component_type, sys))
             @warn "$(get_component_type(v)) is included in the template but no available components exist in the system"
         else
