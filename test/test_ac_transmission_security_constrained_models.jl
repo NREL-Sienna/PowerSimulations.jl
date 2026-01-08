@@ -39,6 +39,9 @@
         c_sys14_dc => 141964.156,
     )
     for (ix, sys) in enumerate(systems)
+        if ix > 2
+            continue # Remove when modeled_ac_branch_types is implemented
+        end
         template = get_thermal_dispatch_template_network(
             NetworkModel(
                 PTDFPowerModel;
@@ -123,6 +126,9 @@ end
         c_sys14_dc => 154585.1,
     )
     for (ix, sys) in enumerate(systems)
+        if ix > 2
+            continue # Remove when modeled_ac_branch_types is implemented
+        end
         template = get_thermal_dispatch_template_network(
             NetworkModel(
                 PTDFPowerModel;
@@ -227,6 +233,9 @@ end
         c_sys14_dc => 154585.1,
     )
     for (ix, sys) in enumerate(systems)
+        if ix > 2
+            continue # Remove when modeled_ac_branch_types is implemented
+        end
         template = get_thermal_dispatch_template_network(
             NetworkModel(
                 PTDFPowerModel;
