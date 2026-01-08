@@ -263,8 +263,7 @@ end
                 res,
                 "PTDFBranchFlow__$branch_type";
                 table_format = TableFormat.WIDE,
-            )[
-                end,
+            )[end,
                 branch_name,
             ]
             @test flow <= static_rating * dlr_factors[end] + 1e-5
