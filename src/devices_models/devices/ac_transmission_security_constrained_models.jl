@@ -121,7 +121,7 @@ function _check_outage_data_branch_scuc(
                 "An outage was added to branch $contingency_device_name of type $V, but this case is not supported yet by the reductions algorithms.",
             )
         end
-        @warn "Outage $outage_id was added to branch $contingency_device_name of type $V, but this branch has been reduced.\nThe outage will be treated as affecting all the reduced components $contingency_device_key." maxlog =
+        @warn "Outage $outage_id was added to branch $contingency_device_name of type $V, but this branch has been reduced.\nThe outage will be treated as affecting all reduced components represented by $contingency_device_key." maxlog =
             100
     end
 end
