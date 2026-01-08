@@ -247,29 +247,16 @@ function add_post_contingency_flow_expressions!(
                 )
             contingency_device = first(associated_devices)
             contingency_device_name = PSY.get_name(contingency_device)
-            if length(associated_devices) != 1
-                @warn(
-                    "Outage $(outage_id) is associated with $(length(associated_devices)) devices of type $V. Expected only one associated device per outage for contingency analysis. It is being considered only component $(PSY.get_name(contingency_device_name))."
-                )
-            end
-
-            if !haskey(name_to_arc_map_contingency, contingency_device_name)
-                error(
-                    "An outage was added to branch $contingency_device_name of type $V, but this case is not supported yet by the reductions algorithms."
-                )
-            end
-
             contingency_device_key = name_to_arc_map_contingency[contingency_device_name]
-            if contingency_device_key != contingency_device_name
-                if V == PSY.PhaseShiftingTransformer
-                    error(
-                    "An outage was added to branch $contingency_device_name of type $V, but this case is not supported yet by the reductions algorithms."
-                    )
-                end
-                @warn(
-                    "Outage $outage_id was added to branch $contingency_device_name of type $V, but this branch has been reduced.\nThe outage will be treated as affecting all the reduced components $contingency_device_key in the $F formulation."
-                )
-            end
+
+            _check_outage_data_branch_scuc(
+                length(associated_devices),
+                contingency_device_name,
+                contingency_device_key,
+                outage_id,
+                V,
+                name_to_arc_map_contingency,
+            )
             from_number = PSY.get_number(PSY.get_from(PSY.get_arc(contingency_device)))
             to_number = PSY.get_number(PSY.get_to(PSY.get_arc(contingency_device)))
             index_lodf_outage = (from_number, to_number)
