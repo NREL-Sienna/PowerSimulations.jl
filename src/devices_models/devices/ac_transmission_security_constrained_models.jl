@@ -102,13 +102,13 @@ function _check_outage_data_branch_scuc(
     contingency_device_key::String,
     outage_id::String,
     V::Type{<:PSY.ACTransmission},
-    name_to_arc_map_contingency,#::Dict{String, Tuple{Tuple{Int, Int}, String}},
-) where {T <: PSY.ACTransmission}
+    name_to_arc_map_contingency::SortedDict{String, String, Base.Order.ForwardOrdering},
+)
     if length_associated_devices != 1
         @warn "Outage $(outage_id) is associated with $(length_associated_devices) devices of type $V. Expected only one associated device per outage for contingency analysis. It is being considered only component $contingency_device_name)." maxlog =
             100
     end
-    @show typeof(name_to_arc_map_contingency)
+
     if !haskey(name_to_arc_map_contingency, contingency_device_name)
         error(
             "An outage was added to branch $contingency_device_name of type $V, but this case is not supported yet by the reductions algorithms.",
