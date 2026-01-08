@@ -550,7 +550,6 @@ function get_dynamic_branch_rating_min_max_limits(
     )
 end
 
-
 """
 Add branch rate limit constraints for ACBranch with AbstractActivePowerModel
 """
@@ -714,7 +713,7 @@ function add_constraints!(
         # It might have performance implications. Possibly separate this into other functions
         reduction_entry = all_branch_maps_by_type[reduction][T][arc]
         limits = get_min_max_limits(reduction_entry, FlowRateConstraint, U)
-        
+
         for t in time_steps
             if has_dlr_ts
                 limits =

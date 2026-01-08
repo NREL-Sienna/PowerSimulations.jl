@@ -220,12 +220,12 @@ end
     n_steps = 2
     for (ix, sys) in enumerate(systems)
         add_dlr_to_system_branches!(
-                sys,
-                branches_dlr[sys],
-                n_steps,
-                dlr_factors;
-                initial_date = "2024-01-01",
-                )
+            sys,
+            branches_dlr[sys],
+            n_steps,
+            dlr_factors;
+            initial_date = "2024-01-01",
+        )
         template = get_thermal_dispatch_template_network(
             NetworkModel(
                 PTDFPowerModel;
@@ -259,7 +259,14 @@ end
             branch = get_component(PSY.ACTransmission, sys, branch_name)
             static_rating = get_rating(branch) * get_base_power(sys)
             branch_type = string(typeof(branch))
-            flow = read_expression(res, "PTDFBranchFlow__$branch_type", table_format=TableFormat.WIDE)[end, branch_name]
+            flow = read_expression(
+                res,
+                "PTDFBranchFlow__$branch_type";
+                table_format = TableFormat.WIDE,
+            )[
+                end,
+                branch_name,
+            ]
             @test flow <= static_rating * dlr_factors[end] + 1e-5
             @test flow >= -static_rating * dlr_factors[end] - 1e-5
         end
@@ -269,10 +276,10 @@ end
 @testset "Network DC-PF with PTDF Model and implementing Dynamic Branch Ratings with reductions" begin
     objfuncs = [GAEVF, GQEVF, GQEVF]
     constraint_keys = [
-            PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
-            PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
-            PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
-        ]
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+    ]
     branches_dlr = ["1", "2", "6"]
     dlr_factors = vcat([fill(x, 6) for x in [1.15, 1.05, 1.1, 0.95]]...)
     test_results = [120, 0, 264, 264, 24]
@@ -310,10 +317,10 @@ end
             n_steps,
             dlr_factors;
             initial_date = "2024-01-01",
-            )
+        )
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
-                PSI.ModelBuildStatus.BUILT
+              PSI.ModelBuildStatus.BUILT
         psi_constraint_test(ps_model, constraint_keys)
 
         moi_tests(
@@ -328,7 +335,6 @@ end
             test_obj_values[ix],
             10000,
         )
-
     end
 end
 
