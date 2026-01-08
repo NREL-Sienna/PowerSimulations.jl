@@ -455,40 +455,50 @@ function _get_emulation_store_requirements(sim::Simulation)
         !should_write_resulting_value(key) && continue
         num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
+        # Use actual data dimensions (excluding last axis which is time) for proper HDF storage
+        data_dims = size(state_values.values)[1:(end - 1)]
         reqs.duals[key] =
-            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
+            Dict("columns" => cols, "dims" => (num_time_rows, data_dims...))
     end
 
     for (key, state_values) in get_parameters_values(system_state)
         !should_write_resulting_value(key) && continue
         num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
+        # Use actual data dimensions (excluding last axis which is time) for proper HDF storage
+        data_dims = size(state_values.values)[1:(end - 1)]
         reqs.parameters[key] =
-            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
+            Dict("columns" => cols, "dims" => (num_time_rows, data_dims...))
     end
 
     for (key, state_values) in get_variables_values(system_state)
         !should_write_resulting_value(key) && continue
         num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
+        # Use actual data dimensions (excluding last axis which is time) for proper HDF storage
+        data_dims = size(state_values.values)[1:(end - 1)]
         reqs.variables[key] =
-            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
+            Dict("columns" => cols, "dims" => (num_time_rows, data_dims...))
     end
 
     for (key, state_values) in get_aux_variables_values(system_state)
         !should_write_resulting_value(key) && continue
         num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
+        # Use actual data dimensions (excluding last axis which is time) for proper HDF storage
+        data_dims = size(state_values.values)[1:(end - 1)]
         reqs.aux_variables[key] =
-            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
+            Dict("columns" => cols, "dims" => (num_time_rows, data_dims...))
     end
 
     for (key, state_values) in get_expression_values(system_state)
         !should_write_resulting_value(key) && continue
         num_time_rows = sim_time ÷ get_data_resolution(state_values)
         cols = get_column_names(key, state_values)
+        # Use actual data dimensions (excluding last axis which is time) for proper HDF storage
+        data_dims = size(state_values.values)[1:(end - 1)]
         reqs.expressions[key] =
-            Dict("columns" => cols, "dims" => (num_time_rows, length.(cols)...))
+            Dict("columns" => cols, "dims" => (num_time_rows, data_dims...))
     end
     return reqs
 end

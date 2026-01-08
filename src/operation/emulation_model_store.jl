@@ -133,6 +133,31 @@ function write_result!(
     return
 end
 
+function write_result!(
+    store::EmulationModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    update_timestamp::Dates.DateTime,
+    array::DenseAxisArray{Float64, 3},
+)
+    # Handle 3D arrays by reducing to 2D when the last dimension is 1.
+    # This mirrors the 2D case above where size(array, 2) == 1 triggers a dimension reduction.
+    if size(array, 3) == 1
+        write_result!(store, name, key, index, update_timestamp, array[:, :, 1])
+    else
+        container = get_data_field(store, get_store_container_type(key))
+        set_value!(
+            container[key],
+            array,
+            index,
+        )
+        set_last_recorded_row!(container[key], index)
+        set_update_timestamp!(container[key], update_timestamp)
+    end
+    return
+end
+
 function read_results(
     store::EmulationModelStore,
     key::OptimizationContainerKey;
@@ -141,14 +166,28 @@ function read_results(
 )
     container = get_data_field(store, get_store_container_type(key))
     data = container[key].values
+    num_dims = ndims(data)
     # Return a copy because callers may mutate it.
-    if isnothing(index)
-        @assert_op len === nothing
-        return data[:, :]
-    elseif isnothing(len)
-        return data[:, index:end]
+    if num_dims == 2
+        if isnothing(index)
+            @assert_op len === nothing
+            return data[:, :]
+        elseif isnothing(len)
+            return data[:, index:end]
+        else
+            return data[:, index:(index + len - 1)]
+        end
+    elseif num_dims == 3
+        if isnothing(index)
+            @assert_op len === nothing
+            return data[:, :, :]
+        elseif isnothing(len)
+            return data[:, :, index:end]
+        else
+            return data[:, :, index:(index + len - 1)]
+        end
     else
-        return data[:, index:(index + len - 1)]
+        error("Unsupported number of dimensions for emulation dataset: $num_dims")
     end
 end
 
