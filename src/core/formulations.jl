@@ -133,7 +133,6 @@ Branch formulation to formulate N-1 contraints in ACTransmission Branches
 """
 struct SecurityConstrainedStaticBranch <: AbstractSecurityConstrainedStaticBranch end
 
-
 """
 Branch formulation for PhaseShiftingTransformer flow control
 """

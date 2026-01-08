@@ -103,9 +103,10 @@ function _check_outage_data_branch_scuc(
     outage_id::String,
     V::Type{<:PSY.ACTransmission},
     name_to_arc_map_contingency,#::Dict{String, Tuple{Tuple{Int, Int}, String}},
-)where {T <: PSY.ACTransmission}
+) where {T <: PSY.ACTransmission}
     if length_associated_devices != 1
-        @warn "Outage $(outage_id) is associated with $(length_associated_devices) devices of type $V. Expected only one associated device per outage for contingency analysis. It is being considered only component $contingency_device_name)." maxlog=100
+        @warn "Outage $(outage_id) is associated with $(length_associated_devices) devices of type $V. Expected only one associated device per outage for contingency analysis. It is being considered only component $contingency_device_name)." maxlog =
+            100
     end
     @show typeof(name_to_arc_map_contingency)
     if !haskey(name_to_arc_map_contingency, contingency_device_name)
@@ -120,10 +121,10 @@ function _check_outage_data_branch_scuc(
                 "An outage was added to branch $contingency_device_name of type $V, but this case is not supported yet by the reductions algorithms.",
             )
         end
-        @warn "Outage $outage_id was added to branch $contingency_device_name of type $V, but this branch has been reduced.\nThe outage will be treated as affecting all the reduced components $contingency_device_key in the $F formulation." maxlog=100
+        @warn "Outage $outage_id was added to branch $contingency_device_name of type $V, but this branch has been reduced.\nThe outage will be treated as affecting all the reduced components $contingency_device_key in the $F formulation." maxlog =
+            100
     end
 end
-
 
 function add_post_contingency_flow_expressions!(
     container::OptimizationContainer,
