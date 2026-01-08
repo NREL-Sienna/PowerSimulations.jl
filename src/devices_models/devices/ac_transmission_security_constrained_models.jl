@@ -105,7 +105,7 @@ function _check_outage_data_branch_scuc(
     name_to_arc_map_contingency::Dict{String, String},
 )
     if length_associated_devices != 1
-        @warn "Outage $(outage_id) is associated with $(length_associated_devices) devices of type $V. Expected only one associated device per outage for contingency analysis. It is being considered only component $contingency_device_name)." maxlog =
+        @warn "Outage $(outage_id) is associated with $(length_associated_devices) devices of type $V. Expected only one associated device per outage for contingency analysis. Only component $contingency_device_name is being considered." maxlog =
             100
     end
 
