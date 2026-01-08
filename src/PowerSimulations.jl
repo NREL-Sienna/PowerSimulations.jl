@@ -50,6 +50,7 @@ export VariableMaxInterfaceFlow
 export StaticBranch
 export StaticBranchBounds
 export StaticBranchUnbounded
+export SecurityConstrainedStaticBranch
 export HVDCTwoTerminalLossless
 export HVDCTwoTerminalDispatch
 export HVDCTwoTerminalUnbounded
@@ -329,7 +330,7 @@ export RangeLimitConstraint
 export FlowRateConstraint
 export FlowRateConstraintFromTo
 export FlowRateConstraintToFrom
-export PostContingencyEmergencyRateLimitConstrain
+export PostContingencyEmergencyFlowRateConstraint
 export ReactivePowerVariableLimitsConstraint
 export RegulationLimitsConstraint
 export RequirementConstraint
@@ -669,6 +670,7 @@ include("devices_models/devices/renewable_generation.jl")
 include("devices_models/devices/thermal_generation.jl")
 include("devices_models/devices/electric_loads.jl")
 include("devices_models/devices/AC_branches.jl")
+include("devices_models/devices/ac_transmission_security_constrained_models.jl")
 include("devices_models/devices/area_interchange.jl")
 include("devices_models/devices/TwoTerminalDC_branches.jl")
 include("devices_models/devices/HVDCsystems.jl")

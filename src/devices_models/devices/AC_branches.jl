@@ -550,6 +550,91 @@ function get_dynamic_branch_rating_min_max_limits(
     )
 end
 
+# -----------------------------------------------------
+# ------ RATING FUNCTIONS FOR EMERGENCY RATINGS -------
+# -----------------------------------------------------
+"""
+Emergency Min and max limits for Abstract Branch Formulation and Post-Contingency conditions
+"""
+function get_emergency_min_max_limits(
+    double_circuit::PNM.BranchesParallel{<:PSY.ACTransmission},
+    constraint_type::Type{<:PostContingencyConstraintType},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    equivalent_rating = PNM.get_equivalent_emergency_rating(double_circuit)
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
+end
+
+"""
+Min and max limits for Abstract Branch Formulation and Post-Contingency conditions
+"""
+function get_emergency_min_max_limits(
+    transformer_entry::PNM.ThreeWindingTransformerWinding,
+    constraint_type::Type{<:PostContingencyConstraintType},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    equivalent_rating = PNM.get_equivalent_emergency_rating(transformer_entry)
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
+end
+
+"""
+Min and max limits for Abstract Branch Formulation and Post-Contingency conditions
+"""
+function get_emergency_min_max_limits(
+    series_chain::PNM.BranchesSeries,
+    constraint_type::Type{<:PostContingencyConstraintType},
+    branch_formulation::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    equivalent_rating = PNM.get_equivalent_emergency_rating(series_chain)
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
+end
+
+"""
+Min and max limits for Abstract Branch Formulation and Post-Contingency conditions
+"""
+function get_emergency_min_max_limits(
+    device::PSY.ACTransmission,
+    ::Type{<:PostContingencyConstraintType},
+    ::Type{<:AbstractBranchFormulation},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    equivalent_rating = PNM.get_equivalent_emergency_rating(device)
+    return (min = -1 * equivalent_rating, max = equivalent_rating)
+end
+
+"""
+Min and max limits for Abstract Branch Formulation and Post-Contingency conditions
+"""
+function get_emergency_min_max_limits(
+    entry::PSY.PhaseShiftingTransformer,
+    ::Type{PhaseAngleControlLimit},
+    ::Type{PhaseAngleControl},
+) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
+    return get_min_max_limits(entry, PhaseAngleControlLimit, PhaseAngleControl)
+end
+
+"""
+Min and max limits for monitored line
+"""
+function get_emergency_min_max_limits(
+    device::PSY.MonitoredLine,
+    ::Type{<:PostContingencyConstraintType},
+    ::Type{T},
+) where {T <: AbstractBranchFormulation}
+    if PSY.get_flow_limits(device).to_from != PSY.get_flow_limits(device).from_to
+        @warn(
+            "Flow limits in Line $(PSY.get_name(device)) aren't equal. The minimum will be used in formulation $(T)"
+        )
+    end
+    equivalent_rating = PNM.get_equivalent_emergency_rating(device)
+    limit = min(
+        equivalent_rating,
+        PSY.get_flow_limits(device).to_from,
+        PSY.get_flow_limits(device).from_to,
+    )
+    minmax = (min = -1 * limit, max = limit)
+    return minmax
+end
+
 """
 Add branch rate limit constraints for ACBranch with AbstractActivePowerModel
 """
@@ -867,6 +952,30 @@ function _make_flow_expressions!(
     return name, expressions
     # change when using the not concurrent version
     # return expressions
+end
+
+function _make_branch_scuc_postcontingency_flow_expressions!(
+    jump_model::JuMP.Model,
+    name::String,
+    outage_id::String,
+    time_steps::UnitRange{Int},
+    lodf::Float64,
+    precontingency_outage_flow::DenseAxisArray{T, 1, <:Tuple{UnitRange{Int}}},#Vector{JuMP.VariableRef},
+    pre_contingency_flow::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
+) where {T}
+    # @debug "Making Flow Expression on thread $(Threads.threadid()) for branch $name"
+
+    expressions = Vector{JuMP.AffExpr}(undef, length(time_steps))
+    for t in time_steps
+        expressions[t] = JuMP.@expression(
+            jump_model,
+            pre_contingency_flow[name, t] +
+            (lodf * precontingency_outage_flow[t])
+        )
+    end
+    return name, expressions
+    # change when using the not concurrent version
+    #return expressions
 end
 
 function _add_expression_to_container!(
