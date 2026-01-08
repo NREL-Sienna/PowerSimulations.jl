@@ -219,7 +219,7 @@ function get_emulation_model_dataset_size(
     store::InMemorySimulationStore,
     key::OptimizationContainerKey,
 )
-    return get_dataset_size(get_em_data(store), key)[2]
+    return get_dataset_size(get_em_data(store), key)[end]   
 end
 
 # Note that this function is not type-stable.

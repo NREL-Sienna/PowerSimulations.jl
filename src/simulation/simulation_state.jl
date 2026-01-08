@@ -786,7 +786,11 @@ function update_system_state!(
     if typeof(store) == HdfSimulationStore
         set_dataset_values!(state, key, 1, res)
     else
-        set_dataset_values!(state, key, 1, res[:, ix])
+        if ndims(res) == 2 
+            set_dataset_values!(state, key, 1, res[:, ix])
+        elseif ndims(res) == 3
+            set_dataset_values!(state, key, 1, res[:, :, ix])
+        end 
     end
     set_last_recorded_row!(dataset, 1)
     return

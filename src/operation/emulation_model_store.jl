@@ -97,6 +97,29 @@ function write_result!(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
     update_timestamp::Dates.DateTime,
+    array::DenseAxisArray{Float64, 3},
+)
+    if size(array, 3) == 1
+        write_result!(store, name, key, index, update_timestamp, array[:, :, 1])
+    else
+        container = get_data_field(store, get_store_container_type(key))
+        set_value!(
+            container[key],
+            array,
+            index,
+        )
+        set_last_recorded_row!(container[key], index)
+        set_update_timestamp!(container[key], update_timestamp)
+    end 
+    return
+end 
+
+function write_result!(
+    store::EmulationModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    update_timestamp::Dates.DateTime,
     array::DenseAxisArray{Float64, 2},
 )
     if size(array, 2) == 1
@@ -142,6 +165,14 @@ function read_results(
     container = get_data_field(store, get_store_container_type(key))
     data = container[key].values
     # Return a copy because callers may mutate it.
+    return _read_results(data, index, len)
+end
+
+function _read_results(
+    data::JuMP.Containers.DenseAxisArray{Float64, 2},
+    index::Union{Int, Nothing},
+    len::Union{Int, Nothing},
+)
     if isnothing(index)
         @assert_op len === nothing
         return data[:, :]
@@ -150,7 +181,23 @@ function read_results(
     else
         return data[:, index:(index + len - 1)]
     end
-end
+end 
+
+function _read_results(
+    data::JuMP.Containers.DenseAxisArray{Float64, 3},
+    index::Union{Int, Nothing},
+    len::Union{Int, Nothing},
+)
+    if isnothing(index)
+        @assert_op len === nothing
+        return data[:, :, :]
+    elseif isnothing(len)
+        return data[:, :, index:end]
+    else
+        return data[:, :, index:(index + len - 1)]
+    end
+    return 
+end 
 
 function get_column_names(store::EmulationModelStore, key::OptimizationContainerKey)
     container = get_data_field(store, get_store_container_type(key))
