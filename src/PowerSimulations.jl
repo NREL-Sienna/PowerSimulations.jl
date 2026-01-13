@@ -420,71 +420,64 @@ import JuMP
 import JuMP: optimizer_with_attributes
 import JuMP.Containers: DenseAxisArray, SparseAxisArray
 export optimizer_with_attributes
-import MathOptInterface
+import MathOptInterface as MOI
 import LinearAlgebra
 import JSON3
-import PowerSystems
-import InfrastructureSystems
-import PowerFlows
-import PowerNetworkMatrices
-import PowerNetworkMatrices: PTDF, VirtualPTDF, LODF, VirtualLODF
-export PTDF
-export VirtualPTDF
-export LODF
-export VirtualLODF
-import InfrastructureSystems: @assert_op, TableFormat, list_recorder_events, get_name
+import PowerSystems as PSY
+import InfrastructureSystems as IS
+import IS: @assert_op, TableFormat, list_recorder_events, get_name
 
 # IS.Optimization imports: functions that have PSY methods that IS needs to access (therefore necessary)
-import InfrastructureSystems.Optimization: get_data_field
+import IS.Optimization: get_data_field
 
 # IS.Optimization imports that get reexported: no additional methods in PowerSimulations (therefore necessary)
-import InfrastructureSystems.Optimization:
+import IS.Optimization:
     OptimizationProblemResults, OptimizationProblemResultsExport, OptimizerStats
-import InfrastructureSystems.Optimization:
+import IS.Optimization:
     read_variables, read_duals, read_parameters, read_aux_variables, read_expressions
-import InfrastructureSystems.Optimization: get_variable_values, get_dual_values,
+import IS.Optimization: get_variable_values, get_dual_values,
     get_parameter_values, get_aux_variable_values, get_expression_values, get_value
-import InfrastructureSystems.Optimization:
+import IS.Optimization:
     get_objective_value, export_realized_results, export_optimizer_stats
 
 # IS.Optimization imports that get reexported: yes additional methods in PowerSimulations (therefore may or may not be desired)
-import InfrastructureSystems.Optimization:
+import IS.Optimization:
     read_variable, read_dual, read_parameter, read_aux_variable, read_expression
-import InfrastructureSystems.Optimization: list_variable_keys, list_dual_keys,
+import IS.Optimization: list_variable_keys, list_dual_keys,
     list_parameter_keys, list_aux_variable_keys, list_expression_keys
-import InfrastructureSystems.Optimization: list_variable_names, list_dual_names,
+import IS.Optimization: list_variable_names, list_dual_names,
     list_parameter_names, list_aux_variable_names, list_expression_names
-import InfrastructureSystems.Optimization: read_optimizer_stats, get_optimizer_stats,
+import IS.Optimization: read_optimizer_stats, get_optimizer_stats,
     export_results, serialize_results, get_timestamps, get_model_base_power
-import InfrastructureSystems.Optimization: get_resolution, get_forecast_horizon
+import IS.Optimization: get_resolution, get_forecast_horizon
 
 # IS.Optimization imports that stay private, may or may not be additional methods in PowerSimulations
-import InfrastructureSystems.Optimization: ArgumentConstructStage, ModelConstructStage
-import InfrastructureSystems.Optimization: STORE_CONTAINERS, STORE_CONTAINER_DUALS,
+import IS.Optimization: ArgumentConstructStage, ModelConstructStage
+import IS.Optimization: STORE_CONTAINERS, STORE_CONTAINER_DUALS,
     STORE_CONTAINER_EXPRESSIONS, STORE_CONTAINER_PARAMETERS, STORE_CONTAINER_VARIABLES,
     STORE_CONTAINER_AUX_VARIABLES
-import InfrastructureSystems.Optimization: OptimizationContainerKey, VariableKey,
+import IS.Optimization: OptimizationContainerKey, VariableKey,
     ConstraintKey, ExpressionKey, AuxVarKey, InitialConditionKey, ParameterKey
-import InfrastructureSystems.Optimization:
+import IS.Optimization:
     RightHandSideParameter, ObjectiveFunctionParameter, TimeSeriesParameter
-import InfrastructureSystems.Optimization: VariableType, ConstraintType, AuxVariableType,
+import IS.Optimization: VariableType, ConstraintType, AuxVariableType,
     ParameterType, InitialConditionType, ExpressionType
-import InfrastructureSystems.Optimization: should_export_variable, should_export_dual,
+import IS.Optimization: should_export_variable, should_export_dual,
     should_export_parameter, should_export_aux_variable, should_export_expression
-import InfrastructureSystems.Optimization:
+import IS.Optimization:
     get_entry_type, get_component_type, get_output_dir
-import InfrastructureSystems.Optimization: read_results_with_keys, deserialize_key,
+import IS.Optimization: read_results_with_keys, deserialize_key,
     encode_key_as_string, encode_keys_as_strings, should_write_resulting_value,
     convert_result_to_natural_units, to_matrix, get_store_container_type
-import InfrastructureSystems.Optimization: get_source_data
+import IS.Optimization: get_source_data
 
 # IS.Optimization imports that stay private, may or may not be additional methods in PowerSimulations
 
 # PowerSystems imports
-import PowerSystems:
+import PSY:
     get_components, get_component, get_available_components, get_available_component,
     get_groups, get_available_groups
-import PowerSystems: StartUpStages
+import PSY: StartUpStages
 
 export get_name
 export get_model_base_power
@@ -492,7 +485,7 @@ export get_optimizer_stats
 export get_timestamps
 export get_resolution
 
-import PowerModels
+import PowerModels as PM
 import TimerOutputs
 import ProgressMeter
 import Distributed
@@ -537,15 +530,10 @@ export process_simulation_partition_cli_args
 ################################################################################
 
 # Type Alias From other Packages
-const PM = PowerModels
-const PSY = PowerSystems
 const PSI = PowerSimulations
-const IS = InfrastructureSystems
-const ISOPT = InfrastructureSystems.Optimization
-const MOI = MathOptInterface
-const MOIU = MathOptInterface.Utilities
+const ISOPT = IS.Optimization
+const MOIU = MOI.Utilities
 const MOPFM = MOI.FileFormats.Model
-const PNM = PowerNetworkMatrices
 const PFS = PowerFlows
 const TS = TimeSeries
 

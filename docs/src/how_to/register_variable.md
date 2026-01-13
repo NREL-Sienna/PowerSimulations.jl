@@ -19,8 +19,8 @@ optimization container and then populate it. For example, it require start the b
 ```julia
 using PowerSystems
 using PowerSimulations
-const PSY = PowerSystems;
-const PSI = PowerSimulations;
+import PowerSystems as PSY
+import PowerSimulations as PSI
 
 function PSI.build_model!(model::PSI.DecisionModel{MyCustomModel})
     container = PSI.get_optimization_container(model)
