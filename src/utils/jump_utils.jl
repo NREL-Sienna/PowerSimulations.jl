@@ -322,6 +322,29 @@ function to_results_dataframe(
 end
 
 function to_results_dataframe(
+    array::DenseAxisArray{Float64, 1, <:Tuple{IntegerAxis}},
+    ::Nothing,
+    ::Val{TableFormat.LONG},
+)
+    num_rows = length(array.data)
+    time_col = Vector{Int}(undef, num_rows)
+    name_col = Vector{String}(undef, num_rows)
+    row_index = 1
+    name = "Result"
+    for time_index in axes(array, 1)
+        time_col[row_index] = time_index
+        name_col[row_index] = name
+        row_index += 1
+    end
+
+    return DataFrame(
+        :time_index => time_col,
+        :name => name_col,
+        :value => reshape(permutedims(array.data), num_rows),
+    )
+end
+
+function to_results_dataframe(
     array::DenseAxisArray{Float64, 2, <:Tuple{Vector{String}, IntegerAxis}},
     timestamps,
     ::Val{TableFormat.WIDE},
