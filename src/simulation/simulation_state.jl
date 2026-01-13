@@ -616,7 +616,6 @@ function update_decision_state!(
     model_params::ModelStoreParams,
 )
     state_data = get_decision_state_data(state, key)
-    column_names = get_column_names(key, state_data)[2]
     outages = get_column_names(key, state_data)[1]
 
     model_resolution = get_resolution(model_params)
@@ -642,7 +641,7 @@ function update_decision_state!(
     set_update_timestamp!(state_data, simulation_time)
     for t in result_time_index
         state_range = state_data_index:(state_data_index + offset)
-        for name in column_names, i in state_range
+        for name in axes(store_data)[2], i in state_range
             #loop pelo -outages, names t
             for outage in outages
                 # TODO: We could also interpolate here
