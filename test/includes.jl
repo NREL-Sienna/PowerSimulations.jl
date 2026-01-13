@@ -16,7 +16,7 @@ using Test
 using Logging
 
 # Dependencies for testing
-using PowerModels
+import PowerModels as PM
 using DataFrames
 using DataFramesMeta
 using Dates
@@ -31,15 +31,15 @@ using Random
 import Serialization
 import LinearAlgebra
 
-const PM = PowerModels
-const PSY = PowerSystems
-const PSI = PowerSimulations
+import PowerSystems as PSY
+import PowerSimulations as PSI
+import PowerNetworkMatrices as PNM
+import InfrastructureSystems as IS
+
 const PFS = PowerFlows
 const PSB = PowerSystemCaseBuilder
-const PNM = PowerNetworkMatrices
-const ISOPT = InfrastructureSystems.Optimization
+const ISOPT = IS.Optimization
 
-const IS = InfrastructureSystems
 const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))
 const DATA_DIR = joinpath(BASE_DIR, "test/test_data")
 

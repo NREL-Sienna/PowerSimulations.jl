@@ -1,9 +1,9 @@
 precompile_time = @timed using PowerSimulations
 
 using PowerSimulations
-const PSI = PowerSimulations
+import PowerSimulations as PSI
 using PowerSystems
-const PSY = PowerSystems
+import PowerSystems as PSY
 using Logging
 using PowerSystemCaseBuilder
 using PowerNetworkMatrices
