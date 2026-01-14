@@ -1070,7 +1070,7 @@ function _write_dataset!(
     array::Vector{Float64},
     index::EmulationModelIndexType,
 )
-    dataset[index, :] = array
+    assign_maybe_broadcast!(dataset, array, (index,))
     @debug "wrote em dataset" dataset index
     return
 end
