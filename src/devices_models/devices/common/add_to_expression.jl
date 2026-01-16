@@ -13,6 +13,28 @@ function _ref_index(::NetworkModel{AreaPTDFPowerModel}, device_bus::PSY.ACBus)
     return PSY.get_name(PSY.get_area(device_bus))
 end
 
+# Hooks for unifying bus-indexed vs area-indexed balance expressions
+# Returns the component type used to index balance expressions (PSY.ACBus or PSY.Area)
+_get_balance_expression_index_type(::NetworkModel{<:PM.AbstractPowerModel}) = PSY.ACBus
+_get_balance_expression_index_type(::NetworkModel{AreaBalancePowerModel}) = PSY.Area
+
+# Returns the index for a device in balance expressions (bus number or area name)
+# Uses PSY.Device to cover all device types (StaticInjection, MotorLoad, ThermalGen, etc.)
+function _get_balance_expression_index(
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+    d::PSY.Device,
+)
+    network_reduction = get_network_reduction(network_model)
+    return PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(d))
+end
+
+function _get_balance_expression_index(
+    ::NetworkModel{AreaBalancePowerModel},
+    d::PSY.Device,
+)
+    return PSY.get_name(PSY.get_area(PSY.get_bus(d)))
+end
+
 _get_variable_if_exists(::PSY.MarketBidCost) = nothing
 _get_variable_if_exists(cost::PSY.OperationalCost) = PSY.get_variable(cost)
 
@@ -182,7 +204,8 @@ function add_to_expression!(
 end
 
 """
-Motor load implementation to add constant power to ActivePowerBalance expression
+Motor load implementation to add constant power to ActivePowerBalance expression.
+Works for both bus-indexed and area-indexed networks.
 """
 function add_to_expression!(
     container::OptimizationContainer,
@@ -198,43 +221,13 @@ function add_to_expression!(
     W <: StaticPowerLoad,
     X <: PM.AbstractPowerModel,
 }
-    network_reduction = get_network_reduction(network_model)
+    index_type = _get_balance_expression_index_type(network_model)
+    expression = get_expression(container, T(), index_type)
     for d in devices
-        bus_no = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(d))
+        idx = _get_balance_expression_index(network_model, d)
         for t in get_time_steps(container)
             _add_to_jump_expression!(
-                get_expression(container, T(), PSY.ACBus)[bus_no, t],
-                PSY.get_active_power(d),
-                -1.0,
-            )
-        end
-    end
-    return
-end
-
-"""
-Motor load implementation to add constant power to ActivePowerBalance expression for AreaBalancePowerModel
-"""
-function add_to_expression!(
-    container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-    devices::IS.FlattenIteratorWrapper{V},
-    model::DeviceModel{V, W},
-    network_model::NetworkModel{AreaBalancePowerModel},
-) where {
-    T <: ActivePowerBalance,
-    U <: ActivePowerTimeSeriesParameter,
-    V <: PSY.MotorLoad,
-    W <: StaticPowerLoad,
-}
-    network_reduction = get_network_reduction(network_model)
-    for d in devices
-        bus = PSY.get_bus(d)
-        area_name = PSY.get_name(PSY.get_area(bus))
-        for t in get_time_steps(container)
-            _add_to_jump_expression!(
-                get_expression(container, T(), PSY.Area)[area_name, t],
+                expression[idx, t],
                 PSY.get_active_power(d),
                 -1.0,
             )
@@ -332,7 +325,8 @@ function add_to_expression!(
 end
 
 """
-Default implementation to add device variables to SystemBalanceExpressions
+Default implementation to add device variables to SystemBalanceExpressions.
+Works for both bus-indexed (AbstractPowerModel) and area-indexed (AreaBalancePowerModel) networks.
 """
 function add_to_expression!(
     container::OptimizationContainer,
@@ -349,46 +343,18 @@ function add_to_expression!(
     X <: PM.AbstractPowerModel,
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), PSY.ACBus)
-    network_reduction = get_network_reduction(network_model)
+    index_type = _get_balance_expression_index_type(network_model)
+    expression = get_expression(container, T(), index_type)
     for d in devices
         name = PSY.get_name(d)
-        bus_no = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(d))
+        idx = _get_balance_expression_index(network_model, d)
         for t in get_time_steps(container)
             _add_to_jump_expression!(
-                expression[bus_no, t],
+                expression[idx, t],
                 variable[name, t],
                 get_variable_multiplier(U(), V, W()),
             )
         end
-    end
-    return
-end
-
-function add_to_expression!(
-    container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-    devices::IS.FlattenIteratorWrapper{V},
-    ::DeviceModel{V, W},
-    network_model::NetworkModel{AreaBalancePowerModel},
-) where {
-    T <: SystemBalanceExpressions,
-    U <: VariableType,
-    V <: PSY.StaticInjection,
-    W <: AbstractDeviceFormulation,
-}
-    variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), PSY.Area)
-    for d in devices, t in get_time_steps(container)
-        name = PSY.get_name(d)
-        bus = PSY.get_bus(d)
-        area_name = PSY.get_name(PSY.get_area(bus))
-        _add_to_jump_expression!(
-            expression[area_name, t],
-            variable[name, t],
-            get_variable_multiplier(U(), V, W()),
-        )
     end
     return
 end
@@ -2289,44 +2255,22 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     sys::PSY.System,
-    ::NetworkModel{AreaBalancePowerModel},
-) where {
-    T <: ActivePowerBalance,
-    U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
-}
-    variable = get_variable(container, U(), PSY.Area)
-    expression = get_expression(container, T(), PSY.Area)
-    @assert_op length(axes(variable, 1)) == length(axes(expression, 1))
-    for t in get_time_steps(container), n in axes(expression, 1)
-        _add_to_jump_expression!(
-            expression[n, t],
-            variable[n, t],
-            get_variable_multiplier(U(), PSY.Area, AreaBalancePowerModel),
-        )
-    end
-    return
-end
-
-function add_to_expression!(
-    container::OptimizationContainer,
-    ::Type{T},
-    ::Type{U},
-    sys::PSY.System,
-    ::NetworkModel{W},
+    network_model::NetworkModel{W},
 ) where {
     T <: ActivePowerBalance,
     U <: Union{SystemBalanceSlackUp, SystemBalanceSlackDown},
     W <: PM.AbstractActivePowerModel,
 }
-    variable = get_variable(container, U(), PSY.ACBus)
-    expression = get_expression(container, T(), PSY.ACBus)
+    index_type = _get_balance_expression_index_type(network_model)
+    variable = get_variable(container, U(), index_type)
+    expression = get_expression(container, T(), index_type)
     @assert_op length(axes(variable, 1)) == length(axes(expression, 1))
-    # We uses axis here to avoid double addition of the slacks to the aggregated buses
+    # We use axes here to avoid double addition of the slacks to the aggregated buses
     for t in get_time_steps(container), n in axes(expression, 1)
         _add_to_jump_expression!(
             expression[n, t],
             variable[n, t],
-            get_variable_multiplier(U(), PSY.ACBus, W),
+            get_variable_multiplier(U(), index_type, W),
         )
     end
     return
