@@ -68,6 +68,7 @@ export DCLossyLine
 export StaticPowerLoad
 export PowerLoadInterruption
 export PowerLoadDispatch
+export PowerLoadShift
 ######## Renewable Formulations ########
 export RenewableFullDispatch
 export RenewableConstantPowerFactor

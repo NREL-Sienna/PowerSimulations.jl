@@ -165,7 +165,7 @@ Creates an objective function term based on the [`FunctionData` Options](@ref) w
 
 **Expressions:**
 
-  - Subtract``p^\text{ld}`` and ``q^\text{ld}`` terms and to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
+  - Subtract ``p^\text{ld}`` and ``q^\text{ld}`` terms and to the respective active and reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
@@ -212,7 +212,7 @@ using PowerSimulations
 using PowerSystems
 using DataFrames
 using Latexify
-combos = PowerSimulations.get_default_time_series_names(ElectricLoad, PowerLoadShift)
+combos = PowerSimulations.get_default_time_series_names(ShiftablePowerLoad, PowerLoadShift)
 combo_table = DataFrame(
     "Parameter" => map(x -> "[`$x`](@ref)", collect(keys(combos))),
     "Default Time Series Name" => map(x -> "`$x`", collect(values(combos))),

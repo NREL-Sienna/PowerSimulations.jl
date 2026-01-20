@@ -313,6 +313,215 @@ function construct_device!(
     return
 end
 
+# AbstractPowerModel + PowerLoadShift device model
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{PSY.ShiftablePowerLoad, PowerLoadShift},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+)
+    devices =
+        get_available_components(model,
+            sys,
+        )
+
+    add_variables!(container, ShiftedActivePowerVariable, devices, PowerLoadShift())
+    add_variables!(container, ReactivePowerVariable, devices, PowerLoadShift())
+
+    process_market_bid_parameters!(container, devices, model, false, true)
+    
+    # Add Parameters to expressions
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        network_model,
+    )
+    
+    # Add Variables to expressions
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ShiftedActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_to_expression!(
+        container,
+        ReactivePowerBalance,
+        ReactivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), UpperBoundActivePowerTimeSeriesParameter)
+        add_parameters!(container, UpperBoundActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), LowerBoundActivePowerTimeSeriesParameter)
+        add_parameters!(container, LowerBoundActivePowerTimeSeriesParameter, devices, model)
+    end
+
+    add_expressions!(container, ProductionCostExpression, devices, model)
+    add_event_arguments!(container, devices, model, network_model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.ShiftablePowerLoad, PowerLoadShift},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+)
+    devices =
+        get_available_components(model,
+            sys,
+        )
+    
+    add_constraints!(
+        container,
+        ShiftedActivePowerBalanceConstraint,
+        ShiftedActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ShiftedActivePowerVariableLimitsConstraint,
+        ShiftedActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ShiftedActivePowerForwardConstraint,
+        ShiftedActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ReactivePowerVariableLimitsConstraint,
+        ReactivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    
+    add_feedforward_constraints!(container, model, devices)
+
+    objective_function!(container, devices, model, get_network_formulation(network_model))
+    add_event_constraints!(container, devices, model, network_model)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
+# kate todo fix these below by deleting reactive power once you have tested the above
+# AbstractActivePowerModel + PowerLoadShift device model
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ArgumentConstructStage,
+    model::DeviceModel{PSY.ShiftablePowerLoad, PowerLoadShift},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+)
+    devices =
+        get_available_components(model,
+            sys,
+        )
+
+    add_variables!(container, ShiftedActivePowerVariable, devices, PowerLoadShift())
+
+    process_market_bid_parameters!(container, devices, model, false, true)
+    
+    # Kate TODO THIS IS WHERE ALYSSA HAD:
+    # Add Parameters to expressions
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ActivePowerTimeSeriesParameter,
+        devices,
+        model,
+        network_model,
+    )
+    
+    # Add Variables to expressions
+    add_to_expression!(
+        container,
+        ActivePowerBalance,
+        ShiftedActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    # Kate TODO THIS IS WHERE ALYSSA HAD:
+    # add_parameters!(container, UpperBoundActivePowerTimeSeriesParameter, devices, model)
+    # add_parameters!(container, LowerBoundActivePowerTimeSeriesParameter, devices, model)
+
+    add_expressions!(container, ProductionCostExpression, devices, model)
+    add_event_arguments!(container, devices, model, network_model)
+    return
+end
+
+function construct_device!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    ::ModelConstructStage,
+    model::DeviceModel{PSY.ShiftablePowerLoad, PowerLoadShift},
+    network_model::NetworkModel{<:PM.AbstractActivePowerModel},
+)
+    devices =
+        get_available_components(model,
+            sys,
+        )
+
+    add_constraints!(
+        container,
+        ShiftedActivePowerBalanceConstraint,
+        ShiftedActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ShiftedActivePowerVariableLimitsConstraint,
+        ShiftedActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    add_constraints!(
+        container,
+        ShiftedActivePowerForwardConstraint,
+        ShiftedActivePowerVariable,
+        devices,
+        model,
+        network_model,
+    )
+    
+    add_feedforward_constraints!(container, model, devices)
+
+    objective_function!(container, devices, model, get_network_formulation(network_model))
+    add_event_constraints!(container, devices, model, network_model)
+    add_constraint_dual!(container, sys, model)
+    return
+end
+
 # AbstractPowerModel + StaticPowerLoad device model
 function construct_device!(
     container::OptimizationContainer,

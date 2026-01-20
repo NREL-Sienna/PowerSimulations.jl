@@ -116,6 +116,39 @@ end
     @test isapprox(-5700, calculated_cost; atol = 1)
 end
 
+@testset "PowerLoadShift DC- PF" begin
+    models = [PowerLoadShift]
+    c_sys5_sl = PSB.build_system(PSITestSystems, "c_sys5_sl") # TODO Kate NEED C_SYS5_SL
+    networks = [DCPPowerModel]
+    for m in models, n in networks
+        device_model = DeviceModel(ShiftablePowerLoad, m)
+        model = DecisionModel(MockOperationProblem, n, c_sys5_sl)
+        mock_construct_device!(model, device_model)
+        moi_tests(model, 48, 0, 48, 0, 0, true)  # TODO Kate 
+        psi_checkobjfun_test(model, GAEVF)
+        model = DecisionModel(MockOperationProblem, n, c_sys5_sl)
+        mock_construct_device!(model, device_model; add_event_model = true)
+        moi_tests(model, 48, 0, 72, 0, 0, true) # TODO Kate 
+    end
+end
+
+@testset "PowerLoadShift AC- PF" begin
+    models = [PowerLoadShift]
+    c_sys5_sl = PSB.build_system(PSITestSystems, "c_sys5_sl")
+    networks = [ACPPowerModel]
+    for m in models, n in networks
+        device_model = DeviceModel(ShiftablePowerLoad, m)
+        model = DecisionModel(MockOperationProblem, n, c_sys5_sl)
+        mock_construct_device!(model, device_model)
+        moi_tests(model, 72, 0, 48, 0, 24, true) # TODO Kate 
+        psi_checkobjfun_test(model, GAEVF)
+        model = DecisionModel(MockOperationProblem, n, c_sys5_sl)
+        mock_construct_device!(model, device_model; add_event_model = true)
+        moi_tests(model, 72, 0, 72, 0, 24, true), 24 # TODO Kate 
+    end
+end
+ # TODO Kate Do we need additional operational cost tests like PowerLoadDispatch?
+
 @testset "PowerLoadInterruption DC- PF" begin
     models = [PowerLoadInterruption]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")

@@ -10,6 +10,7 @@ function _default_devices_uc()
         DeviceModel(PSY.RenewableNonDispatch, FixedOutput),
         DeviceModel(PSY.PowerLoad, StaticPowerLoad),
         DeviceModel(PSY.InterruptiblePowerLoad, PowerLoadInterruption),
+        DeviceModel(PSY.ShiftablePowerLoad, PowerLoadShift),
         DeviceModel(PSY.Line, StaticBranch),
         DeviceModel(PSY.Transformer2W, StaticBranch),
         DeviceModel(PSY.TapTransformer, StaticBranch),

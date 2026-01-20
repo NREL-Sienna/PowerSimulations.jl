@@ -11,6 +11,13 @@ Docs abbreviation: ``p``
 struct ActivePowerVariable <: VariableType end
 
 """
+Struct to dispatch the creation of Shifted Active Power Variables
+
+Docs abbreviation: ``p^\\text{shift}``
+"""
+struct ShiftedActivePowerVariable <: VariableType end
+
+"""
 Struct to dispatch the creation of Post-Contingency Active Power Change Variables.
 
 Docs abbreviation: ``\\Delta p_{g,c}``

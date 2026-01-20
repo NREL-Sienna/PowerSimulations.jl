@@ -701,3 +701,31 @@ The specified constraint is formulated as:
 ```
 """
 struct CurrentAbsoluteValueConstraint <: ConstraintType end
+
+"""
+Struct to create the constraint to balance shifted power over the user-defined time horizons.
+For more information check the [`PowerLoadShift`](@ref) formulation.
+The specified constraints are formulated as:
+```math
+\\sum_{t \\in \\text{time horizon}_k } p_t^\\text{shift} = 0 , \\quad \\forall k \\text{ time horizons}
+```
+"""
+struct ShiftedActivePowerBalanceConstraint <: ConstraintType end
+"""
+Struct to create the constraint to limit shifted power active power between upper and lower bounds.
+For more information check the [`PowerLoadShift`](@ref) formulation.
+The specified constraints are formulated as:
+```math
+P^\\text{lower} - P_t \\le p_t^\\text{shift} \\le P^\\text{upper} - P_t, \\quad \\forall t \\in \\{1,\\dots,T\\}
+```
+"""
+struct ShiftedActivePowerVariableLimitsConstraint <: PowerVariableLimitsConstraint end
+"""
+Struct to create the constraint to allow shifted power to be shifted only forward in time, not back within the power balance horizon.
+For more information check the [`PowerLoadShift`](@ref) formulation.
+The specified constraints are formulated as:
+```math
+p_t^\\text{shift} \\le \\sum_{t < \\text{time horizon}_k } p_t^\\text{shift}, \\quad \\forall k \\text{ time horizons}, \\forall t \\in \\text{time horizon}_k,
+```
+"""
+struct ShiftedActivePowerForwardConstraint <: ConstraintType end
