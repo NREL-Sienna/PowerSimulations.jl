@@ -178,7 +178,6 @@ function _update_parameter_values!(
     return
 end
 
-
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
     ::ParameterType,
