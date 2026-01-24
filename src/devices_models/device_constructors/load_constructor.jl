@@ -330,6 +330,16 @@ function construct_device!(
     add_variables!(container, ReactivePowerVariable, devices, PowerLoadShift())
 
     process_market_bid_parameters!(container, devices, model, false, true)
+
+        if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), UpperBoundActivePowerTimeSeriesParameter)
+        add_parameters!(container, UpperBoundActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), LowerBoundActivePowerTimeSeriesParameter)
+        add_parameters!(container, LowerBoundActivePowerTimeSeriesParameter, devices, model)
+    end
     
     # Add Parameters to expressions
     add_to_expression!(
@@ -358,15 +368,6 @@ function construct_device!(
         model,
         network_model,
     )
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
-        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
-    end
-    if haskey(get_time_series_names(model), UpperBoundActivePowerTimeSeriesParameter)
-        add_parameters!(container, UpperBoundActivePowerTimeSeriesParameter, devices, model)
-    end
-    if haskey(get_time_series_names(model), LowerBoundActivePowerTimeSeriesParameter)
-        add_parameters!(container, LowerBoundActivePowerTimeSeriesParameter, devices, model)
-    end
 
     add_expressions!(container, ProductionCostExpression, devices, model)
     add_event_arguments!(container, devices, model, network_model)
@@ -426,7 +427,6 @@ function construct_device!(
     return
 end
 
-# kate todo fix these below by deleting reactive power once you have tested the above
 # AbstractActivePowerModel + PowerLoadShift device model
 function construct_device!(
     container::OptimizationContainer,
@@ -436,15 +436,24 @@ function construct_device!(
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
     devices =
-        get_available_components(model,
-            sys,
-        )
+    get_available_components(model,
+        sys,
+    )
 
     add_variables!(container, ShiftedActivePowerVariable, devices, PowerLoadShift())
 
     process_market_bid_parameters!(container, devices, model, false, true)
-    
-    # Kate TODO THIS IS WHERE ALYSSA HAD:
+
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), UpperBoundActivePowerTimeSeriesParameter)
+        add_parameters!(container, UpperBoundActivePowerTimeSeriesParameter, devices, model)
+    end
+    if haskey(get_time_series_names(model), LowerBoundActivePowerTimeSeriesParameter)
+        add_parameters!(container, LowerBoundActivePowerTimeSeriesParameter, devices, model)
+    end
+
     # Add Parameters to expressions
     add_to_expression!(
         container,
@@ -454,7 +463,7 @@ function construct_device!(
         model,
         network_model,
     )
-    
+
     # Add Variables to expressions
     add_to_expression!(
         container,
@@ -464,13 +473,6 @@ function construct_device!(
         model,
         network_model,
     )
-
-    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
-        add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
-    end
-    # Kate TODO THIS IS WHERE ALYSSA HAD:
-    # add_parameters!(container, UpperBoundActivePowerTimeSeriesParameter, devices, model)
-    # add_parameters!(container, LowerBoundActivePowerTimeSeriesParameter, devices, model)
 
     add_expressions!(container, ProductionCostExpression, devices, model)
     add_event_arguments!(container, devices, model, network_model)
