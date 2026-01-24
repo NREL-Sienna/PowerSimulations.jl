@@ -286,29 +286,6 @@ function add_feedforward_constraints!(
     return
 end
 
-@doc raw"""
-        ub_ff(container::OptimizationContainer,
-              cons_name::Symbol,
-              constraint_infos,
-              param_reference,
-              var_key::VariableKey)
-
-Constructs a parameterized upper bound constraint to implement feedforward from other models.
-The Parameters are initialized using the uppper boundary values of the provided variables.
-
-
-``` variable[var_name, t] <= param_reference[var_name] ```
-
-# LaTeX
-
-`` x \leq param^{max}``
-
-# Arguments
-* container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* cons_name::Symbol : name of the constraint
-* param_reference : Reference to the JuMP.VariableRef used to determine the upperbound
-* var_key::VariableKey : the name of the continuous variable
-"""
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel,
@@ -345,29 +322,6 @@ function add_feedforward_constraints!(
     return
 end
 
-@doc raw"""
-        lb_ff(container::OptimizationContainer,
-              cons_name::Symbol,
-              constraint_infos,
-              param_reference,
-              var_key::VariableKey)
-
-Constructs a parameterized upper bound constraint to implement feedforward from other models.
-The Parameters are initialized using the uppper boundary values of the provided variables.
-
-
-``` variable[var_name, t] <= param_reference[var_name] ```
-
-# LaTeX
-
-`` x \leq param^{max}``
-
-# Arguments
-* container::OptimizationContainer : the optimization_container model built in PowerSimulations
-* cons_name::Symbol : name of the constraint
-* param_reference : Reference to the JuMP.VariableRef used to determine the upperbound
-* var_key::VariableKey : the name of the continuous variable
-"""
 function add_feedforward_constraints!(
     container::OptimizationContainer,
     ::DeviceModel{T, U},
