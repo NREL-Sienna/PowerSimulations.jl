@@ -203,7 +203,9 @@ PowerLoadShift
 
   - ``P^\text{max}`` = `PowerSystems.get_max_active_power(device)`
   - ``Q^\text{max}`` = `PowerSystems.get_max_reactive_power(device)`
-  - ``T^\text{b}`` = `PowerSystems.get_load_balance_time_horizon(device)`
+  - ``T^\text{b}`` = `Int(PowerSystems.get_load_balance_time_horizon(device)/\Delta T)`
+
+where ``\Delta T`` is the [resolution](@ref R) of the problem.
 
 **Time Series Parameters:**
 
@@ -230,7 +232,7 @@ quantity term is defined as ``max{p_t^\text{shift}, 0}`` (i.e., there is only a 
 
 **Expressions:**
 
-  - Subtract``p_t^\text{shift}`` and ``{ActivePowerTimeSeriesParameter}_t`` terms from the active power balance expressions created by the selected [Network Formulations](@ref network_formulations).
+  - Subtract ``p_t^\text{shift}`` and ``{ActivePowerTimeSeriesParameter}_t`` terms from the active power balance expressions created by the selected [Network Formulations](@ref network_formulations).
   - Subtract``q_t^\text{ld}`` terms from the reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
@@ -247,7 +249,7 @@ quantity term is defined as ``max{p_t^\text{shift}, 0}`` (i.e., there is only a 
 \end{aligned}
 ```
 
-on which ``\text{pf} = \sin(\arctan(Q^\text{max}/P^\text{max}))``.
+where ``\text{pf} = \sin(\arctan(Q^\text{max}/P^\text{max}))``.
 
 ## Valid configurations
 
