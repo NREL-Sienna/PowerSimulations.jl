@@ -55,10 +55,11 @@ end
 
 function get_default_time_series_names(
     ::Type{<:PSY.ShiftablePowerLoad},
-    ::Type{<:PowerLoadShift},
+    ::Type{<:Union{FixedOutput, AbstractLoadFormulation}},
 )
     return Dict{Type{<:TimeSeriesParameter}, String}(
         ActivePowerTimeSeriesParameter => "active_power",
+        ReactivePowerTimeSeriesParameter => "active_power",
         UpperBoundActivePowerTimeSeriesParameter => "upper_bound_active_power",
         LowerBoundActivePowerTimeSeriesParameter => "lower_bound_active_power",
     )
