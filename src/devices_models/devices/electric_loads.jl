@@ -251,6 +251,8 @@ end
 Add [`ShiftedActivePowerVariableLimitsConstraint`](@ref) for [`PowerLoadShift`](@ref) formulation
     
 Assumes the user has provided time series parameters for the active power load.
+Only non-negative loads are allowed (i.e., both the requested active power and lower bound
+active power must be ``\\ge 0``).
 """
 function add_constraints!(
     container::OptimizationContainer,
@@ -315,27 +317,29 @@ function add_constraints!(
 ) where {V <: PSY.ShiftablePowerLoad, W <: PowerLoadShift, X <: PM.AbstractPowerModel}
 
     jump_model = get_jump_model(container)
-    time_steps = axes(constraint_container)[2]
+    time_steps = get_time_steps(container)
+    resolution = get_resolution(container)
     num_time_steps = length(time_steps)
+    p_shift = get_variable(container, U(), V)
 
-    shift_power_forward_constraint = add_constraints_container!(
+    constraint = add_constraints_container!(
         container,
         T(),
         V,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         time_steps; 
         meta = "shift_load_forward_only"
     )
-    p_shift = get_variable(container, U(), V)
+    
     for d in devices
         name = PSY.get_name(d)
-        Tb = get_load_balance_time_horizon(d)
+        Tb = round(Int, get_load_balance_time_horizon(d)/resolution)
         for k in 1:ceil(num_time_steps/Tb)
             for t in (k-1)*Tb+1:minimum(k*Tb,num_time_steps)
                 if t==(k-1)*Tb+1
-                    shift_power_forward_constraint[name, t] = JuMP.@constraint(jump_model, p_shift[name, t] <= 0.0)
+                    constraint[name, t] = JuMP.@constraint(jump_model, p_shift[name, t] <= 0.0)
                 else
-                    shift_power_forward_constraint[name, t] = JuMP.@constraint(jump_model, p_shift[name, t] <= sum(p_shift[name, i] for i in (k-1)*Tb+1:t-1))
+                    constraint[name, t] = JuMP.@constraint(jump_model, p_shift[name, t] <= sum(p_shift[name, i] for i in (k-1)*Tb+1:t-1))
                 end
             end
         end
