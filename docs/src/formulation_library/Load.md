@@ -192,12 +192,12 @@ PowerLoadShift
   - [`ShiftedActivePowerVariable`](@ref):
 
       + Default initial value: 0.0
-      + Symbol: ``p^\text{shift}``
+      + Symbol: ``p_t^\text{shift}``
 
   - [`ReactivePowerVariable`](@ref):
     
       + Default initial value: 0.0
-      + Symbol: ``q^\text{ld}``
+      + Symbol: ``q_t^\text{ld}``
 
 **Static Parameters:**
 
@@ -230,16 +230,16 @@ quantity term is defined as ``max{p_t^\text{shift}, 0}`` (i.e., there is only a 
 
 **Expressions:**
 
-  - Add ``p^\text{shift}`` terms to the active power balance expressions created by the selected [Network Formulations](@ref network_formulations).
+  - Subtract``p_t^\text{shift}`` and ``{ActivePowerTimeSeriesParameter}_t`` terms from the active power balance expressions created by the selected [Network Formulations](@ref network_formulations).
+  - Subtract``q_t^\text{ld}`` terms from the reactive power balance expressions created by the selected [Network Formulations](@ref network_formulations)
 
 **Constraints:**
 
 ```math
 \begin{aligned}
-&  p_t^\text{shift} \ge 0, \quad \forall t \in \{1,\dots, T\} \ \text{ if } \ \text{ActivePowerTimeSeriesParameter}_t<0 \\
-&  p_t^\text{shift} + \text{ActivePowerTimeSeriesParameter}_t \ge \max{\{\text{LowerBoundActivePowerTimeSeriesParameter}_t, 0.0\}}, \quad \forall t \in \{1,\dots, T\}\ \text{ if } \ \text{ActivePowerTimeSeriesParameter}_t \ge 0 \\
-&  p_t^\text{shift} + \text{ActivePowerTimeSeriesParameter}_t \le \text{UpperBoundActivePowerTimeSeriesParameter}_t, \quad \forall t \in \{1,\dots, T\} \\
 & \sum\limits_{t \in \mathcal{T}_k } p_t^\text{shift} = 0 , \quad \forall k \in \{1,\dots, \lceil{T/T^\text{b}}\rceil\}, \ \mathcal{T}_k = \{(k-1)T^\text{b}+1, \ldots, \min{\{kT^\text{b}, N \}} \} \\
+&  p_t^\text{shift} + \text{ActivePowerTimeSeriesParameter}_t \ge \text{LowerBoundActivePowerTimeSeriesParameter}_t, \quad \forall t \in \{1,\dots, T\}\ \text{ if } \ \text{ActivePowerTimeSeriesParameter}_t \ge 0 \\
+&  p_t^\text{shift} + \text{ActivePowerTimeSeriesParameter}_t \le \text{UpperBoundActivePowerTimeSeriesParameter}_t, \quad \forall t \in \{1,\dots, T\} \\
 &  p_t^\text{shift} \le \begin{cases} 0, &\forall k \in \{1,\dots, \lceil{T/T^\text{b}}\rceil\}, \ t=(k-1)T^{\text{b}}+1 \\[1mm]
 \sum\limits_{j<t \in \mathcal{T}_k } p_j^\text{shift}, &\forall k \in \{1,\dots, \lceil{T/T^\text{b}}\rceil\}, \ \forall t \neq (k-1)T^{\text{b}}+1 \in \{1, \ldots, T \}
 \end{cases}\\
