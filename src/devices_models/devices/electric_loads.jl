@@ -53,6 +53,12 @@ function get_default_time_series_names(
     )
 end
 
+"""
+Get the default time series names for [`PowerLoadShift`](@ref) formulation
+
+Default name of central time series is `active_power` rather than `max_active_power`
+for re-use across [`PowerLoadShift`](@ref) and [`StaticPowerLoad`](@ref) formulations.
+"""
 function get_default_time_series_names(
     ::Type{<:PSY.ShiftablePowerLoad},
     ::Type{<:Union{FixedOutput, AbstractLoadFormulation}},
