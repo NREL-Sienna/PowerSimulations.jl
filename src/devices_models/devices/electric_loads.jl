@@ -260,11 +260,12 @@ function add_constraints!(
     ::DeviceModel{V, W},
     ::NetworkModel{X},
 ) where {V <: PSY.ShiftablePowerLoad, W <: PowerLoadShift, X <: PM.AbstractPowerModel}
+    time_steps = get_time_steps(container)
+    jump_model = get_jump_model(container)
+    p_shift = get_variable(container, U(), V)
 
     param_array_activepower = get_parameter_array(container, ActivePowerTimeSeriesParameter(), V)
     param_multiplier_activepower = get_parameter_multiplier_array(container, ActivePowerTimeSeriesParameter(), V)
-    jump_model = get_jump_model(container)
-    time_steps = axes(constraint_container)[2]
 
     param_array_lb = get_parameter_array(container, LowerBoundActivePowerTimeSeriesParameter(), V)
     param_multiplier_lb = get_parameter_multiplier_array(container, LowerBoundActivePowerTimeSeriesParameter(), V)
@@ -276,7 +277,7 @@ function add_constraints!(
         container,
         T(),
         V,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         time_steps; 
         meta = "lb"
     )
@@ -284,17 +285,16 @@ function add_constraints!(
         container,
         T(),
         V,
-        [PSY.get_name(d) for d in devices],
+        PSY.get_name.(devices),
         time_steps; 
         meta = "ub"
     )
-    p_shift = get_variable(container, U(), V)
     for t in time_steps, d in devices
         name = PSY.get_name(d)
-        if param_array[name, t] < 0.0
-            error("Device $d has a negative load.")
-        elseif param_array[name, t] < 0.0
-            error("Device $d has a negative lower bound for the active power load.")
+        if param_array_activepower[name, t] < 0.0
+            error("Device $d has a negative active power load of $(param_array_activepower[name, t]) at time $t.")
+        elseif param_array_lb[name, t] < 0.0
+            error("Device $d has a negative lower bound of $(param_array_lb[name, t]) for the active power load at time $t.")
         end
         lower_bound_constraint[name, t] = JuMP.@constraint(jump_model, p_shift[name, t] >= param_array_lb[name,t] * param_multiplier_lb[name, t] - param_array_activepower[name, t] * param_multiplier_activepower[name, t])
         upper_bound_constraint[name, t] = JuMP.@constraint(jump_model, p_shift[name, t] <= param_array_ub[name,t] * param_multiplier_ub[name, t] - param_array_activepower[name, t] * param_multiplier_activepower[name, t])

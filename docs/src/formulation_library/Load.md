@@ -220,9 +220,13 @@ combo_table = DataFrame(
 mdtable(combo_table; latex = false)
 ```
 
+Only non-negative loads are allowed (i.e., both the requested active power and lower bound active power must be ``\ge 0``).
+
 **Objective:**
 
-Creates an objective function term based on the [`FunctionData` Options](@ref) where the quantity term is defined as ``p^\text{shift}``.
+Creates an objective function term based on the [`FunctionData` Options](@ref) where the
+quantity term is defined as ``max{p_t^\text{shift}, 0}`` (i.e., there is only a cost when
+``p_t^\text{shift}`` is negative, reducing total load). 
 
 **Expressions:**
 
