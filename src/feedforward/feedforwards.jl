@@ -278,7 +278,7 @@ struct FixValueFeedforward <: AbstractAffectFeedforward
                     get_optimization_container_key(v(), component_type, meta)
             else
                 error(
-                    "UpperBoundFeedforward is only compatible with VariableType affected values",
+                    "FixValueFeedforward is only compatible with VariableType or ParameterType affected values",
                 )
             end
         end
