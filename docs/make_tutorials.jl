@@ -132,7 +132,7 @@ function clean_old_generated_files(dir::String)
 end
 
 # Process tutorials with Literate
-function process_tutorials()
+function make_tutorials()
     # Exclude helper scripts that start with "_"
     if isdir("docs/src/tutorials")
         tutorial_files =

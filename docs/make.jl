@@ -15,7 +15,7 @@ links = InterLinks(
 )
 
 include(joinpath(@__DIR__, "make_tutorials.jl"))
-process_tutorials()
+make_tutorials()
 
 pages = OrderedDict(
     "Welcome Page" => "index.md",
