@@ -11,6 +11,8 @@ const TIME1 = DateTime("2024-01-01T00:00:00")
         ("pwl_io_fuel_test", 3421.64, ThermalBasicUnitCommitment),
         ("pwl_incremental_cost_test", 3424.43, ThermalBasicUnitCommitment),
         ("pwl_incremental_fuel_test", 3424.43, ThermalBasicUnitCommitment),
+        ("pwl_average_cost_test", 3424.43, ThermalBasicUnitCommitment),
+        ("pwl_average_fuel_test", 3424.43, ThermalBasicUnitCommitment),
         ("non_convex_io_pwl_cost_test", 3047.14, ThermalBasicUnitCommitment),
     ]
     for (i, cost_reference, thermal_formulation) in test_cases

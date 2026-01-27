@@ -16,7 +16,7 @@ This example is intended to be an extension of the
 using PowerSystems
 using PowerSimulations
 using HydroPowerSimulations
-const PSI = PowerSimulations
+import PowerSimulations as PSI
 using PowerSystemCaseBuilder
 using Dates
 using HiGHS #solver
@@ -31,6 +31,20 @@ relatively relaxed MIP gap (`ratioGap`) setting to improve speed.
 ```@repl tutorial
 solver = optimizer_with_attributes(HiGHS.Optimizer, "mip_rel_gap" => 0.5)
 ```
+
+!!! note
+    
+    Defining a solver upfront ensures that only one license is requested when using a license-limited solver, such as Gurobi. We can create a environment variable and pass it to the optimizer constructor for shared license use if using such a solver
+    
+    ```julia
+    using Gurobi
+    
+    gurobi_env = Gurobi.Env()
+    
+    solver = optimizer_with_attributes(() -> Gurobi.Optimizer(gurobi_env), "MIPGap" => 0.01)
+    ```
+    
+    Conversely, if a unique optimizer constructor is defined within the SimulationModels for each stage, a separate license will be obtained for each stage.
 
 ### Hourly day-ahead system
 

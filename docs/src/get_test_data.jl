@@ -3,9 +3,9 @@ using PowerSimulations
 using PowerSystems
 using DataStructures
 using InfrastructureSystems
-const IS = InfrastructureSystems
-const PSI = PowerSimulations
-const PSY = PowerSystems
+import InfrastructureSystems as IS
+import PowerSimulations as PSI
+import PowerSystems as PSY
 
 include("../../../test/test_utils/get_test_data.jl")
 

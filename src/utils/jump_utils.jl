@@ -253,7 +253,7 @@ function to_results_dataframe(
     ::Val{TableFormat.LONG},
 )
     return DataFrames.DataFrame(
-        :DateTime => [1],
+        :DateTime => ones(Int, length(axes(array, 1))),
         :name => axes(array, 1),
         :value => array.data,
     )

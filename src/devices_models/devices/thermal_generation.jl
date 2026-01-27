@@ -159,6 +159,11 @@ function _onvar_cost(::OptimizationContainer, cost_function::PSY.FuelCurve{PSY.P
     return 0.0
 end
 
+function _onvar_cost(::OptimizationContainer, cost_function::PSY.FuelCurve{PSY.PiecewiseAverageCurve}, d::PSY.ThermalGen, ::Int)
+    # Converted to InputOutputCurve, OnVariableCost handled in transformation
+    return 0.0
+end
+
 # this one implementation is thermal-specific, and requires the component.
 function _onvar_cost(container::OptimizationContainer, cost_function::Union{PSY.FuelCurve{PSY.LinearCurve}, PSY.FuelCurve{PSY.QuadraticCurve}}, d::T, t::Int) where {T <: PSY.ThermalGen}
     value_curve = PSY.get_value_curve(cost_function)

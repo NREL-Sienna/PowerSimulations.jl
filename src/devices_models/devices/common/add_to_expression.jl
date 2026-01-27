@@ -881,17 +881,15 @@ function add_to_expression!(
     V <: PSY.TwoTerminalHVDC,
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), PSY.ACBus)
-    radial_network_reduction = get_radial_network_reduction(network_model)
+    expression = get_expression(container, T(), PSY.Area)
     for d in devices
         name = PSY.get_name(d)
-        bus_no_ = PSY.get_number(PSY.get_arc(d).to)
-        bus_no = PNM.get_mapped_bus_number(network_reduction, bus_no_)
+        area_name = PSY.get_name(PSY.get_area(PSY.get_arc(d).to))
         for t in get_time_steps(container)
             _add_to_jump_expression!(
-                expression[bus_no, t],
+                expression[area_name, t],
                 variable[name, t],
-                get_variable_multiplier(U(), V, W()),
+                get_variable_multiplier(U(), V, HVDCTwoTerminalDispatch()),
             )
         end
     end
@@ -1000,7 +998,7 @@ function add_to_expression!(
     W <: Union{AbstractCompactUnitCommitment, ThermalCompactDispatch},
 }
     variable = get_variable(container, U(), V)
-    expression = get_expression(container, T(), PSY.ACBus)
+    expression = get_expression(container, T(), PSY.Area)
     for d in devices
         name = PSY.get_name(d)
         bus = PSY.get_bus(d)

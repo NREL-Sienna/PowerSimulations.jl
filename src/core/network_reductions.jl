@@ -89,7 +89,7 @@ end
 
 function get_branch_argument_variable_axis(
     net_reduction_data::PNM.NetworkReductionData,
-    ::Type{PowerNetworkMatrices.ThreeWindingTransformerWinding{T}},
+    ::Type{PNM.ThreeWindingTransformerWinding{T}},
 ) where {T <: PSY.ThreeWindingTransformer}
     name_axis = net_reduction_data.name_to_arc_map[T]
     return collect(keys(name_axis))
