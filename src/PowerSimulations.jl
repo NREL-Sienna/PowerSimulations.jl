@@ -418,13 +418,13 @@ import JuMP
 import JuMP: optimizer_with_attributes
 import JuMP.Containers: DenseAxisArray, SparseAxisArray
 export optimizer_with_attributes
-import MathOptInterface
+import MathOptInterface as MOI
 import LinearAlgebra
 import JSON3
-import PowerSystems
-import InfrastructureSystems
+import PowerSystems as PSY
+import InfrastructureSystems as IS
 import PowerFlows
-import PowerNetworkMatrices
+import PowerNetworkMatrices as PNM
 import PowerNetworkMatrices: PTDF, VirtualPTDF, LODF, VirtualLODF
 export PTDF
 export VirtualPTDF
@@ -490,7 +490,7 @@ export get_optimizer_stats
 export get_timestamps
 export get_resolution
 
-import PowerModels
+import PowerModels as PM
 import TimerOutputs
 import ProgressMeter
 import Distributed
@@ -535,15 +535,10 @@ export process_simulation_partition_cli_args
 ################################################################################
 
 # Type Alias From other Packages
-const PM = PowerModels
-const PSY = PowerSystems
 const PSI = PowerSimulations
-const IS = InfrastructureSystems
-const ISOPT = InfrastructureSystems.Optimization
-const MOI = MathOptInterface
-const MOIU = MathOptInterface.Utilities
+const ISOPT = IS.Optimization
+const MOIU = MOI.Utilities
 const MOPFM = MOI.FileFormats.Model
-const PNM = PowerNetworkMatrices
 const PFS = PowerFlows
 const TS = TimeSeries
 

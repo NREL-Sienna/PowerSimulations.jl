@@ -16,7 +16,7 @@ This example is intended to be an extension of the
 using PowerSystems
 using PowerSimulations
 using HydroPowerSimulations
-const PSI = PowerSimulations
+import PowerSimulations as PSI
 using PowerSystemCaseBuilder
 using Dates
 using HiGHS #solver

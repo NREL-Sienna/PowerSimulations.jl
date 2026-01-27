@@ -3,8 +3,7 @@ Abstract type for Device Formulations (a.k.a Models)
 
 # Example
 
-import PowerSimulations
-const PSI = PowerSimulations
+import PowerSimulations as PSI
 struct MyCustomDeviceFormulation <: PSI.AbstractDeviceFormulation
 """
 abstract type AbstractDeviceFormulation end
@@ -113,8 +112,7 @@ struct SynchronousCondenserBasicDispatch <: AbstractReactivePowerDeviceFormulati
 Abstract type for Branch Formulations (a.k.a Models)
 
 # Example
-import PowerSimulations
-const PSI = PowerSimulations
+import PowerSimulations as PSI
 struct MyCustomBranchFormulation <: PSI.AbstractDeviceFormulation
 """
 # Generic Branch Models
@@ -218,8 +216,7 @@ Abstract type for Service Formulations (a.k.a Models)
 
 # Example
 
-import PowerSimulations
-const PSI = PowerSimulations
+import PowerSimulations as PSI
 struct MyServiceFormulation <: PSI.AbstractServiceFormulation
 """
 abstract type AbstractServiceFormulation end
