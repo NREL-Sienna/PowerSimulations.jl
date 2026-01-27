@@ -101,6 +101,14 @@ Formulation type to add import and export model for `Source`
 """
 struct ImportExportSourceModel <: AbstractSourceFormulation end
 
+########################### Reactive Power Device Formulations ##############################
+abstract type AbstractReactivePowerDeviceFormulation <: AbstractDeviceFormulation end
+
+"""
+Formulation type to add reactive power dispatch variables for `SynchronousCondenser`
+"""
+struct SynchronousCondenserBasicDispatch <: AbstractReactivePowerDeviceFormulation end
+
 """
 Abstract type for Branch Formulations (a.k.a Models)
 
