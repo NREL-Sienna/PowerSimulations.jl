@@ -178,7 +178,6 @@ Creates an objective function term based on the [`FunctionData` Options](@ref) w
 
 on which ``\text{pf} = \sin(\arctan(Q^\text{ld,max}/P^\text{ld,max}))``.
 
-
 * * *
 
 ## `PowerLoadShift`
@@ -190,7 +189,7 @@ PowerLoadShift
 **Variables:**
 
   - [`ShiftedActivePowerVariable`](@ref):
-
+    
       + Default initial value: 0.0
       + Symbol: ``p_t^\text{shift}``
 
@@ -228,7 +227,7 @@ Only non-negative loads are allowed (i.e., both the requested active power and l
 
 Creates an objective function term based on the [`FunctionData` Options](@ref) where the
 quantity term is defined as ``max{p_t^\text{shift}, 0}`` (i.e., there is only a cost when
-``p_t^\text{shift}`` is negative, reducing total load). 
+``p_t^\text{shift}`` is negative, reducing total load).
 
 **Expressions:**
 

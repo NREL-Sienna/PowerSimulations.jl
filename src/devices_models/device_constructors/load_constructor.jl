@@ -328,10 +328,11 @@ function construct_device!(
 
     add_variables!(container, ShiftedActivePowerVariable, devices, PowerLoadShift())
     add_variables!(container, ReactivePowerVariable, devices, PowerLoadShift())
+    add_variables!(container, RealizedLoad, devices, PowerLoadShift())
 
     process_market_bid_parameters!(container, devices, model, false, true)
 
-        if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
+    if haskey(get_time_series_names(model), ActivePowerTimeSeriesParameter)
         add_parameters!(container, ActivePowerTimeSeriesParameter, devices, model)
     end
     if haskey(get_time_series_names(model), UpperBoundActivePowerTimeSeriesParameter)
@@ -340,7 +341,7 @@ function construct_device!(
     if haskey(get_time_series_names(model), LowerBoundActivePowerTimeSeriesParameter)
         add_parameters!(container, LowerBoundActivePowerTimeSeriesParameter, devices, model)
     end
-    
+
     # Add Parameters to expressions
     add_to_expression!(
         container,
@@ -350,7 +351,7 @@ function construct_device!(
         model,
         network_model,
     )
-    
+
     # Add Variables to expressions
     add_to_expression!(
         container,
@@ -385,7 +386,7 @@ function construct_device!(
         get_available_components(model,
             sys,
         )
-    
+
     add_constraints!(
         container,
         ShiftedActivePowerBalanceConstraint,
@@ -418,7 +419,7 @@ function construct_device!(
         model,
         network_model,
     )
-    
+
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, get_network_formulation(network_model))
@@ -436,11 +437,12 @@ function construct_device!(
     network_model::NetworkModel{<:PM.AbstractActivePowerModel},
 )
     devices =
-    get_available_components(model,
-        sys,
-    )
+        get_available_components(model,
+            sys,
+        )
 
     add_variables!(container, ShiftedActivePowerVariable, devices, PowerLoadShift())
+    add_variables!(container, RealizedLoad, devices, PowerLoadShift())
 
     process_market_bid_parameters!(container, devices, model, false, true)
 
@@ -515,7 +517,7 @@ function construct_device!(
         model,
         network_model,
     )
-    
+
     add_feedforward_constraints!(container, model, devices)
 
     objective_function!(container, devices, model, get_network_formulation(network_model))

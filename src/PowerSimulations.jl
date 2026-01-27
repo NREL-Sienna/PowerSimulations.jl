@@ -280,6 +280,7 @@ export InterpolationBinarySquaredBilinearVariable
 export TimeDurationOn
 export TimeDurationOff
 export PowerOutput
+export RealizedLoad
 export PowerFlowVoltageAngle
 export PowerFlowVoltageMagnitude
 export PowerFlowLineReactivePowerFromTo, PowerFlowLineReactivePowerToFrom

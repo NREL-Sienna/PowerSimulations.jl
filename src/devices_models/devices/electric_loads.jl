@@ -37,9 +37,11 @@ proportional_cost(cost::Nothing, ::OnVariable, ::PSY.ElectricLoad, ::AbstractCon
 proportional_cost(cost::PSY.OperationalCost, ::OnVariable, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=PSY.get_fixed(cost)
 
 objective_function_multiplier(::VariableType, ::AbstractControllablePowerLoadFormulation)=OBJECTIVE_FUNCTION_NEGATIVE
+objective_function_multiplier(::VariableType, ::PowerLoadShift)=OBJECTIVE_FUNCTION_POSITIVE
 
 variable_cost(::Nothing, ::PSY.ElectricLoad, ::ActivePowerVariable, ::AbstractControllablePowerLoadFormulation)=1.0
 variable_cost(cost::PSY.OperationalCost, ::ActivePowerVariable, ::PSY.ElectricLoad, ::AbstractControllablePowerLoadFormulation)=PSY.get_variable(cost)
+variable_cost(cost::PSY.OperationalCost, ::ShiftedActivePowerDownVariable, ::PSY.ShiftablePowerLoad, ::PowerLoadShift)=PSY.get_variable(cost)
 
 #! format: on
 
@@ -138,8 +140,10 @@ function add_constraints!(
     network_model::NetworkModel{X},
 ) where {V <: PSY.ShiftablePowerLoad, W <: PowerLoadShift, X <: PM.AbstractPowerModel}
     time_steps = get_time_steps(container)
-    param_array_activepower = get_parameter_array(container, ActivePowerTimeSeriesParameter(), V)
-    param_multiplier_activepower = get_parameter_multiplier_array(container, ActivePowerTimeSeriesParameter(), V)
+    param_array_activepower =
+        get_parameter_array(container, ActivePowerTimeSeriesParameter(), V)
+    param_multiplier_activepower =
+        get_parameter_multiplier_array(container, ActivePowerTimeSeriesParameter(), V)
     constraint = add_constraints_container!(
         container,
         T(),
@@ -153,7 +157,14 @@ function add_constraints!(
         pf = sin(atan((PSY.get_max_reactive_power(d) / PSY.get_max_active_power(d))))
         reactive = get_variable(container, U(), V)[name, t]
         real_shift = get_variable(container, ShiftedActivePowerVariable(), V)[name, t]
-        constraint[name, t] = JuMP.@constraint(jump_model, reactive == (real_shift + param_array_activepower[name, t] * param_multiplier_activepower[name, t]) * pf)
+        constraint[name, t] = JuMP.@constraint(
+            jump_model,
+            reactive ==
+            (
+                real_shift +
+                param_array_activepower[name, t] * param_multiplier_activepower[name, t]
+            ) * pf
+        )
     end
 end
 
@@ -246,9 +257,15 @@ function add_constraints!(
     p_shift = get_variable(container, U(), V)
     for d in devices
         name = PSY.get_name(d)
-        Tb = round(Int, get_load_balance_time_horizon(d)/resolution)
-        for k in 1:ceil(num_time_steps/Tb)
-            JuMP.@constraint(jump_model, sum(p_shift[name, t] for t in (k-1)*Tb+1:minimum(k*Tb,num_time_steps)) == 0.0)
+        Tb = round(Int, get_load_balance_time_horizon(d) / resolution)
+        for k in 1:ceil(num_time_steps / Tb)
+            JuMP.@constraint(
+                jump_model,
+                sum(
+                    p_shift[name, t] for
+                    t in ((k - 1) * Tb + 1):minimum(k * Tb, num_time_steps)
+                ) == 0.0
+            )
         end
     end
     return
@@ -273,40 +290,66 @@ function add_constraints!(
     jump_model = get_jump_model(container)
     p_shift = get_variable(container, U(), V)
 
-    param_array_activepower = get_parameter_array(container, ActivePowerTimeSeriesParameter(), V)
-    param_multiplier_activepower = get_parameter_multiplier_array(container, ActivePowerTimeSeriesParameter(), V)
+    param_array_activepower =
+        get_parameter_array(container, ActivePowerTimeSeriesParameter(), V)
+    param_multiplier_activepower =
+        get_parameter_multiplier_array(container, ActivePowerTimeSeriesParameter(), V)
 
-    param_array_lb = get_parameter_array(container, LowerBoundActivePowerTimeSeriesParameter(), V)
-    param_multiplier_lb = get_parameter_multiplier_array(container, LowerBoundActivePowerTimeSeriesParameter(), V)
+    param_array_lb =
+        get_parameter_array(container, LowerBoundActivePowerTimeSeriesParameter(), V)
+    param_multiplier_lb = get_parameter_multiplier_array(
+        container,
+        LowerBoundActivePowerTimeSeriesParameter(),
+        V,
+    )
 
-    param_array_ub = get_parameter_array(container, UpperBoundActivePowerTimeSeriesParameter(), V)
-    param_multiplier_ub = get_parameter_multiplier_array(container, UpperBoundActivePowerTimeSeriesParameter(), V)
+    param_array_ub =
+        get_parameter_array(container, UpperBoundActivePowerTimeSeriesParameter(), V)
+    param_multiplier_ub = get_parameter_multiplier_array(
+        container,
+        UpperBoundActivePowerTimeSeriesParameter(),
+        V,
+    )
 
     lower_bound_constraint = add_constraints_container!(
         container,
         T(),
         V,
         PSY.get_name.(devices),
-        time_steps; 
-        meta = "lb"
+        time_steps;
+        meta = "lb",
     )
     upper_bound_constraint = add_constraints_container!(
         container,
         T(),
         V,
         PSY.get_name.(devices),
-        time_steps; 
-        meta = "ub"
+        time_steps;
+        meta = "ub",
     )
     for t in time_steps, d in devices
         name = PSY.get_name(d)
         if param_array_activepower[name, t] < 0.0
-            error("Device $d has a negative active power load of $(param_array_activepower[name, t]) at time $t.")
+            error(
+                "Device $d has a negative active power load of $(param_array_activepower[name, t]) at time $t.",
+            )
         elseif param_array_lb[name, t] < 0.0
-            error("Device $d has a negative lower bound of $(param_array_lb[name, t]) for the active power load at time $t.")
+            error(
+                "Device $d has a negative lower bound of $(param_array_lb[name, t]) for the active power load at time $t.",
+            )
         end
-        lower_bound_constraint[name, t] = JuMP.@constraint(jump_model, p_shift[name, t] >= param_array_lb[name,t] * param_multiplier_lb[name, t] - param_array_activepower[name, t] * param_multiplier_activepower[name, t])
-        upper_bound_constraint[name, t] = JuMP.@constraint(jump_model, p_shift[name, t] <= param_array_ub[name,t] * param_multiplier_ub[name, t] - param_array_activepower[name, t] * param_multiplier_activepower[name, t])
+        lower_bound_constraint[name, t] = JuMP.@constraint(
+            jump_model,
+            p_shift[name, t] >=
+            param_array_lb[name, t] * param_multiplier_lb[name, t] -
+            param_array_activepower[name, t] * param_multiplier_activepower[name, t]
+        )
+        upper_bound_constraint[name, t] = JuMP.@constraint(
+            jump_model,
+            p_shift[name, t] <=
+            param_array_ub[name, t] * param_multiplier_ub[name, t] -
+            param_array_activepower[name, t] * param_multiplier_activepower[name, t]
+        )
     end
     return
 end
@@ -322,7 +365,6 @@ function add_constraints!(
     ::DeviceModel{V, W},
     ::NetworkModel{X},
 ) where {V <: PSY.ShiftablePowerLoad, W <: PowerLoadShift, X <: PM.AbstractPowerModel}
-
     jump_model = get_jump_model(container)
     time_steps = get_time_steps(container)
     resolution = get_resolution(container)
@@ -334,23 +376,53 @@ function add_constraints!(
         T(),
         V,
         PSY.get_name.(devices),
-        time_steps; 
-        meta = "shift_load_forward_only"
+        time_steps;
+        meta = "shift_load_forward_only",
     )
-    
+
     for d in devices
         name = PSY.get_name(d)
-        Tb = round(Int, get_load_balance_time_horizon(d)/resolution)
-        for k in 1:ceil(num_time_steps/Tb)
-            for t in (k-1)*Tb+1:minimum(k*Tb,num_time_steps)
-                if t==(k-1)*Tb+1
-                    constraint[name, t] = JuMP.@constraint(jump_model, p_shift[name, t] <= 0.0)
+        Tb = round(Int, get_load_balance_time_horizon(d) / resolution)
+        for k in 1:ceil(num_time_steps / Tb)
+            for t in ((k - 1) * Tb + 1):minimum(k * Tb, num_time_steps)
+                if t == (k - 1) * Tb + 1
+                    constraint[name, t] =
+                        JuMP.@constraint(jump_model, p_shift[name, t] <= 0.0)
                 else
-                    constraint[name, t] = JuMP.@constraint(jump_model, p_shift[name, t] <= sum(p_shift[name, i] for i in (k-1)*Tb+1:t-1))
+                    constraint[name, t] = JuMP.@constraint(
+                        jump_model,
+                        p_shift[name, t] <=
+                        sum(p_shift[name, i] for i in ((k - 1) * Tb + 1):(t - 1))
+                    )
                 end
             end
         end
     end
+    return
+end
+
+############################ Auxiliary Variables Calculation ################################
+function calculate_aux_variable_value!(
+    container::OptimizationContainer,
+    ::AuxVarKey{RealizedLoad, T},
+    ::PSY.System,
+) where {T <: PSY.ShiftablePowerLoad}
+    time_steps = get_time_steps(container)
+    shifted_active_power_variable_results =
+        get_variable(container, ShiftedActivePowerVariable(), T)
+    active_power_parameter =
+        get_parameter_array(container, ActivePowerTimeSeriesParameter(), T)
+    active_power_parameter_multiplier =
+        get_parameter_multiplier_array(container, ActivePowerTimeSeriesParameter(), T)
+
+    aux_variable_container = get_aux_variable(container, RealizedLoad(), T)
+    devices_names = axes(aux_variable_container, 1)
+    for name in devices_names, t in time_steps
+        aux_variable_container[name, t] =
+            jump_value(shifted_active_power_variable_results[name, t]) +
+            active_power_parameter[name, t] * active_power_parameter_multiplier[name, t]
+    end
+
     return
 end
 
@@ -373,6 +445,17 @@ function objective_function!(
 ) where {T <: PSY.ControllableLoad, U <: PowerLoadInterruption}
     add_variable_cost!(container, ActivePowerVariable(), devices, U())
     add_proportional_cost!(container, OnVariable(), devices, U())
+    return
+end
+
+# Kate TODO: Follow down the internal functions to make sure sign is correct, default in common.jl
+function objective_function!(
+    container::OptimizationContainer,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::DeviceModel{T, U},
+    ::Type{<:PM.AbstractPowerModel},
+) where {T <: PSY.ShiftablePowerLoad, U <: PowerLoadShift}
+    add_variable_cost!(container, ShiftedActivePowerDownVariable(), devices, U())
     return
 end
 

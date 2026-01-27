@@ -1,7 +1,7 @@
 test_path = mktempdir()
 
 @testset "StaticPowerLoad" begin
-    models = [StaticPowerLoad, PowerLoadDispatch, PowerLoadInterruption]
+    models = [StaticPowerLoad, PowerLoadDispatch, PowerLoadInterruption, PowerLoadShift]
     c_sys5_il = PSB.build_system(PSITestSystems, "c_sys5_il")
     networks = [DCPPowerModel, ACPPowerModel]
     for m in models, n in networks
@@ -118,17 +118,17 @@ end
 
 @testset "PowerLoadShift DC- PF" begin
     models = [PowerLoadShift]
-    c_sys5_sl = PSB.build_system(PSITestSystems, "c_sys5_sl") # TODO Kate NEED C_SYS5_SL
+    c_sys5_sl = PSB.build_system(PSITestSystems, "c_sys5_sl")
     networks = [DCPPowerModel]
     for m in models, n in networks
         device_model = DeviceModel(ShiftablePowerLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_sl)
         mock_construct_device!(model, device_model)
-        moi_tests(model, 48, 0, 48, 0, 0, true)  # TODO Kate 
+        moi_tests(model, 24, 0, 32, 24, 8, false)
         psi_checkobjfun_test(model, GAEVF)
         model = DecisionModel(MockOperationProblem, n, c_sys5_sl)
         mock_construct_device!(model, device_model; add_event_model = true)
-        moi_tests(model, 48, 0, 72, 0, 0, true) # TODO Kate 
+        moi_tests(model, 24, 0, 32, 24, 8, false) # TODO Kate 
     end
 end
 
@@ -140,14 +140,14 @@ end
         device_model = DeviceModel(ShiftablePowerLoad, m)
         model = DecisionModel(MockOperationProblem, n, c_sys5_sl)
         mock_construct_device!(model, device_model)
-        moi_tests(model, 72, 0, 48, 0, 24, true) # TODO Kate 
+        moi_tests(model, 48, 0, 32, 24, 32, false)
         psi_checkobjfun_test(model, GAEVF)
         model = DecisionModel(MockOperationProblem, n, c_sys5_sl)
         mock_construct_device!(model, device_model; add_event_model = true)
-        moi_tests(model, 72, 0, 72, 0, 24, true), 24 # TODO Kate 
+        moi_tests(model, 48, 0, 32, 24, 32, false) # TODO Kate 
     end
 end
- # TODO Kate Do we need additional operational cost tests like PowerLoadDispatch?
+# TODO Kate Do we need additional operational cost tests like PowerLoadDispatch?
 
 @testset "PowerLoadInterruption DC- PF" begin
     models = [PowerLoadInterruption]
