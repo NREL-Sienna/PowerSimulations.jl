@@ -480,7 +480,6 @@ end
     test_generic_mbc_equivalence(c_sys5_pglib0b, c_sys5_pglib1b; multistart = true)
 
     for use_simulation in (false, true)
-        # FIXME this is triggering the "different decisions" assertion. Tweak the numbers.
         (decisions1, decisions2) = run_startup_shutdown_obj_fun_test(
             c_sys5_pglib1a,
             c_sys5_pglib2a;

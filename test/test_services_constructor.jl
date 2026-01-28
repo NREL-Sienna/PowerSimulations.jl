@@ -1024,7 +1024,6 @@ end
             optimizer = HiGHS_optimizer,
             store_variable_names = true,
         )
-    # FIXME builds successfully under PNM 0.16.
     @test build!(
         ps_model;
         console_level = Logging.AboveMaxLevel,  # Ignore expected errors.
