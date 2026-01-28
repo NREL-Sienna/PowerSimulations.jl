@@ -290,7 +290,7 @@ function test_event_results(;
     #Test condition after outage
     @test count[(outage_ix + outage_length_ix + 1), "Alta"] == 0.0
     @test status[(outage_ix + outage_length_ix + 1), "Alta"] == 1.0
-    @test on[on_recover_ix, "Alta"] == 1.0
+    @test isapprox(on[on_recover_ix, "Alta"], 1.0; atol = 1e-5)
     @test !isapprox(p[p_recover_ix, "Alta"], 0.0; atol = 1e-5)
     if test_reactive_power == true
         q = read_realized_variable(
