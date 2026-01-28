@@ -48,7 +48,7 @@
     # cannot easily test for the "from" bus because of the generators "Park City" and "Alta"
     bus_lookup = PFS.get_bus_lookup(data)
     @test isapprox(
-        data.bus_activepower_injection[bus_lookup[get_number(get_to(arc))], :] *
+        data.bus_active_power_injections[bus_lookup[get_number(get_to(arc))], :] *
         base_power,
         filter(row -> row[:name] == get_name(line), phase_results)[!, :value],
         atol = 1e-9,
@@ -266,13 +266,13 @@ hvdc = only(get_components(TwoTerminalGenericHVDCLine, sys))
     # test that the power flow results for the HVDC buses match the HVDC power transfer from the simulation
     bus_lookup = PFS.get_bus_lookup(data)
     @test isapprox(
-        data.bus_activepower_injection[bus_lookup[get_number(from)], :] * base_power,
+        data.bus_active_power_injections[bus_lookup[get_number(from)], :] * base_power,
         vd["FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine"][:, "DC1"],
         atol = 1e-9,
         rtol = 0,
     )
     @test isapprox(
-        data.bus_activepower_injection[bus_lookup[get_number(to)], :] * base_power,
+        data.bus_active_power_injections[bus_lookup[get_number(to)], :] * base_power,
         vd["FlowActivePowerToFromVariable__TwoTerminalGenericHVDCLine"][:, "DC1"],
         atol = 1e-9,
         rtol = 0,
