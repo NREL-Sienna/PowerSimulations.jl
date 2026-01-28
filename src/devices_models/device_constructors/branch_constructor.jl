@@ -1157,6 +1157,22 @@ function construct_device!(
 end
 
 function construct_device!(
+    ::OptimizationContainer,
+    ::PSY.System,
+    ::ArgumentConstructStage,
+    ::DeviceModel{T, HVDCTwoTerminalLCC},
+    ::NetworkModel{N},
+) where {T <: PSY.TwoTerminalLCCLine, N <: PM.AbstractPowerModel}
+    throw(
+        ArgumentError(
+            "HVDCTwoTerminalLCC formulation requires ACPPowerModel network. " *
+            "Got $N. Use HVDCTwoTerminalLossless, HVDCTwoTerminalDispatch, or " *
+            "HVDCTwoTerminalPiecewiseLoss for DC/PTDF networks.",
+        ),
+    )
+end
+
+function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,
     ::ModelConstructStage,

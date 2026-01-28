@@ -53,6 +53,7 @@ export StaticBranchUnbounded
 export HVDCTwoTerminalLossless
 export HVDCTwoTerminalDispatch
 export HVDCTwoTerminalUnbounded
+export HVDCTwoTerminalLCC
 export PhaseAngleControl
 export PTDFBranchFlow
 
