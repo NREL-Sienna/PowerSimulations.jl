@@ -7,11 +7,12 @@
 This tutorial demonstrates how to incorporate dynamic line ratings (DLR) into unit commitment and economic dispatch problems using PowerSimulations.jl. Dynamic line ratings allow transmission line and transformer capacities to vary over time based on environmental conditions such as temperature, wind speed, and solar radiation. This capability enables more efficient use of transmission infrastructure while maintaining system reliability.
 
 In this example, we will:
-- Load and configure a power system
-- Add time-varying rating data to AC transmission branches
-- Configure device models to use dynamic ratings
-- Build and solve an optimization problem with DLR constraints
-- Analyze the results
+
+  - Load and configure a power system
+  - Add time-varying rating data to AC transmission branches
+  - Configure device models to use dynamic ratings
+  - Build and solve an optimization problem with DLR constraints
+  - Analyze the results
 
 ## Load Required Packages
 
@@ -45,21 +46,21 @@ This function adds dynamic line rating time series data to selected branches:
 
 ```julia
 function add_dlr_to_system_branches!(
-    sys::System, 
+    sys::System,
     branches_dlr::Vector{String},
-    n_steps::Int, 
+    n_steps::Int,
     dlr_factors::Vector{Float64};
     initial_date::String = "2020-01-01",
-    )
+)
     for branch_name in branches_dlr
         branch = get_component(ACTransmission, sys, branch_name)
 
         data_ts = collect(
             DateTime("$initial_date 0:00:00", "y-m-d H:M:S"):Hour(1):(
-                DateTime("$initial_date 23:00:00", "y-m-d H:M:S") + Day(n_steps-1)
-            )
+                DateTime("$initial_date 23:00:00", "y-m-d H:M:S") + Day(n_steps - 1)
+            ),
         )
-        
+
         dlr_data = TimeArray(data_ts, dlr_factors)
 
         PowerSystems.add_time_series!(
@@ -76,11 +77,12 @@ end
 ```
 
 The function takes:
-- `sys`: The power system object
-- `branches_dlr`: A vector of branch names to apply DLR
-- `n_steps`: Number of time steps in the time series
-- `dlr_factors`: Vector of scaling factors (multipliers applied to the base rating)
-- `initial_date`: Starting date for the time series, which should be consistent with the dates in the already stored time series.
+
+  - `sys`: The power system object
+  - `branches_dlr`: A vector of branch names to apply DLR
+  - `n_steps`: Number of time steps in the time series
+  - `dlr_factors`: Vector of scaling factors (multipliers applied to the base rating)
+  - `initial_date`: Starting date for the time series, which should be consistent with the dates in the already stored time series.
 
 The `scaling_factor_multiplier = get_rating` argument tells PowerSystems to multiply the time series values by the base rating of each branch.
 
@@ -110,25 +112,26 @@ sys = build_system(PSISystems, "modified_RTS_GMLC_DA_sys")
 We create a daily pattern of rating factors that repeats over the simulation horizon:
 
 ```julia
-steps_ts_horizon = 366 
+steps_ts_horizon = 366
 initial_date = "2020-01-01"
 dlr_factors_daily = vcat([fill(x, 6) for x in [1.15, 1.05, 0.95, 0.95]]...)
 dlr_factor_ts_horizon = repeat(dlr_factors_daily, steps_ts_horizon)
 ```
 
 This creates a daily pattern where:
-- Hours 0-5: 115% of base rating
-- Hours 6-11: 105% of base rating  
-- Hours 12-17: 95% of base rating
-- Hours 18-23: 95% of base rating
+
+  - Hours 0-5: 115% of base rating
+  - Hours 6-11: 105% of base rating
+  - Hours 12-17: 95% of base rating
+  - Hours 18-23: 95% of base rating
 
 ### Specify Branches with DLR
 
 We define which branches will have dynamic ratings applied:
 
 ```julia
-branches_dlr_v = ["A2", "AB1", "A24", "B10","B18", "CA-1", "C22", "C34",
-                  "A7", "A17", "B14", "B15", "C7", "C17"]
+branches_dlr_v = ["A2", "AB1", "A24", "B10", "B18", "CA-1", "C22", "C34",
+    "A7", "A17", "B14", "B15", "C7", "C17"]
 ```
 
 ### Apply DLR to the System
@@ -192,7 +195,7 @@ line_device_model = DeviceModel(
     StaticBranch;
     time_series_names = Dict(
         DynamicBranchRatingTimeSeriesParameter => "dynamic_line_ratings",
-    )
+    ),
 )
 
 TapTransf_device_model = DeviceModel(
@@ -200,7 +203,7 @@ TapTransf_device_model = DeviceModel(
     StaticBranch;
     time_series_names = Dict(
         DynamicBranchRatingTimeSeriesParameter => "dynamic_line_ratings",
-    )
+    ),
 )
 ```
 
@@ -211,8 +214,11 @@ The `time_series_names` dictionary maps the `DynamicBranchRatingTimeSeriesParame
 ```julia
 set_device_model!(template_uc, line_device_model)
 set_device_model!(template_uc, TapTransf_device_model)
-set_device_model!(template_uc, DeviceModel(TwoTerminalGenericHVDCLine,
-                                    HVDCTwoTerminalLossless))
+set_device_model!(
+    template_uc,
+    DeviceModel(TwoTerminalGenericHVDCLine,
+        HVDCTwoTerminalLossless),
+)
 ```
 
 ### Configure Reserve Services
@@ -222,11 +228,11 @@ We add operating reserve requirements to the problem:
 ```julia
 set_service_model!(
     template_uc,
-    ServiceModel(VariableReserve{ReserveUp}, RangeReserve, use_slacks = false) 
+    ServiceModel(VariableReserve{ReserveUp}, RangeReserve; use_slacks = false),
 )
 set_service_model!(
     template_uc,
-    ServiceModel(VariableReserve{ReserveDown}, RangeReserve, use_slacks = false)
+    ServiceModel(VariableReserve{ReserveDown}, RangeReserve; use_slacks = false),
 )
 ```
 
@@ -258,22 +264,22 @@ model = DecisionModel(
 For multi-stage problems or rolling horizon simulations, we set up the simulation structure:
 
 ```julia
-models = SimulationModels(
+models = SimulationModels(;
     decision_models = [model],
 )
 
-DA_sequence = SimulationSequence(
+DA_sequence = SimulationSequence(;
     models = models,
     ini_cond_chronology = InterProblemChronology(),
 )
 
 current_date = string(today())
 steps_sim = 2
-sim = Simulation(
+sim = Simulation(;
     name = current_date * "_RTS_DA" * "_" * string(steps_sim) * "steps",
     steps = steps_sim,
     models = models,
-    initial_time = DateTime(string(initial_date,"T00:00:00")),
+    initial_time = DateTime(string(initial_date, "T00:00:00")),
     sequence = DA_sequence,
     simulation_folder = tempdir())
 ```
@@ -293,16 +299,22 @@ After execution, we can extract and analyze the results:
 results = SimulationResults(sim)
 uc = get_decision_problem_results(results, "UC")
 
-Pline_df = read_realized_expression(uc, "PTDFBranchFlow__Line", table_format = TableFormat.WIDE)
-PTrafo_df = read_realized_expression(uc, "PTDFBranchFlow__TapTransformer", table_format = TableFormat.WIDE)
+Pline_df =
+    read_realized_expression(uc, "PTDFBranchFlow__Line"; table_format = TableFormat.WIDE)
+PTrafo_df = read_realized_expression(
+    uc,
+    "PTDFBranchFlow__TapTransformer";
+    table_format = TableFormat.WIDE,
+)
 
-Pline_dlr_df = Pline_df[:, ["A2", "AB1", "A24", "B10","B18", "CA-1", "C22", "C34"]]
+Pline_dlr_df = Pline_df[:, ["A2", "AB1", "A24", "B10", "B18", "CA-1", "C22", "C34"]]
 PTrafo_dlr_df = PTrafo_df[:, ["A7", "A17"]]
 ```
 
 The results show power flows on branches with dynamic ratings. These flows should respect the time-varying limits imposed by the DLR time series throughout the optimization horizon.
 
 For instance, ``Pline_dlr_df`` should look like this, where it is possible to verify that the limits imposed by the previously defined DLRs:
+
 ```
 48×8 DataFrame
  Row │ A2          AB1       A24      B10       B18        CA-1       C22        C34       
@@ -398,4 +410,5 @@ If you run the same problem but neglecting the DLRs, ``Pline_dlr_df`` results in
   47 │  -3.17089  119.776  199.082   -32.9699  -21.8616  -323.837    -79.7315  -38.5204
   48 │  -9.5247   124.305  214.477   -31.2236  -14.4773  -270.202    -56.7522  -38.8242
 ```
+
 For instance, it is posible to notice some differences in the flows through line "AB1" from time-step 42 to 44 since in the DLR case by the end of each day the line flow is constraind to 95% of its rating.

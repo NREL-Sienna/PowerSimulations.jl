@@ -24,9 +24,9 @@ links = InterLinks(
 pages = OrderedDict(
     "Welcome Page" => "index.md",
     "Tutorials" => Any[
-    "Single-step Problem" => "tutorials/decision_problem.md",
-    "Multi-stage Production Cost Simulation" => "tutorials/pcm_simulation.md",
-    "Simulations withDynamic Line Ratings" => "tutorials/dynamic_line_ratings.md",  # Add this line
+        "Single-step Problem" => "tutorials/decision_problem.md",
+        "Multi-stage Production Cost Simulation" => "tutorials/pcm_simulation.md",
+        "Simulations withDynamic Line Ratings" => "tutorials/dynamic_line_ratings.md",  # Add this line
     ],
     "How to..." => Any[
         "...register a variable in a custom operation model" => "how_to/register_variable.md",
