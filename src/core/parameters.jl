@@ -407,6 +407,7 @@ should_write_resulting_value(::Type{<:ShutdownCostParameter}) = true
 should_write_resulting_value(::Type{<:AbstractCostAtMinParameter}) = true
 should_write_resulting_value(::Type{<:AbstractPiecewiseLinearSlopeParameter}) = true
 should_write_resulting_value(::Type{<:AbstractPiecewiseLinearBreakpointParameter}) = true
+should_write_resulting_value(::Type{<:AbstractDynamicBranchRatingTimeSeriesParameter}) = true
 
 convert_result_to_natural_units(::Type{DynamicBranchRatingTimeSeriesParameter}) = true
 convert_result_to_natural_units(
