@@ -5,6 +5,9 @@ using DataStructures
 using DocumenterInterLinks
 using Literate
 
+# UPDATE FOR CURRENT MODULE NAME HERE
+const _DOCS_BASE_URL = "https://nrel-sienna.github.io/PowerSimulations.jl/stable"
+
 links = InterLinks(
     "Julia" => "https://docs.julialang.org/en/v1/",
     "InfrastructureSystems" => "https://nrel-sienna.github.io/InfrastructureSystems.jl/stable/",
