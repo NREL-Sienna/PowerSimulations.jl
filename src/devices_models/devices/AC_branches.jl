@@ -341,7 +341,6 @@ function get_equivalent_dynamic_branch_rating(
     return PSY.get_rating(branch)
 end
 
-#TODO sm/further discuss this approach which will cause negligible capacity increasing when more than 2 circuits are in parallel
 """
     get_equivalent_dynamic_branch_rating(param_container::ParameterContainer, bp::PNM.BranchesParallel{<:PSY.ACTransmission}, ts_name::String, ts_type::DataType, t::Int, ci_name::String, mult)
 
