@@ -521,6 +521,11 @@ function _onvar_cost(::PSY.CostCurve{PSY.PiecewiseIncrementalCurve})
     return 0.0
 end
 
+function _onvar_cost(::PSY.CostCurve{PSY.PiecewiseAverageCurve})
+    # Input at min is used to transform to InputOutputCurve
+    return 0.0
+end
+
 function _onvar_cost(
     ::OptimizationContainer,
     cost_function::PSY.CostCurve{T},

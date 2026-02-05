@@ -127,47 +127,6 @@ function add_variables!(
     return
 end
 
-function _add_variable_to_container!(
-    variable_container::JuMPVariableArray,
-    variable::JuMP.VariableRef,
-    entry::T,
-    ::Type{U},
-    t,
-) where {T <: PSY.ACTransmission, U <: PSY.ACTransmission}
-    if isa(entry, U)
-        name = PSY.get_name(entry)
-        variable_container[name, t] = variable
-    end
-end
-
-function _add_variable_to_container!(
-    variable_container::JuMPVariableArray,
-    variable::JuMP.VariableRef,
-    double_circuit::Set{T},
-    ::Type{T},
-    t,
-) where {T <: PSY.ACTransmission}
-    for circuit in double_circuit
-        if isa(circuit, T)
-            name = PSY.get_name(circuit) * "_double_circuit"
-            variable_container[name, t] = variable
-        end
-    end
-    return
-end
-
-function _add_variable_to_container!(
-    variable_container::JuMPVariableArray,
-    variable::JuMP.VariableRef,
-    series_chain::Vector{Any},
-    type::Type{T},
-    t,
-) where {T <: PSY.ACTransmission}
-    for segment in series_chain
-        _add_variable_to_container!(variable_container, variable, segment, type, t)
-    end
-end
-
 function add_variables!(
     container::OptimizationContainer,
     ::Type{S},

@@ -616,7 +616,6 @@ function update_decision_state!(
     model_params::ModelStoreParams,
 )
     state_data = get_decision_state_data(state, key)
-    column_names = get_column_names(key, state_data)[2]
     outages = get_column_names(key, state_data)[1]
 
     model_resolution = get_resolution(model_params)

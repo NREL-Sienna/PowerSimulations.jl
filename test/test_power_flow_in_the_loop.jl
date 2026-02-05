@@ -48,7 +48,7 @@
     # cannot easily test for the "from" bus because of the generators "Park City" and "Alta"
     bus_lookup = PFS.get_bus_lookup(data)
     @test isapprox(
-        data.bus_activepower_injection[bus_lookup[get_number(get_to(arc))], :] *
+        data.bus_active_power_injections[bus_lookup[get_number(get_to(arc))], :] *
         base_power,
         filter(row -> row[:name] == get_name(line), phase_results)[!, :value],
         atol = 1e-9,
@@ -161,65 +161,194 @@ end
     # reductions. we'd have to pass kwargs all the way down to add_power_flow_data!.
 end
 
-"""
-Remove components from a system while preserving time series data on other components.
-(There ought to be a better way to do this than this roundabout method, but I have yet to find one:
-simply removing the time series on the components to be removed is not sufficient.)
-"""
-function remove_components!(sys::System, components::Vector{PSY.StaticInjection})
-    # record the time series
-    key_to_comp = Dict{TimeSeriesKey, Vector{PSY.Component}}()
-    key_to_ts = Dict{TimeSeriesKey, Union{AbstractDeterministic, SingleTimeSeries}}()
-    for comp in get_components(PSY.Device, sys)
-        for key in PSY.get_time_series_keys(comp)
-            a = get!(key_to_comp, key, [])
-            push!(a, comp)
-            ts = PSY.get_time_series(comp, key)
-            if key in keys(key_to_ts)
-                @assert ts == key_to_ts[key] "Mismatched time series for key $key"
-            end
-            key_to_ts[key] = deepcopy(ts)
-        end
-    end
-    # remove all time series
-    clear_time_series!(sys)
-    # remove the components
-    removed_components = Set{PSY.Component}()
-    for c in components
-        push!(removed_components, c)
-        remove_component!(sys, c)
-    end
-    # add back the time series
-    for (key, comps) in key_to_comp
-        for comp in comps
-            if comp ∉ removed_components
-                ts = key_to_ts[key]
-                if !(ts isa DeterministicSingleTimeSeries)
-                    add_time_series!(sys, comp, ts)
-                end
-            end
-        end
-    end
-    for ts in values(key_to_ts)
-        if ts isa AbstractDeterministic
-            transform_single_time_series!(sys, get_horizon(ts), get_interval(ts))
-            break
-        end
-    end
-    return
+# already has a TwoTerminalGenericHVDCLine
+replace_hvdc!(::PSY.System, ::Type{TwoTerminalGenericHVDCLine}) = nothing
+
+function replace_hvdc!(sys::PSY.System, ::Type{TwoTerminalVSCLine})
+    # required fields for constructor:
+    # name, available, arc, active_power_flow, rating, active_power_limits_from,
+    # active_power_limits_to
+    old_hvdc = only(get_components(TwoTerminalGenericHVDCLine, sys))
+    remove_component!(sys, old_hvdc)
+    hvdc = TwoTerminalVSCLine(;
+        name = get_name(old_hvdc),
+        available = true,
+        arc = get_arc(old_hvdc),
+        active_power_flow = get_active_power_flow(old_hvdc),
+        rating = 100.0, # arbitrary
+        active_power_limits_from = get_active_power_limits_from(old_hvdc),
+        active_power_limits_to = get_active_power_limits_to(old_hvdc),
+    )
+    add_component!(sys, hvdc)
 end
 
-# failing due to changes in PowerFlows.jl: HVDC flows are stored separately, and not
-# currently reported.
-#=
-@testset "HVDC with AC PF in the loop" begin
+function replace_hvdc!(sys::PSY.System, ::Type{TwoTerminalLCCLine})
+    # required fields for constructor (yikes):
+    # name, available, arc, active_power_flow, r, transfer_setpoint, scheduled_dc_voltage,
+    # rectifier_bridges, rectifier_delay_angle_limits, rectifier_rc, rectifier_xc, 
+    #rectifier_base_voltage, inverter_bridges, inverter_extinction_angle_limits, 
+    # inverter_rc, inverter_xc, inverter_base_voltage, 
+    old_hvdc = only(get_components(TwoTerminalGenericHVDCLine, sys))
+    remove_component!(sys, old_hvdc)
+    # hand-tuned parameters.
+    r = 0.01
+    xr = 0.01
+    xi = 0.01
+    hvdc = TwoTerminalLCCLine(;
+        name = get_name(old_hvdc),
+        available = true,
+        arc = get_arc(old_hvdc),
+        active_power_flow = get_active_power_flow(old_hvdc),
+        r = r,
+        transfer_setpoint = 50,
+        scheduled_dc_voltage = 200.0,
+        rectifier_bridges = 1,
+        rectifier_delay_angle_limits = (min = 0.0, max = π / 2),
+        rectifier_rc = 0.0,
+        rectifier_xc = xr,
+        rectifier_base_voltage = 100.0,
+        inverter_bridges = 1,
+        inverter_extinction_angle_limits = (min = 0, max = π / 2),
+        inverter_rc = 0.0,
+        inverter_xc = xi,
+        inverter_base_voltage = 100.0,
+        # rest are optional.
+        #=power_mode = true,
+        switch_mode_voltage = 0.0,
+        compounding_resistance = 0.0,
+        min_compounding_voltage = 0.0,
+        rectifier_transformer_ratio = 1.0,
+        rectifier_tap_setting = 1.0,
+        rectifier_tap_limits = (min = 0.5, max = 1.5),
+        rectifier_tap_step = 0.05,
+        rectifier_delay_angle = 0.01,
+        rectifier_capacitor_reactance = 0.0,
+        inverter_transformer_ratio = 1.0,
+        inverter_tap_setting = 1.0,
+        inverter_tap_limits = (min = 0.5, max = 1.5),
+        inverter_tap_step = 0.05,
+        inverter_extinction_angle = 0.0,
+        inverter_capacitor_reactance = 0.0,
+        active_power_limits_from = (min = 0.0, max = 0.0),
+        active_power_limits_to = (min = 0.0, max = 0.0),
+        reactive_power_limits_from = (min = 0.0, max = 0.0),
+        reactive_power_limits_to = (min = 0.0, max = 0.0),=#
+    )
+    add_component!(sys, hvdc)
+end
+
+@testset "HVDCs with DC PF in the loop" begin
+    for hvdc_type in (TwoTerminalGenericHVDCLine, TwoTerminalLCCLine, TwoTerminalVSCLine)
+        sys = build_system(PSISystems, "2Area 5 Bus System")
+        replace_hvdc!(sys, hvdc_type)
+
+        template_uc =
+            ProblemTemplate(
+                NetworkModel(PTDFPowerModel; power_flow_evaluation = DCPowerFlow()),
+            )
+
+        set_device_model!(template_uc, ThermalStandard, ThermalBasicUnitCommitment)
+        set_device_model!(template_uc, RenewableDispatch, RenewableFullDispatch)
+        set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
+        set_device_model!(template_uc, DeviceModel(Line, StaticBranch))
+
+        if hvdc_type == TwoTerminalVSCLine
+            set_device_model!(
+                template_uc,
+                # regardless of formulation, PowerFlows.jl always takes losses into account...
+                DeviceModel(hvdc_type, HVDCTwoTerminalLossless),
+            )
+        else
+            set_device_model!(
+                template_uc,
+                DeviceModel(hvdc_type, HVDCTwoTerminalDispatch),
+            )
+        end
+
+        model = DecisionModel(template_uc, sys; name = "UC", optimizer = HiGHS_optimizer)
+
+        @test build!(model; output_dir = mktempdir()) == PSI.ModelBuildStatus.BUILT
+        @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    end
+end
+
+@testset "LCC HVDC with AC PF in the loop" begin
+    sys5 = build_system(PSISystems, "2Area 5 Bus System")
+    hvdc = first(get_components(TwoTerminalGenericHVDCLine, sys5))
+    lcc = TwoTerminalLCCLine(;
+        name = "lcc",
+        available = true,
+        arc = hvdc.arc,
+        active_power_flow = 0.1,
+        r = 0.000189,
+        transfer_setpoint = -100.0,
+        scheduled_dc_voltage = 7.5,
+        rectifier_bridges = 2,
+        rectifier_delay_angle_limits = (min = 0.31590, max = 1.570),
+        rectifier_rc = 2.6465e-5,
+        rectifier_xc = 0.001092,
+        rectifier_base_voltage = 230.0,
+        inverter_bridges = 2,
+        inverter_extinction_angle_limits = (min = 0.3037, max = 1.57076),
+        inverter_rc = 2.6465e-5,
+        inverter_xc = 0.001072,
+        inverter_base_voltage = 230.0,
+        power_mode = true,
+        switch_mode_voltage = 0.0,
+        compounding_resistance = 0.0,
+        min_compounding_voltage = 0.0,
+        rectifier_transformer_ratio = 0.09772,
+        rectifier_tap_setting = 1.0,
+        rectifier_tap_limits = (min = 1, max = 1),
+        rectifier_tap_step = 0.00624,
+        rectifier_delay_angle = 0.31590,
+        rectifier_capacitor_reactance = 0.1,
+        inverter_transformer_ratio = 0.07134,
+        inverter_tap_setting = 1.0,
+        inverter_tap_limits = (min = 1, max = 1),
+        inverter_tap_step = 0.00625,
+        inverter_extinction_angle = 0.31416,
+        inverter_capacitor_reactance = 0.0,
+        active_power_limits_from = (min = -3.0, max = 3.0),
+        active_power_limits_to = (min = -3.0, max = 3.0),
+        reactive_power_limits_from = (min = -3.0, max = 3.0),
+        reactive_power_limits_to = (min = -3.0, max = 3.0),
+    )
+
+    add_component!(sys5, lcc)
+    remove_component!(sys5, hvdc)
+
+    template = get_thermal_dispatch_template_network(
+        NetworkModel(
+            ACPPowerModel;
+            use_slacks = false,
+            power_flow_evaluation = ACPowerFlow(),
+        ),
+    )
+
+    set_device_model!(template, TwoTerminalLCCLine, PSI.HVDCTwoTerminalLCC)
+    set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
+
+    model = DecisionModel(
+        template,
+        sys5;
+        optimizer = optimizer_with_attributes(Ipopt.Optimizer),
+        horizon = Hour(2),
+    )
+    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+end
+
+@testset "generic HVDC with AC PF in the loop" begin
+    # TODO replace RTS with something smaller, so this test case doesn't take so long.
     sys = build_system(PSISystems, "RTS_GMLC_DA_sys")
 
-hvdc = only(get_components(TwoTerminalGenericHVDCLine, sys))
+    hvdc = only(get_components(TwoTerminalGenericHVDCLine, sys))
     from = get_from(get_arc(hvdc))
     to = get_to(get_arc(hvdc))
 
-    # remove components that impact total bus power at the HVDC line buses
+    # remove components that impact total bus power at the HVDC line buses.
     components = collect(
         get_components(
             x -> get_number(get_bus(x)) ∈ (get_number(from), get_number(to)),
@@ -227,7 +356,7 @@ hvdc = only(get_components(TwoTerminalGenericHVDCLine, sys))
             sys,
         ),
     )
-    remove_components!(sys, components)
+    foreach(x -> remove_component!(sys, x), components)
     change_to_PQ = ["Chifa", "Arne"]
     for bus_name in change_to_PQ
         bus = get_component(PSY.ACBus, sys, bus_name)
@@ -265,20 +394,34 @@ hvdc = only(get_components(TwoTerminalGenericHVDCLine, sys))
 
     # test that the power flow results for the HVDC buses match the HVDC power transfer from the simulation
     bus_lookup = PFS.get_bus_lookup(data)
+
+    from_to = vd["FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine"][:, :value]
+    to_from = vd["FlowActivePowerToFromVariable__TwoTerminalGenericHVDCLine"][:, :value]
+
     @test isapprox(
-        data.bus_activepower_injection[bus_lookup[get_number(from)], :] * base_power,
-        vd["FlowActivePowerFromToVariable__TwoTerminalGenericHVDCLine"][:, "DC1"],
+        data.bus_active_power_injections[bus_lookup[get_number(from)], :] * base_power,
+        -1 .* from_to,
         atol = 1e-9,
         rtol = 0,
     )
+    # take into account losses in the HVDC line here. [Why does the above pass, then?]
+    hvdc_loss_curve = get_loss(hvdc)
+    # check that our hard-coded numbers are correct.
+    @assert hvdc_loss_curve isa PSY.LinearCurve
+    @assert get_proportional_term(hvdc_loss_curve) == 0.1
+    @assert get_constant_term(hvdc_loss_curve) == 0.0
+    nonzeros = (abs.(from_to) .> 1e-9) .| (abs.(to_from) .> 1e-9)
+    loss_ratios = (from_to .+ to_from) ./ maximum.(zip(abs.(from_to), abs.(to_from)))
+    ten_percent_loss = abs.(loss_ratios .- 0.1) .< 1e-9
+    @test all(ten_percent_loss[nonzeros])
+
     @test isapprox(
-        data.bus_activepower_injection[bus_lookup[get_number(to)], :] * base_power,
-        vd["FlowActivePowerToFromVariable__TwoTerminalGenericHVDCLine"][:, "DC1"],
+        data.bus_active_power_injections[bus_lookup[get_number(to)], :] * base_power * 0.9,
+        -1 .* to_from,
         atol = 1e-9,
         rtol = 0,
     )
 end
-=#
 
 @testset "Test AC power flow in the loop: small system UCED, PSS/E export" for calculate_loss_factors in
                                                                                (true, false)
