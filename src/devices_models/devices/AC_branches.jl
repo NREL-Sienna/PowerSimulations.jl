@@ -335,7 +335,7 @@ function get_equivalent_dynamic_branch_rating(
 ) where {U <: PSY.ACTransmission}
     if PSY.has_time_series(branch, ts_type, ts_name)
         branch_dlr_params = get_parameter_column_refs(param_container, get_name(branch))
-        return branch_dlr_params[t] * mult[ci_name, t]
+        return branch_dlr_params[t] * mult[get_name(branch), t]
     end
 
     return PSY.get_rating(branch)

@@ -300,15 +300,6 @@ end
             line_to_add_parallel,
             PSY.Line,
         )
-        template = get_thermal_dispatch_template_network(
-            NetworkModel(
-                PTDFPowerModel;
-                PTDF_matrix = PTDF(sys),
-            ),
-        )
-
-        set_device_model!(template, line_device_model)
-        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         add_dlr_to_system_branches!(
             sys,
@@ -317,6 +308,15 @@ end
             dlr_factors;
             initial_date = "2024-01-01",
         )
+
+        template = get_thermal_dispatch_template_network(
+            NetworkModel(
+                PTDFPowerModel;
+                PTDF_matrix = PTDF(sys),
+            ),
+        )
+        set_device_model!(template, line_device_model)
+        ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
 
         @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
               PSI.ModelBuildStatus.BUILT
