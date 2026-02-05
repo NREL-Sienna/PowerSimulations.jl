@@ -1360,8 +1360,8 @@ function _get_data_for_tdc(
             end
             ini_conds[idx, 1] = ic
             ini_conds[idx, 2] = initial_conditions_off[ix]
-            up_val = round(Float64, time_limits.up * steps_per_hour, RoundUp)
-            down_val = round(Float64, time_limits.down * steps_per_hour, RoundUp)
+            up_val = round(time_limits.up * steps_per_hour, RoundUp)
+            down_val = round(time_limits.down * steps_per_hour, RoundUp)
             time_params[idx] = (up = up_val, down = down_val)
         end
     end
