@@ -402,7 +402,7 @@ _update_pf_data_component!(
     index,
     t,
     value,
-) = (pf_data.bus_reactivepower_withdrawals[index, t] -= value)
+) = (pf_data.bus_reactive_power_withdrawals[index, t] -= value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
     ::Union{Val{:voltage_angle_export}, Val{:voltage_angle_opf}},
