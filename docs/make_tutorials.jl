@@ -85,7 +85,8 @@ function preprocess_admonitions_for_notebook(str::AbstractString)
     out = String[]
     i = 1
     n = length(lines)
-    admonition_start = r"^# !!! (note|info|tip|warning|danger|compat|todo|details)(?:\s+\"([^\"]*)\")?\s*$"
+    admonition_start =
+        r"^# !!! (note|info|tip|warning|danger|compat|todo|details)(?:\s+\"([^\"]*)\")?\s*$"
     content_line = r"^#     (.*)$"  # Documenter admonition body: # then 4 spaces
     blank_comment = r"^#\s*$"      # # or # with only spaces
 
@@ -335,7 +336,8 @@ function make_tutorials()
                     credit = false,
                     execute = false,
                     preprocess = preprocess_admonitions_for_notebook,
-                    postprocess = nb -> add_image_links(add_pkg_status_to_notebook(nb), outputfile))
+                    postprocess = nb ->
+                        add_image_links(add_pkg_status_to_notebook(nb), outputfile))
             end
         end
     end

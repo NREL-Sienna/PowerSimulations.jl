@@ -15,7 +15,7 @@
  7. [`HVDCTwoTerminalLCC`](#HVDCTwoTerminalLCC)
  8. [`PhaseAngleControl`](#PhaseAngleControl)
  9. [`TwoTerminalLCCLine`](#TwoTerminalLCCLine)
- 10. [Valid configurations](#Valid-configurations)
+10. [Valid configurations](#Valid-configurations)
 
 ## `StaticBranch`
 
