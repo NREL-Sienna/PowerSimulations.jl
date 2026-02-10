@@ -12,9 +12,10 @@
  4. [`HVDCTwoTerminalUnbounded`](#HVDCTwoTerminalUnbounded)
  5. [`HVDCTwoTerminalLossless`](#HVDCTwoTerminalLossless)
  6. [`HVDCTwoTerminalDispatch`](#HVDCTwoTerminalDispatch)
- 7. [`PhaseAngleControl`](#PhaseAngleControl)
- 8. [`TwoTerminalLCCLine`](#TwoTerminalLCCLine)
- 9. [Valid configurations](#Valid-configurations)
+ 7. [`HVDCTwoTerminalLCC`](#HVDCTwoTerminalLCC)
+ 8. [`PhaseAngleControl`](#PhaseAngleControl)
+ 9. [`TwoTerminalLCCLine`](#TwoTerminalLCCLine)
+ 10. [Valid configurations](#Valid-configurations)
 
 ## `StaticBranch`
 
@@ -303,6 +304,16 @@ In addition, the `HVDCLosses` are subtracted to the `from` bus in the `ActivePow
 & f_t^\text{to-from} - f_t^\text{from-to} \le \ell_t,\quad \forall t \in \{1,\dots, T\} \\
 & f_t^\text{from-to} - f_t^\text{to-from} \le \ell_t,\quad \forall t \in \{1,\dots, T\} 
 \end{align*}
+```
+
+* * *
+
+## `HVDCTwoTerminalLCC`
+
+TODO
+
+```@docs
+HVDCTwoTerminalLCC
 ```
 
 * * *
