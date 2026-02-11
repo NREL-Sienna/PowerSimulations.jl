@@ -322,6 +322,14 @@ _get_bus_component_tuples(pfd::PFS.SystemPowerFlowContainer) =
         c in PSY.get_available_components(PSY.ACBus, PFS.get_system(pfd))
     ]
 
+function _with_time_steps(pf::T, n::Int) where {T <: PFS.PowerFlowEvaluationModel}
+    fields = Dict(fn => getfield(pf, fn) for fn in fieldnames(T))
+    fields[:time_steps] = n
+    return T(; fields...)
+end
+
+_with_time_steps(pf::PFS.PSSEExportPowerFlow, ::Int) = pf # exporter doesn't use time_steps
+
 function add_power_flow_data!(
     container::OptimizationContainer,
     evaluators::Vector{PFS.PowerFlowEvaluationModel},
@@ -333,10 +341,13 @@ function add_power_flow_data!(
     branch_aux_var_components =
         Dict{Type{<:AuxVariableType}, Set{Tuple{<:DataType, String}}}()
     bus_aux_var_components = Dict{Type{<:AuxVariableType}, Set{Tuple{<:DataType, <:Int}}}()
+    # we ought to be providing the time_steps when constructing the PF evaluation model,
+    # but that value isn't known until runtime (and PF evaluation model is immutable).
+    n_time_steps = length(get_time_steps(container))
     for evaluator in evaluators
+        evaluator = _with_time_steps(evaluator, n_time_steps)
         @info "Building PowerFlow evaluator using $(evaluator)"
-        pf_data = PFS.make_power_flow_container(evaluator, sys;
-            time_steps = length(get_time_steps(container)))
+        pf_data = PFS.make_power_flow_container(evaluator, sys)
         pf_e_data = PowerFlowEvaluationData(pf_data)
         my_branch_aux_vars = branch_aux_vars(pf_data)
         my_bus_aux_vars = bus_aux_vars(pf_data)
