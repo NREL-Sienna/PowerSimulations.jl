@@ -1,10 +1,8 @@
-# ```@meta
-# EditURL = "decision_problem.jl"
-# ```
-#
-# # [Operations problems with [PowerSimulations.jl](https://github.com/NREL-Sienna/PowerSimulations.jl)](@id op_problem_tutorial)
-#
-# **Originally Contributed by**: Clayton Barrows
+#!nb # ```@meta
+#!nb # EditURL = "decision_problem.jl"
+#!nb # ```
+#!nb #
+# # Running a Simple-Step Problem
 #
 # ## Introduction
 #

@@ -1,18 +1,16 @@
-# ```@meta
-# EditURL = "pcm_simulation.jl"
-# ```
-#
-# # [Sequential Simulations with [PowerSimulations.jl](https://github.com/NREL-Sienna/PowerSimulations.jl)](@id pcm_tutorial)
-#
-# **Originally Contributed by**: Clayton Barrows
+#!nb # ```@meta
+#!nb # EditURL = "pcm_simulation.jl"
+#!nb # ```
+#!nb #
+# # Running a Multi-Stage Production Cost Simulation
 #
 # ## Introduction
 #
 # PowerSimulations.jl supports simulations that consist of sequential optimization problems
 # where results from previous problems inform subsequent problems in a variety of ways. This
 # example demonstrates some of these capabilities to represent electricity market clearing.
-# This example is intended to be an extension of the
-# [OperationsProblem tutorial.](@ref op_problem_tutorial)
+# This example is intended to be an extension of the tutorial on 
+# [Running a Simple-Step Problem](@ref).
 #
 # ### Load Packages
 
