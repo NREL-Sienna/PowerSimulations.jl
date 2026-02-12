@@ -750,7 +750,6 @@ Finally, multi temperature start/stop constraints are implemented using the foll
 
 * * *
 
-
 ## Valid configurations
 
 Valid `DeviceModel`s for subtypes of `ThermalGen` include the following:

@@ -187,4 +187,3 @@ Adds the `ActivePowerBalance` constraint to balance the active power of all comp
 ```
 
 This includes the flows of lines based on the PTDF factors.
-
