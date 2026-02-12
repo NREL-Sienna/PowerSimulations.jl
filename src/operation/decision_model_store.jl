@@ -105,6 +105,19 @@ function write_result!(
     key::OptimizationContainerKey,
     index::DecisionModelIndexType,
     update_timestamp::Dates.DateTime,
+    array::DenseAxisArray{T, 1, <:Tuple{UnitRange}},
+) where {T}
+    container = getfield(store, get_store_container_type(key))
+    container[key][index] = array
+    return
+end
+
+function write_result!(
+    store::DecisionModelStore,
+    name::Symbol,
+    key::OptimizationContainerKey,
+    index::DecisionModelIndexType,
+    update_timestamp::Dates.DateTime,
     array::DenseAxisArray{T, 3, <:Tuple{Vector{String}, Vector{String}, UnitRange{Int}}},
 ) where {T}
     container = getfield(store, get_store_container_type(key))
