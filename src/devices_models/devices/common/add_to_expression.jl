@@ -471,7 +471,7 @@ function add_to_expression!(
     ::DeviceModel{V, W},
     network_model::NetworkModel{PTDFPowerModel},
 ) where {
-    T <: ActivePowerBalanc,
+    T <: ActivePowerBalance,
     U <: FlowActivePowerToFromVariable,
     V <: PSY.TwoTerminalHVDC,
     W <: AbstractTwoTerminalDCLineFormulation,
