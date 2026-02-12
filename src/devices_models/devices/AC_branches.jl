@@ -27,7 +27,7 @@ get_parameter_multiplier(::UpperBoundValueParameter, ::PSY.ACTransmission, ::Abs
 
 get_variable_multiplier(::PhaseShifterAngle, d::PSY.PhaseShiftingTransformer, ::PhaseAngleControl) = 1.0/PSY.get_x(d)
 
-get_multiplier_value(::AbstractDynamicBranchRatingTimeSeriesParameter, d::PSY.ACTransmission, ::StaticBranch) = 1.0/PSY.get_base_power(d)
+get_multiplier_value(::AbstractDynamicBranchRatingTimeSeriesParameter, d::PSY.ACTransmission, ::StaticBranch) = PSY.get_rating(d)
 
 
 get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, U}) where {T <: PSY.ACTransmission, U <: AbstractBranchFormulation} = DeviceModel(T, U)
@@ -380,6 +380,18 @@ function add_constraints!(
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
+
+    has_dlr_ts =
+        haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
+    if has_dlr_ts
+        ts_name =
+            get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
+        ts_type = get_default_time_series_type(container)
+        param_container =
+            get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
+        mult = get_multiplier_array(param_container)
+    end
+
     for (name, (arc, reduction)) in
         get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][T]
         # TODO: entry is not type stable here, it can return any type ACTransmission.
@@ -387,6 +399,18 @@ function add_constraints!(
         reduction_entry = all_branch_maps_by_type[reduction][T][arc]
         limits = get_min_max_limits(reduction_entry, FlowRateConstraint, U)
         for t in time_steps
+            if has_dlr_ts
+                limits =
+                    get_dynamic_branch_rating_min_max_limits(
+                        param_container,
+                        reduction_entry,
+                        ts_name,
+                        ts_type,
+                        t,
+                        name,
+                        mult)
+                @debug "Dynamic Branch Rating applied for branch $(name) at time step $(t): min=$(limits.min), max=$(limits.max)"
+            end
             con_ub[name, t] =
                 JuMP.@constraint(get_jump_model(container),
                     array[name, t] -
@@ -450,6 +474,18 @@ function add_constraints!(
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)
     end
+
+    has_dlr_ts =
+        haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
+    if has_dlr_ts
+        ts_name =
+            get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
+        ts_type = get_default_time_series_type(container)
+        param_container =
+            get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
+        mult = get_multiplier_array(param_container)
+    end
+
     for (name, (arc, reduction)) in
         get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][T]
         # TODO: entry is not type stable here, it can return any type ACTransmission.
@@ -457,6 +493,18 @@ function add_constraints!(
         reduction_entry = all_branch_maps_by_type[reduction][T][arc]
         limits = get_min_max_limits(reduction_entry, FlowRateConstraint, U)
         for t in time_steps
+            if has_dlr_ts
+                limits =
+                    get_dynamic_branch_rating_min_max_limits(
+                        param_container,
+                        reduction_entry,
+                        ts_name,
+                        ts_type,
+                        t,
+                        name,
+                        mult)
+                @debug "Dynamic Branch Rating applied for branch $(name) at time step $(t): min=$(limits.min), max=$(limits.max)"
+            end
             con_ub[name, t] =
                 JuMP.@constraint(get_jump_model(container),
                     array[name, t] -
