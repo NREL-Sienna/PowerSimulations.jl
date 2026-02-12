@@ -11,7 +11,7 @@ Assume that setup commands have been run:
 
 ```julia
 using PowerSimulations
-const PSI = PowerSimulations
+import PowerSimulations as PSI
 ```
 
 Note that for all functions below you can optionally specify a function to filter events.

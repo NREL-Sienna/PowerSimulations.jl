@@ -9,8 +9,7 @@ Abstract type for Decision Problems
 
 # Example
 
-import PowerSimulations
-const PSI = PowerSimulations
+import PowerSimulations as PSI
 struct MyCustomProblem <: PSI.DecisionProblem
 """
 abstract type DecisionProblem end
@@ -20,8 +19,7 @@ Abstract type for Emulation Problems
 
 # Example
 
-import PowerSimulations
-const PSI = PowerSimulations
+import PowerSimulations as PSI
 struct MyCustomEmulator <: PSI.EmulationProblem
 """
 abstract type EmulationProblem end

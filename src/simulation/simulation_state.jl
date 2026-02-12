@@ -616,7 +616,6 @@ function update_decision_state!(
     model_params::ModelStoreParams,
 )
     state_data = get_decision_state_data(state, key)
-    column_names = get_column_names(key, state_data)[2]
     outages = get_column_names(key, state_data)[1]
 
     model_resolution = get_resolution(model_params)
@@ -786,7 +785,15 @@ function update_system_state!(
     if typeof(store) == HdfSimulationStore
         set_dataset_values!(state, key, 1, res)
     else
-        set_dataset_values!(state, key, 1, res[:, ix])
+        # Handle different dimensionality of results
+        num_dims = ndims(res)
+        if num_dims == 2
+            set_dataset_values!(state, key, 1, res[:, ix])
+        elseif num_dims == 3
+            set_dataset_values!(state, key, 1, res[:, :, ix])
+        else
+            error("Unsupported number of dimensions for emulation result: $num_dims")
+        end
     end
     set_last_recorded_row!(dataset, 1)
     return

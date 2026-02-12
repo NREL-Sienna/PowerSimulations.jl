@@ -6,7 +6,7 @@ using PowerNetworkMatrices
 using Logging
 using Test
 
-using PowerModels
+import PowerModels as PM
 using DataFrames
 using Dates
 using JuMP
@@ -18,12 +18,12 @@ import UUIDs
 using Random
 import Serialization
 
-const PM = PowerModels
-const PSY = PowerSystems
-const PSI = PowerSimulations
+import PowerSystems as PSY
+import PowerSimulations as PSI
+import InfrastructureSystems as IS
+
 const PSB = PowerSystemCaseBuilder
 
-const IS = InfrastructureSystems
 const BASE_DIR = string(dirname(dirname(pathof(PowerSimulations))))
 const DATA_DIR = joinpath(BASE_DIR, "test/test_data")
 

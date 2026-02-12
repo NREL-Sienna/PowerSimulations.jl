@@ -1044,10 +1044,12 @@ function _add_vom_cost_to_objective_helper!(
         power_units,
         base_power,
         device_base_power)
+    resolution = get_resolution(container)
+    dt = Dates.value(resolution) / MILLISECONDS_IN_HOUR
     for t in get_time_steps(container)
-        exp = _add_proportional_term!(container, T(), d, cost_term_normalized * multiplier,
-            t)
-        add_to_expression!(container, ProductionCostExpression, exp, d, t)
+        exp = _add_proportional_term!(
+            container, T(), component, cost_term_normalized * multiplier * dt, t)
+        add_to_expression!(container, ProductionCostExpression, exp, component, t)
     end
     return
 end

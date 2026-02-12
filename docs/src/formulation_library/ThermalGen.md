@@ -24,8 +24,7 @@ Thermal generation formulations define the optimization models that describe the
  6. [`ThermalBasicCompactUnitCommitment`](#ThermalBasicCompactUnitCommitment)
  7. [`ThermalStandardUnitCommitment`](#ThermalStandardUnitCommitment)
  8. [`ThermalMultiStartUnitCommitment`](#ThermalMultiStartUnitCommitment)
- 9. [`ThermalSecurityConstrainedStandardUnitCommitment`](#ThermalSecurityConstrainedStandardUnitCommitment)
-10. [Valid configurations](#Valid-configurations)
+ 9. [Valid configurations](#Valid-configurations)
 
 * * *
 
@@ -748,16 +747,6 @@ Finally, multi temperature start/stop constraints are implemented using the foll
 & D^\text{warm} y_t^\text{th} \le \sum_{i=1}^t (1 - u_i^\text{th}) +  D^\text{init,warm}, \quad \forall t \in \{1, \dots, T\} \\
 \end{align*}
 ```
-
-* * *
-
-## `ThermalSecurityConstrainedStandardUnitCommitment`
-
-```@docs
-ThermalSecurityConstrainedStandardUnitCommitment
-```
-
-TODO
 
 * * *
 

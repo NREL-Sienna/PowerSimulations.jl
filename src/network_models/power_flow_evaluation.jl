@@ -322,6 +322,14 @@ _get_bus_component_tuples(pfd::PFS.SystemPowerFlowContainer) =
         c in PSY.get_available_components(PSY.ACBus, PFS.get_system(pfd))
     ]
 
+function _with_time_steps(pf::T, n::Int) where {T <: PFS.PowerFlowEvaluationModel}
+    fields = Dict(fn => getfield(pf, fn) for fn in fieldnames(T))
+    fields[:time_steps] = n
+    return T(; fields...)
+end
+
+_with_time_steps(pf::PFS.PSSEExportPowerFlow, ::Int) = pf # exporter doesn't use time_steps
+
 function add_power_flow_data!(
     container::OptimizationContainer,
     evaluators::Vector{PFS.PowerFlowEvaluationModel},
@@ -333,10 +341,13 @@ function add_power_flow_data!(
     branch_aux_var_components =
         Dict{Type{<:AuxVariableType}, Set{Tuple{<:DataType, String}}}()
     bus_aux_var_components = Dict{Type{<:AuxVariableType}, Set{Tuple{<:DataType, <:Int}}}()
+    # we ought to be providing the time_steps when constructing the PF evaluation model,
+    # but that value isn't known until runtime (and PF evaluation model is immutable).
+    n_time_steps = length(get_time_steps(container))
     for evaluator in evaluators
+        evaluator = _with_time_steps(evaluator, n_time_steps)
         @info "Building PowerFlow evaluator using $(evaluator)"
-        pf_data = PFS.make_power_flow_container(evaluator, sys;
-            time_steps = length(get_time_steps(container)))
+        pf_data = PFS.make_power_flow_container(evaluator, sys)
         pf_e_data = PowerFlowEvaluationData(pf_data)
         my_branch_aux_vars = branch_aux_vars(pf_data)
         my_bus_aux_vars = bus_aux_vars(pf_data)
@@ -378,7 +389,7 @@ _update_pf_data_component!(
     index,
     t,
     value,
-) = (pf_data.bus_activepower_injection[index, t] += value)
+) = (pf_data.bus_active_power_injections[index, t] += value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
     ::Val{:active_power},
@@ -386,7 +397,7 @@ _update_pf_data_component!(
     index,
     t,
     value,
-) = (pf_data.bus_activepower_withdrawals[index, t] -= value)
+) = (pf_data.bus_active_power_withdrawals[index, t] -= value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
     ::Val{:reactive_power},
@@ -394,7 +405,7 @@ _update_pf_data_component!(
     index,
     t,
     value,
-) = (pf_data.bus_reactivepower_injection[index, t] += value)
+) = (pf_data.bus_reactive_power_injections[index, t] += value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
     ::Val{:reactive_power},
@@ -402,7 +413,7 @@ _update_pf_data_component!(
     index,
     t,
     value,
-) = (pf_data.bus_reactivepower_withdrawals[index, t] -= value)
+) = (pf_data.bus_reactive_power_withdrawals[index, t] -= value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
     ::Union{Val{:voltage_angle_export}, Val{:voltage_angle_opf}},
@@ -426,7 +437,7 @@ _update_pf_data_component!(
     index,
     t,
     value,
-) = (pf_data.bus_activepower_injection[index, t] -= value)
+) = (pf_data.bus_active_power_injections[index, t] -= value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
     ::Val{:active_power_hvdc_pst_to_from},
@@ -434,7 +445,7 @@ _update_pf_data_component!(
     index,
     t,
     value,
-) = (pf_data.bus_activepower_injection[index, t] += value)
+) = (pf_data.bus_active_power_injections[index, t] += value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
     ::Val{:active_power_hvdc_pst_from_to},
@@ -442,7 +453,7 @@ _update_pf_data_component!(
     index,
     t,
     value,
-) = (pf_data.bus_activepower_injection[index, t] -= value)
+) = (pf_data.bus_active_power_injections[index, t] -= value)
 _update_pf_data_component!(
     pf_data::PFS.PowerFlowData,
     ::Val{:active_power_hvdc_pst_to_from},
@@ -450,7 +461,7 @@ _update_pf_data_component!(
     index,
     t,
     value,
-) = (pf_data.bus_activepower_injection[index, t] += value)
+) = (pf_data.bus_active_power_injections[index, t] += value)
 
 function _write_value_to_pf_data!(
     pf_data::PFS.PowerFlowData,
@@ -566,17 +577,17 @@ function latest_solved_power_flow_evaluation_data(container::OptimizationContain
     return datas[findlast(x -> x.is_solved, datas)]
 end
 
-function solve_powerflow!(
+function solve_power_flow!(
     pf_e_data::PowerFlowEvaluationData,
     container::OptimizationContainer)
     pf_data = get_power_flow_data(pf_e_data)
     if PFS.supports_multi_period(pf_data)
         update_pf_data!(pf_e_data, container)
-        PFS.solve_powerflow!(pf_data)
+        PFS.solve_power_flow!(pf_data)
     else
         for t in get_time_steps(container)
             update_pf_data!(pf_e_data, container, t)
-            PFS.solve_powerflow!(pf_data)
+            PFS.solve_power_flow!(pf_data)
         end
     end
     pf_e_data.is_solved = true
@@ -593,13 +604,13 @@ _get_pf_result(::Type{PowerFlowVoltageAngle}, pf_data::PFS.PowerFlowData) =
 _get_pf_result(::Type{PowerFlowVoltageMagnitude}, pf_data::PFS.PowerFlowData) =
     PFS.get_bus_magnitude(pf_data)
 _get_pf_result(::Type{PowerFlowLineReactivePowerFromTo}, pf_data::PFS.PowerFlowData) =
-    PFS.get_arc_reactivepower_flow_from_to(pf_data)
+    PFS.get_arc_reactive_power_flow_from_to(pf_data)
 _get_pf_result(::Type{PowerFlowLineReactivePowerToFrom}, pf_data::PFS.PowerFlowData) =
-    PFS.get_arc_reactivepower_flow_to_from(pf_data)
+    PFS.get_arc_reactive_power_flow_to_from(pf_data)
 _get_pf_result(::Type{PowerFlowLineActivePowerFromTo}, pf_data::PFS.PowerFlowData) =
-    PFS.get_arc_activepower_flow_from_to(pf_data)
+    PFS.get_arc_active_power_flow_from_to(pf_data)
 _get_pf_result(::Type{PowerFlowLineActivePowerToFrom}, pf_data::PFS.PowerFlowData) =
-    PFS.get_arc_activepower_flow_to_from(pf_data)
+    PFS.get_arc_active_power_flow_to_from(pf_data)
 _get_pf_result(::Type{PowerFlowLossFactors}, pf_data::PFS.PowerFlowData) =
     PFS.get_loss_factors(pf_data)
 _get_pf_result(::Type{PowerFlowVoltageStabilityFactors}, pf_data::PFS.PowerFlowData) =

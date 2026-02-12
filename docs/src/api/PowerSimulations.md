@@ -29,13 +29,14 @@ DeviceModel
 
 Refer to the [Formulations Page](@ref formulation_library) for each Abstract Device Formulation.
 
-HVDC formulations will be moved to tis own section in future releases
+HVDC formulations will be moved to its own section in future releases
 
 ### HVDC Formulations
 
 ```@docs
 TransportHVDCNetworkModel
 VoltageDispatchHVDCNetworkModel
+HVDCTwoTerminalLCC
 ```
 
 ### Converter Formulations
@@ -48,6 +49,12 @@ QuadraticLossConverter
 
 ```@docs
 DCLossyLine
+```
+
+### Synchronous Condenser Formulations
+
+```@docs
+SynchronousCondenserBasicDispatch
 ```
 
 ### Problem Templates

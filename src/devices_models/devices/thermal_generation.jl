@@ -159,6 +159,11 @@ function _onvar_cost(::OptimizationContainer, cost_function::PSY.FuelCurve{PSY.P
     return 0.0
 end
 
+function _onvar_cost(::OptimizationContainer, cost_function::PSY.FuelCurve{PSY.PiecewiseAverageCurve}, d::PSY.ThermalGen, ::Int)
+    # Converted to InputOutputCurve, OnVariableCost handled in transformation
+    return 0.0
+end
+
 # this one implementation is thermal-specific, and requires the component.
 function _onvar_cost(container::OptimizationContainer, cost_function::Union{PSY.FuelCurve{PSY.LinearCurve}, PSY.FuelCurve{PSY.QuadraticCurve}}, d::T, t::Int) where {T <: PSY.ThermalGen}
     value_curve = PSY.get_value_curve(cost_function)
@@ -1355,8 +1360,8 @@ function _get_data_for_tdc(
             end
             ini_conds[idx, 1] = ic
             ini_conds[idx, 2] = initial_conditions_off[ix]
-            up_val = round(Float64, time_limits.up * steps_per_hour, RoundUp)
-            down_val = round(Float64, time_limits.down * steps_per_hour, RoundUp)
+            up_val = round(time_limits.up * steps_per_hour, RoundUp)
+            down_val = round(time_limits.down * steps_per_hour, RoundUp)
             time_params[idx] = (up = up_val, down = down_val)
         end
     end

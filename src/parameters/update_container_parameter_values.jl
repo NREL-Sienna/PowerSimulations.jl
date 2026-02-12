@@ -153,6 +153,34 @@ end
 function _update_parameter_values!(
     parameter_array::AbstractArray{T},
     ::ParameterType,
+    attributes::TimeSeriesAttributes{U},
+    service::V,
+    model::EmulationModel,
+    ::DatasetContainer{InMemoryDataset},
+) where {T <: Union{JuMP.VariableRef, Float64}, U <: PSY.SingleTimeSeries, V <: PSY.Service}
+    initial_forecast_time = get_current_time(model)
+    ts_name = get_time_series_name(attributes)
+    ts_uuid = _get_ts_uuid(attributes, PSY.get_name(service))
+    # Note: This interface reads one single value per component at a time.
+    value = get_time_series_values!(
+        U,
+        model,
+        service,
+        get_time_series_name(attributes),
+        initial_forecast_time,
+    )[1]
+    if !isfinite(value)
+        error("The value for the time series $(ts_name) is not finite. \
+            Check that the data in the time series is valid.")
+    end
+    _set_param_value!(parameter_array, value, ts_uuid, 1)
+
+    return
+end
+
+function _update_parameter_values!(
+    parameter_array::AbstractArray{T},
+    ::ParameterType,
     attributes::VariableValueAttributes,
     ::Type{<:PSY.Device},
     model::DecisionModel,
