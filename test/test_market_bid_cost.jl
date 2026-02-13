@@ -963,6 +963,87 @@ end
     @test isapprox(total_cost_hourly, total_cost_30min; rtol = 0.05)
 end
 
+@testset "Test MarketBidCost VOM cost time normalization across different resolutions" begin
+    # Test that VOM costs in MarketBidCost (OfferCurveCost path) scale correctly
+    # with time resolution. This validates the bugfix in market_bid.jl
+    # _add_vom_cost_to_objective_helper! (GitHub issue #1531)
+
+    function _build_mbc_vom_system()
+        sys = load_sys_incr()
+        unit = get_component(ThermalStandard, sys, "Test Unit1")
+        mbc = get_operation_cost(unit)
+        offer_curves = get_incremental_offer_curves(mbc)
+
+        # Add VOM cost to the existing offer curves
+        new_offer_curves = CostCurve(
+            get_value_curve(offer_curves),
+            get_power_units(offer_curves),
+            LinearCurve(5.0),  # $/MWh VOM cost
+        )
+        set_incremental_offer_curves!(mbc, new_offer_curves)
+        return sys, get_name(unit)
+    end
+
+    # Build and solve at hourly resolution
+    sys_hourly, unit_name = _build_mbc_vom_system()
+
+    template_hourly = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+    set_device_model!(template_hourly, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template_hourly, PowerLoad, StaticPowerLoad)
+
+    model_hourly = DecisionModel(
+        template_hourly,
+        sys_hourly;
+        name = "MBC_VOM_hourly",
+        optimizer = HiGHS_optimizer,
+        system_to_file = false,
+        optimizer_solve_log_print = false,
+    )
+    @test build!(model_hourly; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+    @test solve!(model_hourly) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    results_hourly = OptimizationProblemResults(model_hourly)
+    expr_hourly = read_expression(
+        results_hourly,
+        "ProductionCostExpression__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+
+    # Build and solve at 30-minute resolution
+    sys_30min, _ = _build_mbc_vom_system()
+
+    template_30min = ProblemTemplate(NetworkModel(CopperPlatePowerModel))
+    set_device_model!(template_30min, ThermalStandard, ThermalBasicUnitCommitment)
+    set_device_model!(template_30min, PowerLoad, StaticPowerLoad)
+
+    model_30min = DecisionModel(
+        template_30min,
+        sys_30min;
+        name = "MBC_VOM_30min",
+        optimizer = HiGHS_optimizer,
+        system_to_file = false,
+        optimizer_solve_log_print = false,
+        resolution = Dates.Minute(30),
+    )
+    @test build!(model_30min; output_dir = test_path) == PSI.ModelBuildStatus.BUILT
+    @test solve!(model_30min) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    results_30min = OptimizationProblemResults(model_30min)
+    expr_30min = read_expression(
+        results_30min,
+        "ProductionCostExpression__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+
+    total_cost_hourly = sum(expr_hourly[!, unit_name])
+    total_cost_30min = sum(expr_30min[!, unit_name])
+
+    # Total costs should be approximately equal:
+    # - Hourly: 24 steps × power × cost × 1.0 hour
+    # - 30-min: 48 steps × power × cost × 0.5 hour
+    @test isapprox(total_cost_hourly, total_cost_30min; rtol = 0.05)
+end
+
 @testset "Test Market Bid Cost With Single Time Serie" begin
     sys = build_system(PSITestSystems, "c_sys5_uc"; add_single_time_series = true)
     existing_ts = get_time_series_array(

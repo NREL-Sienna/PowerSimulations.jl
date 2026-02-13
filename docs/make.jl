@@ -5,12 +5,8 @@ using DataStructures
 using DocumenterInterLinks
 using Literate
 
-Literate.markdown(
-    "docs/src/tutorials/decision_problem.jl",
-    "docs/src/tutorials";
-    name = "decision_problem",
-    flavor = Literate.DocumenterFlavor(),
-)
+# UPDATE FOR CURRENT MODULE NAME HERE
+const _DOCS_BASE_URL = "https://nrel-sienna.github.io/PowerSimulations.jl/stable"
 
 links = InterLinks(
     "Julia" => "https://docs.julialang.org/en/v1/",
@@ -21,11 +17,14 @@ links = InterLinks(
     "HydroPowerSimulations" => "https://nrel-sienna.github.io/HydroPowerSimulations.jl/dev/",
 )
 
+include(joinpath(@__DIR__, "make_tutorials.jl"))
+make_tutorials()
+
 pages = OrderedDict(
     "Welcome Page" => "index.md",
     "Tutorials" => Any[
-        "Single-step Problem" => "tutorials/decision_problem.md",
-        "Multi-stage Production Cost Simulation" => "tutorials/pcm_simulation.md",
+        "Single-step Problem" => "tutorials/generated_decision_problem.md",
+        "Multi-stage Production Cost Simulation" => "tutorials/generated_pcm_simulation.md",
     ],
     "How to..." => Any[
         "...register a variable in a custom operation model" => "how_to/register_variable.md",
@@ -48,7 +47,6 @@ pages = OrderedDict(
         "Developers" => ["Developer Guidelines" => "api/developer.md",
             "Internals" => "api/internal.md"],
     ],
-    "Archived Old Docs Content" => "archive_old_docs_content.md",
     "Formulation Library" => Any[
         "Introduction" => "formulation_library/Introduction.md",
         "General" => "formulation_library/General.md",
@@ -72,6 +70,7 @@ makedocs(;
     sitename = "PowerSimulations.jl",
     authors = "Jose Daniel Lara, Daniel Thom, Kate Doubleday, Rodrigo Henriquez-Auba, and Clayton Barrows",
     pages = Any[p for p in pages],
+    plugins = [links],
 )
 
 deploydocs(;

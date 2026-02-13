@@ -346,7 +346,11 @@ For instance, ``Pline_dlr_df`` should look like this, where it is possible to ve
 It is possible to explore the DLRs of each line using:
 
 ```julia
-dlrs_dict = read_parameter(uc, "DynamicBranchRatingTimeSeriesParameter__Line", table_format = TableFormat.WIDE)
+dlrs_dict = read_parameter(
+    uc,
+    "DynamicBranchRatingTimeSeriesParameter__Line";
+    table_format = TableFormat.WIDE,
+)
 keys_dlrs = collect(keys(dlrs_dict))
 dlrs_dict[keys_dlrs[1]]
 ```
