@@ -370,6 +370,18 @@ function _make_denseaxisarray(
 end
 
 function _make_denseaxisarray(
+    data::Matrix{Float64},
+    columns::NTuple{2, <:Any},
+)
+    # Handle 2D data with 2 column axes (e.g., from reshaped 3D emulation data)
+    return DenseAxisArray(
+        permutedims(data),
+        columns[1],
+        columns[2],
+    )
+end
+
+function _make_denseaxisarray(
     data::Array{Float64, 3},
     columns::NTuple{2, <:Any},
 )
@@ -420,17 +432,32 @@ function read_results(
     len::Union{Nothing, Int} = nothing,
 )
     dataset = _get_em_dataset(store, key)
-    @assert_op ndims(dataset.values) == 2
-    if isnothing(index)
-        @assert_op(isnothing(len))
-        data = dataset.values[:, :]
-    elseif isnothing(len)
-        data = dataset.values[index:end, :]
+    num_dims = ndims(dataset.values)
+    if num_dims == 2
+        if isnothing(index)
+            @assert_op(isnothing(len))
+            data = dataset.values[:, :]
+        elseif isnothing(len)
+            data = dataset.values[index:end, :]
+        else
+            data = dataset.values[index:(index + len - 1), :]
+        end
+        columns = get_column_names(key, dataset)
+        return DenseAxisArray(permutedims(data), columns..., 1:size(data)[1])
+    elseif num_dims == 3
+        if isnothing(index)
+            @assert_op(isnothing(len))
+            data = dataset.values[:, :, :]
+        elseif isnothing(len)
+            data = dataset.values[index:end, :, :]
+        else
+            data = dataset.values[index:(index + len - 1), :, :]
+        end
+        columns = get_column_names(key, dataset)
+        return DenseAxisArray(permutedims(data, (2, 3, 1)), columns..., 1:size(data)[1])
     else
-        data = dataset.values[index:(index + len - 1), :]
+        error("Unsupported number of dimensions for emulation dataset: $num_dims")
     end
-    columns = get_column_names(key, dataset)
-    return DenseAxisArray(permutedims(data), columns..., 1:size(data)[1])
 end
 
 function get_column_names(
@@ -500,13 +527,17 @@ function _read_result(
     dset = dataset.values
     # Uncomment for performance checking
     #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Read dataset" begin
-    @assert_op ndims(dset) == 2
-    data = dset[index, :]
+    num_dims = ndims(dset)
+    if num_dims == 2
+        data = dset[index, :]
+    elseif num_dims == 3
+        data = dset[index, :, :]
+    else
+        error("Unsupported number of dimensions for emulation dataset: $num_dims")
+    end
     #end
     columns = get_column_names(key, dataset)
-    data = permutedims(data)
-    @assert_op size(data)[2] == length(columns[1])
-    @assert_op size(data)[1] == 1
+    data = ndims(data) == 1 ? permutedims(data) : data
     return data, columns
 end
 
@@ -649,6 +680,28 @@ function write_result!(
     # It fails with the key = InfrastructureSystems.Optimization.ParameterKey{OnStatusParameter, ThermalStandard}("")
     # The array size is 5 x 1
     data = size(array, 2) == 1 ? reshape(array.data, length(array.data)) : array.data
+    dataset = _get_em_dataset(store, key)
+    _write_dataset!(dataset.values, data, index)
+    set_last_recorded_row!(dataset, index)
+    set_update_timestamp!(dataset, simulation_time)
+    return
+end
+
+function write_result!(
+    store::HdfSimulationStore,
+    ::Symbol,
+    key::OptimizationContainerKey,
+    index::EmulationModelIndexType,
+    simulation_time::Dates.DateTime,
+    array::DenseAxisArray{Float64, 3},
+)
+    # Handle 3D arrays by reshaping if the last dimension is 1
+    # This mirrors the 2D case above where size(array, 2) == 1 triggers a reshape
+    if size(array, 3) == 1
+        data = reshape(array.data, size(array, 1), size(array, 2))
+    else
+        data = array.data
+    end
     dataset = _get_em_dataset(store, key)
     _write_dataset!(dataset.values, data, index)
     set_last_recorded_row!(dataset, index)
@@ -1070,7 +1123,7 @@ function _write_dataset!(
     array::Vector{Float64},
     index::EmulationModelIndexType,
 )
-    dataset[index, :] = array
+    assign_maybe_broadcast!(dataset, array, (index,))
     @debug "wrote em dataset" dataset index
     return
 end
@@ -1081,6 +1134,16 @@ function _write_dataset!(
     index::EmulationModelIndexType,
 )
     dataset[index, :, :] = array
+    @debug "wrote em dataset" dataset index
+    return
+end
+
+function _write_dataset!(
+    dataset::HDF5.Dataset,
+    array::Array{Float64, 3},
+    index::EmulationModelIndexType,
+)
+    dataset[index, :, :, :] = array
     @debug "wrote em dataset" dataset index
     return
 end

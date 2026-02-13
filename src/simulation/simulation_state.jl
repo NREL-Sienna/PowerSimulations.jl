@@ -785,7 +785,15 @@ function update_system_state!(
     if typeof(store) == HdfSimulationStore
         set_dataset_values!(state, key, 1, res)
     else
-        set_dataset_values!(state, key, 1, res[:, ix])
+        # Handle different dimensionality of results
+        num_dims = ndims(res)
+        if num_dims == 2
+            set_dataset_values!(state, key, 1, res[:, ix])
+        elseif num_dims == 3
+            set_dataset_values!(state, key, 1, res[:, :, ix])
+        else
+            error("Unsupported number of dimensions for emulation result: $num_dims")
+        end
     end
     set_last_recorded_row!(dataset, 1)
     return
