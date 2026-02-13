@@ -266,9 +266,22 @@ function add_image_links(nb::Dict, outputfile_base::AbstractString)
         # - ```@raw html ... ``` blocks
         # - Markdown images ![...](...)
         # - standalone <img> tags (only if not already matched by <p> wrapper)
+        # Define readable sub-patterns for each of the above cases.
+        p_with_img_pattern = r"<p[^>]*>[\s\S]*?<img[\s\S]*?</p>"
+        raw_html_block_pattern = r"```@raw html[\s\S]*?```"
+        markdown_image_pattern = r"!\[[^\]]*\]\([^\)]*\)"
+        standalone_img_pattern = r"<img[^>]*?/?>"
+        # Combine them into one non-overlapping regex to keep behaviour identical.
+        image_fragment_pattern = Regex(
+            "(?:" *
+            pattern(p_with_img_pattern) * "|" *
+            pattern(raw_html_block_pattern) * "|" *
+            pattern(markdown_image_pattern) * "|" *
+            pattern(standalone_img_pattern) * ")",
+        )
         text = replace(
             text,
-            r"(?:<p[^>]*>[\s\S]*?<img[\s\S]*?</p>|```@raw html[\s\S]*?```|!\[[^\]]*\]\([^\)]*\)|<img[^>]*?/?>)" =>
+            image_fragment_pattern =>
                 append_after,
         )
         # Convert back to notebook source array (lines, last without trailing \n if non-empty)
