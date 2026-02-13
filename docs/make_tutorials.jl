@@ -274,10 +274,10 @@ function add_image_links(nb::Dict, outputfile_base::AbstractString)
         # Combine them into one non-overlapping regex to keep behaviour identical.
         image_fragment_pattern = Regex(
             "(?:" *
-            pattern(p_with_img_pattern) * "|" *
-            pattern(raw_html_block_pattern) * "|" *
-            pattern(markdown_image_pattern) * "|" *
-            pattern(standalone_img_pattern) * ")",
+            p_with_img_pattern.pattern * "|" *
+            raw_html_block_pattern.pattern * "|" *
+            markdown_image_pattern.pattern * "|" *
+            standalone_img_pattern.pattern * ")",
         )
         text = replace(
             text,
