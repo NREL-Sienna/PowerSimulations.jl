@@ -646,7 +646,10 @@ function update_decision_state!(
             #loop pelo -outages, names t
             for outage in outages
                 # TODO: We could also interpolate here
-                state_data.values[outage, name, i] = store_data[outage, name, t]
+                # This check is needed for decomposition, where the lines with post-contingency flows can vary depending on the subsystem assignment.
+                if name in column_names
+                    state_data.values[outage, name, i] = store_data[outage, name, t]
+                end
             end
         end
         set_last_recorded_row!(state_data, state_range[end])
