@@ -289,10 +289,10 @@ PowerFlowVoltageStabilityFactors
 ### Branch Auxiliary Variables
 
 ```@docs
-PowerFlowLineReactivePowerFromTo
-PowerFlowLineReactivePowerToFrom
-PowerFlowLineActivePowerFromTo
-PowerFlowLineActivePowerToFrom
+PowerFlowBranchReactivePowerFromTo
+PowerFlowBranchReactivePowerToFrom
+PowerFlowBranchActivePowerFromTo
+PowerFlowBranchActivePowerToFrom
 ```
 
 ```@raw html

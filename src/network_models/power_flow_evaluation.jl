@@ -280,14 +280,14 @@ end
 
 # Trait that determines what branch aux vars we can get from each PowerFlowContainer
 branch_aux_vars(::PFS.ACPowerFlowData) =
-    [PowerFlowLineReactivePowerFromTo, PowerFlowLineReactivePowerToFrom,
-        PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom]
+    [PowerFlowBranchReactivePowerFromTo, PowerFlowBranchReactivePowerToFrom,
+        PowerFlowBranchActivePowerFromTo, PowerFlowBranchActivePowerToFrom]
 branch_aux_vars(::PFS.ABAPowerFlowData) =
-    [PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom]
+    [PowerFlowBranchActivePowerFromTo, PowerFlowBranchActivePowerToFrom]
 branch_aux_vars(::PFS.PTDFPowerFlowData) =
-    [PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom]
+    [PowerFlowBranchActivePowerFromTo, PowerFlowBranchActivePowerToFrom]
 branch_aux_vars(::PFS.vPTDFPowerFlowData) =
-    [PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom]
+    [PowerFlowBranchActivePowerFromTo, PowerFlowBranchActivePowerToFrom]
 branch_aux_vars(::PFS.PSSEExporter) = DataType[]
 
 # Same for bus aux vars
@@ -603,13 +603,13 @@ _get_pf_result(::Type{PowerFlowVoltageAngle}, pf_data::PFS.PowerFlowData) =
     PFS.get_bus_angles(pf_data)
 _get_pf_result(::Type{PowerFlowVoltageMagnitude}, pf_data::PFS.PowerFlowData) =
     PFS.get_bus_magnitude(pf_data)
-_get_pf_result(::Type{PowerFlowLineReactivePowerFromTo}, pf_data::PFS.PowerFlowData) =
+_get_pf_result(::Type{PowerFlowBranchReactivePowerFromTo}, pf_data::PFS.PowerFlowData) =
     PFS.get_arc_reactive_power_flow_from_to(pf_data)
-_get_pf_result(::Type{PowerFlowLineReactivePowerToFrom}, pf_data::PFS.PowerFlowData) =
+_get_pf_result(::Type{PowerFlowBranchReactivePowerToFrom}, pf_data::PFS.PowerFlowData) =
     PFS.get_arc_reactive_power_flow_to_from(pf_data)
-_get_pf_result(::Type{PowerFlowLineActivePowerFromTo}, pf_data::PFS.PowerFlowData) =
+_get_pf_result(::Type{PowerFlowBranchActivePowerFromTo}, pf_data::PFS.PowerFlowData) =
     PFS.get_arc_active_power_flow_from_to(pf_data)
-_get_pf_result(::Type{PowerFlowLineActivePowerToFrom}, pf_data::PFS.PowerFlowData) =
+_get_pf_result(::Type{PowerFlowBranchActivePowerToFrom}, pf_data::PFS.PowerFlowData) =
     PFS.get_arc_active_power_flow_to_from(pf_data)
 _get_pf_result(::Type{PowerFlowLossFactors}, pf_data::PFS.PowerFlowData) =
     PFS.get_loss_factors(pf_data)
