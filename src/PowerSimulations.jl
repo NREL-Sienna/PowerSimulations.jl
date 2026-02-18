@@ -280,8 +280,8 @@ export TimeDurationOff
 export PowerOutput
 export PowerFlowVoltageAngle
 export PowerFlowVoltageMagnitude
-export PowerFlowLineReactivePowerFromTo, PowerFlowLineReactivePowerToFrom
-export PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom
+export PowerFlowBranchReactivePowerFromTo, PowerFlowBranchReactivePowerToFrom
+export PowerFlowBranchActivePowerFromTo, PowerFlowBranchActivePowerToFrom
 export PowerFlowLossFactors
 export PowerFlowVoltageStabilityFactors
 

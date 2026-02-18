@@ -99,8 +99,8 @@ end
         @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
         results = OptimizationProblemResults(model_m)
         vd = read_aux_variables(results)
-        active_power_ft = vd["PowerFlowLineActivePowerFromTo__Line"]
-        reactive_power_ft = vd["PowerFlowLineReactivePowerFromTo__Line"]
+        active_power_ft = vd["PowerFlowBranchActivePowerFromTo__Line"]
+        reactive_power_ft = vd["PowerFlowBranchReactivePowerFromTo__Line"]
         if replace_line
             name = "$(get_name(line))_1"
             parallel_line_flow =

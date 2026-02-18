@@ -37,27 +37,27 @@ struct PowerFlowVoltageMagnitude <: PowerFlowAuxVariableType end
 """
 Auxiliary Variable for line power flow results from power flow evaluation
 """
-abstract type LineFlowAuxVariableType <: PowerFlowAuxVariableType end
+abstract type BranchFlowAuxVariableType <: PowerFlowAuxVariableType end
 
 """
 Auxiliary Variable for the line reactive flow in the from -> to direction from power flow evaluation
 """
-struct PowerFlowLineReactivePowerFromTo <: LineFlowAuxVariableType end
+struct PowerFlowBranchReactivePowerFromTo <: BranchFlowAuxVariableType end
 
 """
 Auxiliary Variable for the line reactive flow in the to -> from direction from power flow evaluation
 """
-struct PowerFlowLineReactivePowerToFrom <: LineFlowAuxVariableType end
+struct PowerFlowBranchReactivePowerToFrom <: BranchFlowAuxVariableType end
 
 """
 Auxiliary Variable for the line active flow in the from -> to direction from power flow evaluation
 """
-struct PowerFlowLineActivePowerFromTo <: LineFlowAuxVariableType end
+struct PowerFlowBranchActivePowerFromTo <: BranchFlowAuxVariableType end
 
 """
 Auxiliary Variable for the line active flow in the to -> from direction from power flow evaluation
 """
-struct PowerFlowLineActivePowerToFrom <: LineFlowAuxVariableType end
+struct PowerFlowBranchActivePowerToFrom <: BranchFlowAuxVariableType end
 
 """
 Auxiliary Variable for the loss factors from AC power flow evaluation that are calculated using the Jacobian matrix
@@ -73,8 +73,8 @@ convert_result_to_natural_units(::Type{PowerOutput}) = true
 convert_result_to_natural_units(
     ::Type{
         <:Union{
-            PowerFlowLineReactivePowerFromTo, PowerFlowLineReactivePowerToFrom,
-            PowerFlowLineActivePowerFromTo, PowerFlowLineActivePowerToFrom,
+            PowerFlowBranchReactivePowerFromTo, PowerFlowBranchReactivePowerToFrom,
+            PowerFlowBranchActivePowerFromTo, PowerFlowBranchActivePowerToFrom,
         },
     },
 ) = true
