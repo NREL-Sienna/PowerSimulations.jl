@@ -536,8 +536,8 @@ end
     results = OptimizationProblemResults(model_m)
     ad = read_aux_variables(results)
 
-    active_power_ft = ad["PowerFlowLineActivePowerFromTo__Line"]
-    active_power_tf = ad["PowerFlowLineActivePowerToFrom__Line"]
+    active_power_ft = ad["PowerFlowBranchActivePowerFromTo__Line"]
+    active_power_tf = ad["PowerFlowBranchActivePowerToFrom__Line"]
     active_power_loss = ad["PowerFlowBranchActivePowerLoss__Line"]
 
     for line_name in unique(active_power_loss.name)
