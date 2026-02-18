@@ -666,10 +666,8 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
             first_name = PSY.get_name(sample_line)
             if br isa U
                 name = PSY.get_name(br)
-                @assert T <: BranchFlowAuxVariableType ||
-                        (T == PowerFlowBranchActivePowerLoss)
-                "Only BranchFlowAuxVariableType aux vars can be used for parallel " *
-                "branches: got $T"
+                IS.@assert_op T <: BranchFlowAuxVariableType ||
+                              (T == PowerFlowBranchActivePowerLoss)
                 if !isapprox(PSY.get_r(br) + im * PSY.get_x(br), impedance)
                     @debug "Parallel branches with different impedances found: " *
                            "$name and $first_name. Check your data inputs."
