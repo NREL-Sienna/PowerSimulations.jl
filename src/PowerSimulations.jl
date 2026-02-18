@@ -282,6 +282,7 @@ export PowerFlowVoltageAngle
 export PowerFlowVoltageMagnitude
 export PowerFlowBranchReactivePowerFromTo, PowerFlowBranchReactivePowerToFrom
 export PowerFlowBranchActivePowerFromTo, PowerFlowBranchActivePowerToFrom
+export PowerFlowBranchActivePowerLoss
 export PowerFlowLossFactors
 export PowerFlowVoltageStabilityFactors
 
