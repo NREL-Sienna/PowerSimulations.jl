@@ -151,6 +151,38 @@ function add_to_expression!(
     param_container = get_parameter(container, U(), V)
     multiplier = get_multiplier_array(param_container)
     network_reduction = get_network_reduction(network_model)
+    for d in devices, t in get_time_steps(container)
+        bus_no = PNM.get_mapped_bus_number(network_reduction, PSY.get_bus(d))
+        name = PSY.get_name(d)
+        _add_to_jump_expression!(
+            get_expression(container, T(), PSY.ACBus)[bus_no, t],
+            get_parameter_column_refs(param_container, name)[t],
+            multiplier[name, t],
+        )
+    end
+    return
+end
+
+"""
+Generic electric load implementation to add parameters to SystemBalanceExpressions
+"""
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    network_model::NetworkModel{X},
+) where {
+    T <: SystemBalanceExpressions,
+    U <: TimeSeriesParameter,
+    V <: PSY.ElectricLoad,
+    W <: AbstractLoadFormulation,
+    X <: PM.AbstractPowerModel,
+}
+    param_container = get_parameter(container, U(), V)
+    multiplier = get_multiplier_array(param_container)
+    network_reduction = get_network_reduction(network_model)
     ts_name = get_time_series_names(model)[U]
     ts_type = get_default_time_series_type(container)
     for d in devices
