@@ -513,6 +513,11 @@ _update_component!(comp::PSY.Component, ::Val{:reactive_power}, value, sys_base)
     (comp.reactive_power = value * sys_base / PSY.get_base_power(comp))
 _update_component!(comp::PSY.ElectricLoad, ::Val{:reactive_power}, value, sys_base) =
     (comp.reactive_power = -value * sys_base / PSY.get_base_power(comp))
+# For StandardLoad, update the correct fields
+_update_component!(comp::PSY.StandardLoad, ::Val{:active_power}, value, sys_base) =
+    (comp.constant_active_power = -value * sys_base / PSY.get_base_power(comp))
+_update_component!(comp::PSY.StandardLoad, ::Val{:reactive_power}, value, sys_base) =
+    (comp.constant_reactive_power = -value * sys_base / PSY.get_base_power(comp))
 _update_component!(
     comp::PSY.ACBus,
     ::Union{Val{:voltage_angle_export}, Val{:voltage_angle_opf}},
