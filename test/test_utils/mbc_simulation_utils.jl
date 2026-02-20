@@ -273,10 +273,49 @@ function run_mbc_sim(
     # TODO make this more general as to which variables we're reading.
     # e.g. hydro.
 
-    # TODO test slopes, breakpoints too once we are able to write those
-    # Determine parameter type and getter based on comp_type
-    # the PowerLoadDispatch device formulation doesn't have
+    # Test that breakpoint and slope parameters read from results match the
+    # ground truth from the system's offer curve time series.
+    # The PowerLoadDispatch device formulation doesn't have
     # DecrementalCostAtMinParameter nor OnVariable.
+
+    if is_decremental
+        bp_param_type = PSI.DecrementalPiecewiseLinearBreakpointParameter
+        sl_param_type = PSI.DecrementalPiecewiseLinearSlopeParameter
+        oc_getter = get_decremental_offer_curves
+    else
+        bp_param_type = PSI.IncrementalPiecewiseLinearBreakpointParameter
+        sl_param_type = PSI.IncrementalPiecewiseLinearSlopeParameter
+        oc_getter = get_incremental_offer_curves
+    end
+    bp_param = _maybe_upgrade_to_dict(read_parameter(res, bp_param_type, T))
+    # SortedDict of DateTime => DataFrame
+    # columns: :DateTime, :name ("Test Unit1"), :name2 ("tranche_1"), :value (breakpoint)
+    sl_param = _maybe_upgrade_to_dict(read_parameter(res, sl_param_type, T))
+    # same structure, except :value is slope
+
+    # We can compare the raw PiecewiseStepData values directly against read_parameter
+    # results because: (1) time-variant offer curve time series are always in natural units
+    # (see PSY's cost_function_timeseries.jl), and (2) the parameter multiplier is 1.0 for
+    # both slopes and breakpoints (see default_interface_methods.jl). Unit conversion via
+    # get_piecewise_curve_per_system_unit only happens later when building expressions.
+    for (step_dt, bp_step_df) in pairs(bp_param)
+        sl_step_df = sl_param[step_dt]
+        for gen_name in unique(bp_step_df.name)
+            comp = get_component(T, sys, gen_name)
+            cost = PSY.get_operation_cost(comp)
+            oc_ts = oc_getter(comp, cost; start_time = step_dt)
+            gen_bp = @rsubset(bp_step_df, :name == gen_name)
+            gen_sl = @rsubset(sl_step_df, :name == gen_name)
+            for (ts, psd) in zip(TimeSeries.timestamp(oc_ts), TimeSeries.values(oc_ts))
+                expected_bp = get_x_coords(psd)
+                expected_sl = get_y_coords(psd)
+                actual_bp = sort(@rsubset(gen_bp, :DateTime == ts), :name2).value
+                actual_sl = sort(@rsubset(gen_sl, :DateTime == ts), :name2).value
+                @test all(isapprox.(actual_bp[1:length(expected_bp)], expected_bp))
+                @test all(isapprox.(actual_sl[1:length(expected_sl)], expected_sl))
+            end
+        end
+    end
 
     if has_initial_input
         if is_decremental
