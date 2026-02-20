@@ -12,16 +12,17 @@ function construct_device!(
     D <: ImportExportSourceModel,
 }
     devices = get_available_components(model, sys)
+    has_ts = any(PSY.has_time_series, devices)
 
     add_variables!(container, ActivePowerInVariable, devices, D())
     add_variables!(container, ActivePowerOutVariable, devices, D())
     add_variables!(container, ReactivePowerVariable, devices, D())
     add_expressions!(container, NetActivePower, devices, model)
 
-    if haskey(get_time_series_names(model), ActivePowerOutTimeSeriesParameter)
+    if has_ts && haskey(get_time_series_names(model), ActivePowerOutTimeSeriesParameter)
         add_parameters!(container, ActivePowerOutTimeSeriesParameter, devices, model)
     end
-    if haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
+    if has_ts && haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
         add_parameters!(container, ActivePowerInTimeSeriesParameter, devices, model)
     end
 
@@ -93,6 +94,7 @@ function construct_device!(
     D <: ImportExportSourceModel,
 }
     devices = get_available_components(model, sys)
+    has_ts = any(PSY.has_time_series, devices)
 
     add_constraints!(
         container,
@@ -128,7 +130,7 @@ function construct_device!(
     )
     add_constraints!(container, ImportExportBudgetConstraint, devices, model, network_model)
 
-    if haskey(get_time_series_names(model), ActivePowerOutTimeSeriesParameter)
+    if has_ts && haskey(get_time_series_names(model), ActivePowerOutTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerOutVariableTimeSeriesLimitsConstraint,
@@ -138,7 +140,7 @@ function construct_device!(
             network_model,
         )
     end
-    if haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
+    if has_ts && haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerInVariableTimeSeriesLimitsConstraint,
@@ -170,15 +172,16 @@ function construct_device!(
     D <: ImportExportSourceModel,
 }
     devices = get_available_components(model, sys)
+    has_ts = any(PSY.has_time_series, devices)
 
     add_variables!(container, ActivePowerInVariable, devices, D())
     add_variables!(container, ActivePowerOutVariable, devices, D())
     add_expressions!(container, NetActivePower, devices, model)
 
-    if haskey(get_time_series_names(model), ActivePowerOutTimeSeriesParameter)
+    if has_ts && haskey(get_time_series_names(model), ActivePowerOutTimeSeriesParameter)
         add_parameters!(container, ActivePowerOutTimeSeriesParameter, devices, model)
     end
-    if haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
+    if has_ts && haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
         add_parameters!(container, ActivePowerInTimeSeriesParameter, devices, model)
     end
 
@@ -257,6 +260,7 @@ function construct_device!(
     D <: ImportExportSourceModel,
 }
     devices = get_available_components(model, sys)
+    has_ts = any(PSY.has_time_series, devices)
 
     add_constraints!(
         container,
@@ -285,7 +289,7 @@ function construct_device!(
 
     add_constraints!(container, ImportExportBudgetConstraint, devices, model, network_model)
 
-    if haskey(get_time_series_names(model), ActivePowerOutTimeSeriesParameter)
+    if has_ts && haskey(get_time_series_names(model), ActivePowerOutTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerOutVariableTimeSeriesLimitsConstraint,
@@ -295,7 +299,7 @@ function construct_device!(
             network_model,
         )
     end
-    if haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
+    if has_ts && haskey(get_time_series_names(model), ActivePowerInTimeSeriesParameter)
         add_constraints!(
             container,
             ActivePowerInVariableTimeSeriesLimitsConstraint,
