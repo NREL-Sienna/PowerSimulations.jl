@@ -336,6 +336,49 @@ function add_to_expression!(
     ::Type{T},
     ::Type{U},
     devices::IS.FlattenIteratorWrapper{V},
+    model::DeviceModel{V, W},
+    network_model::NetworkModel{AreaBalancePowerModel},
+) where {
+    T <: SystemBalanceExpressions,
+    U <: TimeSeriesParameter,
+    V <: PSY.ElectricLoad,
+    W <: AbstractLoadFormulation,
+}
+    param_container = get_parameter(container, U(), V)
+    multiplier = get_multiplier_array(param_container)
+    ts_name = get_time_series_names(model)[U]
+    ts_type = get_default_time_series_type(container)
+    for d in devices
+        bus = PSY.get_bus(d)
+        area_name = PSY.get_name(PSY.get_area(bus))
+        name = PSY.get_name(d)
+        has_ts = PSY.has_time_series(d, ts_type, ts_name)
+        if !has_ts
+            @warn "Device $(name) does not have time series of type $(ts_type) with name $(ts_name). Using default value of 1.0 for all time steps."
+        end
+        for t in get_time_steps(container)
+            if has_ts
+                param_value = get_parameter_column_refs(param_container, name)[t]
+                mult = multiplier[name, t]
+            else
+                param_value = 1.0
+                mult = get_multiplier_value(U(), d, W())
+            end
+            _add_to_jump_expression!(
+                get_expression(container, T(), PSY.Area)[area_name, t],
+                param_value,
+                mult,
+            )
+        end
+    end
+    return
+end
+
+function add_to_expression!(
+    container::OptimizationContainer,
+    ::Type{T},
+    ::Type{U},
+    devices::IS.FlattenIteratorWrapper{V},
     ::DeviceModel{V, W},
     network_model::NetworkModel{X},
 ) where {
