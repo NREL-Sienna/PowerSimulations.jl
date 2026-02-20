@@ -160,8 +160,47 @@ function run_iec_sim(sys::System, comp_name::String, ::Type{T};
         run_generic_mbc_prob(sys; device_to_formulation = device_to_formulation)
     end
 
-    # TODO test slope, breakpoint written parameters against time series values
-    # (https://github.com/NREL-Sienna/PowerSimulations.jl/issues/1429)
+    # Test that breakpoint and slope parameters read from results match the
+    # ground truth from the system's offer curve time series.
+    # We can compare raw PiecewiseStepData values directly because time-variant offer curve
+    # time series are always in natural units and the parameter multiplier is 1.0
+    # (see the analogous comment in mbc_simulation_utils.jl).
+    for (is_decremental, oc_getter) in (
+        (false, PSY.get_import_offer_curves),
+        (true, PSY.get_export_offer_curves),
+    )
+        bp_param_type = if is_decremental
+            PSI.DecrementalPiecewiseLinearBreakpointParameter
+        else
+            PSI.IncrementalPiecewiseLinearBreakpointParameter
+        end
+        sl_param_type = if is_decremental
+            PSI.DecrementalPiecewiseLinearSlopeParameter
+        else
+            PSI.IncrementalPiecewiseLinearSlopeParameter
+        end
+        bp_param = _maybe_upgrade_to_dict(read_parameter(res, bp_param_type, T))
+        sl_param = _maybe_upgrade_to_dict(read_parameter(res, sl_param_type, T))
+        for (step_dt, bp_step_df) in pairs(bp_param)
+            sl_step_df = sl_param[step_dt]
+            for gen_name in unique(bp_step_df.name)
+                comp = get_component(T, sys, gen_name)
+                cost = PSY.get_operation_cost(comp)
+                oc_ts = oc_getter(comp, cost; start_time = step_dt)
+                gen_bp = @rsubset(bp_step_df, :name == gen_name)
+                gen_sl = @rsubset(sl_step_df, :name == gen_name)
+                for (ts, psd) in
+                    zip(TimeSeries.timestamp(oc_ts), TimeSeries.values(oc_ts))
+                    expected_bp = get_x_coords(psd)
+                    expected_sl = get_y_coords(psd)
+                    actual_bp = sort(@rsubset(gen_bp, :DateTime == ts), :name2).value
+                    actual_sl = sort(@rsubset(gen_sl, :DateTime == ts), :name2).value
+                    @test all(isapprox.(actual_bp[1:length(expected_bp)], expected_bp))
+                    @test all(isapprox.(actual_sl[1:length(expected_sl)], expected_sl))
+                end
+            end
+        end
+    end
 
     decisions = (
         _read_one_value(res, PSI.ActivePowerOutVariable, T, comp_name),
