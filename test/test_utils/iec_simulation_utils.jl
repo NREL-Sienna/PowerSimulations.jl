@@ -195,6 +195,9 @@ function run_iec_sim(sys::System, comp_name::String, ::Type{T};
                     expected_sl = get_y_coords(psd)
                     actual_bp = sort(@rsubset(gen_bp, :DateTime == ts), :name2).value
                     actual_sl = sort(@rsubset(gen_sl, :DateTime == ts), :name2).value
+                    # actual may be longer than expected due to padding (see _unwrap_for_param)
+                    @test length(actual_bp) >= length(expected_bp)
+                    @test length(actual_sl) >= length(expected_sl)
                     @test all(isapprox.(actual_bp[1:length(expected_bp)], expected_bp))
                     @test all(isapprox.(actual_sl[1:length(expected_sl)], expected_sl))
                 end

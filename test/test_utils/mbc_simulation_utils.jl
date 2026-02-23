@@ -287,11 +287,11 @@ function run_mbc_sim(
         sl_param_type = PSI.IncrementalPiecewiseLinearSlopeParameter
         oc_getter = get_incremental_offer_curves
     end
+    # Both bp_param and sl_param are SortedDict{DateTime, DataFrame}.
+    # Columns: :DateTime, :name ("Test Unit1"), :name2 ("tranche_1"),
+    # and :value (breakpoints for bp_param, slopes for sl_param).
     bp_param = _maybe_upgrade_to_dict(read_parameter(res, bp_param_type, T))
-    # SortedDict of DateTime => DataFrame
-    # columns: :DateTime, :name ("Test Unit1"), :name2 ("tranche_1"), :value (breakpoint)
     sl_param = _maybe_upgrade_to_dict(read_parameter(res, sl_param_type, T))
-    # same structure, except :value is slope
 
     # We can compare the raw PiecewiseStepData values directly against read_parameter
     # results because: (1) time-variant offer curve time series are always in natural units
@@ -311,6 +311,9 @@ function run_mbc_sim(
                 expected_sl = get_y_coords(psd)
                 actual_bp = sort(@rsubset(gen_bp, :DateTime == ts), :name2).value
                 actual_sl = sort(@rsubset(gen_sl, :DateTime == ts), :name2).value
+                # actual may be longer than expected due to padding (see _unwrap_for_param)
+                @test length(actual_bp) >= length(expected_bp)
+                @test length(actual_sl) >= length(expected_sl)
                 @test all(isapprox.(actual_bp[1:length(expected_bp)], expected_bp))
                 @test all(isapprox.(actual_sl[1:length(expected_sl)], expected_sl))
             end
