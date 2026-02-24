@@ -342,7 +342,7 @@ function _add_start_up_cost_to_objective!(
             Val(add_as_time_variant), container, T(), component,
             my_cost_term * multiplier, t)
         add_to_expression!(container, ProductionCostExpression, exp, component, t)
-        add_to_expression!(container, StartUpCostExpression, exp, d, t)
+        add_to_expression!(container, StartUpCostExpression, exp, component, t)
     end
     return
 end
@@ -495,6 +495,13 @@ function _add_time_varying_fuel_variable_cost!(
         add_to_expression!(
             container,
             ProductionCostExpression,
+            cost_expr,
+            component,
+            t,
+        )
+        add_to_expression!(
+            container,
+            VariableCostExpression,
             cost_expr,
             component,
             t,

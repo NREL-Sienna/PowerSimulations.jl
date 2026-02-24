@@ -22,6 +22,13 @@ function _add_linearcurve_variable_term_to_model!(
         component,
         time_period,
     )
+    add_to_expression!(
+        container,
+        VariableCostExpression,
+        linear_cost,
+        component,
+        time_period,
+    )
     return
 end
 
