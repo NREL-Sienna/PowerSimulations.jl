@@ -1610,6 +1610,82 @@ function add_expression_container!(
     )
 end
 
+function add_expression_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    axs...;
+    sparse = false,
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: VariableCostExpression, U <: Union{PSY.Component, PSY.System}}
+    expr_key = ExpressionKey(T, U, meta)
+    expr_type = JuMP.QuadExpr
+    return _add_expression_container!(
+        container,
+        expr_key,
+        expr_type,
+        axs...;
+        sparse = sparse,
+    )
+end
+
+function add_expression_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    axs...;
+    sparse = false,
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: StartUpCostExpression, U <: Union{PSY.Component, PSY.System}}
+    expr_key = ExpressionKey(T, U, meta)
+    expr_type = JuMP.QuadExpr
+    return _add_expression_container!(
+        container,
+        expr_key,
+        expr_type,
+        axs...;
+        sparse = sparse,
+    )
+end
+
+function add_expression_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    axs...;
+    sparse = false,
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: ShutDownCostExpression, U <: Union{PSY.Component, PSY.System}}
+    expr_key = ExpressionKey(T, U, meta)
+    expr_type = JuMP.QuadExpr
+    return _add_expression_container!(
+        container,
+        expr_key,
+        expr_type,
+        axs...;
+        sparse = sparse,
+    )
+end
+
+function add_expression_container!(
+    container::OptimizationContainer,
+    ::T,
+    ::Type{U},
+    axs...;
+    sparse = false,
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {T <: ProportionalCostExpression, U <: Union{PSY.Component, PSY.System}}
+    expr_key = ExpressionKey(T, U, meta)
+    expr_type = JuMP.QuadExpr
+    return _add_expression_container!(
+        container,
+        expr_key,
+        expr_type,
+        axs...;
+        sparse = sparse,
+    )
+end
+
 function get_expression_keys(container::OptimizationContainer)
     return collect(keys(container.expressions))
 end
