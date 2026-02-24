@@ -265,9 +265,8 @@ function _add_time_series_parameters!(
     =#
 
     if isempty(device_names)
-        error(
-            "No devices with time series $ts_name found for $D devices. Check DeviceModel time_series_names field.",
-        )
+        @info "No devices with time series $ts_name found for $D devices. Skipping parameter addition."
+        return
     end
 
     additional_axes =
