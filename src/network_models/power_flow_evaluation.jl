@@ -281,7 +281,8 @@ end
 # Trait that determines what branch aux vars we can get from each PowerFlowContainer
 branch_aux_vars(::PFS.ACPowerFlowData) =
     [PowerFlowBranchReactivePowerFromTo, PowerFlowBranchReactivePowerToFrom,
-        PowerFlowBranchActivePowerFromTo, PowerFlowBranchActivePowerToFrom]
+        PowerFlowBranchActivePowerFromTo, PowerFlowBranchActivePowerToFrom,
+        PowerFlowBranchActivePowerLoss]
 branch_aux_vars(::PFS.ABAPowerFlowData) =
     [PowerFlowBranchActivePowerFromTo, PowerFlowBranchActivePowerToFrom]
 branch_aux_vars(::PFS.PTDFPowerFlowData) =
@@ -615,6 +616,10 @@ _get_pf_result(::Type{PowerFlowLossFactors}, pf_data::PFS.PowerFlowData) =
     PFS.get_loss_factors(pf_data)
 _get_pf_result(::Type{PowerFlowVoltageStabilityFactors}, pf_data::PFS.PowerFlowData) =
     PFS.get_voltage_stability_factors(pf_data)
+# PERF: unlike the others, this one requires a bit of computation.
+_get_pf_result(::Type{PowerFlowBranchActivePowerLoss}, pf_data::PFS.PowerFlowData) =
+    PFS.get_arc_active_power_flow_from_to(pf_data) .+
+    PFS.get_arc_active_power_flow_to_from(pf_data)
 
 function calculate_aux_variable_value!(container::OptimizationContainer,
     key::AuxVarKey{T, <:PSY.ACBus},
@@ -661,8 +666,8 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
             first_name = PSY.get_name(sample_line)
             if br isa U
                 name = PSY.get_name(br)
-                @assert T <: BranchFlowAuxVariableType "Only BranchFlowAuxVariableType aux vars " *
-                                                       "can be used for parallel branches: got $T"
+                IS.@assert_op T <: BranchFlowAuxVariableType ||
+                              (T == PowerFlowBranchActivePowerLoss)
                 if !isapprox(PSY.get_r(br) + im * PSY.get_x(br), impedance)
                     @debug "Parallel branches with different impedances found: " *
                            "$name and $first_name. Check your data inputs."

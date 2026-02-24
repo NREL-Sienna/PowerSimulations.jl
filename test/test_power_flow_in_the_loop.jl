@@ -517,3 +517,33 @@ end
         end
     end
 end
+
+@testset "AC Power Flow line active power loss auxiliary variable" begin
+    system = build_system(PSITestSystems, "c_sys5_uc")
+
+    template = get_template_dispatch_with_network(
+        NetworkModel(
+            PTDFPowerModel;
+            PTDF_matrix = PTDF(system),
+            power_flow_evaluation = ACPowerFlow(),
+        ),
+    )
+    model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
+    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    results = OptimizationProblemResults(model_m)
+    ad = read_aux_variables(results)
+
+    active_power_ft = ad["PowerFlowBranchActivePowerFromTo__Line"]
+    active_power_tf = ad["PowerFlowBranchActivePowerToFrom__Line"]
+    active_power_loss = ad["PowerFlowBranchActivePowerLoss__Line"]
+
+    for line_name in unique(active_power_loss.name)
+        ft_vals = filter(row -> row[:name] == line_name, active_power_ft)[!, :value]
+        tf_vals = filter(row -> row[:name] == line_name, active_power_tf)[!, :value]
+        loss_vals = filter(row -> row[:name] == line_name, active_power_loss)[!, :value]
+        @test isapprox(loss_vals, ft_vals .+ tf_vals; atol = 1e-9)
+    end
+end
