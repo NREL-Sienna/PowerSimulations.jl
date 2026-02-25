@@ -31,11 +31,11 @@
         c_sys14 => ["Line1", "Line2", "Line9", "Line10", "Line12", "Trans2"],
         c_sys14_dc => ["Line1", "Line9", "Line10", "Line12", "Trans2"],
     )
-    dlr_factors = vcat([fill(x, 6) for x in [1.15, 1.05, 1.1, 0.95]]...)
+    dlr_factors = vcat([fill(x, 6) for x in [0.99, 0.98, 1.0, 0.95]]...)
     test_results = IdDict{System, Vector{Int}}(
-        c_sys5 => [120, 0, 264, 264, 24],
-        c_sys14 => [120, 0, 600, 600, 24],
-        c_sys14_dc => [168, 0, 648, 552, 24],
+        c_sys5 => [120, 0, 336, 336, 24],
+        c_sys14 => [120, 0, 744, 744, 24],
+        c_sys14_dc => [168, 0, 768, 672, 24],
     )
     test_obj_values = IdDict{System, Float64}(
         c_sys5 => 241293.703,
@@ -44,6 +44,7 @@
     )
     n_steps = 2
     for (ix, sys) in enumerate(systems)
+        @show ix
         add_dlr_to_system_branches!(
             sys,
             branches_dlr[sys],
@@ -105,8 +106,8 @@ end
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
     ]
     branches_dlr = ["1", "2", "6"]
-    dlr_factors = vcat([fill(x, 6) for x in [1.15, 1.05, 1.1, 0.95]]...)
-    test_results = [120, 0, 264, 264, 24]
+    dlr_factors = vcat([fill(x, 6) for x in [0.99, 0.98, 1.0, 0.95]]...)
+    test_results = [120, 0, 336, 336, 24]
     test_obj_values = [381341.0, 340475.0, 241293.703]
     parallel_lines_names_to_add = ["1", "2", "3"]#Add parallel lines in lines with and without DLRs
     n_steps = 2
