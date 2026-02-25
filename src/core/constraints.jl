@@ -271,6 +271,7 @@ The specified constraint is formulated as:
 ```
 """
 struct FlowRateConstraint <: ConstraintType end
+struct FlowRateTimeSeriesConstraint <: ConstraintType end
 struct PostContingencyEmergencyRateLimitConstrain <: PostContingencyConstraintType end
 
 """

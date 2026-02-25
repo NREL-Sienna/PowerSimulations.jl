@@ -27,7 +27,7 @@ get_parameter_multiplier(::UpperBoundValueParameter, ::PSY.ACTransmission, ::Abs
 
 get_variable_multiplier(::PhaseShifterAngle, d::PSY.PhaseShiftingTransformer, ::PhaseAngleControl) = 1.0/PSY.get_x(d)
 
-get_multiplier_value(::AbstractDynamicBranchRatingTimeSeriesParameter, d::PSY.ACTransmission, ::StaticBranch) = 1.0/PSY.get_base_power(d)
+get_multiplier_value(::AbstractDynamicBranchRatingTimeSeriesParameter, d::PSY.ACTransmission, ::StaticBranch) = PSY.get_rating(d)
 
 
 get_initial_conditions_device_model(::OperationModel, ::DeviceModel{T, U}) where {T <: PSY.ACTransmission, U <: AbstractBranchFormulation} = DeviceModel(T, U)
@@ -400,6 +400,99 @@ function add_constraints!(
         end
     end
     return
+end
+
+
+function add_constraints!(
+    container::OptimizationContainer,
+    sys::PSY.System,
+    cons_type::Type{FlowRateTimeSeriesConstraint},
+    devices::IS.FlattenIteratorWrapper{T},
+    device_model::DeviceModel{T, U},
+    network_model::NetworkModel{V},
+) where {
+    T <: PSY.ACTransmission,
+    U <: StaticBranch,
+    V <: AbstractPTDFModel,
+}
+    time_steps = get_time_steps(container)
+    net_reduction_data = network_model.network_reduction
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    ts_type = get_default_time_series_type(container)
+    ts_name = get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
+    branch_names = get_branch_argument_constraint_axis(
+        net_reduction_data,
+        reduced_branch_tracker,
+        devices,
+        cons_type;
+        filter_function = x -> has_time_series(x, ts_type, ts_name)
+    )
+
+    all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
+
+    con_lb =
+        add_constraints_container!(
+            container,
+            cons_type(),
+            T,
+            branch_names,
+            time_steps;
+            meta = "lb",
+        )
+    con_ub =
+        add_constraints_container!(
+            container,
+            cons_type(),
+            T,
+            branch_names,
+            time_steps;
+            meta = "ub",
+        )
+
+    array = get_expression(container, PTDFBranchFlow(), T)
+
+    use_slacks = get_use_slacks(device_model)
+
+    if use_slacks
+        slack_ub = get_variable(container, TimeSeriesFlowActivePowerSlackUpperBound(), T)
+        slack_lb = get_variable(container, TimeSeriesFlowActivePowerSlackLowerBound(), T)
+    end
+
+    if haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
+        param_container =
+            get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
+        mult = get_multiplier_array(param_container)
+    end
+
+    for (name, (arc, reduction)) in
+        get_constraint_map_by_type(reduced_branch_tracker)[FlowRateTimeSeriesConstraint][T]
+        # TODO: entry is not type stable here, it can return any type ACTransmission.
+        # It might have performance implications. Possibly separate this into other functions
+        reduction_entry = all_branch_maps_by_type[reduction][T][arc]
+        #limits = get_min_max_limits(reduction_entry, FlowRateTimeSeriesConstraint, U)
+        for t in time_steps
+            limits =
+                    get_dynamic_branch_rating_min_max_limits(
+                        param_container,
+                        reduction_entry,
+                        ts_name,
+                        ts_type,
+                        t,
+                        name,
+                        mult)
+
+            con_ub[name, t] =
+                JuMP.@constraint(get_jump_model(container),
+                    array[name, t] -
+                    (use_slacks ? slack_ub[name, t] : 0.0) <=
+                    limits.max)
+            con_lb[name, t] =
+                JuMP.@constraint(get_jump_model(container),
+                    array[name, t] +
+                    (use_slacks ? slack_lb[name, t] : 0.0) >=
+                    limits.min)
+        end
+    end
 end
 
 function add_constraints!(

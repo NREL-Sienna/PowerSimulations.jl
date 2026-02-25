@@ -99,13 +99,15 @@ function get_branch_argument_constraint_axis(
     net_reduction_data::PNM.NetworkReductionData,
     reduced_branch_tracker::BranchReductionOptimizationTracker,
     ::IS.FlattenIteratorWrapper{T},
-    ::Type{U},
+    ::Type{U};
+    filter_function = x -> true,
 ) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
     return get_branch_argument_constraint_axis(
         net_reduction_data,
         reduced_branch_tracker,
         T,
-        U,
+        U;
+        filter_function = filter_function,
     )
 end
 
@@ -113,7 +115,8 @@ function get_branch_argument_constraint_axis(
     net_reduction_data::PNM.NetworkReductionData,
     reduced_branch_tracker::BranchReductionOptimizationTracker,
     ::Type{T},
-    ::Type{U},
+    ::Type{U};
+    filter_function = x -> true,
 ) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
     constraint_tracker = get_constraint_dict(reduced_branch_tracker)
     constraint_map_by_type = get_constraint_map_by_type(reduced_branch_tracker)
@@ -131,11 +134,62 @@ function get_branch_argument_constraint_axis(
     constraint_submap =
         get!(constraint_map, T, SortedDict{String, Tuple{Tuple{Int, Int}, String}}())
     for (branch_name, name_axis_tuple) in name_axis
-        arc_tuple = name_axis_tuple[1]
+        arc_tuple, reduction = name_axis_tuple
+
         if !(arc_tuple in arc_tuples_with_constraints)
-            constraint_submap[branch_name] = name_axis_tuple
-            push!(arc_tuples_with_constraints, arc_tuple)
+
+            reduction_entry= PNM.get_all_branch_maps_by_type(net_reduction_data)[reduction][T][arc_tuple]
+            if( filter_function(reduction_entry) )
+                constraint_submap[branch_name] = name_axis_tuple
+                push!(arc_tuples_with_constraints, arc_tuple)
+            end
+            
         end
     end
     return collect(keys(constraint_submap))
+end
+
+function has_time_series(
+    branch::PNM.BranchesParallel,
+    ts_type::Type{T},
+    ts_name::String,
+) where {
+    T<:PSY.TimeSeriesData
+}
+    return any(
+        PSY.has_time_series(b, ts_type, ts_name) for b in branch.branches
+    )
+end
+
+function has_time_series(
+    branch::PNM.BranchesSeries,
+    ts_type::Type{T},
+    ts_name::String,
+)where{
+    T<:PSY.TimeSeriesData
+}
+    return any(
+        PSY.has_time_series(b, ts_type, ts_name) for b in branch.branches
+    )
+end
+
+function has_time_series(
+    branch::PSY.ACTransmission,
+    ts_type::Type{T},
+    ts_name::String,
+)where{
+    T<:PSY.TimeSeriesData
+}
+    return  PSY.has_time_series(branch, ts_type, ts_name)
+end
+
+
+function has_time_series(
+    transformer::PNM.ThreeWindingTransformerWinding,
+    ts_type::Type{T},
+    ts_name::String,
+)where{
+    T<:PSY.TimeSeriesData
+}
+    return PSY.has_time_series(transformer, ts_type, ts_name)
 end
