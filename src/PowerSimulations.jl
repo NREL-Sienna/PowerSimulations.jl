@@ -332,6 +332,7 @@ export RampConstraint
 export RampLimitConstraint
 export RangeLimitConstraint
 export FlowRateConstraint
+export FlowRateTimeSeriesConstraint
 export FlowRateConstraintFromTo
 export FlowRateConstraintToFrom
 export PostContingencyEmergencyRateLimitConstrain
