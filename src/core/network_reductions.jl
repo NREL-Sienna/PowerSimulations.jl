@@ -137,13 +137,12 @@ function get_branch_argument_constraint_axis(
         arc_tuple, reduction = name_axis_tuple
 
         if !(arc_tuple in arc_tuples_with_constraints)
-
-            reduction_entry= PNM.get_all_branch_maps_by_type(net_reduction_data)[reduction][T][arc_tuple]
-            if( filter_function(reduction_entry) )
+            reduction_entry =
+                PNM.get_all_branch_maps_by_type(net_reduction_data)[reduction][T][arc_tuple]
+            if (filter_function(reduction_entry))
                 constraint_submap[branch_name] = name_axis_tuple
                 push!(arc_tuples_with_constraints, arc_tuple)
             end
-            
         end
     end
     return collect(keys(constraint_submap))
@@ -154,7 +153,7 @@ function has_time_series(
     ts_type::Type{T},
     ts_name::String,
 ) where {
-    T<:PSY.TimeSeriesData
+    T <: PSY.TimeSeriesData,
 }
     return any(
         PSY.has_time_series(b, ts_type, ts_name) for b in branch.branches
@@ -165,8 +164,8 @@ function has_time_series(
     branch::PNM.BranchesSeries,
     ts_type::Type{T},
     ts_name::String,
-)where{
-    T<:PSY.TimeSeriesData
+) where {
+    T <: PSY.TimeSeriesData,
 }
     return any(
         PSY.has_time_series(b, ts_type, ts_name) for b in branch.branches
@@ -177,19 +176,18 @@ function has_time_series(
     branch::PSY.ACTransmission,
     ts_type::Type{T},
     ts_name::String,
-)where{
-    T<:PSY.TimeSeriesData
+) where {
+    T <: PSY.TimeSeriesData,
 }
-    return  PSY.has_time_series(branch, ts_type, ts_name)
+    return PSY.has_time_series(branch, ts_type, ts_name)
 end
-
 
 function has_time_series(
     transformer::PNM.ThreeWindingTransformerWinding,
     ts_type::Type{T},
     ts_name::String,
-)where{
-    T<:PSY.TimeSeriesData
+) where {
+    T <: PSY.TimeSeriesData,
 }
     return PSY.has_time_series(transformer, ts_type, ts_name)
 end

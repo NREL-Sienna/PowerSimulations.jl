@@ -402,7 +402,6 @@ function add_constraints!(
     return
 end
 
-
 function add_constraints!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -425,7 +424,7 @@ function add_constraints!(
         reduced_branch_tracker,
         devices,
         cons_type;
-        filter_function = x -> has_time_series(x, ts_type, ts_name)
+        filter_function = x -> has_time_series(x, ts_type, ts_name),
     )
 
     all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
@@ -472,14 +471,14 @@ function add_constraints!(
         #limits = get_min_max_limits(reduction_entry, FlowRateTimeSeriesConstraint, U)
         for t in time_steps
             limits =
-                    get_dynamic_branch_rating_min_max_limits(
-                        param_container,
-                        reduction_entry,
-                        ts_name,
-                        ts_type,
-                        t,
-                        name,
-                        mult)
+                get_dynamic_branch_rating_min_max_limits(
+                    param_container,
+                    reduction_entry,
+                    ts_name,
+                    ts_type,
+                    t,
+                    name,
+                    mult)
 
             con_ub[name, t] =
                 JuMP.@constraint(get_jump_model(container),
