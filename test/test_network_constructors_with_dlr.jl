@@ -46,7 +46,6 @@
     )
     n_steps = 2
     for (ix, sys) in enumerate(systems)
-        @show ix
         add_dlr_to_system_branches!(
             sys,
             branches_dlr[sys],
