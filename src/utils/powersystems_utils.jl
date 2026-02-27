@@ -405,10 +405,6 @@ function get_deterministic_time_series_type(sys::PSY.System)
     end
 end
 
-_is_a_reduction(::PSY.ACTransmission) = false
-_is_a_reduction(::PNM.BranchesParallel) = true
-_is_a_reduction(::PNM.BranchesSeries) = true
-
 function has_time_series(
     branch::PSY.ACTransmission,
     ts_type::Type{T},
@@ -416,7 +412,7 @@ function has_time_series(
 ) where {
     T <: PSY.TimeSeriesData,
 }
-    if _is_a_reduction(branch)
+    if PNM.is_a_reduction(branch)
         return PNM.has_time_series(branch, ts_type, ts_name)
     end
     return PSY.has_time_series(branch, ts_type, ts_name)
