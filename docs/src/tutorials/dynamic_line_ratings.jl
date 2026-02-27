@@ -99,8 +99,8 @@ end
 
 mip_gap = 0.01
 optimizer = optimizer_with_attributes(
-                HiGHS.Optimizer,
-                "mip_rel_gap" => mip_gap)
+    HiGHS.Optimizer,
+    "mip_rel_gap" => mip_gap)
 
 # ### Load the Test System
 #
@@ -309,7 +309,11 @@ PTrafo_dlr_df = PTrafo_df[:, ["A7", "A17"]]
 #
 # It is possible to explore the DLRs of each line using:
 
-dlrs_dict = read_parameter(uc, "DynamicBranchRatingTimeSeriesParameter__Line", table_format = TableFormat.WIDE)
+dlrs_dict = read_parameter(
+    uc,
+    "DynamicBranchRatingTimeSeriesParameter__Line";
+    table_format = TableFormat.WIDE,
+)
 keys_dlrs = collect(keys(dlrs_dict))
 dlrs_dict[keys_dlrs[1]]
 
