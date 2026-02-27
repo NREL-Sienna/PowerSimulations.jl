@@ -249,49 +249,49 @@ struct AuxBilinearConverterVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Auxiliary Variable for Squared Converter Bilinear term: v * i
-    
+
 Docs abbreviation: ``\\gamma_c^{sq,dc}``
 """
 struct AuxBilinearSquaredConverterVariable <: VariableType end
 
 """
 Struct to dispatch the creation of Continuous Interpolation Variable for Squared Converter Voltage
-    
+
 Docs abbreviation: ``\\delta_c^{v}``
 """
 struct InterpolationSquaredVoltageVariable <: InterpolationVariableType end
 
 """
 Struct to dispatch the creation of Binary Interpolation Variable for Squared Converter Voltage
-    
+
 Docs abbreviation: ``z_c^{v}``
 """
 struct InterpolationBinarySquaredVoltageVariable <: BinaryInterpolationVariableType end
 
 """
 Struct to dispatch the creation of Continuous Interpolation Variable for Squared Converter Current
-    
+
 Docs abbreviation: ``\\delta_c^{i}``
 """
 struct InterpolationSquaredCurrentVariable <: InterpolationVariableType end
 
 """
 Struct to dispatch the creation of Binary Interpolation Variable for Squared Converter Current
-    
+
 Docs abbreviation: ``z_c^{i}``
 """
 struct InterpolationBinarySquaredCurrentVariable <: BinaryInterpolationVariableType end
 
 """
 Struct to dispatch the creation of Continuous Interpolation Variable for Squared Converter AuxVar
-    
+
 Docs abbreviation: ``\\delta_c^{\\gamma}``
 """
 struct InterpolationSquaredBilinearVariable <: InterpolationVariableType end
 
 """
 Struct to dispatch the creation of Binary Interpolation Variable for Squared Converter AuxVar
-    
+
 Docs abbreviation: ``z_c^{\\gamma}``
 """
 struct InterpolationBinarySquaredBilinearVariable <: BinaryInterpolationVariableType end
@@ -349,25 +349,11 @@ Docs abbreviation: ``f^\\text{sl,up}``
 struct FlowActivePowerSlackUpperBound <: AbstractACActivePowerFlow end
 
 """
-Struct to dispatch the creation of active power flow upper bound slack variables. Used when there is not enough flow through the branch with Dynamic Line Ratings (DLR) in the forward direction.
-
-Docs abbreviation: ``f^\\text{sl,up}``
-"""
-struct TimeSeriesFlowActivePowerSlackUpperBound <: AbstractACActivePowerFlow end
-
-"""
 Struct to dispatch the creation of active power flow lower bound slack variables. Used when there is not enough flow through the branch in the reverse direction.
 
 Docs abbreviation: ``f^\\text{sl,lo}``
 """
 struct FlowActivePowerSlackLowerBound <: AbstractACActivePowerFlow end
-
-"""
-Struct to dispatch the creation of active power flow lower bound slack variables. Used when there is not enough flow through the branch with Dynamic Line Ratings (DLR) in the reverse direction.
-
-Docs abbreviation: ``f^\\text{sl,lo}``
-"""
-struct TimeSeriesFlowActivePowerSlackLowerBound <: AbstractACActivePowerFlow end
 
 """
 Struct to dispatch the creation of Phase Shifters Variables
