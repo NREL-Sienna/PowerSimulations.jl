@@ -190,13 +190,18 @@ function construct_device!(
         network_model,
     )
 
-    add_constraints!(container, FlowRateConstraint, devices, device_model, network_model)
-
     if haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
+        add_flow_rate_constraint_with_parameters!(
+            container,
+            FlowRateConstraint,
+            devices,
+            device_model,
+            network_model,
+        )
+    else
         add_constraints!(
             container,
-            sys,
-            FlowRateTimeSeriesConstraint,
+            FlowRateConstraint,
             devices,
             device_model,
             network_model,
