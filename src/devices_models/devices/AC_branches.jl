@@ -398,18 +398,17 @@ function add_constraints!(
     use_slacks = get_use_slacks(device_model)
     for (name, (arc, reduction)) in
         get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][T]
-        var_slice = var_array[name, :]
-        con_lb_slice = con_lb[name, :]
-        con_ub_slice = con_ub[name, :]
+
         _add_flow_rate_constraint!(
             container,
             T,
             arc,
             use_slacks,
-            con_lb_slice,
-            con_ub_slice,
-            var_slice,
-            all_branch_maps_by_type[reduction],
+            con_lb,
+            con_ub,
+            var_array,
+            all_branch_maps_by_type[reduction][T],#TODO Maybe this needs [T]
+            name,
         )
     end
     return
@@ -437,7 +436,7 @@ function _add_flow_rate_constraint_with_parameters!(
     param_container = get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
     ts_type = get_default_time_series_type(container)
     mult = get_multiplier_array(param_container)
-    
+
     for t in time_steps
         limits =
             get_dynamic_branch_rating_min_max_limits(
