@@ -13,7 +13,7 @@ function get_equivalent_dynamic_branch_rating(
     ts_name::String,
     ts_type::DataType,
     t::Int,
-    ci_name::String,
+    _::String,
     mult::DenseAxisArray{Float64, 2},
 ) where {U <: PSY.ACTransmission}
     if PSY.has_time_series(branch, ts_type, ts_name)
