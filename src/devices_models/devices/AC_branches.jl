@@ -398,7 +398,6 @@ function add_constraints!(
     use_slacks = get_use_slacks(device_model)
     for (name, (arc, reduction)) in
         get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][T]
-
         _add_flow_rate_constraint!(
             container,
             T,
@@ -522,7 +521,6 @@ function add_flow_rate_constraint_with_parameters!(
     use_slacks = get_use_slacks(device_model)
     for (name, (arc, reduction)) in
         get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][T]
-       
         if _arc_has_branch_with_time_series(
             all_branch_maps_by_type[reduction][T],
             arc,
