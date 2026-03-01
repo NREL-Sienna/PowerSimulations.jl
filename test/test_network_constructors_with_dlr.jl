@@ -173,5 +173,80 @@ end
     end
 end
 
+@testset "Network DC-PF with PTDF Model and implementing Dynamic Branch Ratings with Reductions" begin
+    objfuncs = [GAEVF, GQEVF, GQEVF]
+    constraint_keys = [
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+    ]
+    branches_dlr = ["1", "2", "6"]
+    dlr_factors = vcat([fill(x, 6) for x in [0.99, 0.98, 1.0, 0.95]]...)
+
+    test_obj_values = [381341.0, 340475.0, 241293.703]
+    parallel_lines_names_to_add = ["1", "2", "3"]#Add parallel lines in lines with and without DLRs
+    n_steps = 2
+
+    for slack_flag in [false, true]
+        if slack_flag
+            test_results = [408, 0, 264, 264, 24]
+        else
+            test_results = [120, 0, 264, 264, 24]
+        end
+        line_device_model = DeviceModel(
+            Line,
+            StaticBranch;
+            time_series_names = Dict(
+                DynamicBranchRatingTimeSeriesParameter => "dynamic_line_ratings",
+            ),
+            use_slacks = slack_flag,
+        )
+        for (ix, add_parallel_line_name) in enumerate(parallel_lines_names_to_add)
+            sys = PSB.build_system(PSITestSystems, "c_sys5")
+            line_to_add_parallel = get_component(Line, sys, add_parallel_line_name)
+            add_equivalent_ac_transmission_with_parallel_circuits!(
+                sys,
+                line_to_add_parallel,
+                PSY.Line,
+            )
+
+            add_dlr_to_system_branches!(
+                sys,
+                branches_dlr,
+                n_steps,
+                dlr_factors;
+                initial_date = "2024-01-01",
+            )
+            nr = NetworkReduction[DegreeTwoReduction()]
+            ptdf = PTDF(sys; network_reductions = nr)
+            template = get_thermal_dispatch_template_network(
+                NetworkModel(
+                    PTDFPowerModel;
+                    PTDF_matrix = ptdf,
+                    reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                        ptdf.network_reduction_data,
+                    ),
+                ),
+            )
+            set_device_model!(template, line_device_model)
+            ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+
+            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
+            psi_constraint_test(ps_model, constraint_keys)
+
+            moi_tests(
+                ps_model,
+                test_results...,
+                false,
+            )
+            psi_checkobjfun_test(ps_model, objfuncs[1])
+            psi_checksolve_test(
+                ps_model,
+                [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+                test_obj_values[ix],
+                10000,
+            )
+        end
     end
 end
