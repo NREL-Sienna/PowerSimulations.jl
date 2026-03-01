@@ -19,8 +19,6 @@
     constraint_keys = [
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
-        #PSI.ConstraintKey(FlowRateTimeSeriesConstraint, PSY.Line, "lb"),
-        #PSI.ConstraintKey(FlowRateTimeSeriesConstraint, PSY.Line, "ub"),
         PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
     ]
     PTDF_ref = IdDict{System, PTDF}(
