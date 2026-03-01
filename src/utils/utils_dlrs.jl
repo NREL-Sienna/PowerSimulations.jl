@@ -61,7 +61,7 @@ For series circuits, the rating is limited by the weakest link: Rating_total = m
 """
 function get_equivalent_dynamic_branch_rating(
     param_container::ParameterContainer,
-    bs::PNM.BranchesSeries,
+    series_chain::PNM.BranchesSeries,
     ts_name::String,
     ts_type::DataType,
     t::Int,
@@ -71,13 +71,13 @@ function get_equivalent_dynamic_branch_rating(
     return minimum(
         get_equivalent_dynamic_branch_rating(
             param_container,
-            branch,
+            segment,
             ts_name,
             ts_type,
             t,
             ci_name,
             mult,
-        ) for branch in bs.branches
+        ) for segment in series_chain
     )
 end
 

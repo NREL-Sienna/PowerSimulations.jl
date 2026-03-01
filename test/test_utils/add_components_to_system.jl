@@ -28,7 +28,7 @@ function get_copied_bus(
         number = PSY.get_number(bus) + 1000, #Add 1000 to avoid name conflicts
         name = PSY.get_name(bus) * "_copy",
         available = PSY.get_available(bus),
-        bustype = PSY.get_bustype(bus),
+        bustype = ACBusTypes.PQ,
         angle = PSY.get_angle(bus),
         magnitude = PSY.get_magnitude(bus),
         voltage_limits = PSY.get_voltage_limits(bus),
@@ -65,17 +65,27 @@ function add_equivalent_ac_transmission_with_series_parallel_circuits!(
 
     #make Parallel circuits
     original_rating = PSY.get_rating(ac_transmission)
+    original_r = PSY.get_r(ac_transmission)
+    original_x = PSY.get_x(ac_transmission)
     rating_new_parallel = PSY.get_rating(ac_transmission) / 2
+    new_r_parallel = PSY.get_r(ac_transmission) * 2
+    new_x_parallel = PSY.get_x(ac_transmission) * 2
     ac_transmission_copy_parallel = get_copied_line(ac_transmission)
     ac_transmission_copy_series = get_copied_line(ac_transmission_copy_parallel)
 
     set_rating!(ac_transmission, rating_new_parallel)
     set_rating!(ac_transmission_copy_parallel, rating_new_parallel)
+    set_r!(ac_transmission, original_r)
+    set_r!(ac_transmission_copy_parallel, new_r_parallel)
+    set_x!(ac_transmission, new_x_parallel)
+    set_x!(ac_transmission_copy_parallel, new_x_parallel)
     add_component!(sys, ac_transmission_copy_parallel)
 
     #Add new series Line with same parameters
     set_arc!(ac_transmission_copy_series, arc2)
     add_component!(sys, ac_transmission_copy_series)
+    set_x!(ac_transmission_copy_series, 1e-9)
+    set_r!(ac_transmission_copy_series, 1e-9)
 end
 
 function add_equivalent_ac_transmission_with_parallel_circuits!(
@@ -84,11 +94,17 @@ function add_equivalent_ac_transmission_with_parallel_circuits!(
     ::Type{T},
 ) where {T <: PSY.Line}
     rating_new = PSY.get_rating(ac_transmission) / 2
+    x_new = PSY.get_x(ac_transmission) * 2
+    r_new = PSY.get_r(ac_transmission) * 2
     ac_transmission_copy_parallel = get_copied_line(ac_transmission)
 
     #Set ratings the half so the case remains equivalent to the original
     set_rating!(ac_transmission, rating_new)
     set_rating!(ac_transmission_copy_parallel, rating_new)
+    set_x!(ac_transmission, x_new)
+    set_x!(ac_transmission_copy_parallel, x_new)
+    set_r!(ac_transmission, r_new)
+    set_r!(ac_transmission_copy_parallel, r_new)
     add_component!(sys, ac_transmission_copy_parallel)
 end
 

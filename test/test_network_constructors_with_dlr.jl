@@ -107,7 +107,7 @@ end
     branches_dlr = ["1", "2", "6"]
     dlr_factors = vcat([fill(x, 6) for x in [0.99, 0.98, 1.0, 0.95]]...)
 
-    test_obj_values = [381341.0, 340475.0, 241293.703]
+    test_obj_values = [356577.0, 279735.0, 241293.703]
     parallel_lines_names_to_add = ["1", "2", "3"]#Add parallel lines in lines with and without DLRs
     n_steps = 2
 
@@ -181,7 +181,7 @@ end
     branches_dlr = ["1", "2", "6"]
     dlr_factors = vcat([fill(x, 6) for x in [0.99, 0.98, 1.0, 0.95]]...)
 
-    test_obj_values = [381341.0, 340475.0, 241293.703]
+    test_obj_values = [356577.0, 279735.0, 241293.703]
     parallel_lines_names_to_add = ["1", "2", "3"]#Add parallel lines in lines with and without DLRs
     n_steps = 2
 
@@ -201,8 +201,9 @@ end
         )
         for (ix, add_parallel_line_name) in enumerate(parallel_lines_names_to_add)
             sys = PSB.build_system(PSITestSystems, "c_sys5")
+
             line_to_add_parallel = get_component(Line, sys, add_parallel_line_name)
-            add_equivalent_ac_transmission_with_parallel_circuits!(
+            add_equivalent_ac_transmission_with_series_parallel_circuits!(
                 sys,
                 line_to_add_parallel,
                 PSY.Line,
