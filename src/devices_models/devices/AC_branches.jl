@@ -406,7 +406,7 @@ function add_constraints!(
             con_lb,
             con_ub,
             var_array,
-            all_branch_maps_by_type[reduction][T],#TODO Maybe this needs [T]
+            all_branch_maps_by_type[reduction][T],
             name,
         )
     end
@@ -426,37 +426,26 @@ function _add_flow_rate_constraint_with_parameters!(
     ts_name::String,
 ) where {T <: PSY.ACTransmission}
     time_steps = get_time_steps(container)
-    reduction_entry = branch_maps_by_type[arc]
     if use_slacks
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)[name, :]
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)[name, :]
     end
 
     param_container = get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
-    ts_type = get_default_time_series_type(container)
-    mult = get_multiplier_array(param_container)
+    param = get_parameter_column_refs(param_container, name)
+    mult = get_multiplier_array(param_container)[name, :]
 
     for t in time_steps
-        limits =
-            get_dynamic_branch_rating_min_max_limits(
-                param_container,
-                reduction_entry,
-                ts_name,
-                ts_type,
-                t,
-                name,
-                mult)
-        @debug "Dynamic Branch Rating applied for branch $(name) at time step $(t): min=$(limits.min), max=$(limits.max)"
-
+        @debug "Dynamic Branch Rating applied for branch $(name) at time step $(t)"
         con_ub[name, t] =
             JuMP.@constraint(
                 get_jump_model(container),
-                var[name, t] - (use_slacks ? slack_ub[t] : 0.0) <= limits.max
+                var[name, t] - (use_slacks ? slack_ub[t] : 0.0) <= param[t] * mult[t]
             )
         con_lb[name, t] =
             JuMP.@constraint(
                 get_jump_model(container),
-                var[name, t] + (use_slacks ? slack_lb[t] : 0.0) >= limits.min
+                var[name, t] + (use_slacks ? slack_lb[t] : 0.0) >= -1 * param[t] * mult[t]
             )
     end
     return
@@ -466,8 +455,8 @@ function _arc_has_branch_with_time_series(
     branch_maps::Dict,
     arc::Tuple{Int, Int},
     ts_name::String,
-    ts_type::Type{<:PSY.TimeSeriesData},
-)::Bool
+    ts_type::Type{T},
+)::Bool where {T <: PSY.TimeSeriesData}
     return has_time_series(branch_maps[arc], ts_type, ts_name)
 end
 
