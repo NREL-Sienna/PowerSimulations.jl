@@ -108,10 +108,6 @@ end
         Source,
         ImportExportSourceModel;
         attributes = Dict("reservation" => false),
-        time_series_names = Dict{Any, String}(
-            ActivePowerInTimeSeriesParameter => "max_active_power_in",
-            ActivePowerOutTimeSeriesParameter => "max_active_power_out",
-        ),
     )
     set_device_model!(template, source_model)
 
@@ -186,10 +182,6 @@ end
         Source,
         ImportExportSourceModel;
         attributes = Dict("reservation" => false),
-        time_series_names = Dict{Any, String}(
-            ActivePowerInTimeSeriesParameter => "max_active_power_in",
-            ActivePowerOutTimeSeriesParameter => "max_active_power_out",
-        ),
     )
     mock_construct_device!(model, device_model)
     moi_tests(model, 264, 0, 314, 72, 48, false)
@@ -201,10 +193,6 @@ end
         Source,
         ImportExportSourceModel;
         attributes = Dict("reservation" => true),
-        time_series_names = Dict{Any, String}(
-            ActivePowerInTimeSeriesParameter => "max_active_power_in",
-            ActivePowerOutTimeSeriesParameter => "max_active_power_out",
-        ),
     )
     mock_construct_device!(model, device_model)
     moi_tests(model, 288, 0, 314, 72, 48, true)

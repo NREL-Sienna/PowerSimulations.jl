@@ -34,7 +34,10 @@ function get_default_time_series_names(
     ::Type{U},
     ::Type{V},
 ) where {U <: PSY.Source, V <: AbstractSourceFormulation}
-    return Dict{Any, String}()
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        ActivePowerOutTimeSeriesParameter => "max_active_power_out",
+        ActivePowerInTimeSeriesParameter => "max_active_power_in",
+    )
 end
 
 function get_default_attributes(
