@@ -445,7 +445,7 @@ function _add_flow_rate_constraint_with_parameters!(
         con_lb[name, t] =
             JuMP.@constraint(
                 get_jump_model(container),
-                var[name, t] + (use_slacks ? slack_lb[t] : 0.0) >= -1 * param[t] * mult[t]
+                var[name, t] + (use_slacks ? slack_lb[t] : 0.0) >= -1.0 * param[t] * mult[t]
             )
     end
     return
@@ -455,9 +455,9 @@ function _arc_has_branch_with_time_series(
     branch_maps::Dict,
     arc::Tuple{Int, Int},
     ts_name::String,
-    ts_type::Type{T},
+    ::Type{T},
 )::Bool where {T <: PSY.TimeSeriesData}
-    return has_time_series(branch_maps[arc], ts_type, ts_name)
+    return has_time_series(branch_maps[arc], T, ts_name)
 end
 
 function add_flow_rate_constraint_with_parameters!(
