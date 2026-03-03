@@ -34,6 +34,13 @@ function _add_quadraticcurve_variable_term_to_model!(
         component,
         time_period,
     )
+    add_to_expression!(
+        container,
+        VariableCostExpression,
+        cost_term,
+        component,
+        time_period,
+    )
     return
 end
 

@@ -13,6 +13,10 @@ struct EmergencyUp <: ExpressionType end
 struct EmergencyDown <: ExpressionType end
 struct RawACE <: ExpressionType end
 struct ProductionCostExpression <: CostExpressions end
+struct VariableCostExpression <: CostExpressions end
+struct StartUpCostExpression <: CostExpressions end
+struct ShutDownCostExpression <: CostExpressions end
+struct ProportionalCostExpression <: CostExpressions end
 struct FuelConsumptionExpression <: ExpressionType end
 struct ActivePowerRangeExpressionLB <: RangeConstraintLBExpressions end
 struct ActivePowerRangeExpressionUB <: RangeConstraintUBExpressions end
