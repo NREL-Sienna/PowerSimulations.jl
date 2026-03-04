@@ -445,7 +445,8 @@ function _add_flow_rate_constraint_with_parameters!(
         con_lb[name, t] =
             JuMP.@constraint(
                 get_jump_model(container),
-                var[name, t] + (use_slacks ? slack_lb[t] : 0.0) >= -1.0 * param[t] * mult[t]
+                var[name, t] + (use_slacks ? slack_lb[t] : 0.0) >=
+                -1.0 * param[t] * mult[t]
             )
     end
     return
