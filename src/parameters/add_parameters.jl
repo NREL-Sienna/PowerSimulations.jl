@@ -15,6 +15,182 @@ function add_parameters!(
     return
 end
 
+# Compute the equivalent averaged DLR time series for a set of parallel branches.
+# For each branch that carries the named time series, the per-step values are scaled
+# by the parameter multiplier and collected; branches that lack the time series emit a
+# warning and are skipped.  The final result is the element-wise mean across all
+# collected series, and the UUID of the last seen (non-skipped) branch is also returned.
+function _compute_equivalent_parallel_dlr_ts(
+    container::OptimizationContainer,
+    reduction_entry,
+    ts_type,
+    ts_name::String,
+    initial_values::Dict,
+    ::Type{T},
+    ::Type{W},
+    ::Type{D},
+    arc,
+) where {
+    T <: AbstractDynamicBranchRatingTimeSeriesParameter,
+    W <: AbstractDeviceFormulation,
+    D <: PSY.ACTransmission,
+}
+    parallel_dlr_ts = Vector{Vector{Float64}}()
+    ts_uuid = ""
+    for branch in reduction_entry
+        if !PSY.has_time_series(branch, ts_type, ts_name)
+            @warn "$D, $(PSY.get_name(branch)) has no time series but has a branch in parallel with Time series $(ts_type):$(ts_name). Considering same time series for all branches in parallel in arc $arc"
+            continue
+        end
+        ts_uuid = string(IS.get_time_series_uuid(ts_type, branch, ts_name))
+        if !(ts_uuid in keys(initial_values))
+            push!(
+                parallel_dlr_ts,
+                get_time_series_initial_values!(container, ts_type, branch, ts_name) *
+                get_multiplier_value(T(), branch, W()),
+            )
+        end
+    end
+    equivalent_dlr_ts =
+        vec(sum(reduce(hcat, parallel_dlr_ts); dims = 2)) ./ length(parallel_dlr_ts)
+    return ts_uuid, equivalent_dlr_ts
+end
+
+# Walk the network reduction map and build three parallel data structures consumed by
+# add_dlr_parameters!:
+#   device_names             – names in the same order as the reduction keys
+#   entries_with_time_series – reduction entries that carry the target time series
+#   initial_values           – maps ts_uuid => (arc, time-series vector)
+function _collect_dlr_entries_and_initial_values!(
+    container::OptimizationContainer,
+    net_reduction_data,
+    reduced_branch_tracker,
+    all_branch_maps_by_type,
+    ts_type,
+    ts_name::String,
+    ::Type{T},
+    ::Type{W},
+    ::Type{D},
+) where {
+    T <: AbstractDynamicBranchRatingTimeSeriesParameter,
+    W <: AbstractDeviceFormulation,
+    D <: PSY.ACTransmission,
+}
+    device_names = String[]
+    entries_with_time_series = []
+    initial_values = Dict{String, Tuple{Tuple{Int64, Int64}, AbstractArray}}()
+
+    for (name, (arc, reduction)) in PNM.get_name_to_arc_map(net_reduction_data, D)
+        reduction_entry = all_branch_maps_by_type[reduction][D][arc]
+        if !PNM.has_time_series(reduction_entry, ts_type, ts_name)
+            @info "Time series $(ts_type):$(ts_name) for $D,  $name not found skipping parameter addition."
+            continue
+        end
+        has_entry, tracker_container = search_for_reduced_branch_argument!(
+            reduced_branch_tracker,
+            arc,
+            T,
+        )
+        if has_entry
+            @assert !isempty(tracker_container) name arc reduction
+            continue
+        end
+
+        push!(entries_with_time_series, reduction_entry)
+        if !PNM.is_a_reduction(reduction_entry)
+            push!(device_names, PSY.get_name(reduction_entry))
+            ts_uuid = string(IS.get_time_series_uuid(ts_type, reduction_entry, ts_name))
+            if !(ts_uuid in keys(initial_values))
+                initial_values[ts_uuid] = (
+                    arc,
+                    get_time_series_initial_values!(
+                        container,
+                        ts_type,
+                        reduction_entry,
+                        ts_name,
+                    ) * get_multiplier_value(T(), reduction_entry, W()),
+                )
+            end
+        else
+            push!(device_names, PNM.get_name(reduction_entry))
+            ts_uuid, equivalent_dlr_ts = _compute_equivalent_parallel_dlr_ts(
+                container,
+                reduction_entry,
+                ts_type,
+                ts_name,
+                initial_values,
+                T,
+                W,
+                D,
+                arc,
+            )
+            initial_values[ts_uuid] = (arc, equivalent_dlr_ts)
+        end
+    end
+    return device_names, entries_with_time_series, initial_values
+end
+
+# Populate parameter values inside param_container from the pre-computed initial_values.
+function _fill_dlr_parameter_values!(
+    param_container,
+    jump_model::JuMP.Model,
+    initial_values::Dict,
+    additional_axes,
+    time_steps,
+    param_instance::AbstractDynamicBranchRatingTimeSeriesParameter,
+)
+    for (ts_uuid, (arc, raw_ts_vals)) in initial_values
+        ts_vals = _unwrap_for_param.(Ref(param_instance), raw_ts_vals, Ref(additional_axes))
+        @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
+        #TODO use tracker
+        for step in time_steps
+            set_parameter!(param_container, jump_model, ts_vals[step], ts_uuid, step)
+        end
+    end
+    return
+end
+
+# Set per-step multipliers and register the time-series UUID for every entry that was
+# collected in _collect_dlr_entries_and_initial_values!.
+function _fill_dlr_multipliers_and_component_names!(
+    param_container,
+    entries_with_time_series,
+    ts_type,
+    ts_name::String,
+    time_steps,
+)
+    for reduction_entry in entries_with_time_series
+        if !PNM.is_a_reduction(reduction_entry)
+            device_name = PSY.get_name(reduction_entry)
+            for step in time_steps
+                set_multiplier!(param_container, 1.0, device_name, step)  #TODO get_multiplier_value(T(), reduction_entry, W())
+            end
+            #TODO use tracker
+            add_component_name!(
+                get_attributes(param_container),
+                device_name,
+                string(IS.get_time_series_uuid(ts_type, reduction_entry, ts_name)),
+            )
+            continue
+        end
+
+        device_name = PNM.get_name(reduction_entry)
+        for branch in reduction_entry
+            for step in time_steps
+                set_multiplier!(param_container, 1.0, device_name, step)  #TODO multiplier_value(T(), branch, W())
+            end
+            #TODO use tracker
+            add_component_name!(
+                get_attributes(param_container),
+                device_name,
+                string(IS.get_time_series_uuid(ts_type, branch, ts_name)),
+            )
+            break  # only the first branch provides the UUID
+        end
+    end
+    return
+end
+
 function add_dlr_parameters!(
     container::OptimizationContainer,
     ::Type{T},
@@ -41,68 +217,20 @@ function add_dlr_parameters!(
     end
     ts_name = _get_time_series_name(T(), first(devices), model)
 
-    device_names = String[] #getting the same keys of reductions
-    entries_with_time_series = []
-    initial_values = Dict{String, Tuple{Tuple{Int64, Int64}, AbstractArray}}()
-    for (name, (arc, reduction)) in PNM.get_name_to_arc_map(net_reduction_data, D)
-        reduction_entry = all_branch_maps_by_type[reduction][D][arc]
-        if !PNM.has_time_series(reduction_entry, ts_type, ts_name)
-            @info "Time series $(ts_type):$(ts_name) for $D,  $name not found skipping parameter addition."
-            continue
-        end
-        has_entry, tracker_container = search_for_reduced_branch_argument!(
+    device_names, entries_with_time_series, initial_values =
+        _collect_dlr_entries_and_initial_values!(
+            container,
+            net_reduction_data,
             reduced_branch_tracker,
-            arc,
+            all_branch_maps_by_type,
+            ts_type,
+            ts_name,
             T,
+            W,
+            D,
         )
-        if has_entry
-            @assert !isempty(tracker_container) name arc reduction
-            continue
-        end
 
-        push!(entries_with_time_series, reduction_entry)
-        if !PNM.is_a_reduction(reduction_entry)
-            push!(device_names, PSY.get_name(reduction_entry))
-            ts_uuid = string(IS.get_time_series_uuid(ts_type, reduction_entry, ts_name))
-            if !(ts_uuid in keys(initial_values))
-                initial_values[ts_uuid] =
-                    (
-                        arc,
-                        get_time_series_initial_values!(
-                            container,
-                            ts_type,
-                            reduction_entry,
-                            ts_name,
-                        ) * get_multiplier_value(T(), reduction_entry, W()),
-                    )
-            end
-            continue
-        end
-        push!(device_names, PNM.get_name(reduction_entry))
-
-        parallel_dlr_ts = Vector{Vector{Float64}}()
-        ts_uuid = ""
-        for branch in reduction_entry
-            if !PSY.has_time_series(branch, ts_type, ts_name)
-                @warn "$D, $(PSY.get_name(branch)) has no time series but has a branch in parallel with Time series $(ts_type):$(ts_name). Considering same time series for all branches in parallel in arc $arc"
-                continue
-            end
-
-            ts_uuid = string(IS.get_time_series_uuid(ts_type, branch, ts_name))
-            if !(ts_uuid in keys(initial_values))
-                push!(
-                    parallel_dlr_ts,
-                    get_time_series_initial_values!(container, ts_type, branch, ts_name) *
-                    get_multiplier_value(T(), branch, W()),
-                )
-            end
-        end
-        equivalent_dlr_ts =
-            vec(sum(reduce(hcat, parallel_dlr_ts); dims = 2)) ./ length(parallel_dlr_ts)
-        initial_values[ts_uuid] = (arc, equivalent_dlr_ts)
-    end
-
-    additional_axes = ()#calc_additional_axes(container, T(), devices_with_time_series, model)
+    additional_axes = ()  #calc_additional_axes(container, T(), devices_with_time_series, model)
     param_container = add_param_container!(
         container,
         T(),
@@ -117,49 +245,22 @@ function add_dlr_parameters!(
 
     set_subsystem!(get_attributes(param_container), get_subsystem(model))
 
-    jump_model = get_jump_model(container)
-    param_instance = T()
-    for (ts_uuid, (arc, raw_ts_vals)) in initial_values
-        ts_vals = _unwrap_for_param.(Ref(param_instance), raw_ts_vals, Ref(additional_axes))
-        @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
+    _fill_dlr_parameter_values!(
+        param_container,
+        get_jump_model(container),
+        initial_values,
+        additional_axes,
+        time_steps,
+        T(),
+    )
 
-        #TODO use tracker
-        for step in time_steps
-            set_parameter!(param_container, jump_model, ts_vals[step], ts_uuid, step)
-        end
-    end
-
-    for reduction_entry in entries_with_time_series
-        if !PNM.is_a_reduction(reduction_entry)
-            multiplier = 1.0#get_multiplier_value(T(), reduction_entry, W())
-            device_name = PSY.get_name(reduction_entry)
-            for step in time_steps
-                set_multiplier!(param_container, multiplier, device_name, step)
-            end
-            #TODO use tracker
-            add_component_name!(
-                get_attributes(param_container),
-                device_name,
-                string(IS.get_time_series_uuid(ts_type, reduction_entry, ts_name)),
-            )
-            continue
-        end
-
-        device_name = PNM.get_name(reduction_entry)
-        for branch in reduction_entry
-            multiplier = 1.0#multiplier_value(T(), branch, W())
-            for step in time_steps
-                set_multiplier!(param_container, multiplier, device_name, step)
-            end
-            #TODO use tracker
-            add_component_name!(
-                get_attributes(param_container),
-                device_name,
-                string(IS.get_time_series_uuid(ts_type, branch, ts_name)),
-            )
-            break
-        end
-    end
+    _fill_dlr_multipliers_and_component_names!(
+        param_container,
+        entries_with_time_series,
+        ts_type,
+        ts_name,
+        time_steps,
+    )
 
     return
 end
