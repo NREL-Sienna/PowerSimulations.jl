@@ -294,6 +294,7 @@ function _add_time_series_parameters!(
             @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
         end
         multiplier = get_multiplier_value(T(), reduction_entry, W())
+        jump_model = get_jump_model(container)
         for t in time_steps
             if !has_entry
                 tracker_container[t] = ts_vals[t]

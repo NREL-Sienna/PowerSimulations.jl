@@ -1,7 +1,8 @@
 mutable struct BranchReductionOptimizationTracker
     variable_dict::Dict{
         Type{<:Union{ISOPT.VariableType, ISOPT.ParameterType}},
-        Dict{Tuple{Int, Int}, Vector{JuMP.VariableRef}},
+        Any,  # VariableType entries: Dict{Tuple{Int,Int}, Vector{VariableRef}}
+              # ParameterType entries: Dict{Tuple{Int,Int}, Vector{Float64}}
     }
     constraint_dict::Dict{Type{<:ISOPT.ConstraintType}, Set{Tuple{Int, Int}}}
     constraint_map_by_type::Dict{
@@ -42,30 +43,46 @@ function BranchReductionOptimizationTracker()
     return BranchReductionOptimizationTracker(Dict(), Dict(), Dict(), 0)
 end
 
-function _make_empty_tracker_dict(arc_tuple::Tuple{Int, Int}, num_steps::Int)
+function _make_empty_tracker_dict(
+    arc_tuple::Tuple{Int, Int}, 
+    num_steps::Int, ::Type{T}
+    ) where {T <: ISOPT.VariableType}
     return Dict{Tuple{Int, Int}, Vector{JuMP.VariableRef}}(
         arc_tuple => Vector{JuMP.VariableRef}(undef, num_steps),
     )
 end
 
-function search_for_reduced_branch_variable!(
+function _make_empty_tracker_dict(
+    arc_tuple::Tuple{Int, Int}, 
+    num_steps::Int, ::Type{T}
+    ) where {T <: ISOPT.ParameterType}
+    return Dict{Tuple{Int, Int}, Vector{Float64}}(
+        arc_tuple => Vector{Float64}(undef, num_steps),
+    )
+end
+
+function search_for_reduced_branch_argument!(
     tracker::BranchReductionOptimizationTracker,
     arc_tuple::Tuple{Int, Int},
     ::Type{T},
 ) where {
-    T <: VariableType,
+    T <: Union{ISOPT.VariableType, ISOPT.ParameterType},
 }
     variable_dict = tracker.variable_dict
 
     time_steps = get_number_of_steps(tracker)
     if !haskey(variable_dict, T)
-        variable_dict[T] = _make_empty_tracker_dict(arc_tuple, time_steps)
+        variable_dict[T] = _make_empty_tracker_dict(arc_tuple, time_steps, T)
         return (false, variable_dict[T][arc_tuple])
     else
         if haskey(variable_dict[T], arc_tuple)
             return (true, variable_dict[T][arc_tuple])
         else
-            variable_dict[T][arc_tuple] = Vector{JuMP.VariableRef}(undef, time_steps)
+            if T <: ISOPT.VariableType
+                variable_dict[T][arc_tuple] = Vector{JuMP.VariableRef}(undef, time_steps)
+            else
+                variable_dict[T][arc_tuple] = Vector{Float64}(undef, time_steps)
+            end
             return (false, variable_dict[T][arc_tuple])
         end
     end

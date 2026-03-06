@@ -91,7 +91,7 @@ function add_variables!(
         # TODO: entry is not type stable here, it can return any type ACTransmission.
         # It might have performance implications. Possibly separate this into other functions
         reduction_entry = all_branch_maps_by_type[reduction][U][arc]
-        has_entry, tracker_container = search_for_reduced_branch_variable!(
+        has_entry, tracker_container = search_for_reduced_branch_argument!(
             reduced_branch_tracker,
             arc,
             T,
