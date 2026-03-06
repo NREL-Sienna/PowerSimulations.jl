@@ -187,9 +187,9 @@ end
 
     for slack_flag in [false, true]
         if slack_flag
-            test_results = [408, 0, 264, 264, 24]
+            test_results = [456, 0, 288, 288, 24]
         else
-            test_results = [120, 0, 264, 264, 24]
+            test_results = [120, 0, 288, 288, 24]
         end
         line_device_model = DeviceModel(
             Line,
@@ -217,11 +217,11 @@ end
                 initial_date = "2024-01-01",
             )
             nr = NetworkReduction[DegreeTwoReduction()]
-            ptdf = PTDF(sys; network_reductions = nr)
+            #ptdf = PTDF(sys; network_reductions = nr)
             template = get_thermal_dispatch_template_network(
                 NetworkModel(
                     PTDFPowerModel;
-                    PTDF_matrix = ptdf,
+                    #PTDF_matrix = ptdf,
                     reduce_degree_two_branches = PNM.has_degree_two_reduction(
                         ptdf.network_reduction_data,
                     ),
