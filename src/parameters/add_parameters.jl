@@ -208,6 +208,87 @@ end
 _size_wrapper(elem) = size(elem)
 _size_wrapper(::Tuple) = ()
 
+function _add_time_series_parameters!(
+    container::OptimizationContainer,
+    param::T,
+    network_model::NetworkModel{<:AbstractPTDFModel},
+    devices,
+    model::DeviceModel{D, W},
+) where {D <: PSY.ACTransmission, T <: TimeSeriesParameter, W <: AbstractDeviceFormulation}
+    ts_type = get_default_time_series_type(container)
+    if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
+        error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
+    end
+    time_steps = get_time_steps(container)
+    # TODO: Temporary workaround to get the name where we assume all the names are the same accross devices.
+    ts_name = _get_time_series_name(T(), first(devices), model)
+
+    net_reduction_data = network_model.network_reduction
+
+    device_name_axis, ts_uuid_axis =
+        get_branch_argument_parameter_axes(net_reduction_data, devices)
+    if isempty(device_name_axis)
+        @info "No devices with time series $ts_name found for $D devices. Skipping parameter addition."
+        return
+    end
+    additional_axes = ()
+    param_container = add_param_container!(
+        container,
+        param,
+        D,
+        ts_type,
+        ts_name,
+        device_name_axis,
+        ts_uuid_axis,
+        additional_axes,
+        time_steps,
+    )
+    set_subsystem!(get_attributes(param_container), get_subsystem(model))
+
+    param_instance = T()
+    for (name, (arc, reduction)) in PNM.get_name_to_arc_map(net_reduction_data, U)
+        reduction_entry = all_branch_maps_by_type[reduction][U][arc]
+        if !PNM.has_time_series(reduction_entry)
+            continue
+        end
+        device_with_time_series = PNM.get_device_with_time_series(reduction_entry) # TODO - IMPLEMENT IN PNM
+        ts_uuid = string(IS.get_time_series_uuid(device_with_time_series))
+
+        has_entry, tracker_container = search_for_reduced_branch_argument!(
+            reduced_branch_tracker,
+            arc,
+            T,
+        )
+        if has_entry
+            @assert !isempty(tracker_container) name arc reduction
+        else
+            raw_ts_vals = get_time_series_initial_values!(
+                container,
+                ts_type,
+                device_with_time_series,
+                ts_name,
+            )
+            ts_vals =
+                _unwrap_for_param.(Ref(param_instance), raw_ts_vals, Ref(additional_axes))
+            @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
+        end
+        multiplier = get_multiplier_value(T(), reduction_entry, W())    # TODO - Get appropriate rating from reduction_entry 
+        for t in time_steps
+            if !has_entry
+                tracker_container[t] = ts_vals[t]
+            end
+            set_parameter!(param_container, jump_model, tracker_container[t], ts_uuid, t)
+            set_multiplier!(param_container, multiplier, name, t)
+        end
+        add_component_name!(
+            get_attributes(param_container),
+            device_name,
+            string(IS.get_time_series_uuid(ts_type, device_with_time_series, ts_name)),
+        )
+    end
+    return
+end
+
 # NOTE direct equivalent of _add_parameters! on ObjectiveFunctionParameter
 # PERF: compilation hotspot. Switch to TSC.
 function _add_time_series_parameters!(
