@@ -1,6 +1,6 @@
 mutable struct BranchReductionOptimizationTracker
     variable_dict::Dict{
-        Type{<:ISOPT.VariableType},
+        Type{<:Union{ISOPT.VariableType, ISOPT.ParameterType}},
         Dict{Tuple{Int, Int}, Vector{JuMP.VariableRef}},
     }
     constraint_dict::Dict{Type{<:ISOPT.ConstraintType}, Set{Tuple{Int, Int}}}
@@ -72,6 +72,30 @@ function search_for_reduced_branch_variable!(
     error("condition for reduced branch variable search not met")
 end
 
+function get_branch_argument_parameter_axes(
+    net_reduction_data::PNM.NetworkReductionData,
+    ::IS.FlattenIteratorWrapper{T},
+) where {T <: PSY.ACTransmission}
+    return get_branch_argument_parameter_axes(net_reduction_data, T)
+end
+
+function get_branch_argument_parameter_axes(
+    net_reduction_data::PNM.NetworkReductionData,
+    ::Type{T},
+) where {T <: PSY.ACTransmission}
+    name_axis = Vector{String}()
+    ts_uuid_axis = Vector{String}()
+    for (name, (arc, reduction)) in net_reduction_data.name_to_arc_map[T]
+        reduction_entry = net_reduction_data.all_branch_maps_by_type[reduction][T][arc]
+        if PNM.has_time_series(reduction_entry)
+            push!(name_axis, name)
+            device_with_time_series = PNM.get_device_with_time_series(reduction_entry)  # TODO - IMPLEMENT IN PNM 
+            push!(ts_uuid_axis, IS.get_time_series_uuid(device_with_time_series))
+        end
+    end
+    return name_axis, ts_uuid_axis
+end
+
 function get_branch_argument_variable_axis(
     net_reduction_data::PNM.NetworkReductionData,
     ::IS.FlattenIteratorWrapper{T},
@@ -87,13 +111,13 @@ function get_branch_argument_variable_axis(
     return collect(keys(name_axis))
 end
 
-function get_branch_argument_variable_axis(
+#= function get_branch_argument_variable_axis(
     net_reduction_data::PNM.NetworkReductionData,
     ::Type{PNM.ThreeWindingTransformerWinding{T}},
 ) where {T <: PSY.ThreeWindingTransformer}
     name_axis = net_reduction_data.name_to_arc_map[T]
     return collect(keys(name_axis))
-end
+end =#
 
 function get_branch_argument_constraint_axis(
     net_reduction_data::PNM.NetworkReductionData,
