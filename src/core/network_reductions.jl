@@ -75,22 +75,26 @@ end
 function get_branch_argument_parameter_axes(
     net_reduction_data::PNM.NetworkReductionData,
     ::IS.FlattenIteratorWrapper{T},
-) where {T <: PSY.ACTransmission}
-    return get_branch_argument_parameter_axes(net_reduction_data, T)
+    ::Type{V},
+    ts_name::String,
+) where {T <: PSY.ACTransmission, V <: PSY.TimeSeriesData}
+    return get_branch_argument_parameter_axes(net_reduction_data, T, V, ts_name)
 end
 
 function get_branch_argument_parameter_axes(
     net_reduction_data::PNM.NetworkReductionData,
     ::Type{T},
-) where {T <: PSY.ACTransmission}
+    ::Type{V},
+    ts_name::String,
+) where {T <: PSY.ACTransmission, V <: PSY.TimeSeriesData}
     name_axis = Vector{String}()
     ts_uuid_axis = Vector{String}()
     for (name, (arc, reduction)) in net_reduction_data.name_to_arc_map[T]
         reduction_entry = net_reduction_data.all_branch_maps_by_type[reduction][T][arc]
-        if PNM.has_time_series(reduction_entry)
+        device_with_time_series = PNM.get_device_with_time_series(reduction_entry, V, ts_name)
+        if device_with_time_series !== nothing
             push!(name_axis, name)
-            device_with_time_series = PNM.get_device_with_time_series(reduction_entry)  # TODO - IMPLEMENT IN PNM 
-            push!(ts_uuid_axis, IS.get_time_series_uuid(device_with_time_series))
+            push!(ts_uuid_axis, string(IS.get_time_series_uuid(V, device_with_time_series, ts_name)) )
         end
     end
     return name_axis, ts_uuid_axis
