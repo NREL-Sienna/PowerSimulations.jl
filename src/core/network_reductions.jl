@@ -1,6 +1,6 @@
 mutable struct BranchReductionOptimizationTracker
-    variable_dict::Dict{
-        Type{<:ISOPT.VariableType},
+    argument_dict::Dict{
+        Type{<:Union{ISOPT.VariableType, ISOPT.ParameterType}}, 
         Dict{Tuple{Int, Int}, Vector{JuMP.VariableRef}},
     }
     constraint_dict::Dict{Type{<:ISOPT.ConstraintType}, Set{Tuple{Int, Int}}}
@@ -14,8 +14,8 @@ mutable struct BranchReductionOptimizationTracker
     number_of_steps::Int
 end
 
-get_variable_dict(reduction_tracker::BranchReductionOptimizationTracker) =
-    reduction_tracker.variable_dict
+get_argument_dict(reduction_tracker::BranchReductionOptimizationTracker) =
+    reduction_tracker.argument_dict
 get_constraint_dict(reduction_tracker::BranchReductionOptimizationTracker) =
     reduction_tracker.constraint_dict
 get_constraint_map_by_type(reduction_tracker::BranchReductionOptimizationTracker) =
@@ -28,13 +28,13 @@ set_number_of_steps!(reduction_tracker, number_of_steps) =
 
 Base.isempty(
     reduction_tracker::BranchReductionOptimizationTracker,
-) = isempty(reduction_tracker.variable_dict) &&
+) = isempty(reduction_tracker.argument_dict) &&
 isempty(reduction_tracker.constraint_dict)
 
 Base.empty!(
     reduction_tracker::BranchReductionOptimizationTracker,
 ) = begin
-    empty!(reduction_tracker.variable_dict)
+    empty!(reduction_tracker.argument_dict)
     empty!(reduction_tracker.constraint_dict)
 end
 
@@ -47,26 +47,26 @@ function _make_empty_tracker_dict(arc_tuple::Tuple{Int, Int}, num_steps::Int)
         arc_tuple => Vector{JuMP.VariableRef}(undef, num_steps),
     )
 end
-
-function search_for_reduced_branch_variable!(
+#
+function search_for_reduced_branch_argument!(
     tracker::BranchReductionOptimizationTracker,
     arc_tuple::Tuple{Int, Int},
     ::Type{T},
 ) where {
-    T <: VariableType,
+    T <: Union{ISOPT.VariableType, ISOPT.ParameterType},
 }
-    variable_dict = tracker.variable_dict
+    argument_dict = tracker.argument_dict
 
     time_steps = get_number_of_steps(tracker)
-    if !haskey(variable_dict, T)
-        variable_dict[T] = _make_empty_tracker_dict(arc_tuple, time_steps)
-        return (false, variable_dict[T][arc_tuple])
+    if !haskey(argument_dict, T)
+        argument_dict[T] = _make_empty_tracker_dict(arc_tuple, time_steps)
+        return (false, argument_dict[T][arc_tuple])
     else
-        if haskey(variable_dict[T], arc_tuple)
-            return (true, variable_dict[T][arc_tuple])
+        if haskey(argument_dict[T], arc_tuple)
+            return (true, argument_dict[T][arc_tuple])
         else
-            variable_dict[T][arc_tuple] = Vector{JuMP.VariableRef}(undef, time_steps)
-            return (false, variable_dict[T][arc_tuple])
+            argument_dict[T][arc_tuple] = Vector{JuMP.VariableRef}(undef, time_steps)
+            return (false, argument_dict[T][arc_tuple])
         end
     end
     error("condition for reduced branch variable search not met")

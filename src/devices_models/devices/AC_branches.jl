@@ -90,7 +90,7 @@ function add_variables!(
         # TODO: entry is not type stable here, it can return any type ACTransmission.
         # It might have performance implications. Possibly separate this into other functions
         reduction_entry = all_branch_maps_by_type[reduction][U][arc]
-        has_entry, tracker_container = search_for_reduced_branch_variable!(
+        has_entry, tracker_container = search_for_reduced_branch_argument!(
             reduced_branch_tracker,
             arc,
             T,
@@ -430,8 +430,7 @@ function _add_flow_rate_constraint_with_parameters!(
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)[name, :]
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)[name, :]
     end
-
-    param_container = get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
+    @show param_container = get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
     param = get_parameter_column_refs(param_container, name)
     mult = get_multiplier_array(param_container)[name, :]
 
@@ -511,7 +510,7 @@ function add_flow_rate_constraint_with_parameters!(
     use_slacks = get_use_slacks(device_model)
     for (name, (arc, reduction)) in
         get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][T]
-        if _arc_has_branch_with_time_series(
+        if _arc_has_branch_with_time_series(#TODO see PNM function PNM.has_time_series(reduction)
             all_branch_maps_by_type[reduction][T],
             arc,
             ts_name,
