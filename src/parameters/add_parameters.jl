@@ -15,6 +15,24 @@ function add_parameters!(
     return
 end
 
+function add_branch_parameters!(
+    container::OptimizationContainer,
+    ::Type{T},
+    devices::U,
+    model::DeviceModel{D, W},
+    network_model::NetworkModel{<:AbstractPTDFModel},
+) where {
+    T <: ParameterType,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.ACTransmission}
+    if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
+        return
+    end
+    _add_time_series_parameters!(container, T(), network_model, devices, model)
+    return
+end
+
 function add_parameters!(
     container::OptimizationContainer,
     ::Type{T},
@@ -224,9 +242,11 @@ function _add_time_series_parameters!(
     ts_name = _get_time_series_name(T(), first(devices), model)
 
     net_reduction_data = network_model.network_reduction
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
 
     device_name_axis, ts_uuid_axis =
-        get_branch_argument_parameter_axes(net_reduction_data, devices)
+        get_branch_argument_parameter_axes(net_reduction_data, devices, ts_type, ts_name,)
     if isempty(device_name_axis)
         @info "No devices with time series $ts_name found for $D devices. Skipping parameter addition."
         return
@@ -246,19 +266,20 @@ function _add_time_series_parameters!(
     set_subsystem!(get_attributes(param_container), get_subsystem(model))
 
     param_instance = T()
-    for (name, (arc, reduction)) in PNM.get_name_to_arc_map(net_reduction_data, U)
-        reduction_entry = all_branch_maps_by_type[reduction][U][arc]
-        if !PNM.has_time_series(reduction_entry)
+    for (name, (arc, reduction)) in PNM.get_name_to_arc_map(net_reduction_data, D)
+        reduction_entry = all_branch_maps_by_type[reduction][D][arc]
+        if !PNM.has_time_series(reduction_entry, ts_type, ts_name)
             continue
         end
-        device_with_time_series = PNM.get_device_with_time_series(reduction_entry) # TODO - IMPLEMENT IN PNM
-        ts_uuid = string(IS.get_time_series_uuid(device_with_time_series))
+        device_with_time_series = PNM.get_device_with_time_series(reduction_entry, ts_type, ts_name)
+        ts_uuid = string(IS.get_time_series_uuid(ts_type, device_with_time_series, ts_name))
 
         has_entry, tracker_container = search_for_reduced_branch_argument!(
             reduced_branch_tracker,
             arc,
             T,
         )
+        @show typeof(tracker_container)
         if has_entry
             @assert !isempty(tracker_container) name arc reduction
         else
@@ -272,7 +293,7 @@ function _add_time_series_parameters!(
                 _unwrap_for_param.(Ref(param_instance), raw_ts_vals, Ref(additional_axes))
             @assert all(_size_wrapper.(ts_vals) .== Ref(length.(additional_axes)))
         end
-        multiplier = get_multiplier_value(T(), reduction_entry, W())    # TODO - Get appropriate rating from reduction_entry 
+        multiplier = get_multiplier_value(T(), reduction_entry, W())
         for t in time_steps
             if !has_entry
                 tracker_container[t] = ts_vals[t]
