@@ -243,10 +243,13 @@ function instantiate_network_model!(
     number_of_steps::Int,
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
+
     _check_branch_network_compatibility(model, branch_models, sys)
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
+    #TODO make another function to check ptdf matriz they are passing
+    #if they are passing ptdf and has Degree2Reduction && DLRs -> recompute and warn
     if model.reduce_radial_branches && model.reduce_degree_two_branches
         @info "Applying both radial and degree two reductions"
         irreducible_buses = _get_irreducible_buses_due_to_dlrs(sys, model, branch_models)
@@ -331,43 +334,47 @@ function instantiate_network_model!(
     sys::PSY.System,
 )
     _check_branch_network_compatibility(model, branch_models, sys)
-    if get_PTDF_matrix(model) === nothing
-        @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
-        if model.reduce_radial_branches && model.reduce_degree_two_branches
-            @info "Applying both radial and degree two reductions"
-            irreducible_buses =
-                _get_irreducible_buses_due_to_dlrs(sys, model, branch_models)
-            ptdf = PNM.VirtualPTDF(
-                sys;
-                network_reductions = PNM.NetworkReduction[
-                    PNM.RadialReduction(; irreducible_buses = collect(irreducible_buses)),
-                    PNM.DegreeTwoReduction(;
-                        irreducible_buses = collect(irreducible_buses),
-                    ),
-                ],
-            )
-        elseif model.reduce_radial_branches
-            @info "Applying radial reduction"
-            irreducible_buses =
-                _get_irreducible_buses_due_to_dlrs(sys, model, branch_models)
-            ptdf = PNM.VirtualPTDF(
-                sys;
-                network_reductions = PNM.NetworkReduction[PNM.RadialReduction(;
+
+    @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
+    if model.reduce_radial_branches && model.reduce_degree_two_branches
+        @info "Applying both radial and degree two reductions"
+        irreducible_buses =
+            _get_irreducible_buses_due_to_dlrs(sys, model, branch_models)
+        ptdf = PNM.VirtualPTDF(
+            sys;
+            network_reductions = PNM.NetworkReduction[
+                PNM.RadialReduction(; irreducible_buses = collect(irreducible_buses)),
+                PNM.DegreeTwoReduction(;
                     irreducible_buses = collect(irreducible_buses),
-                )],
-            )
-        elseif model.reduce_degree_two_branches
-            @info "Applying degree two reduction"
-            irreducible_buses =
-                _get_irreducible_buses_due_to_dlrs(sys, model, branch_models)
-            ptdf = PNM.VirtualPTDF(
-                sys;
-                network_reductions = PNM.NetworkReduction[PNM.DegreeTwoReduction(;
-                    irreducible_buses = collect(irreducible_buses),
-                )],
-            )
+                ),
+            ],
+        )
+    elseif model.reduce_radial_branches
+        @info "Applying radial reduction"
+        irreducible_buses =
+            _get_irreducible_buses_due_to_dlrs(sys, model, branch_models)
+        ptdf = PNM.VirtualPTDF(
+            sys;
+            network_reductions = PNM.NetworkReduction[PNM.RadialReduction(;
+                irreducible_buses = collect(irreducible_buses),
+            )],
+        )
+    elseif model.reduce_degree_two_branches
+        @info "Applying degree two reduction"
+        irreducible_buses =
+            _get_irreducible_buses_due_to_dlrs(sys, model, branch_models)
+        ptdf = PNM.VirtualPTDF(
+            sys;
+            network_reductions = PNM.NetworkReduction[PNM.DegreeTwoReduction(;
+                irreducible_buses = collect(irreducible_buses),
+            )],
+        )
+    if get_PTDF_matrix(model) !== nothing
+        
         else
-            ptdf = PNM.VirtualPTDF(sys)
+            if get_PTDF_matrix(model) === nothing
+                ptdf = PNM.VirtualPTDF(sys)
+            end
         end
         model.PTDF_matrix = ptdf
         model.network_reduction = deepcopy(ptdf.network_reduction_data)
