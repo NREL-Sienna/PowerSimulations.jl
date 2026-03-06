@@ -246,7 +246,7 @@ function _add_time_series_parameters!(
     all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
 
     device_name_axis, ts_uuid_axis =
-        get_branch_argument_parameter_axes(net_reduction_data, devices, ts_type, ts_name,)
+        get_branch_argument_parameter_axes(net_reduction_data, devices, ts_type, ts_name)
     if isempty(device_name_axis)
         @info "No devices with time series $ts_name found for $D devices. Skipping parameter addition."
         return
@@ -272,8 +272,10 @@ function _add_time_series_parameters!(
             continue
         end
         @show name
-        @show device_with_time_series = PNM.get_device_with_time_series(reduction_entry, ts_type, ts_name)
-        @show ts_uuid = string(IS.get_time_series_uuid(ts_type, device_with_time_series, ts_name))
+        @show device_with_time_series =
+            PNM.get_device_with_time_series(reduction_entry, ts_type, ts_name)
+        @show ts_uuid =
+            string(IS.get_time_series_uuid(ts_type, device_with_time_series, ts_name))
 
         has_entry, tracker_container = search_for_reduced_branch_argument!(
             reduced_branch_tracker,

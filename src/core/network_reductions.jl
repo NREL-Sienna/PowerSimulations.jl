@@ -2,7 +2,7 @@ mutable struct BranchReductionOptimizationTracker
     variable_dict::Dict{
         Type{<:Union{ISOPT.VariableType, ISOPT.ParameterType}},
         Any,  # VariableType entries: Dict{Tuple{Int,Int}, Vector{VariableRef}}
-              # ParameterType entries: Dict{Tuple{Int,Int}, Vector{Float64}}
+        # ParameterType entries: Dict{Tuple{Int,Int}, Vector{Float64}}
     }
     constraint_dict::Dict{Type{<:ISOPT.ConstraintType}, Set{Tuple{Int, Int}}}
     constraint_map_by_type::Dict{
@@ -44,18 +44,18 @@ function BranchReductionOptimizationTracker()
 end
 
 function _make_empty_tracker_dict(
-    arc_tuple::Tuple{Int, Int}, 
-    num_steps::Int, ::Type{T}
-    ) where {T <: ISOPT.VariableType}
+    arc_tuple::Tuple{Int, Int},
+    num_steps::Int, ::Type{T},
+) where {T <: ISOPT.VariableType}
     return Dict{Tuple{Int, Int}, Vector{JuMP.VariableRef}}(
         arc_tuple => Vector{JuMP.VariableRef}(undef, num_steps),
     )
 end
 
 function _make_empty_tracker_dict(
-    arc_tuple::Tuple{Int, Int}, 
-    num_steps::Int, ::Type{T}
-    ) where {T <: ISOPT.ParameterType}
+    arc_tuple::Tuple{Int, Int},
+    num_steps::Int, ::Type{T},
+) where {T <: ISOPT.ParameterType}
     return Dict{Tuple{Int, Int}, Vector{Float64}}(
         arc_tuple => Vector{Float64}(undef, num_steps),
     )
@@ -108,10 +108,14 @@ function get_branch_argument_parameter_axes(
     ts_uuid_axis = Vector{String}()
     for (name, (arc, reduction)) in net_reduction_data.name_to_arc_map[T]
         reduction_entry = net_reduction_data.all_branch_maps_by_type[reduction][T][arc]
-        device_with_time_series = PNM.get_device_with_time_series(reduction_entry, V, ts_name)
+        device_with_time_series =
+            PNM.get_device_with_time_series(reduction_entry, V, ts_name)
         if device_with_time_series !== nothing
             push!(name_axis, name)
-            push!(ts_uuid_axis, string(IS.get_time_series_uuid(V, device_with_time_series, ts_name)) )
+            push!(
+                ts_uuid_axis,
+                string(IS.get_time_series_uuid(V, device_with_time_series, ts_name)),
+            )
         end
     end
     return name_axis, ts_uuid_axis
