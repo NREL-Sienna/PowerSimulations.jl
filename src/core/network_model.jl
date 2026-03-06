@@ -357,7 +357,7 @@ function instantiate_network_model!(
                 )],
             )
         elseif model.reduce_degree_two_branches
-            @show @info "Applying degree two reduction"
+            @info "Applying degree two reduction"
             irreducible_buses =
                 _get_irreducible_buses_due_to_dlrs(sys, model, branch_models)
             ptdf = PNM.VirtualPTDF(
