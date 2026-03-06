@@ -148,11 +148,12 @@ function construct_device!(
     end
 
     if haskey(get_time_series_names(device_model), DynamicBranchRatingTimeSeriesParameter)
-        add_parameters!(
+        add_dlr_parameters!(
             container,
             DynamicBranchRatingTimeSeriesParameter,
             devices,
             device_model,
+            network_model,
         )
     end
 
@@ -160,11 +161,12 @@ function construct_device!(
         get_time_series_names(device_model),
         PostContingencyDynamicBranchRatingTimeSeriesParameter,
     )
-        add_parameters!(
+        add_dlr_parameters!(
             container,
             PostContingencyDynamicBranchRatingTimeSeriesParameter,
             devices,
             device_model,
+            network_model,
         )
     end
 
