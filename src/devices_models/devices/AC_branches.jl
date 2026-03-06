@@ -430,7 +430,8 @@ function _add_flow_rate_constraint_with_parameters!(
         slack_ub = get_variable(container, FlowActivePowerSlackUpperBound(), T)[name, :]
         slack_lb = get_variable(container, FlowActivePowerSlackLowerBound(), T)[name, :]
     end
-    @show param_container = get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
+    param_container =
+        get_parameter(container, DynamicBranchRatingTimeSeriesParameter(), T)
     param = get_parameter_column_refs(param_container, name)
     mult = get_multiplier_array(param_container)[name, :]
 

@@ -26,11 +26,10 @@ function add_dlr_parameters!(
     U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
     W <: AbstractDeviceFormulation,
 } where {D <: PSY.ACTransmission}
-
     if get_rebuild_model(get_settings(container)) && has_container_key(container, T, D)
         return
     end
-    
+
     time_steps = get_time_steps(container)
     net_reduction_data = network_model.network_reduction
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
@@ -44,7 +43,7 @@ function add_dlr_parameters!(
 
     device_names = String[] #getting the same keys of reductions
     entries_with_time_series = []
-    initial_values = Dict{String, Tuple{Tuple{Int64, Int64},AbstractArray}}()
+    initial_values = Dict{String, Tuple{Tuple{Int64, Int64}, AbstractArray}}()
     for (name, (arc, reduction)) in PNM.get_name_to_arc_map(net_reduction_data, D)
         reduction_entry = all_branch_maps_by_type[reduction][D][arc]
         if !PNM.has_time_series(reduction_entry, ts_type, ts_name)
@@ -67,7 +66,15 @@ function add_dlr_parameters!(
             ts_uuid = string(IS.get_time_series_uuid(ts_type, reduction_entry, ts_name))
             if !(ts_uuid in keys(initial_values))
                 initial_values[ts_uuid] =
-                    (arc, get_time_series_initial_values!(container, ts_type, reduction_entry, ts_name) * get_multiplier_value(T(), reduction_entry, W()))
+                    (
+                        arc,
+                        get_time_series_initial_values!(
+                            container,
+                            ts_type,
+                            reduction_entry,
+                            ts_name,
+                        ) * get_multiplier_value(T(), reduction_entry, W()),
+                    )
             end
             continue
         end
@@ -76,18 +83,22 @@ function add_dlr_parameters!(
         parallel_dlr_ts = Vector{Vector{Float64}}()
         ts_uuid = ""
         for branch in reduction_entry
-
             if !PSY.has_time_series(branch, ts_type, ts_name)
                 @warn "$D, $(PSY.get_name(branch)) has no time series but has a branch in parallel with Time series $(ts_type):$(ts_name). Considering same time series for all branches in parallel in arc $arc"
                 continue
             end
-            
+
             ts_uuid = string(IS.get_time_series_uuid(ts_type, branch, ts_name))
             if !(ts_uuid in keys(initial_values))
-                push!(parallel_dlr_ts, get_time_series_initial_values!(container, ts_type, branch, ts_name) *  get_multiplier_value(T(), branch, W()))
+                push!(
+                    parallel_dlr_ts,
+                    get_time_series_initial_values!(container, ts_type, branch, ts_name) *
+                    get_multiplier_value(T(), branch, W()),
+                )
             end
         end
-        equivalent_dlr_ts = vec(sum(reduce(hcat, parallel_dlr_ts), dims=2)) ./ length(parallel_dlr_ts) 
+        equivalent_dlr_ts =
+            vec(sum(reduce(hcat, parallel_dlr_ts); dims = 2)) ./ length(parallel_dlr_ts)
         initial_values[ts_uuid] = (arc, equivalent_dlr_ts)
     end
 
@@ -117,7 +128,7 @@ function add_dlr_parameters!(
             set_parameter!(param_container, jump_model, ts_vals[step], ts_uuid, step)
         end
     end
-    
+
     for reduction_entry in entries_with_time_series
         if !PNM.is_a_reduction(reduction_entry)
             multiplier = 1.0#get_multiplier_value(T(), reduction_entry, W())

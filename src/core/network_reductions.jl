@@ -1,6 +1,6 @@
 mutable struct BranchReductionOptimizationTracker
     argument_dict::Dict{
-        Type{<:Union{ISOPT.VariableType, ISOPT.ParameterType}}, 
+        Type{<:Union{ISOPT.VariableType, ISOPT.ParameterType}},
         Dict{Tuple{Int, Int}, Vector{JuMP.VariableRef}},
     }
     constraint_dict::Dict{Type{<:ISOPT.ConstraintType}, Set{Tuple{Int, Int}}}
