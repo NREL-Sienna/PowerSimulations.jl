@@ -264,17 +264,16 @@ function _add_time_series_parameters!(
         time_steps,
     )
     set_subsystem!(get_attributes(param_container), get_subsystem(model))
-    @show ts_uuid_axis
+    ts_uuid_axis
     param_instance = T()
     for (name, (arc, reduction)) in PNM.get_name_to_arc_map(net_reduction_data, D)
         reduction_entry = all_branch_maps_by_type[reduction][D][arc]
         if !PNM.has_time_series(reduction_entry, ts_type, ts_name)
             continue
         end
-        @show name
-        @show device_with_time_series =
+        device_with_time_series =
             PNM.get_device_with_time_series(reduction_entry, ts_type, ts_name)
-        @show ts_uuid =
+        ts_uuid =
             string(IS.get_time_series_uuid(ts_type, device_with_time_series, ts_name))
 
         has_entry, tracker_container = search_for_reduced_branch_argument!(
@@ -282,7 +281,7 @@ function _add_time_series_parameters!(
             arc,
             T,
         )
-        @show typeof(tracker_container)
+
         if has_entry
             @assert !isempty(tracker_container) name arc reduction
         else
