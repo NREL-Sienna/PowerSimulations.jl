@@ -1,8 +1,11 @@
 mutable struct BranchReductionOptimizationTracker
     variable_dict::Dict{
-        Type{<:Union{ISOPT.VariableType, ISOPT.ParameterType}},
-        Any,  # VariableType entries: Dict{Tuple{Int,Int}, Vector{VariableRef}}
-        # ParameterType entries: Dict{Tuple{Int,Int}, Vector{Float64}}
+        Type{<:ISOPT.VariableType},
+        Dict{Tuple{Int, Int}, Vector{VariableRef}},
+    }
+    parameter_dict::Dict{
+        Type{<:ISOPT.ParameterType},
+        Dict{Tuple{Int, Int}, Vector{Union{Float64, JuMP.VariableRef}}},
     }
     constraint_dict::Dict{Type{<:ISOPT.ConstraintType}, Set{Tuple{Int, Int}}}
     constraint_map_by_type::Dict{
@@ -40,8 +43,8 @@ Base.empty!(
 end
 
 function BranchReductionOptimizationTracker()
-    return BranchReductionOptimizationTracker(Dict(), Dict(), Dict(), 0)
-end
+    return BranchReductionOptimizationTracker(Dict(), Dict(), Dict(), Dict(), 0)
+end 
 
 function _make_empty_tracker_dict(
     arc_tuple::Tuple{Int, Int},
