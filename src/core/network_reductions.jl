@@ -1,7 +1,7 @@
 mutable struct BranchReductionOptimizationTracker
     variable_dict::Dict{
         Type{<:ISOPT.VariableType},
-        Dict{Tuple{Int, Int}, Vector{VariableRef}},
+        Dict{Tuple{Int, Int}, Vector{JuMP.VariableRef}},
     }
     parameter_dict::Dict{
         Type{<:ISOPT.ParameterType},
@@ -20,6 +20,8 @@ end
 
 get_variable_dict(reduction_tracker::BranchReductionOptimizationTracker) =
     reduction_tracker.variable_dict
+get_parameter_dict(reduction_tracker::BranchReductionOptimizationTracker) =
+    reduction_tracker.parameter_dict
 get_constraint_dict(reduction_tracker::BranchReductionOptimizationTracker) =
     reduction_tracker.constraint_dict
 get_constraint_map_by_type(reduction_tracker::BranchReductionOptimizationTracker) =
@@ -33,12 +35,14 @@ set_number_of_steps!(reduction_tracker, number_of_steps) =
 Base.isempty(
     reduction_tracker::BranchReductionOptimizationTracker,
 ) = isempty(reduction_tracker.variable_dict) &&
-isempty(reduction_tracker.constraint_dict)
+    isempty(reduction_tracker.parameter_dict) &&
+    isempty(reduction_tracker.constraint_dict)
 
 Base.empty!(
     reduction_tracker::BranchReductionOptimizationTracker,
 ) = begin
     empty!(reduction_tracker.variable_dict)
+    empty!(reduction_tracker.parameter_dict)
     empty!(reduction_tracker.constraint_dict)
 end
 
@@ -46,50 +50,89 @@ function BranchReductionOptimizationTracker()
     return BranchReductionOptimizationTracker(Dict(), Dict(), Dict(), Dict(), 0)
 end
 
-function _make_empty_tracker_dict(
+function _make_empty_variable_tracker_dict(
     arc_tuple::Tuple{Int, Int},
-    num_steps::Int, ::Type{T},
-) where {T <: ISOPT.VariableType}
+    num_steps::Int,
+)
     return Dict{Tuple{Int, Int}, Vector{JuMP.VariableRef}}(
         arc_tuple => Vector{JuMP.VariableRef}(undef, num_steps),
     )
 end
 
-function _make_empty_tracker_dict(
+function _make_empty_parameter_tracker_dict(
     arc_tuple::Tuple{Int, Int},
-    num_steps::Int, ::Type{T},
-) where {T <: ISOPT.ParameterType}
-    return Dict{Tuple{Int, Int}, Vector{Float64}}(
-        arc_tuple => Vector{Float64}(undef, num_steps),
+    num_steps::Int,
+)
+    return Dict{Tuple{Int, Int}, Vector{Union{Float64, JuMP.VariableRef}}}(
+        arc_tuple => Vector{Union{Float64, JuMP.VariableRef}}(undef, num_steps),
     )
+end
+
+"""Look up (or register) the tracker entry for `arc_tuple` and `VariableType` T.
+Returns `(has_entry, tracker_vector)` where `has_entry` is `true` when the arc
+was already registered by a previous call (i.e. a parallel/reduced branch of a
+different device type already created the variable)."""
+function search_for_reduced_branch_variable!(
+    tracker::BranchReductionOptimizationTracker,
+    arc_tuple::Tuple{Int, Int},
+    ::Type{T},
+) where {T <: ISOPT.VariableType}
+    variable_dict = tracker.variable_dict
+    time_steps = get_number_of_steps(tracker)
+    if !haskey(variable_dict, T)
+        variable_dict[T] = _make_empty_variable_tracker_dict(arc_tuple, time_steps)
+        return (false, variable_dict[T][arc_tuple])
+    else
+        if haskey(variable_dict[T], arc_tuple)
+            return (true, variable_dict[T][arc_tuple])
+        else
+            variable_dict[T][arc_tuple] = Vector{JuMP.VariableRef}(undef, time_steps)
+            return (false, variable_dict[T][arc_tuple])
+        end
+    end
+end
+
+"""Look up (or register) the tracker entry for `arc_tuple` and `ParameterType` T.
+Stores `Float64` values when `built_for_recurrent_solves` is `false`, or
+`JuMP.VariableRef` objects (JuMP parameters) when `true`, so that shared arcs
+across different branch types reuse the same underlying parameter object.
+Returns `(has_entry, tracker_vector)`."""
+function search_for_reduced_branch_parameter!(
+    tracker::BranchReductionOptimizationTracker,
+    arc_tuple::Tuple{Int, Int},
+    ::Type{T},
+) where {T <: ISOPT.ParameterType}
+    parameter_dict = tracker.parameter_dict
+    time_steps = get_number_of_steps(tracker)
+    if !haskey(parameter_dict, T)
+        parameter_dict[T] = _make_empty_parameter_tracker_dict(arc_tuple, time_steps)
+        return (false, parameter_dict[T][arc_tuple])
+    else
+        if haskey(parameter_dict[T], arc_tuple)
+            return (true, parameter_dict[T][arc_tuple])
+        else
+            parameter_dict[T][arc_tuple] =
+                Vector{Union{Float64, JuMP.VariableRef}}(undef, time_steps)
+            return (false, parameter_dict[T][arc_tuple])
+        end
+    end
+end
+
+# Backwards-compatible dispatcher: routes to the correctly typed dict based on T.
+function search_for_reduced_branch_argument!(
+    tracker::BranchReductionOptimizationTracker,
+    arc_tuple::Tuple{Int, Int},
+    ::Type{T},
+) where {T <: ISOPT.VariableType}
+    return search_for_reduced_branch_variable!(tracker, arc_tuple, T)
 end
 
 function search_for_reduced_branch_argument!(
     tracker::BranchReductionOptimizationTracker,
     arc_tuple::Tuple{Int, Int},
     ::Type{T},
-) where {
-    T <: Union{ISOPT.VariableType, ISOPT.ParameterType},
-}
-    variable_dict = tracker.variable_dict
-
-    time_steps = get_number_of_steps(tracker)
-    if !haskey(variable_dict, T)
-        variable_dict[T] = _make_empty_tracker_dict(arc_tuple, time_steps, T)
-        return (false, variable_dict[T][arc_tuple])
-    else
-        if haskey(variable_dict[T], arc_tuple)
-            return (true, variable_dict[T][arc_tuple])
-        else
-            if T <: ISOPT.VariableType
-                variable_dict[T][arc_tuple] = Vector{JuMP.VariableRef}(undef, time_steps)
-            else
-                variable_dict[T][arc_tuple] = Vector{Float64}(undef, time_steps)
-            end
-            return (false, variable_dict[T][arc_tuple])
-        end
-    end
-    error("condition for reduced branch variable search not met")
+) where {T <: ISOPT.ParameterType}
+    return search_for_reduced_branch_parameter!(tracker, arc_tuple, T)
 end
 
 function get_branch_argument_parameter_axes(
