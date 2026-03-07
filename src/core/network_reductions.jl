@@ -44,7 +44,7 @@ end
 
 function BranchReductionOptimizationTracker()
     return BranchReductionOptimizationTracker(Dict(), Dict(), Dict(), Dict(), 0)
-end 
+end
 
 function _make_empty_tracker_dict(
     arc_tuple::Tuple{Int, Int},

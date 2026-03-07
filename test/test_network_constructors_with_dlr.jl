@@ -1,21 +1,28 @@
 function check_dlr_branch_flows!(
     res::OptimizationProblemResults,
-    sys::PSY.System, 
+    sys::PSY.System,
     branches_dlr::Vector{<:AbstractString},
-    dlr_factors::Vector{Float64}, 
-    add_parallel_line_name::Union{Nothing, AbstractString} = nothing
-    )
+    dlr_factors::Vector{Float64},
+    add_parallel_line_name::Union{Nothing, AbstractString} = nothing,
+)
     for branch_name in branches_dlr
         branch = get_component(PSY.ACTransmission, sys, branch_name)
-        col_key = (add_parallel_line_name !== nothing && branch_name == add_parallel_line_name) ?
-            branch_name * "double_circuit" : branch_name
+        col_key =
+            if (add_parallel_line_name !== nothing && branch_name == add_parallel_line_name)
+                branch_name * "double_circuit"
+            else
+                branch_name
+            end
         static_rating = get_rating(branch) * get_base_power(sys)
         branch_type = string(typeof(branch))
         flow = read_expression(
             res,
             "PTDFBranchFlow__$branch_type";
             table_format = TableFormat.WIDE,
-        )[:, col_key]
+        )[
+            :,
+            col_key,
+        ]
         for (i, f) in enumerate(flow)
             @test f <= static_rating * dlr_factors[i] + 1e-5
             @test f >= -static_rating * dlr_factors[i] - 1e-5
@@ -164,7 +171,7 @@ end
             set_device_model!(template, line_device_model)
             set_device_model!(template, PSY.MonitoredLine, StaticBranch)
             ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
-           
+
             @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
                   PSI.ModelBuildStatus.BUILT
             psi_constraint_test(ps_model, constraint_keys)
@@ -181,9 +188,15 @@ end
                 test_obj_values[ix],
                 10000,
             )
-            
+
             res = OptimizationProblemResults(ps_model)
-            check_dlr_branch_flows!(res, sys, branches_dlr, dlr_factors, add_parallel_line_name)
+            check_dlr_branch_flows!(
+                res,
+                sys,
+                branches_dlr,
+                dlr_factors,
+                add_parallel_line_name,
+            )
         end
     end
 end
@@ -241,7 +254,7 @@ end
             )
             set_device_model!(template, line_device_model)
             ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
-            
+
             @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
                   PSI.ModelBuildStatus.BUILT
             psi_constraint_test(ps_model, constraint_keys)
@@ -259,7 +272,13 @@ end
                 10000,
             )
             res = OptimizationProblemResults(ps_model)
-            check_dlr_branch_flows!(res, sys, branches_dlr, dlr_factors, add_parallel_line_name)
+            check_dlr_branch_flows!(
+                res,
+                sys,
+                branches_dlr,
+                dlr_factors,
+                add_parallel_line_name,
+            )
         end
     end
 end
@@ -340,7 +359,13 @@ end
                 10000,
             )
             res = OptimizationProblemResults(ps_model)
-            check_dlr_branch_flows!(res, sys, branches_dlr, dlr_factors, add_parallel_line_name)
+            check_dlr_branch_flows!(
+                res,
+                sys,
+                branches_dlr,
+                dlr_factors,
+                add_parallel_line_name,
+            )
         end
     end
 end
