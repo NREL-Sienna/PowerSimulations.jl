@@ -300,9 +300,20 @@ function _add_time_series_parameters!(
         param_array = get_parameter_array(param_container)
         for t in time_steps
             if !has_entry
-                tracker_container[t] = ts_vals[t]
+                # Store raw float in tracker for non-recurrent builds. For recurrent
+                # builds (JuMP parameters), read back the VariableRef that set_parameter!
+                # creates so that parallel branch types share the same JuMP parameter.
+                set_parameter!(param_container, jump_model, ts_vals[t], ts_uuid, t)
+                if built_for_recurrent_solves(container)
+                    tracker_container[t] = param_array[ts_uuid, t]
+                else
+                    tracker_container[t] = ts_vals[t]
+                end
+            else
+                # Reuse the value (Float64) or VariableRef already stored by the first
+                # branch type that processed this arc.
+                set_parameter!(param_container, jump_model, tracker_container[t], ts_uuid, t)
             end
-            set_parameter!(param_container, jump_model, tracker_container[t], ts_uuid, t)
             set_multiplier!(param_container, multiplier, name, t)
         end
         add_component_name!(
