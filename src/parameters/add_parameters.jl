@@ -276,7 +276,7 @@ function _add_time_series_parameters!(
         ts_uuid =
             string(IS.get_time_series_uuid(ts_type, device_with_time_series, ts_name))
 
-        has_entry, tracker_container = search_for_reduced_branch_argument!(
+        has_entry, tracker_container = search_for_reduced_branch_parameter!(
             reduced_branch_tracker,
             arc,
             T,
@@ -297,6 +297,7 @@ function _add_time_series_parameters!(
         end
         multiplier = get_multiplier_value(T(), reduction_entry, W())
         jump_model = get_jump_model(container)
+        param_array = get_parameter_array(param_container)
         for t in time_steps
             if !has_entry
                 tracker_container[t] = ts_vals[t]
