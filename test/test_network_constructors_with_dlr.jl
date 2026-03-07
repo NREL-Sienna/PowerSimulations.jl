@@ -126,7 +126,9 @@ end
     branches_dlr = ["1", "2", "6"]
     dlr_factors = vcat([fill(x, 6) for x in [0.99, 0.98, 1.0, 0.95]]...)
 
-    test_obj_values = [356577.0, 279735.0, 241293.703]
+    # DLR constraints are now correctly applied to parallel arcs shared between different branch types.
+    # The first two cases (parallel on lines "1" and "2") have DLR, resulting in a higher optimal cost.
+    test_obj_values = [375109.0, 320486.0, 241293.703]
     parallel_lines_names_to_add = ["1", "2", "3"]#Add parallel lines in lines with and without DLRs
     n_steps = 2
 
