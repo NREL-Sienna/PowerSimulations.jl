@@ -115,6 +115,8 @@ function add_equivalent_ac_transmission_with_parallel_circuits!(
     ::Type{PSY.MonitoredLine},
 ) where {T <: PSY.Line}
     rating_new = PSY.get_rating(ac_transmission) / 2
+    x_new = PSY.get_x(ac_transmission) * 2
+    r_new = PSY.get_r(ac_transmission) * 2
     ac_transmission_copy = MonitoredLine(;
         name = PSY.get_name(ac_transmission) * "_copy",
         available = PSY.get_available(ac_transmission),
@@ -138,6 +140,8 @@ function add_equivalent_ac_transmission_with_parallel_circuits!(
 
     #Set ratings the half so the case remains equivalent to the original
     set_rating!(ac_transmission, rating_new)
+    set_x!(ac_transmission, x_new)
+    set_r!(ac_transmission, r_new)
     add_component!(sys, ac_transmission_copy)
 end
 
