@@ -34,7 +34,8 @@ set_number_of_steps!(reduction_tracker, number_of_steps) =
 
 Base.isempty(
     reduction_tracker::BranchReductionOptimizationTracker,
-) = isempty(reduction_tracker.variable_dict) &&
+) =
+    isempty(reduction_tracker.variable_dict) &&
     isempty(reduction_tracker.parameter_dict) &&
     isempty(reduction_tracker.constraint_dict)
 

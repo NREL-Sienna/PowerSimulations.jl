@@ -312,7 +312,13 @@ function _add_time_series_parameters!(
             else
                 # Reuse the value (Float64) or VariableRef already stored by the first
                 # branch type that processed this arc.
-                set_parameter!(param_container, jump_model, tracker_container[t], ts_uuid, t)
+                set_parameter!(
+                    param_container,
+                    jump_model,
+                    tracker_container[t],
+                    ts_uuid,
+                    t,
+                )
             end
             set_multiplier!(param_container, multiplier, name, t)
         end
