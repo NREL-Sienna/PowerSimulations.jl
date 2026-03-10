@@ -92,6 +92,28 @@ function add_variable_cost!(
 end
 
 ##################################
+#### Curtailment Cost ############
+##################################
+function add_curtailment_cost!(
+    container::OptimizationContainer,
+    ::U,
+    devices::IS.FlattenIteratorWrapper{T},
+    ::V,
+) where {
+    T <: Union{PSY.RenewableDispatch, PSY.RenewableGen},
+    U <: VariableType,
+    V <: AbstractDeviceFormulation,
+}
+    for d in devices
+        op_cost_data = PSY.get_operation_cost(d)
+        cost_function = PSY.get_curtailment_cost(op_cost_data)
+        isnothing(cost_function) && continue
+        _add_curtailment_cost!(container, U(), d, cost_function, V())
+    end
+    return
+end
+
+##################################
 #### Start/Stop Variable Cost ####
 ##################################
 
@@ -156,7 +178,7 @@ function add_proportional_cost!(
         for t in get_time_steps(container)
             exp = _add_proportional_term!(container, U(), d, cost_term * multiplier, t)
             add_to_expression!(container, ProductionCostExpression, exp, d, t)
-            add_to_expression!(container, ProportionalCostExpression, exp, d, t)
+            add_to_expression!(container, FixedCostExpression, exp, d, t)
         end
     end
     return
@@ -199,6 +221,7 @@ function _add_vom_cost_to_objective!(
                 t,
             )
         add_to_expression!(container, ProductionCostExpression, exp, component, t)
+        add_to_expression!(container, VOMCostExpression, exp, component, t)
     end
     return
 end
@@ -229,7 +252,7 @@ function add_proportional_cost!(
                     Val(add_as_time_variant), container, U(), d, cost_term, t)
             end
             add_to_expression!(container, ProductionCostExpression, exp, d, t)
-            add_to_expression!(container, ProportionalCostExpression, exp, d, t)
+            add_to_expression!(container, FixedCostExpression, exp, d, t)
         end
     end
     return
@@ -268,7 +291,7 @@ function add_proportional_cost!(
             exp = _add_proportional_term_maybe_variant!(
                 Val(add_as_time_variant), container, U(), d, cost_term, t)
             add_to_expression!(container, ProductionCostExpression, exp, d, t)
-            add_to_expression!(container, ProportionalCostExpression, exp, d, t)
+            add_to_expression!(container, FixedCostExpression, exp, d, t)
         end
     end
     return
@@ -501,7 +524,7 @@ function _add_time_varying_fuel_variable_cost!(
         )
         add_to_expression!(
             container,
-            VariableCostExpression,
+            FuelCostExpression,
             cost_expr,
             component,
             t,

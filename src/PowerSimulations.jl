@@ -400,10 +400,12 @@ export EmergencyUp
 export EmergencyDown
 export RawACE
 export ProductionCostExpression
-export VariableCostExpression
+export FuelCostExpression
 export StartUpCostExpression
 export ShutDownCostExpression
-export ProportionalCostExpression
+export FixedCostExpression
+export VOMCostExpression
+export CurtailmentCostExpression
 export FuelConsumptionExpression
 export ActivePowerRangeExpressionLB
 export ActivePowerRangeExpressionUB
