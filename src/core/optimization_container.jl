@@ -751,15 +751,15 @@ function build_impl!(
         )
     end
 
-    # Sort branch models so that those with time series parameters (e.g. DLR) come first.
-    # This ensures that DLR-aware constraint builders claim shared arcs before static builders,
-    # preventing static constraints from overriding DLR constraints for parallel branches of
-    # different types sharing the same arc.
-    sorted_branch_models = sort(
-        collect(values(template.branches));
-        by = b -> isempty(get_time_series_names(b)) ? 1 : 0,
-    )
-    for branch_model in sorted_branch_models
+    # # Sort branch models so that those with time series parameters (e.g. DLR) come first.
+    # # This ensures that DLR-aware constraint builders claim shared arcs before static builders,
+    # # preventing static constraints from overriding DLR constraints for parallel branches of
+    # # different types sharing the same arc.
+    # sorted_branch_models = sort(
+    #     collect(values(template.branches));
+    #     by = b -> isempty(get_time_series_names(b)) ? 1 : 0,
+    # )
+    for branch_model in values(template.branches)
         @debug "Building Arguments for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
@@ -803,7 +803,7 @@ function build_impl!(
         @debug "Problem size:" get_problem_size(container) _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
     end
-    for branch_model in sorted_branch_models
+    for branch_model in values(template.branches)
         @debug "Building Model for $(get_component_type(branch_model)) with $(get_formulation(branch_model)) formulation" _group =
             LOG_GROUP_OPTIMIZATION_CONTAINER
         TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "$(get_component_type(branch_model))" begin
