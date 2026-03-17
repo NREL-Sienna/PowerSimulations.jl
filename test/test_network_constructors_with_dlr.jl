@@ -412,7 +412,6 @@ end
     )
 
     for slack_flag in [false, true]
-        
         line_device_model = DeviceModel(
             Line,
             StaticBranch;
@@ -518,9 +517,6 @@ end
             use_slacks = slack_flag,
         )
         for (ix, add_parallel_line_name) in enumerate(parallel_lines_names_to_add)
-           
-            @show  slack_flag
-            @show   ix
             if slack_flag
                 test_results = test_results_slacks[ix]
             else
