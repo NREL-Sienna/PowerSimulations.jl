@@ -8,21 +8,17 @@ function check_dlr_branch_flows!(
     for branch_name in branches_dlr
         branch = get_component(PSY.ACTransmission, sys, branch_name)
         col_key =
-            if (add_parallel_line_name !== nothing && contains(branch_name, add_parallel_line_name))
+            if (
+                add_parallel_line_name !== nothing &&
+                contains(branch_name, add_parallel_line_name)
+            )
                 replace(branch_name, "_copy" => "") * "double_circuit"
             else
                 branch_name
             end
 
         static_rating = get_rating(branch) * get_base_power(sys)
-        @show branch_type = string(typeof(branch))
-        flow_df = read_expression(
-            res,
-            "PTDFBranchFlow__$branch_type";
-            table_format = TableFormat.WIDE,
-        )
-        
-        @show names(flow_df)
+        branch_type = string(typeof(branch))
         flow = read_expression(
             res,
             "PTDFBranchFlow__$branch_type";
@@ -251,7 +247,7 @@ end
 
             add_dlr_to_system_branches!(
                 sys,
-                [add_parallel_line_name*"_copy"],
+                [add_parallel_line_name * "_copy"],
                 n_steps,
                 dlr_factors;
                 initial_date = "2024-01-01",
@@ -288,14 +284,13 @@ end
             check_dlr_branch_flows!(
                 res,
                 sys,
-                [add_parallel_line_name*"_copy"],
+                [add_parallel_line_name * "_copy"],
                 dlr_factors,
                 add_parallel_line_name,
             )
         end
     end
 end
-
 
 @testset "Network DC-PF with PTDF Model and implementing Dynamic Branch Ratings with BranchesParallel" begin
     objfuncs = [GAEVF, GQEVF, GQEVF]
