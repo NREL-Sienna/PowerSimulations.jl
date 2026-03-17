@@ -8,13 +8,21 @@ function check_dlr_branch_flows!(
     for branch_name in branches_dlr
         branch = get_component(PSY.ACTransmission, sys, branch_name)
         col_key =
-            if (add_parallel_line_name !== nothing && branch_name == add_parallel_line_name)
-                branch_name * "double_circuit"
+            if (add_parallel_line_name !== nothing && contains(branch_name, add_parallel_line_name))
+                replace(branch_name, "_copy" => "") * "double_circuit"
             else
                 branch_name
             end
+
         static_rating = get_rating(branch) * get_base_power(sys)
-        branch_type = string(typeof(branch))
+        @show branch_type = string(typeof(branch))
+        flow_df = read_expression(
+            res,
+            "PTDFBranchFlow__$branch_type";
+            table_format = TableFormat.WIDE,
+        )
+        
+        @show names(flow_df)
         flow = read_expression(
             res,
             "PTDFBranchFlow__$branch_type";
@@ -202,6 +210,92 @@ end
         end
     end
 end
+
+@testset "Network DC-PF with PTDF Model and implementing Dynamic Branch Ratings with BranchesParallel of different types (MonitoredLine with DLR)" begin
+    objfuncs = [GAEVF, GQEVF, GQEVF]
+    constraint_keys = [
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+    ]
+
+    dlr_factors = vcat([fill(x, 6) for x in [0.99, 0.98, 1.0, 0.95]]...)
+
+    test_obj_values = [375109.0, 320486.0, 241293.703]
+    parallel_lines_names_to_add = ["1", "2", "3"]#Add parallel lines in lines with and without DLRs
+    n_steps = 2
+
+    for slack_flag in [false, true]
+        if slack_flag
+            test_results = [408, 0, 264, 264, 24]
+        else
+            test_results = [120, 0, 264, 264, 24]
+        end
+        line_device_model = DeviceModel(
+            Line,
+            StaticBranch;
+            time_series_names = Dict(
+                DynamicBranchRatingTimeSeriesParameter => "dynamic_line_ratings",
+            ),
+            use_slacks = slack_flag,
+        )
+        for (ix, add_parallel_line_name) in enumerate(parallel_lines_names_to_add)
+            sys = PSB.build_system(PSITestSystems, "c_sys5")
+            line_to_add_parallel = get_component(Line, sys, add_parallel_line_name)
+            add_equivalent_ac_transmission_with_parallel_circuits!(
+                sys,
+                line_to_add_parallel,
+                PSY.Line,
+                PSY.MonitoredLine,
+            )
+
+            add_dlr_to_system_branches!(
+                sys,
+                [add_parallel_line_name*"_copy"],
+                n_steps,
+                dlr_factors;
+                initial_date = "2024-01-01",
+            )
+
+            template = get_thermal_dispatch_template_network(
+                NetworkModel(
+                    PTDFPowerModel;
+                    PTDF_matrix = PTDF(sys),
+                ),
+            )
+            set_device_model!(template, line_device_model)
+            set_device_model!(template, PSY.MonitoredLine, StaticBranch)
+            ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+
+            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
+            psi_constraint_test(ps_model, constraint_keys)
+
+            moi_tests(
+                ps_model,
+                test_results...,
+                false,
+            )
+            psi_checkobjfun_test(ps_model, objfuncs[1])
+            psi_checksolve_test(
+                ps_model,
+                [MOI.OPTIMAL, MOI.ALMOST_OPTIMAL],
+                test_obj_values[ix],
+                10000,
+            )
+
+            res = OptimizationProblemResults(ps_model)
+            check_dlr_branch_flows!(
+                res,
+                sys,
+                [add_parallel_line_name*"_copy"],
+                dlr_factors,
+                add_parallel_line_name,
+            )
+        end
+    end
+end
+
 
 @testset "Network DC-PF with PTDF Model and implementing Dynamic Branch Ratings with BranchesParallel" begin
     objfuncs = [GAEVF, GQEVF, GQEVF]
