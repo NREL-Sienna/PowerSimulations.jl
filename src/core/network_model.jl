@@ -259,7 +259,6 @@ function instantiate_network_model!(
         )
     elseif model.reduce_radial_branches
         @info "Applying radial reduction"
-        irreducible_buses = _get_irreducible_buses_due_to_dlrs(sys, model, branch_models)
         ybus =
             PNM.Ybus(sys; network_reductions = PNM.NetworkReduction[PNM.RadialReduction()])
     elseif model.reduce_degree_two_branches

@@ -53,7 +53,9 @@ function get_default_time_series_names(
     ::Type{U},
     ::Type{V},
 ) where {U <: PSY.ACTransmission, V <: AbstractBranchFormulation}
-    return Dict{Type{<:TimeSeriesParameter}, String}()
+    return Dict{Type{<:TimeSeriesParameter}, String}(
+        DynamicBranchRatingTimeSeriesParameter => "dynamic_line_ratings",
+    )
 end
 
 function get_default_attributes(
