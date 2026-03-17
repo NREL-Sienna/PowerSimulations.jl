@@ -412,7 +412,7 @@ function add_constraints!(
             use_slacks,
             con_lb,
             con_ub,
-            var_array,
+            array,
             all_branch_maps_by_type[reduction][T],
             name,
         )
