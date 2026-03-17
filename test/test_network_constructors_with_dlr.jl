@@ -400,13 +400,18 @@ end
     test_obj_values = [356577.0, 279735.0, 241293.703]
     parallel_lines_names_to_add = ["1", "2", "3"]#Add parallel lines in lines with and without DLRs
     n_steps = 2
+    test_results_slacks = Dict(
+        1 => [456, 0, 288, 288, 24],
+        2 => [456, 0, 288, 288, 24],
+        3 => [408, 0, 264, 264, 24],
+    )
+    test_results_no_slacks = Dict(
+        1 => [120, 0, 288, 288, 24],
+        2 => [120, 0, 288, 288, 24],
+        3 => [120, 0, 264, 264, 24],
+    )
 
     for slack_flag in [false, true]
-        if slack_flag
-            test_results = [456, 0, 288, 288, 24]
-        else
-            test_results = [120, 0, 288, 288, 24]
-        end
         line_device_model = DeviceModel(
             Line,
             StaticBranch;
@@ -416,6 +421,11 @@ end
             use_slacks = slack_flag,
         )
         for (ix, add_parallel_line_name) in enumerate(parallel_lines_names_to_add)
+            if slack_flag
+                test_results = test_results_slacks[ix]
+            else
+                test_results = test_results_no_slacks[ix]
+            end
             sys = PSB.build_system(PSITestSystems, "c_sys5")
 
             line_to_add_parallel = get_component(Line, sys, add_parallel_line_name)
@@ -486,13 +496,18 @@ end
 
     parallel_lines_names_to_add = ["1", "2", "3"]#Add parallel lines in lines with and without DLRs
     n_steps = 2
+    test_results_slacks = Dict(
+        1 => [456, 0, 288, 288, 24],
+        2 => [456, 0, 288, 288, 24],
+        3 => [408, 0, 264, 264, 24],
+    )
+    test_results_no_slacks = Dict(
+        1 => [120, 0, 288, 288, 24],
+        2 => [120, 0, 288, 288, 24],
+        3 => [120, 0, 264, 264, 24],
+    )
 
     for slack_flag in [false, true]
-        if slack_flag
-            test_results = [600, 0, 288, 288, 24]
-        else
-            test_results = [264, 0, 288, 288, 24]
-        end
         line_device_model = DeviceModel(
             Line,
             StaticBranch;
@@ -502,6 +517,14 @@ end
             use_slacks = slack_flag,
         )
         for (ix, add_parallel_line_name) in enumerate(parallel_lines_names_to_add)
+            @show slack_flag
+            @show ix
+            if slack_flag
+                test_results = test_results_slacks[ix]
+            else
+                test_results = test_results_no_slacks[ix]
+            end
+
             sys = PSB.build_system(PSITestSystems, "c_sys5")
 
             line_to_add_parallel = get_component(Line, sys, add_parallel_line_name)
