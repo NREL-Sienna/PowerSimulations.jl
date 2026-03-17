@@ -106,6 +106,7 @@ function add_curtailment_cost!(
 }
     for d in devices
         op_cost_data = PSY.get_operation_cost(d)
+        !hasproperty(op_cost_data, :curtailment_cost) && continue
         cost_function = PSY.get_curtailment_cost(op_cost_data)
         isnothing(cost_function) && continue
         _add_curtailment_cost!(container, U(), d, cost_function, V())
