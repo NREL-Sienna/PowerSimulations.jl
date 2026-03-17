@@ -205,17 +205,60 @@ function _get_filters(branch_models::BranchModelContainer)
     return filters
 end
 
+function _get_irreducible_buses_due_to_dlrs(
+    sys::PSY.System,
+    network_model::NetworkModel,
+    branch_models::BranchModelContainer,
+)
+    @debug "Identifying buses that are irreducible due to dynamic line ratings"
+    irreducible_buses = Set{Int64}()
+    for branch_type in network_model.modeled_ac_branch_types
+        device_model = branch_models[Symbol(branch_type)]
+        if !haskey(
+            get_time_series_names(device_model),
+            DynamicBranchRatingTimeSeriesParameter,
+        )
+            continue
+        end
+
+        if branch_type == PSY.ThreeWindingTransformer
+            @warn "Dynamic branch ratings for ThreeWindingTransformers are not implemented yet. Skipping it."
+            continue
+        end
+
+        ts_name =
+            get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
+        ts_type = PSY.Deterministic #TODO workaround since we dont have the container
+
+        branches = PSY.get_available_components(branch_type, sys)
+        for branch in branches
+            if !PSY.has_time_series(branch, ts_type, ts_name)
+                continue
+            end
+            bus_to = PSY.get_number(PSY.get_to(PSY.get_arc(branch)))
+            bus_from = PSY.get_number(PSY.get_from(PSY.get_arc(branch)))
+            push!(irreducible_buses, bus_to)
+            push!(irreducible_buses, bus_from)
+        end
+    end
+    return collect(irreducible_buses)
+end
+
 function instantiate_network_model!(
     model::NetworkModel{T},
     branch_models::BranchModelContainer,
     number_of_steps::Int,
     sys::PSY.System,
-    irreducible_buses::Vector{Int64},
 ) where {T <: PM.AbstractPowerModel}
     _check_branch_network_compatibility(model, branch_models, sys)
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
+    irreducible_buses = _get_irreducible_buses_due_to_dlrs(
+        sys,
+        model,
+        branch_models,
+    )
     if model.reduce_radial_branches && model.reduce_degree_two_branches
         @info "Applying both radial and degree two reductions"
         ybus = PNM.Ybus(
@@ -262,7 +305,6 @@ function instantiate_network_model!(
     branch_models::BranchModelContainer,
     number_of_steps::Int,
     sys::PSY.System,
-    irreducible_buses::Vector{Int64},
 )
     _check_branch_network_compatibility(model, branch_models, sys)
     PNM.populate_branch_maps_by_type!(model.network_reduction)
@@ -276,7 +318,6 @@ function instantiate_network_model!(
     branch_models::BranchModelContainer,
     number_of_steps::Int,
     sys::PSY.System,
-    irreducible_buses::Vector{Int64},
 )
     _check_branch_network_compatibility(model, branch_models, sys)
     if isempty(model.subnetworks)
@@ -297,8 +338,12 @@ function instantiate_network_model!(
     branch_models::BranchModelContainer,
     number_of_steps::Int,
     sys::PSY.System,
-    irreducible_buses::Vector{Int64},
 )
+    irreducible_buses = _get_irreducible_buses_due_to_dlrs(
+        sys,
+        model,
+        branch_models,
+    )
     _check_branch_network_compatibility(model, branch_models, sys)
     if get_PTDF_matrix(model) === nothing || !isempty(irreducible_buses)
         if get_PTDF_matrix(model) !== nothing

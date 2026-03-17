@@ -377,61 +377,16 @@ function serialize_optimization_model(model::OperationModel)
     return
 end
 
-function _get_irreducible_buses_due_to_dlrs(
-    sys::PSY.System,
-    network_model::NetworkModel,
-    branch_models::BranchModelContainer,
-)
-    @debug "Identifying buses that are irreducible due to dynamic line ratings"
-    irreducible_buses = Set{Int64}()
-    for branch_type in network_model.modeled_ac_branch_types
-        device_model = branch_models[Symbol(branch_type)]
-        if !haskey(
-            get_time_series_names(device_model),
-            DynamicBranchRatingTimeSeriesParameter,
-        )
-            continue
-        end
-
-        if branch_type == PSY.ThreeWindingTransformer
-            @warn "Dynamic branch ratings for ThreeWindingTransformers are not implemented yet. Skipping it."
-            continue
-        end
-
-        ts_name =
-            get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
-        ts_type = PSY.Deterministic #TODO workaround since we dont have the container
-
-        branches = PSY.get_available_components(branch_type, sys)
-        for branch in branches
-            if !PSY.has_time_series(branch, ts_type, ts_name)
-                continue
-            end
-            bus_to = PSY.get_number(PSY.get_to(PSY.get_arc(branch)))
-            bus_from = PSY.get_number(PSY.get_from(PSY.get_arc(branch)))
-            push!(irreducible_buses, bus_to)
-            push!(irreducible_buses, bus_from)
-        end
-    end
-    return collect(irreducible_buses)
-end
-
 function instantiate_network_model!(model::OperationModel)
     template = get_template(model)
     network_model = get_network_model(template)
     branch_models = get_branch_models(template)
     number_of_steps = get_time_steps(get_optimization_container(model))[end]
-    irreducible_buses_dlrs = _get_irreducible_buses_due_to_dlrs(
-        get_system(model),
-        network_model,
-        branch_models,
-    )
     instantiate_network_model!(
         network_model,
         branch_models,
         number_of_steps,
         get_system(model),
-        irreducible_buses_dlrs,
     )
     return
 end
