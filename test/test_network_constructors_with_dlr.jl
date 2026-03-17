@@ -29,7 +29,7 @@ function check_dlr_branch_flows!(
                 col_key,
             ]
         else
-             flow = read_expression(
+            flow = read_expression(
                 res,
                 "PTDFBranchFlow__$branch_type";
                 table_format = TableFormat.WIDE,
@@ -530,7 +530,8 @@ end
                 ),
             )
             set_device_model!(template, line_device_model)
-            ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer, name = "UC")
+            ps_model =
+                DecisionModel(template, sys; optimizer = HiGHS_optimizer, name = "UC")
 
             models = SimulationModels(;
                 decision_models = [ps_model],
@@ -553,7 +554,8 @@ end
 
             @test build!(sim) == PSI.SimulationBuildStatus.BUILT
 
-            @test execute!(sim) == IS.Simulation.RunStatusModule.RunStatus.SUCCESSFULLY_FINALIZED
+            @test execute!(sim) ==
+                  IS.Simulation.RunStatusModule.RunStatus.SUCCESSFULLY_FINALIZED
 
             psi_constraint_test(ps_model, constraint_keys)
 
@@ -563,7 +565,7 @@ end
                 false,
             )
             psi_checkobjfun_test(ps_model, objfuncs[1])
-           
+
             results = SimulationResults(sim)
             res = get_decision_problem_results(results, "UC")
             check_dlr_branch_flows!(
