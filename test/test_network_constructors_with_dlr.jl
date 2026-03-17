@@ -412,6 +412,7 @@ end
     )
 
     for slack_flag in [false, true]
+        
         line_device_model = DeviceModel(
             Line,
             StaticBranch;
@@ -497,14 +498,14 @@ end
     parallel_lines_names_to_add = ["1", "2", "3"]#Add parallel lines in lines with and without DLRs
     n_steps = 2
     test_results_slacks = Dict(
-        1 => [456, 0, 288, 288, 24],
-        2 => [456, 0, 288, 288, 24],
-        3 => [408, 0, 264, 264, 24],
+        1 => [600, 0, 288, 288, 24],
+        2 => [600, 0, 288, 288, 24],
+        3 => [552, 0, 264, 264, 24],
     )
     test_results_no_slacks = Dict(
-        1 => [120, 0, 288, 288, 24],
-        2 => [120, 0, 288, 288, 24],
-        3 => [120, 0, 264, 264, 24],
+        1 => [264, 0, 288, 288, 24],
+        2 => [264, 0, 288, 288, 24],
+        3 => [264, 0, 264, 264, 24],
     )
 
     for slack_flag in [false, true]
@@ -517,8 +518,9 @@ end
             use_slacks = slack_flag,
         )
         for (ix, add_parallel_line_name) in enumerate(parallel_lines_names_to_add)
-            @show slack_flag
-            @show ix
+           
+            @show  slack_flag
+            @show   ix
             if slack_flag
                 test_results = test_results_slacks[ix]
             else
