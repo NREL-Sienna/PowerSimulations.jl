@@ -237,14 +237,14 @@ function _add_time_series_parameters!(
     if !(ts_type <: Union{PSY.AbstractDeterministic, PSY.StaticTimeSeries})
         error("add_parameters! for TimeSeriesParameter is not compatible with $ts_type")
     end
-    time_steps = get_time_steps(container)
-    # TODO: Temporary workaround to get the name where we assume all the names are the same accross devices.
-    ts_name = _get_time_series_name(T(), first(devices), model)
+    time_steps = get_time_steps(container)  
 
     net_reduction_data = network_model.network_reduction
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
     all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
 
+    # TODO: Temporary workaround to get the name where we assume all the names are the same accross devices.
+    ts_name = _get_time_series_name(T(), first(devices), model)
     device_name_axis, ts_uuid_axis =
         get_branch_argument_parameter_axes(net_reduction_data, devices, ts_type, ts_name)
     if isempty(device_name_axis)
