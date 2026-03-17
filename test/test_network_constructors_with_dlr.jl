@@ -1,5 +1,5 @@
 function check_dlr_branch_flows!(
-    res::OptimizationProblemResults,
+    res::Union{OptimizationProblemResults, PSI.SimulationProblemResults},
     sys::PSY.System,
     branches_dlr::Vector{<:AbstractString},
     dlr_factors::Vector{Float64},
@@ -19,17 +19,30 @@ function check_dlr_branch_flows!(
 
         static_rating = get_rating(branch) * get_base_power(sys)
         branch_type = string(typeof(branch))
-        flow = read_expression(
-            res,
-            "PTDFBranchFlow__$branch_type";
-            table_format = TableFormat.WIDE,
-        )[
-            :,
-            col_key,
-        ]
+        if typeof(res) <: PSI.SimulationProblemResults
+            flow = read_realized_expression(
+                res,
+                "PTDFBranchFlow__$branch_type";
+                table_format = TableFormat.WIDE,
+            )[
+                :,
+                col_key,
+            ]
+        else
+             flow = read_expression(
+                res,
+                "PTDFBranchFlow__$branch_type";
+                table_format = TableFormat.WIDE,
+            )[
+                :,
+                col_key,
+            ]
+        end
+        n_dlr = length(dlr_factors)
         for (i, f) in enumerate(flow)
-            @test f <= static_rating * dlr_factors[i] + 1e-5
-            @test f >= -static_rating * dlr_factors[i] - 1e-5
+            dlr_idx = mod1(i, n_dlr)
+            @test f <= static_rating * dlr_factors[dlr_idx] + 1e-5
+            @test f >= -static_rating * dlr_factors[dlr_idx] - 1e-5
         end
     end
 end
@@ -450,6 +463,109 @@ end
                 10000,
             )
             res = OptimizationProblemResults(ps_model)
+            check_dlr_branch_flows!(
+                res,
+                sys,
+                branches_dlr,
+                dlr_factors,
+                add_parallel_line_name,
+            )
+        end
+    end
+end
+
+@testset "Network DC-PF Simulation with PTDF Model and implementing Dynamic Branch Ratings with Reductions" begin
+    objfuncs = [GAEVF, GQEVF, GQEVF]
+    constraint_keys = [
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "lb"),
+        PSI.ConstraintKey(FlowRateConstraint, PSY.Line, "ub"),
+        PSI.ConstraintKey(CopperPlateBalanceConstraint, PSY.System),
+    ]
+    branches_dlr = ["1", "2", "6"]
+    dlr_factors = vcat([fill(x, 6) for x in [0.99, 0.98, 1.0, 0.95]]...)
+
+    parallel_lines_names_to_add = ["1", "2", "3"]#Add parallel lines in lines with and without DLRs
+    n_steps = 2
+
+    for slack_flag in [false, true]
+        if slack_flag
+            test_results = [600, 0, 288, 288, 24]
+        else
+            test_results = [264, 0, 288, 288, 24]
+        end
+        line_device_model = DeviceModel(
+            Line,
+            StaticBranch;
+            time_series_names = Dict(
+                DynamicBranchRatingTimeSeriesParameter => "dynamic_line_ratings",
+            ),
+            use_slacks = slack_flag,
+        )
+        for (ix, add_parallel_line_name) in enumerate(parallel_lines_names_to_add)
+            sys = PSB.build_system(PSITestSystems, "c_sys5")
+
+            line_to_add_parallel = get_component(Line, sys, add_parallel_line_name)
+            add_equivalent_ac_transmission_with_series_parallel_circuits!(
+                sys,
+                line_to_add_parallel,
+                PSY.Line,
+            )
+
+            add_dlr_to_system_branches!(
+                sys,
+                branches_dlr,
+                n_steps,
+                dlr_factors;
+                initial_date = "2024-01-01",
+            )
+            nr = NetworkReduction[DegreeTwoReduction()]
+            ptdf = PTDF(sys; network_reductions = nr)
+            template = get_thermal_dispatch_template_network(
+                NetworkModel(
+                    PTDFPowerModel;
+                    #PTDF_matrix = ptdf,
+                    reduce_degree_two_branches = PNM.has_degree_two_reduction(
+                        ptdf.network_reduction_data,
+                    ),
+                ),
+            )
+            set_device_model!(template, line_device_model)
+            ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer, name = "UC")
+
+            models = SimulationModels(;
+                decision_models = [ps_model],
+            )
+
+            DA_sequence = SimulationSequence(;
+                models = models,
+                ini_cond_chronology = InterProblemChronology(),
+            )
+
+            current_date = string(today())
+            steps_sim = 2
+            sim = Simulation(;
+                name = "",
+                steps = steps_sim,
+                models = models,
+                initial_time = DateTime("2024-01-01T00:00:00"),
+                sequence = DA_sequence,
+                simulation_folder = tempdir())
+
+            @test build!(sim) == PSI.SimulationBuildStatus.BUILT
+
+            @test execute!(sim) == IS.Simulation.RunStatusModule.RunStatus.SUCCESSFULLY_FINALIZED
+
+            psi_constraint_test(ps_model, constraint_keys)
+
+            moi_tests(
+                ps_model,
+                test_results...,
+                false,
+            )
+            psi_checkobjfun_test(ps_model, objfuncs[1])
+           
+            results = SimulationResults(sim)
+            res = get_decision_problem_results(results, "UC")
             check_dlr_branch_flows!(
                 res,
                 sys,
