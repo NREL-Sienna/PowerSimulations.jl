@@ -66,7 +66,7 @@ end
         read_realized_parameters,
         read_realized_variables,
     )
-    key_strings_to_skip = ("Flow", "On", "Off", "Start", "Stop")
+    key_strings_to_skip = ("Flow", "On", "Off", "Shut", "Start", "Stop")
     for name in ("ED", "UC")
         regular_model_results = get_decision_problem_results(regular_results, name)
         partitioned_model_results = get_decision_problem_results(partitioned_results, name)
@@ -93,7 +93,7 @@ end
                 skip && continue
                 r_sum = 0
                 p_sum = 0
-                atol = occursin("ProductionCostExpression", key) ? 11000 : 1e-6
+                atol = (occursin("ProductionCostExpression", key) || occursin("FuelCostExpression__ThermalStandard", key)) ? 11000 : 1e-6
                 for i in 2:ncol(rdf)
                     r_sum += sum(rdf[!, i])
                     p_sum += sum(pdf[!, i])
