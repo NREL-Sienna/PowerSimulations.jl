@@ -10,6 +10,7 @@ struct Settings
     detailed_optimizer_stats::Bool
     calculate_conflict::Bool
     system_to_file::Bool
+    check_components::Bool
     initialize_model::Bool
     initialization_file::String
     deserialize_initial_conditions::Bool
@@ -35,6 +36,7 @@ function Settings(
     detailed_optimizer_stats::Bool = false,
     calculate_conflict::Bool = false,
     system_to_file::Bool = true,
+    check_components::Bool = true,
     initialize_model::Bool = true,
     initialization_file = "",
     deserialize_initial_conditions::Bool = false,
@@ -73,6 +75,7 @@ function Settings(
         detailed_optimizer_stats,
         calculate_conflict,
         system_to_file,
+        check_components,
         initialize_model,
         initialization_file,
         deserialize_initial_conditions,
@@ -141,6 +144,7 @@ get_optimizer(settings::Settings) = settings.optimizer
 get_ext(settings::Settings) = settings.ext
 get_warm_start(settings::Settings) = settings.warm_start[]
 get_system_to_file(settings::Settings) = settings.system_to_file
+get_check_components(settings::Settings) = settings.check_components
 get_initialize_model(settings::Settings) = settings.initialize_model
 get_initialization_file(settings::Settings) = settings.initialization_file
 get_deserialize_initial_conditions(settings::Settings) =

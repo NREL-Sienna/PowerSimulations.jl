@@ -41,6 +41,7 @@ Build the optimization problem of type M with the specific system and template.
   - `resolution::Dates.Period = UNSET_RESOLUTION`: Manually specify the model's resolution
   - `warm_start::Bool = true`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
   - `system_to_file::Bool = true:`: True to create a copy of the system used in the model.
+  - `check_components::Bool = true`: True to check the components valid fields when building
   - `initialize_model::Bool = true`: Option to decide to initialize the model or not.
   - `initialization_file::String = ""`: This allows to pass pre-existing initialization values to avoid the solution of an optimization problem to find feasible initial conditions.
   - `deserialize_initial_conditions::Bool = false`: Option to deserialize conditions
@@ -90,7 +91,7 @@ function DecisionModel{M}(
         DecisionModelStore(),
         Dict{String, Any}(),
     )
-    PSI.validate_time_series!(model)
+    validate_time_series!(model)
     return model
 end
 
@@ -104,6 +105,7 @@ function DecisionModel{M}(
     resolution = UNSET_RESOLUTION,
     warm_start = true,
     system_to_file = true,
+    check_components = true,
     initialize_model = true,
     initialization_file = "",
     deserialize_initial_conditions = false,
@@ -129,6 +131,7 @@ function DecisionModel{M}(
         time_series_cache_size = time_series_cache_size,
         warm_start = warm_start,
         system_to_file = system_to_file,
+        check_components = check_components,
         initialize_model = initialize_model,
         initialization_file = initialization_file,
         deserialize_initial_conditions = deserialize_initial_conditions,
@@ -615,5 +618,48 @@ function handle_initial_conditions!(model::DecisionModel{<:DecisionProblem})
             nothing,
         )
     end
+    return
+end
+
+function _make_device_name_axis(
+    devices::IS.FlattenIteratorWrapper{T},
+    check_components::Bool,
+    filter_function::Function,
+) where {T <: PSY.Device}
+    devices = sizehint!(Vector{T}(), length(devices))
+    for component in components
+        if PSY.get_available(component) && filter_function(component)
+            check_components && PSY.check_component(sys, component)
+            push!(model.component_cache, component)
+        end
+    end
+    return devices
+end
+
+function _make_device_name_axis(
+    devices::IS.FlattenIteratorWrapper{T},
+    check_components::Bool,
+    ::Nothing,
+) where {T <: PSY.Device}
+    devices = sizehint!(Vector{T}(), length(devices))
+    for component in components
+        if PSY.get_available(component)
+            check_components && PSY.check_component(sys, component)
+            push!(model.component_cache, component)
+        end
+    end
+    return devices
+end
+
+function make_device_cache!(
+    model::DeviceModel{T, <:AbstractDeviceFormulation},
+    system::PSY.System,
+    check_components::Bool,
+) where {T <: PSY.Device}
+    subsystem = get_subsystem(model)
+    PSY.has_components(system, T) && return false
+    devices = PSY.get_components(T, system; subsystem_name = subsystem)
+    filter_func = get_attribute(model, "filter_function")
+    model.component_cache = _make_device_name_axis(devices, check_components, filter_func)
     return
 end
