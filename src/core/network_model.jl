@@ -270,6 +270,9 @@ function instantiate_network_model!(
         )
     elseif model.reduce_radial_branches
         @info "Applying radial reduction"
+        if !isempty(irreducible_buses)
+            @warn "Irreducible buses identified due to DLRs. The reduction of any radial branch between 2 irreducible buses wil be ignored"
+        end
         ybus =
             PNM.Ybus(
                 sys;
@@ -365,6 +368,9 @@ function instantiate_network_model!(
             )
         elseif model.reduce_radial_branches
             @info "Applying radial reduction"
+            if !isempty(irreducible_buses)
+                @warn "Irreducible buses identified due to DLRs. The reduction of any radial branch between 2 irreducible buses wil be ignored"
+            end
             ptdf = PNM.VirtualPTDF(
                 sys;
                 network_reductions = PNM.NetworkReduction[PNM.RadialReduction(;
