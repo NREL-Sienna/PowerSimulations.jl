@@ -876,28 +876,6 @@ function _add_expression_to_container!(
     time_steps::UnitRange{Int},
     ptdf_col::AbstractVector{Float64},
     nodal_balance_expressions::JuMPAffineExpressionDArrayIntInt,
-    reduction_entry::T,
-    branches::Vector{String},
-) where {T <: PSY.ACTransmission}
-    name = PSY.get_name(reduction_entry)
-    if name in branches
-        branch_flow_expr[name, :] .= _make_flow_expressions!(
-            jump_model,
-            name,
-            time_steps,
-            ptdf_col,
-            nodal_balance_expressions.data,
-        )
-    end
-    return
-end
-
-function _add_expression_to_container!(
-    branch_flow_expr::JuMPAffineExpressionDArrayStringInt,
-    jump_model::JuMP.Model,
-    time_steps::UnitRange{Int},
-    ptdf_col::AbstractVector{Float64},
-    nodal_balance_expressions::JuMPAffineExpressionDArrayIntInt,
     reduction_entry::Vector{Any},
     branches::Vector{String},
 )
