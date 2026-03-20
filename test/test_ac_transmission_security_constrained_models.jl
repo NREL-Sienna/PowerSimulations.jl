@@ -39,7 +39,6 @@
         c_sys14_dc => 141964.156,
     )
     for (ix, sys) in enumerate(systems)
-
         template = get_thermal_dispatch_template_network(
             NetworkModel(
                 PTDFPowerModel;
@@ -124,7 +123,6 @@ end
         c_sys14_dc => 154585.1,
     )
     for (ix, sys) in enumerate(systems)
-
         template = get_thermal_dispatch_template_network(
             NetworkModel(
                 PTDFPowerModel;
@@ -176,7 +174,7 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     parallel_branches_to_add = IdDict{System, Vector{String}}(
         c_sys5 => ["3", "4"],
-        c_sys14 => ["Line1", "Line14"], 
+        c_sys14 => ["Line1", "Line14"],
         c_sys14_dc => ["Line1", "Line14"],
     )
     systems = [c_sys5, c_sys14, c_sys14_dc]
@@ -280,7 +278,7 @@ end
     c_sys14_dc = PSB.build_system(PSITestSystems, "c_sys14_dc")
     parallel_branches_to_add = IdDict{System, Vector{String}}(
         c_sys5 => ["4"],
-        c_sys14 => ["Line14"], 
+        c_sys14 => ["Line14"],
         c_sys14_dc => ["Line14"],
     )
     systems = [c_sys5, c_sys14, c_sys14_dc]
@@ -349,8 +347,8 @@ end
                 PTDF_matrix = ptdf,
                 LODF_matrix = lodf,
                 reduce_degree_two_branches = PNM.has_degree_two_reduction(
-                        ptdf.network_reduction_data,
-                    ),
+                    ptdf.network_reduction_data,
+                ),
             ),
         )
         set_device_model!(template, Line, SecurityConstrainedStaticBranch)
