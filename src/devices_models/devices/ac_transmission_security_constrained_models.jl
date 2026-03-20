@@ -176,6 +176,7 @@ function add_post_contingency_flow_expressions!(
 }
     time_steps = get_time_steps(container)
     lodf_matrix = get_LODF_matrix(network_model)
+    lodf_outage_axes = Set(PNM.get_axes(lodf_matrix)[2])
 
     associated_outages = PSY.get_associated_supplemental_attributes(
         sys,
@@ -241,7 +242,13 @@ function add_post_contingency_flow_expressions!(
         from_number = PSY.get_number(PSY.get_from(PSY.get_arc(contingency_device)))
         to_number = PSY.get_number(PSY.get_to(PSY.get_arc(contingency_device)))
         index_lodf_outage = (from_number, to_number)
-        #TODO ADD HERE ERROR IF AN OUTAGE WAS ADDED TO A BRANCH
+
+        if !(index_lodf_outage in lodf_outage_axes)
+            error(
+                "An outage was added to branch $contingency_device_name of type $V, but this branch was reduced from the LODF matrix. Remove the outage or add the buses $(index_lodf_outage) to the irreducible buses in the network model.",
+            )
+        end
+        
         precontingency_outage_flow =
             get_expression(container, PTDFBranchFlow(), V)[contingency_device_key, :]
 
