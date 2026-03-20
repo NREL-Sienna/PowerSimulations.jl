@@ -271,7 +271,22 @@ The specified constraint is formulated as:
 ```
 """
 struct FlowRateConstraint <: ConstraintType end
-struct PostContingencyEmergencyRateLimitConstrain <: PostContingencyConstraintType end
+
+"""
+Struct to create the constraint that set the post-contingency AC flow limits through ACTransmission branches.
+
+For more information check [Branch Formulations](@ref PowerSystems.Branch-Formulations).
+
+The specified constraint is formulated as:
+
+```math
+\\begin{align*}
+&  f_t + LODF_o \\times f_{o,t} - f_t^\\text{sl,up} \\le R^\\text{max},\\quad \\forall t \\in \\{1,\\dots, T\\} \\\\
+&  f_t + LODF_o \\times f_{o,t} - f_t^\\text{sl,lo} \\ge -R^\\text{max},\\quad \\forall t \\in \\{1,\\dots, T\\}
+\\end{align*}
+```
+"""
+struct PostContingencyEmergencyFlowRateConstraint <: PostContingencyConstraintType end
 
 """
 Struct to create the constraint for branch flow rate limits from the 'from' bus to the 'to' bus.
