@@ -1594,7 +1594,6 @@ function construct_device!(
     return
 end
 
-#TODO Check if for SCUC AreaPTDF needs something else
 function construct_device!(
     container::OptimizationContainer,
     sys::PSY.System,

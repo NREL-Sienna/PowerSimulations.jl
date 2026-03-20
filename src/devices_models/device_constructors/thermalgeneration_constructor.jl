@@ -1,13 +1,3 @@
-# TODO: Security constrained models implement the correct functions for the model
-function has_security_arguments(device_model::DeviceModel)::Bool
-    return true
-end
-
-# TODO: Security constrained models implement the correct functions for the model
-function has_security_model(device_model::DeviceModel)::Bool
-    return true
-end
-
 @inline function _handle_common_thermal_parameters!(
     container::OptimizationContainer,
     devices::IS.FlattenIteratorWrapper{T},
