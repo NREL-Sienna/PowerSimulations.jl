@@ -303,16 +303,7 @@ end
         PSI.ConstraintKey(PostContingencyEmergencyFlowRateConstraint, PSY.Line, "lb"),
         PSI.ConstraintKey(PostContingencyEmergencyFlowRateConstraint, PSY.Line, "ub"),
     ]
-    # PTDF_ref = IdDict{System, PTDF}(
-    #     c_sys5 => PTDF(c_sys5),
-    #     c_sys14 => PTDF(c_sys14),
-    #     c_sys14_dc => PTDF(c_sys14_dc),
-    # )
-    # LODF_ref = IdDict{System, LODF}(
-    #     c_sys5 => LODF(c_sys5),
-    #     c_sys14 => LODF(c_sys14),
-    #     c_sys14_dc => LODF(c_sys14_dc),
-    # )
+
     lines_outages = IdDict{System, Vector{String}}(
         c_sys5 => ["1", "2", "3"],
         c_sys14 => ["Line1", "Line2", "Line9", "Line10", "Line12", "Trans2"],
@@ -331,13 +322,6 @@ end
         c_sys14_dc => 154585.1,
     )
     for (ix, sys) in enumerate(systems)
-        # line_to_add_parallel = get_component(Line, sys, add_parallel_line_name)
-        # add_equivalent_ac_transmission_with_series_parallel_circuits!(
-        #     sys,
-        #     line_to_add_parallel,
-        #     PSY.Line,
-        # )
-
         nr = NetworkReduction[DegreeTwoReduction()]
         ptdf = PTDF(sys; network_reductions = nr)
         lodf = LODF(sys; network_reductions = nr)

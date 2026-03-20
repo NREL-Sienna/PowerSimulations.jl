@@ -248,7 +248,7 @@ function add_post_contingency_flow_expressions!(
                 "An outage was added to branch $contingency_device_name of type $V, but this branch was reduced from the LODF matrix. Remove the outage or add the buses $(index_lodf_outage) to the irreducible buses in the network model.",
             )
         end
-        
+
         precontingency_outage_flow =
             get_expression(container, PTDFBranchFlow(), V)[contingency_device_key, :]
 
