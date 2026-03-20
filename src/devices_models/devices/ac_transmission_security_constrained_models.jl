@@ -126,6 +126,42 @@ function _check_outage_data_branch_scuc(
     end
 end
 
+function _add_post_contingency_flow_expressions_for_outage!(
+    expression_container,
+    jump_model::JuMP.Model,
+    time_steps::UnitRange{Int},
+    lodf_matrix,
+    index_lodf_outage::Tuple{Int, Int},
+    outage_id::String,
+    contingency_branch_type::Type{<:PSY.ACTransmission},
+    precontingency_outage_flow::DenseAxisArray{T, 1, <:Tuple{UnitRange{Int}}},
+    branch_type_data,
+) where {T}
+    for (b_type, pre_contingency_flow, name_to_arc_map) in branch_type_data
+        @debug "Adding post contingency flow expressions for branch type $b_type caused by contingencies associated with branch type $contingency_branch_type"
+        tasks = map(collect(name_to_arc_map)) do pair
+            (name, (arc, _)) = pair
+            lodf_factor = lodf_matrix[arc, index_lodf_outage]
+            Threads.@spawn _make_branch_scuc_postcontingency_flow_expressions!(
+                jump_model,
+                name,
+                outage_id,
+                time_steps,
+                lodf_factor,
+                precontingency_outage_flow,
+                pre_contingency_flow,
+            )
+        end
+
+        for task in tasks
+            name, expressions = fetch(task)
+            expression_container[outage_id, name, :] .= expressions
+        end
+    end
+
+    return
+end
+
 function add_post_contingency_flow_expressions!(
     container::OptimizationContainer,
     sys::PSY.System,
@@ -139,7 +175,7 @@ function add_post_contingency_flow_expressions!(
     N <: AbstractPTDFModel,
 }
     time_steps = get_time_steps(container)
-    lodf = get_LODF_matrix(network_model)
+    lodf_matrix = get_LODF_matrix(network_model)
 
     associated_outages = PSY.get_associated_supplemental_attributes(
         sys,
@@ -170,66 +206,56 @@ function add_post_contingency_flow_expressions!(
     name_to_arc_map_contingency =
         PNM.get_component_to_reduction_name_map(net_reduction_data, V)
     jump_model = get_jump_model(container)
-
-    for b_type in modeled_branch_types
-        if !haskey(
-            get_constraint_map_by_type(reduced_branch_tracker)[PostContingencyEmergencyFlowRateConstraint],
+    post_contingency_constraint_map =
+        get_constraint_map_by_type(reduced_branch_tracker)[PostContingencyEmergencyFlowRateConstraint]
+    branch_type_data = [
+        (
             b_type,
-        )
-            continue
-        end
-        pre_contingency_flow =
-            get_expression(container, PTDFBranchFlow(), b_type)
-        name_to_arc_map =
-            get_constraint_map_by_type(reduced_branch_tracker)[PostContingencyEmergencyFlowRateConstraint][b_type]
+            get_expression(container, PTDFBranchFlow(), b_type),
+            post_contingency_constraint_map[b_type],
+        ) for b_type in modeled_branch_types if
+        haskey(post_contingency_constraint_map, b_type)
+    ]
 
-        #TODO Put this loop and the threads in a separate function.
-        for outage in associated_outages
-            outage_id = string(IS.get_uuid(outage))
-            associated_devices =
-                PSY.get_associated_components(
-                    sys,
-                    outage;
-                    component_type = V,
-                )
-            contingency_device = first(associated_devices)
-            contingency_device_name = PSY.get_name(contingency_device)
-            contingency_device_key = name_to_arc_map_contingency[contingency_device_name]
-
-            _check_outage_data_branch_scuc(
-                length(associated_devices),
-                contingency_device_name,
-                contingency_device_key,
-                outage_id,
-                V,
-                name_to_arc_map_contingency,
+    for outage in associated_outages
+        outage_id = string(IS.get_uuid(outage))
+        associated_devices =
+            PSY.get_associated_components(
+                sys,
+                outage;
+                component_type = V,
             )
+        contingency_device = first(associated_devices)
+        contingency_device_name = PSY.get_name(contingency_device)
+        contingency_device_key = name_to_arc_map_contingency[contingency_device_name]
 
-            from_number = PSY.get_number(PSY.get_from(PSY.get_arc(contingency_device)))
-            to_number = PSY.get_number(PSY.get_to(PSY.get_arc(contingency_device)))
-            index_lodf_outage = (from_number, to_number)
-            #TODO ADD HERE ERROR IF AN OUTAGE WAS ADDED TO A BRANCH
-            precontingency_outage_flow =
-                get_expression(container, PTDFBranchFlow(), V)[contingency_device_key, :]
+        _check_outage_data_branch_scuc(
+            length(associated_devices),
+            contingency_device_name,
+            contingency_device_key,
+            outage_id,
+            V,
+            name_to_arc_map_contingency,
+        )
 
-            tasks = map(collect(name_to_arc_map)) do pair
-                (name, (arc, _)) = pair
-                lodf_factor = lodf[arc, index_lodf_outage]
-                Threads.@spawn _make_branch_scuc_postcontingency_flow_expressions!(
-                    jump_model,
-                    name,
-                    outage_id,
-                    time_steps,
-                    lodf_factor,
-                    precontingency_outage_flow,
-                    pre_contingency_flow,
-                )
-            end
-            for task in tasks
-                name, expressions = fetch(task)
-                expression_container[outage_id, name, :] .= expressions
-            end
-        end
+        from_number = PSY.get_number(PSY.get_from(PSY.get_arc(contingency_device)))
+        to_number = PSY.get_number(PSY.get_to(PSY.get_arc(contingency_device)))
+        index_lodf_outage = (from_number, to_number)
+        #TODO ADD HERE ERROR IF AN OUTAGE WAS ADDED TO A BRANCH
+        precontingency_outage_flow =
+            get_expression(container, PTDFBranchFlow(), V)[contingency_device_key, :]
+
+        _add_post_contingency_flow_expressions_for_outage!(
+            expression_container,
+            jump_model,
+            time_steps,
+            lodf_matrix,
+            index_lodf_outage,
+            outage_id,
+            V,
+            precontingency_outage_flow,
+            branch_type_data,
+        )
     end
 
     #= Leaving serial code commented out for debugging purposes in the future
