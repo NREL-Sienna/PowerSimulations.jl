@@ -266,42 +266,44 @@ function add_post_contingency_flow_expressions!(
     end
 
     #= Leaving serial code commented out for debugging purposes in the future
-    for b_type in modeled_branch_types
-
-        pre_contingency_flow =
-            get_expression(container, PTDFBranchFlow(), b_type)
-
-        for outage in associated_outages
-            outage_id = string(IS.get_uuid(outage))
-            associated_devices =
-                PSY.get_associated_components(
-                    sys,
-                    outage;
-                    component_type = V,
-                )
-            contingency_device = first(associated_devices)
-            contingency_device_name = PSY.get_name(contingency_device)
-            contingency_device_key = name_to_arc_map_contingency[contingency_device_name]
-
-            _check_outage_data_branch_scuc(
-                length(associated_devices),
-                contingency_device_name,
-                contingency_device_key,
-                outage_id,
-                V,
-                name_to_arc_map_contingency,
+    for outage in associated_outages
+        outage_id = string(IS.get_uuid(outage))
+        associated_devices =
+            PSY.get_associated_components(
+                sys,
+                outage;
+                component_type = V,
             )
-            from_number = PSY.get_number(PSY.get_from(PSY.get_arc(contingency_device)))
-            to_number = PSY.get_number(PSY.get_to(PSY.get_arc(contingency_device)))
-            index_lodf_outage = (from_number, to_number)
+        contingency_device = first(associated_devices)
+        contingency_device_name = PSY.get_name(contingency_device)
+        contingency_device_key = name_to_arc_map_contingency[contingency_device_name]
 
-            precontingency_outage_flow =
-                get_expression(container, PTDFBranchFlow(), V)[contingency_device_key, :]
+        _check_outage_data_branch_scuc(
+            length(associated_devices),
+            contingency_device_name,
+            contingency_device_key,
+            outage_id,
+            V,
+            name_to_arc_map_contingency,
+        )
 
-            for (name, (arc, reduction)) in
-                get_constraint_map_by_type(reduced_branch_tracker)[FlowRateConstraint][b_type]
-                lodf_factor = lodf[arc, index_lodf_outage]
-                expression_container[outage_id, name, :] .=
+        from_number = PSY.get_number(PSY.get_from(PSY.get_arc(contingency_device)))
+        to_number = PSY.get_number(PSY.get_to(PSY.get_arc(contingency_device)))
+        index_lodf_outage = (from_number, to_number)
+
+        if !(index_lodf_outage in lodf_outage_axes)
+            error(
+                "An outage was added to branch $contingency_device_name of type $V, but this branch was reduced from the LODF matrix. Remove the outage or add the buses $(index_lodf_outage) to the irreducible buses in the network model.",
+            )
+        end
+
+        precontingency_outage_flow =
+            get_expression(container, PTDFBranchFlow(), V)[contingency_device_key, :]
+
+        for (b_type, pre_contingency_flow, name_to_arc_map) in branch_type_data
+            for (name, (arc, _)) in name_to_arc_map
+                lodf_factor = lodf_matrix[arc, index_lodf_outage]
+                resolved_name, expressions =
                     _make_branch_scuc_postcontingency_flow_expressions!(
                         jump_model,
                         name,
@@ -311,6 +313,7 @@ function add_post_contingency_flow_expressions!(
                         precontingency_outage_flow,
                         pre_contingency_flow,
                     )
+                expression_container[outage_id, resolved_name, :] .= expressions
             end
         end
     end
