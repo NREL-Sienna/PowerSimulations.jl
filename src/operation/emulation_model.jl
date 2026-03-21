@@ -219,6 +219,11 @@ function EmulationModel(
 end
 
 get_problem_type(::EmulationModel{M}) where {M <: EmulationProblem} = M
+
+function validate_template(::EmulationModel{M}) where {M <: EmulationProblem}
+    error("validate_template is not implemented for EmulationModel{$M}")
+end
+
 function validate_template(model::EmulationModel{<:DefaultEmulationProblem})
     validate_template_impl!(model)
     return

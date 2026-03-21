@@ -239,6 +239,10 @@ end
 
 get_problem_type(::DecisionModel{M}) where {M <: DecisionProblem} = M
 
+function validate_template(::DecisionModel{M}) where {M <: DecisionProblem}
+    error("validate_template is not implemented for DecisionModel{$M}")
+end
+
 function validate_template(model::DecisionModel{<:DefaultDecisionProblem})
     validate_template_impl!(model)
     return

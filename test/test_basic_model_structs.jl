@@ -33,18 +33,23 @@ end
 
     sys = PSB.build_system(PSITestSystems, "c_sys5")
     template = ProblemTemplate(CopperPlatePowerModel)
-    settings = PSI.Settings(sys)
 
+    # DecisionModel has no inner constructor, so use the default field constructor
     decision_model = DecisionModel{CustomDecisionProblem}(
+        :test,
         template,
         sys,
-        settings,
         nothing,
+        PSI.SimulationInfo(),
+        PSI.DecisionModelStore(),
+        Dict{String, Any}(),
     )
     @test_throws ErrorException PSI.validate_template(decision_model)
 
+    # EmulationModel has an inner constructor; build with settings then test
+    settings = PSI.Settings(sys)
     emulation_model = EmulationModel{CustomEmulationProblem}(
-        template,
+        deepcopy(template),
         sys,
         settings,
         nothing,

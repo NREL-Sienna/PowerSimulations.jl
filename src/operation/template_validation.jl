@@ -1,11 +1,3 @@
-function validate_template(model::DecisionModel{M}) where {M <: DecisionProblem}
-    error("validate_template is not implemented for DecisionModel{$M}")
-end
-
-function validate_template(model::EmulationModel{M}) where {M <: EmulationProblem}
-    error("validate_template is not implemented for EmulationModel{$M}")
-end
-
 function _check_branch_network_compatibility(
     ::NetworkModel{T},
     unmodeled_branch_types::Vector{DataType},
