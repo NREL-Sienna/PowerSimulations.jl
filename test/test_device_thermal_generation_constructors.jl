@@ -912,7 +912,6 @@ end
     c_sys5_dc = PSB.build_system(PSITestSystems, "c_sys5_dc")
     systems = [c_sys5, c_sys5_dc]
     networks = [
-        PTDFPowerModel,
         DCPPowerModel,
         NFAPowerModel,
         PTDFPowerModel,
