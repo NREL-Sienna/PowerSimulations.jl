@@ -27,6 +27,31 @@ end
     ) isa NetworkModel
 end
 
+@testset "validate_template dispatch Tests" begin
+    struct CustomDecisionProblem <: PSI.DecisionProblem end
+    struct CustomEmulationProblem <: PSI.EmulationProblem end
+
+    sys = PSB.build_system(PSITestSystems, "c_sys5")
+    template = ProblemTemplate(CopperPlatePowerModel)
+    settings = PSI.Settings(sys)
+
+    decision_model = DecisionModel{CustomDecisionProblem}(
+        template,
+        sys,
+        settings,
+        nothing,
+    )
+    @test_throws ErrorException PSI.validate_template(decision_model)
+
+    emulation_model = EmulationModel{CustomEmulationProblem}(
+        template,
+        sys,
+        settings,
+        nothing,
+    )
+    @test_throws ErrorException PSI.validate_template(emulation_model)
+end
+
 @testset "Feedforward Struct Tests" begin
     ffs = [
         UpperBoundFeedforward(;
