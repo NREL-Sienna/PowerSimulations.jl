@@ -219,7 +219,10 @@ function EmulationModel(
 end
 
 get_problem_type(::EmulationModel{M}) where {M <: EmulationProblem} = M
-validate_template(::EmulationModel{<:EmulationProblem}) = error()
+function validate_template(model::EmulationModel{<:DefaultEmulationProblem})
+    validate_template_impl!(model)
+    return
+end
 
 function validate_time_series!(model::EmulationModel{<:DefaultEmulationProblem})
     sys = get_system(model)
