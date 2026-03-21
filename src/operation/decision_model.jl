@@ -313,28 +313,36 @@ function validate_template(model::DecisionModel{<:DefaultDecisionProblem})
         end
     end
 
+    device_keys_to_delete = Symbol[]
     for (k, device_model) in model.template.devices
         make_device_cache!(device_model, system, get_check_components(settings))
         if isempty(get_device_cache(device_model))
             @info "The system data doesn't include devices of type $(k), consider changing the models in the template" _group =
                 LOG_GROUP_MODELS_VALIDATION
-            delete!(model.template.devices, k)
+            push!(device_keys_to_delete, k)
         end
+    end
+    for k in device_keys_to_delete
+        delete!(model.template.devices, k)
     end
 
     model_has_branch_filters = false
+    branch_keys_to_delete = Symbol[]
     for (k, device_model) in model.template.branches
         make_device_cache!(device_model, system, get_check_components(settings))
         if isempty(get_device_cache(device_model))
             @info "The system data doesn't include Branches of type $(k), consider changing the models in the template" _group =
                 LOG_GROUP_MODELS_VALIDATION
-            delete!(model.template.branches, k)
+            push!(branch_keys_to_delete, k)
         else
             push!(network_model.modeled_ac_branch_types, get_component_type(device_model))
         end
         if get_attribute(device_model, "filter_function") !== nothing
             model_has_branch_filters = true
         end
+    end
+    for k in branch_keys_to_delete
+        delete!(model.template.branches, k)
     end
     validate_network_model(network_model, unmodeled_branch_types, model_has_branch_filters)
     return
@@ -726,7 +734,7 @@ function _make_device_cache(
     return device_cache
 end
 
-function _make_device_name_cache(
+function _make_device_cache(
     devices::IS.FlattenIteratorWrapper{T},
     check_components::Bool,
     sys::PSY.System,
