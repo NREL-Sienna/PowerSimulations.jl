@@ -1,15 +1,4 @@
 """
-Abstract type for models than employ PowerSimulations methods. For custom emulation problems
-    use EmulationProblem as the super type.
-"""
-abstract type DefaultEmulationProblem <: EmulationProblem end
-
-"""
-Default PowerSimulations Emulation Problem Type for unspecified problems
-"""
-struct GenericEmulationProblem <: DefaultEmulationProblem end
-
-"""
     EmulationModel{M}(
         template::AbstractProblemTemplate,
         sys::PSY.System,
@@ -230,7 +219,7 @@ function EmulationModel(
 end
 
 get_problem_type(::EmulationModel{M}) where {M <: EmulationProblem} = M
-validate_template(::EmulationModel{<:EmulationProblem}) = nothing
+validate_template(::EmulationModel{<:EmulationProblem}) = error()
 
 function validate_time_series!(model::EmulationModel{<:DefaultEmulationProblem})
     sys = get_system(model)

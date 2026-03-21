@@ -1,14 +1,3 @@
-"""
-Abstract type for models than employ PowerSimulations methods. For custom decision problems
-    use DecisionProblem as the super type.
-"""
-abstract type DefaultDecisionProblem <: DecisionProblem end
-
-"""
-Generic PowerSimulations Operation Problem Type for unspecified models
-"""
-struct GenericOpProblem <: DefaultDecisionProblem end
-
 mutable struct DecisionModel{M <: DecisionProblem} <: OperationModel
     name::Symbol
     template::AbstractProblemTemplate
@@ -249,7 +238,107 @@ function DecisionModel(
 end
 
 get_problem_type(::DecisionModel{M}) where {M <: DecisionProblem} = M
-validate_template(::DecisionModel{<:DecisionProblem}) = nothing
+
+function _check_branch_network_compatibility(
+    ::NetworkModel{T},
+    unmodeled_branch_types::Vector{DataType},
+) where {T <: PM.AbstractPowerModel}
+    if requires_all_branch_models(T) && !isempty(unmodeled_branch_types)
+        for d in unmodeled_branch_types
+            @error "The system has a branch branch type $(d) but the DeviceModel is not included in the Template."
+        end
+        throw(
+            IS.ConflictingInputsError(
+                "Network model $(T) requires all AC Transmission devices have a model",
+            ),
+        )
+    end
+    return
+end
+
+function _validate_branch_models(
+    ::Type{T},
+    model_has_branch_filters::Bool,
+) where {T <: PM.AbstractPowerModel}
+    if supports_branch_filtering(T) || !model_has_branch_filters
+        return
+    elseif model_has_branch_filters
+        if ignores_branch_filtering(T)
+            @warn "Branch filtering is ignored for network model $(T)"
+        else
+            throw(
+                IS.ConflictingInputsError(
+                    "Branch filtering is not supported for network model $(T). Remove branch \\
+                    filter functions from branch models or use a different network model.",
+                ),
+            )
+        end
+    else
+        throw(
+            IS.ConflictingInputsError(
+                "Network model $(T) can't be validated against branch models",
+            ),
+        )
+    end
+    return
+end
+
+function validate_network_model(network_model::NetworkModel{T},
+    unmodeled_branch_types::Vector{DataType},
+    model_has_branch_filters::Bool,
+) where {T <: PM.AbstractPowerModel}
+    _check_branch_network_compatibility(network_model, unmodeled_branch_types)
+    _validate_branch_models(T, model_has_branch_filters)
+    return
+end
+
+function validate_template(model::DecisionModel{<:DefaultDecisionProblem})
+    template = get_template(model)
+    settings = get_settings(model)
+    if isempty(template)
+        error("Template can't be empty for models $(get_problem_type(model))")
+    end
+    system = get_system(model)
+    modeled_types = get_component_types(template)
+    system_component_types = PSY.get_existing_component_types(system)
+    network_model = get_network_model(template)
+    valid_device_types = union(modeled_types, _TEMPLATE_VALIDATION_EXCLUSIONS)
+    unmodeled_branch_types = DataType[]
+
+    for m in setdiff(system_component_types, valid_device_types)
+        @warn "The template doesn't include models for components of type $(m), consider changing the template" _group =
+            LOG_GROUP_MODELS_VALIDATION
+        if m <: PSY.ACTransmission
+            push!(unmodeled_branch_types, m)
+        end
+    end
+
+    for (k, device_model) in model.template.devices
+        make_device_cache!(device_model, system, get_check_components(settings))
+        if isempty(get_device_cache(device_model))
+            @info "The system data doesn't include devices of type $(k), consider changing the models in the template" _group =
+                LOG_GROUP_MODELS_VALIDATION
+            delete!(model.template.devices, k)
+        end
+    end
+
+    model_has_branch_filters = false
+    for (k, device_model) in model.template.branches
+        make_device_cache!(device_model, system, get_check_components(settings))
+        if isempty(get_device_cache(device_model))
+            @info "The system data doesn't include Branches of type $(k), consider changing the models in the template" _group =
+                LOG_GROUP_MODELS_VALIDATION
+            delete!(model.template.branches, k)
+        else
+            push!(network_model.modeled_ac_branch_types, get_component_type(device_model))
+        end
+        if get_attribute(device_model, "filter_function") !== nothing
+            model_has_branch_filters = true
+        end
+    end
+    validate_network_model(network_model, unmodeled_branch_types, model_has_branch_filters)
+    return
+end
 
 # Probably could be more efficient by storing the info in the internal
 function get_current_time(model::DecisionModel)
@@ -621,34 +710,36 @@ function handle_initial_conditions!(model::DecisionModel{<:DecisionProblem})
     return
 end
 
-function _make_device_name_axis(
+function _make_device_cache(
     devices::IS.FlattenIteratorWrapper{T},
     check_components::Bool,
+    sys::PSY.System,
     filter_function::Function,
 ) where {T <: PSY.Device}
-    devices = sizehint!(Vector{T}(), length(devices))
-    for component in components
-        if PSY.get_available(component) && filter_function(component)
-            check_components && PSY.check_component(sys, component)
-            push!(model.component_cache, component)
+    device_cache = sizehint!(Vector{T}(), length(devices))
+    for device in devices
+        if PSY.get_available(device) && filter_function(device)
+            check_components && PSY.check_component(sys, device)
+            push!(device_cache, device)
         end
     end
-    return devices
+    return device_cache
 end
 
-function _make_device_name_axis(
+function _make_device_name_cache(
     devices::IS.FlattenIteratorWrapper{T},
     check_components::Bool,
+    sys::PSY.System,
     ::Nothing,
 ) where {T <: PSY.Device}
-    devices = sizehint!(Vector{T}(), length(devices))
-    for component in components
-        if PSY.get_available(component)
-            check_components && PSY.check_component(sys, component)
-            push!(model.component_cache, component)
+    device_cache = sizehint!(Vector{T}(), length(devices))
+    for device in devices
+        if PSY.get_available(device)
+            check_components && PSY.check_component(sys, device)
+            push!(device_cache, device)
         end
     end
-    return devices
+    return device_cache
 end
 
 function make_device_cache!(
@@ -657,9 +748,10 @@ function make_device_cache!(
     check_components::Bool,
 ) where {T <: PSY.Device}
     subsystem = get_subsystem(model)
-    PSY.has_components(system, T) && return false
+    !PSY.has_components(system, T) && return false
     devices = PSY.get_components(T, system; subsystem_name = subsystem)
-    filter_func = get_attribute(model, "filter_function")
-    model.component_cache = _make_device_name_axis(devices, check_components, filter_func)
+    filt_func = get_attribute(model, "filter_function")
+    model.device_cache =
+        _make_device_cache(devices, check_components, system, filt_func)
     return
 end
