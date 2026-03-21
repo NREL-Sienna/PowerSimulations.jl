@@ -233,46 +233,6 @@ end
 
 const _TEMPLATE_VALIDATION_EXCLUSIONS = [PSY.Arc, PSY.Area, PSY.ACBus, PSY.LoadZone]
 
-function validate_template(model::OperationModel)
-    template = get_template(model)
-    settings = get_settings(model)
-    if isempty(template)
-        error("Template can't be empty for models $(get_problem_type(model))")
-    end
-    system = get_system(model)
-    modeled_types = get_component_types(template)
-    system_component_types = PSY.get_existing_component_types(system)
-
-    for m in setdiff(
-        system_component_types,
-        union(modeled_types, _TEMPLATE_VALIDATION_EXCLUSIONS),
-    )
-        @warn "The template doesn't include models for components of type $(m), consider changing the template" _group =
-            LOG_GROUP_MODELS_VALIDATION
-    end
-
-    for (k, device_model) in model.template.devices
-        make_device_cache!(device_model, system, get_check_components(settings))
-        if isempty(get_device_cache(device_model))
-            @warn "The system data doesn't include devices of type $(k), consider changing the models in the template" _group =
-                LOG_GROUP_MODELS_VALIDATION
-            pop!(model.template.devices, k)
-        end
-    end
-
-    for (k, device_model) in model.template.branches
-        make_device_cache!(device_model, system, get_check_components(settings))
-        if isempty(get_device_cache(device_model))
-            @warn "The system data doesn't include Branches of type $(k), consider changing the models in the template" _group =
-                LOG_GROUP_MODELS_VALIDATION
-            pop!(model.template.branches, k)
-        end
-        @show k, get_device_cache(device_model)
-    end
-
-    return
-end
-
 function build_if_not_already_built!(model::OperationModel; kwargs...)
     status = get_status(model)
     if status == ModelBuildStatus.EMPTY
