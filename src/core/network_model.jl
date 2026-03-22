@@ -144,6 +144,45 @@ function _get_filters(branch_models::BranchModelContainer)
     return filters
 end
 
+function _get_irreducible_buses_due_to_dlrs(
+    sys::PSY.System,
+    network_model::NetworkModel,
+    branch_models::BranchModelContainer,
+)
+    @debug "Identifying buses that are irreducible due to dynamic line ratings"
+    irreducible_buses = Set{Int64}()
+    for branch_type in network_model.modeled_ac_branch_types
+        device_model = branch_models[Symbol(branch_type)]
+        if !haskey(
+            get_time_series_names(device_model),
+            DynamicBranchRatingTimeSeriesParameter,
+        )
+            continue
+        end
+
+        if branch_type == PSY.ThreeWindingTransformer
+            @warn "Dynamic branch ratings for ThreeWindingTransformers are not implemented yet. Skipping it."
+            continue
+        end
+
+        ts_name =
+            get_time_series_names(device_model)[DynamicBranchRatingTimeSeriesParameter]
+        ts_type = PSY.Deterministic #TODO workaround since we dont have the container
+
+        branches = PSY.get_available_components(branch_type, sys)
+        for branch in branches
+            if !PSY.has_time_series(branch, ts_type, ts_name)
+                continue
+            end
+            bus_to = PSY.get_number(PSY.get_to(PSY.get_arc(branch)))
+            bus_from = PSY.get_number(PSY.get_from(PSY.get_arc(branch)))
+            push!(irreducible_buses, bus_to)
+            push!(irreducible_buses, bus_from)
+        end
+    end
+    return collect(irreducible_buses)
+end
+
 function instantiate_network_model!(
     model::NetworkModel{T},
     branch_models::BranchModelContainer,
@@ -153,24 +192,39 @@ function instantiate_network_model!(
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
+    irreducible_buses = _get_irreducible_buses_due_to_dlrs(
+        sys,
+        model,
+        branch_models,
+    )
     if model.reduce_radial_branches && model.reduce_degree_two_branches
         @info "Applying both radial and degree two reductions"
         ybus = PNM.Ybus(
             sys;
             network_reductions = PNM.NetworkReduction[
-                PNM.RadialReduction(),
-                PNM.DegreeTwoReduction(),
+                PNM.RadialReduction(; irreducible_buses = irreducible_buses),
+                PNM.DegreeTwoReduction(; irreducible_buses = irreducible_buses),
             ],
         )
     elseif model.reduce_radial_branches
         @info "Applying radial reduction"
+        if !isempty(irreducible_buses)
+            @warn "Irreducible buses identified due to DLRs. The reduction of any radial branch between 2 irreducible buses wil be ignored"
+        end
         ybus =
-            PNM.Ybus(sys; network_reductions = PNM.NetworkReduction[PNM.RadialReduction()])
+            PNM.Ybus(
+                sys;
+                network_reductions = PNM.NetworkReduction[PNM.RadialReduction(;
+                    irreducible_buses = irreducible_buses,
+                )],
+            )
     elseif model.reduce_degree_two_branches
         @info "Applying degree two reduction"
         ybus = PNM.Ybus(
             sys;
-            network_reductions = PNM.NetworkReduction[PNM.DegreeTwoReduction()],
+            network_reductions = PNM.NetworkReduction[PNM.DegreeTwoReduction(;
+                irreducible_buses = irreducible_buses,
+            )],
         )
     else
         ybus = PNM.Ybus(sys)
@@ -226,26 +280,47 @@ function instantiate_network_model!(
 )
     if get_PTDF_matrix(model) === nothing
         @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
+    irreducible_buses = _get_irreducible_buses_due_to_dlrs(
+        sys,
+        model,
+        branch_models,
+    )
+    if get_PTDF_matrix(model) === nothing || !isempty(irreducible_buses)
+        if get_PTDF_matrix(model) !== nothing
+            @warn "Provided PTDF Matrix is being ignored since irreducible buses were identified because of DLRs. Recalculating PTDF Matrix with PowerNetworkMatrices.PTDF and the identified irreducible buses."
+        else
+            @info "No PTDF Matrix provided. Calculating using PowerNetworkMatrices.PTDF"
+        end
+
         if model.reduce_radial_branches && model.reduce_degree_two_branches
             @info "Applying both radial and degree two reductions"
             ptdf = PNM.VirtualPTDF(
                 sys;
                 network_reductions = PNM.NetworkReduction[
-                    PNM.RadialReduction(),
-                    PNM.DegreeTwoReduction(),
+                    PNM.RadialReduction(; irreducible_buses = irreducible_buses),
+                    PNM.DegreeTwoReduction(;
+                        irreducible_buses = irreducible_buses,
+                    ),
                 ],
             )
         elseif model.reduce_radial_branches
             @info "Applying radial reduction"
+            if !isempty(irreducible_buses)
+                @warn "Irreducible buses identified due to DLRs. The reduction of any radial branch between 2 irreducible buses wil be ignored"
+            end
             ptdf = PNM.VirtualPTDF(
                 sys;
-                network_reductions = PNM.NetworkReduction[PNM.RadialReduction()],
+                network_reductions = PNM.NetworkReduction[PNM.RadialReduction(;
+                    irreducible_buses = irreducible_buses,
+                )],
             )
         elseif model.reduce_degree_two_branches
             @info "Applying degree two reduction"
             ptdf = PNM.VirtualPTDF(
                 sys;
-                network_reductions = PNM.NetworkReduction[PNM.DegreeTwoReduction()],
+                network_reductions = PNM.NetworkReduction[PNM.DegreeTwoReduction(;
+                    irreducible_buses = irreducible_buses,
+                )],
             )
         else
             ptdf = PNM.VirtualPTDF(sys)
