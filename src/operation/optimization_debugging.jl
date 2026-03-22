@@ -61,50 +61,20 @@ function get_detailed_constraint_numerical_bounds(model::OperationModel)
     if !is_built(model)
         error("Model not built, can't calculate constraint numerical bounds")
     end
-    constraint_bounds = Dict()
-    for (const_key, constraint_array) in get_constraints(get_optimization_container(model))
-        if isa(constraint_array, SparseAxisArray)
-            bounds = ConstraintBounds()
-            for idx in eachindex(constraint_array)
-                constraint_array[idx] == 0.0 && continue
-                con_obj = JuMP.constraint_object(constraint_array[idx])
-                update_coefficient_bounds(bounds, con_obj, idx)
-                update_rhs_bounds(bounds, con_obj, idx)
-            end
-            constraint_bounds[const_key] = bounds
-        else
-            bounds = ConstraintBounds()
-            for idx in Iterators.product(constraint_array.axes...)
-                con_obj = JuMP.constraint_object(constraint_array[idx...])
-                update_coefficient_bounds(bounds, con_obj, idx)
-                update_rhs_bounds(bounds, con_obj, idx)
-            end
-            constraint_bounds[const_key] = bounds
-        end
+    constraint_pairs = collect(get_constraints(get_optimization_container(model)))
+    tasks = map(constraint_pairs) do (const_key, constraint_array)
+        const_key => Threads.@spawn _compute_constraint_bounds(const_key, constraint_array)
     end
-    return constraint_bounds
+    return Dict(key => fetch(task) for (key, task) in tasks)
 end
 
 function get_detailed_variable_numerical_bounds(model::OperationModel)
     if !is_built(model)
         error("Model not built, can't calculate variable numerical bounds")
     end
-    variable_bounds = Dict()
-    for (variable_key, variable_array) in get_variables(get_optimization_container(model))
-        bounds = VariableBounds()
-        if isa(variable_array, SparseAxisArray)
-            for idx in eachindex(variable_array)
-                var = variable_array[idx]
-                var == 0.0 && continue
-                update_variable_bounds(bounds, var, idx)
-            end
-        else
-            for idx in Iterators.product(variable_array.axes...)
-                var = variable_array[idx...]
-                update_variable_bounds(bounds, var, idx)
-            end
-        end
-        variable_bounds[variable_key] = bounds
+    variable_pairs = collect(get_variables(get_optimization_container(model)))
+    tasks = map(variable_pairs) do (variable_key, variable_array)
+        variable_key => Threads.@spawn _compute_variable_bounds(variable_key, variable_array)
     end
-    return variable_bounds
+    return Dict(key => fetch(task) for (key, task) in tasks)
 end
