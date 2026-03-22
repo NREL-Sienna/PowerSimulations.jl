@@ -1860,7 +1860,7 @@ function _calculate_dual_variables_discrete_model!(
     container::OptimizationContainer,
     ::PSY.System,
 )
-    return _process_duals(container, container.settings.optimizer)
+    return process_duals(container, container.settings.optimizer)
 end
 
 function calculate_dual_variables!(
