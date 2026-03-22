@@ -138,7 +138,7 @@ end
 
 function get_branch_argument_parameter_axes(
     net_reduction_data::PNM.NetworkReductionData,
-    ::IS.FlattenIteratorWrapper{T},
+    ::Vector{T},
     ::Type{V},
     ts_name::String,
 ) where {T <: PSY.ACTransmission, V <: PSY.TimeSeriesData}
@@ -170,7 +170,7 @@ end
 
 function get_branch_argument_variable_axis(
     net_reduction_data::PNM.NetworkReductionData,
-    ::IS.FlattenIteratorWrapper{T},
+    ::Vector{T},
 ) where {T <: PSY.ACTransmission}
     return get_branch_argument_variable_axis(net_reduction_data, T)
 end
@@ -194,7 +194,7 @@ end =#
 function get_branch_argument_constraint_axis(
     net_reduction_data::PNM.NetworkReductionData,
     reduced_branch_tracker::BranchReductionOptimizationTracker,
-    ::IS.FlattenIteratorWrapper{T},
+    ::Vector{T},
     ::Type{U},
 ) where {T <: PSY.ACTransmission, U <: ISOPT.ConstraintType}
     return get_branch_argument_constraint_axis(
