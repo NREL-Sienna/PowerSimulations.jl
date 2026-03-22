@@ -989,7 +989,9 @@ function _execute!(
     elseif !isnothing(cache_size_mib) || !isnothing(min_cache_flush_size_mib)
         rules = CacheFlushRules(;
             max_size = something(cache_size_mib, DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB) * MiB,
-            min_flush_size = trunc(something(min_cache_flush_size_mib, MIN_CACHE_FLUSH_SIZE_MiB) * MiB),
+            min_flush_size = trunc(
+                something(min_cache_flush_size_mib, MIN_CACHE_FLUSH_SIZE_MiB) * MiB,
+            ),
         )
         set_cache_flush_rules!(store, rules)
     end
