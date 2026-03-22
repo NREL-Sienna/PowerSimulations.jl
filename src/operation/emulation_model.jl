@@ -17,7 +17,6 @@ Build the optimization problem of type M with the specific system and template.
   - `optimizer::Union{Nothing,MOI.OptimizerWithAttributes} = nothing` : The optimizer does
     not get serialized. Callers should pass whatever they passed to the original problem.
   - `warm_start::Bool = true`: True will use the current operation point in the system to initialize variable values. False initializes all variables to zero. Default is true
-  - `system_to_file::Bool = true:`: True to create a copy of the system used in the model.
   - `initialize_model::Bool = true`: Option to decide to initialize the model or not.
   - `initialization_file::String = ""`: This allows to pass pre-existing initialization values to avoid the solution of an optimization problem to find feasible initial conditions.
   - `deserialize_initial_conditions::Bool = false`: Option to deserialize conditions
@@ -84,7 +83,6 @@ function EmulationModel{M}(
     name = nothing,
     optimizer = nothing,
     warm_start = true,
-    system_to_file = true,
     initialize_model = true,
     initialization_file = "",
     deserialize_initial_conditions = false,
@@ -106,7 +104,6 @@ function EmulationModel{M}(
         optimizer = optimizer,
         time_series_cache_size = time_series_cache_size,
         warm_start = warm_start,
-        system_to_file = system_to_file,
         initialize_model = initialize_model,
         initialization_file = initialization_file,
         deserialize_initial_conditions = deserialize_initial_conditions,

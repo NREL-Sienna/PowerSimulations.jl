@@ -166,7 +166,6 @@ function test_simulation_results(
     file_path::String,
     export_path;
     in_memory = false,
-    system_to_file = true,
 )
     @testset "Test simulation results in_memory = $in_memory" begin
         c_sys5_hy_uc = PSB.build_system(PSITestSystems, "c_sys5_hy_uc")
@@ -177,7 +176,6 @@ function test_simulation_results(
             file_path,
             export_path;
             in_memory = in_memory,
-            system_to_file = system_to_file,
         )
         results = SimulationResults(sim)
         test_decision_problem_results(results, c_sys5_hy_ed, c_sys5_hy_uc, in_memory)
@@ -1016,7 +1014,6 @@ end
         c_sys5_hy_ed,
         file_path,
         export_path;
-        system_to_file = false,
         in_memory = in_memory,
     )
     results = SimulationResults(PSI.get_simulation_folder(sim))

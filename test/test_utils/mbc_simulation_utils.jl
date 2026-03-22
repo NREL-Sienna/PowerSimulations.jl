@@ -136,7 +136,6 @@ function build_generic_mbc_model(sys::System;
         name = "UC",
         store_variable_names = true,
         optimizer = HiGHS_optimizer_small_gap,
-        system_to_file = false,
     )
     return model
 end

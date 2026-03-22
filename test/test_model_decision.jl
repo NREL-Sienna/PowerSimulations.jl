@@ -364,19 +364,6 @@ end
     ED2 = DecisionModel(fpath, HiGHS_optimizer)
     @test build!(ED2; output_dir = fpath) == PSI.ModelBuildStatus.BUILT
     psi_checksolve_test(ED2, [MOI.OPTIMAL], 240000.0, 10000)
-
-    path2 = mktempdir(; cleanup = true)
-    model_no_sys =
-        DecisionModel(template, sys; optimizer = HiGHS_optimizer, system_to_file = false)
-
-    @test build!(model_no_sys; output_dir = path2) == PSI.ModelBuildStatus.BUILT
-    @test solve!(model_no_sys) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
-
-    file_list = sort!(collect(readdir(path2)))
-    @test .!all(occursin.(r".h5", file_list))
-    ED3 = DecisionModel(path2, HiGHS_optimizer; system = sys)
-    build!(ED3; output_dir = path2)
-    psi_checksolve_test(ED3, [MOI.OPTIMAL], 240000.0, 10000)
 end
 
 @testset "Test NonSpinning reseve model" begin

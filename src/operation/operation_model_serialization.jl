@@ -28,7 +28,6 @@ end
 
 struct ProblemSerializationWrapper
     template::ProblemTemplate
-    sys::Union{Nothing, String}
     settings::Settings
     model_type::DataType
     name::String
@@ -38,15 +37,6 @@ end
 function serialize_problem(model::OperationModel; optimizer = nothing)
     # A PowerSystem cannot be serialized in this format because of how it stores
     # time series data. Use its specialized serialization method instead.
-    sys_to_file = get_system_to_file(get_settings(model))
-    if sys_to_file
-        sys = get_system(model)
-        sys_filename = joinpath(get_output_dir(model), make_system_filename(sys))
-        # Skip serialization if the system is already in the folder
-        !ispath(sys_filename) && PSY.to_json(sys, sys_filename)
-    else
-        sys_filename = nothing
-    end
     container = get_optimization_container(model)
 
     if optimizer === nothing
@@ -56,7 +46,6 @@ function serialize_problem(model::OperationModel; optimizer = nothing)
 
     obj = ProblemSerializationWrapper(
         model.template,
-        sys_filename,
         container.settings_copy,
         typeof(model),
         string(get_name(model)),
@@ -83,16 +72,11 @@ function deserialize_problem(
     sys = get(kwargs, :system, nothing)
 
     if sys === nothing
-        if obj.sys === nothing && !settings[:sys_to_file]
-            throw(
-                IS.DataFormatError(
-                    "Operations Problem System was not serialized and a System has not been specified.",
-                ),
-            )
-        elseif !ispath(obj.sys)
-            throw(IS.DataFormatError("PowerSystems.System file $(obj.sys) does not exist"))
-        end
-        sys = PSY.System(obj.sys)
+        throw(
+            IS.DataFormatError(
+                "A System must be specified for deserialization.",
+            ),
+        )
     end
     settings =
         Settings(sys; restore_from_copy(obj.settings; optimizer = kwargs[:optimizer])...)

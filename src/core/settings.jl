@@ -9,7 +9,6 @@ struct Settings
     optimizer_solve_log_print::Bool
     detailed_optimizer_stats::Bool
     calculate_conflict::Bool
-    system_to_file::Bool
     check_components::Bool
     initialize_model::Bool
     initialization_file::String
@@ -35,7 +34,6 @@ function Settings(
     optimizer_solve_log_print::Bool = false,
     detailed_optimizer_stats::Bool = false,
     calculate_conflict::Bool = false,
-    system_to_file::Bool = true,
     check_components::Bool = true,
     initialize_model::Bool = true,
     initialization_file = "",
@@ -74,7 +72,6 @@ function Settings(
         optimizer_solve_log_print,
         detailed_optimizer_stats,
         calculate_conflict,
-        system_to_file,
         check_components,
         initialize_model,
         initialization_file,
@@ -143,7 +140,6 @@ get_initial_time(settings::Settings)::Dates.DateTime = settings.initial_time[]
 get_optimizer(settings::Settings) = settings.optimizer
 get_ext(settings::Settings) = settings.ext
 get_warm_start(settings::Settings) = settings.warm_start[]
-get_system_to_file(settings::Settings) = settings.system_to_file
 get_check_components(settings::Settings) = settings.check_components
 get_initialize_model(settings::Settings) = settings.initialize_model
 get_initialization_file(settings::Settings) = settings.initialization_file
