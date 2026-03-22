@@ -278,8 +278,6 @@ function instantiate_network_model!(
     number_of_steps::Int,
     sys::PSY.System,
 )
-    if get_PTDF_matrix(model) === nothing
-        @info "PTDF Matrix not provided. Calculating using PowerNetworkMatrices.PTDF"
     irreducible_buses = _get_irreducible_buses_due_to_dlrs(
         sys,
         model,
@@ -287,9 +285,9 @@ function instantiate_network_model!(
     )
     if get_PTDF_matrix(model) === nothing || !isempty(irreducible_buses)
         if get_PTDF_matrix(model) !== nothing
-            @warn "Provided PTDF Matrix is being ignored since irreducible buses were identified because of DLRs. Recalculating PTDF Matrix with PowerNetworkMatrices.PTDF and the identified irreducible buses."
+            @warn "Provided PTDF Matrix is being ignored since irreducible buses were identified because of DLRs. Recalculating PTDF Matrix with PowerNetworkMatrices.VirtualPTDF and the identified irreducible buses."
         else
-            @info "No PTDF Matrix provided. Calculating using PowerNetworkMatrices.PTDF"
+            @info "No PTDF Matrix provided. Calculating using PowerNetworkMatrices.VirtualPTDF"
         end
 
         if model.reduce_radial_branches && model.reduce_degree_two_branches
