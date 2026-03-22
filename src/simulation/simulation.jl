@@ -569,6 +569,7 @@ end
 function _build!(
     sim::Simulation;
     serialize = true,
+    store_systems_in_results = true,
     setup_simulation_partitions = false,
     partitions = nothing,
     index = nothing,
@@ -614,12 +615,21 @@ function _build!(
         _check_steps(sim, problem_initial_times)
     end
 
-    # Spawn system serialization (JSON conversion) in parallel with model builds.
-    # Systems are read-only during building, so this is safe.
-    serialization_task = Threads.@spawn _serialize_systems_to_json(sim)
+    if store_systems_in_results
+        # Spawn system serialization (JSON conversion) in parallel with model builds.
+        # Systems are read-only during building, so this is safe.
+        serialization_task = Threads.@spawn _serialize_systems_to_json(sim)
+    end
 
-    _build_decision_models!(sim)
-    _build_emulation_model!(sim)
+    try
+        _build_decision_models!(sim)
+        _build_emulation_model!(sim)
+    catch
+        if store_systems_in_results
+            Base.throwto(serialization_task, InterruptException())
+        end
+        rethrow()
+    end
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation State" begin
         _initialize_simulation_state!(sim)
@@ -630,10 +640,12 @@ function _build!(
             set_simulation_store!(sim, store)
             try
                 _initialize_problem_storage!(sim)
-                # Fetch pre-computed JSON from the parallel task and write to HDF5 store.
-                serialized = fetch(serialization_task)
-                for (uuid, json_text) in serialized
-                    write_system_json!(store, uuid, json_text)
+                if store_systems_in_results
+                    # Fetch pre-computed JSON from the parallel task and write to HDF5 store.
+                    serialized = fetch(serialization_task)
+                    for (uuid, json_text) in serialized
+                        write_system_json!(store, uuid, json_text)
+                    end
                 end
             finally
                 set_simulation_store!(sim, nothing)
@@ -699,6 +711,7 @@ Build the Simulation, problems and the related folder structure.
   - `sim::Simulation`: simulation object
   - `recorders::Vector{Symbol} = []`: recorder names to register
   - `serialize::Bool = true`: serializes the simulation objects in the simulation
+  - `store_systems_in_results::Bool = true`: stores the systems as JSON in the results HDF5 file
   - `console_level = Logging.Error`:
   - `file_level = Logging.Info`:
 """
@@ -708,6 +721,7 @@ function build!(
     console_level = Logging.Error,
     file_level = Logging.Info,
     serialize = true,
+    store_systems_in_results = true,
     partitions::Union{Nothing, SimulationPartitions} = nothing,
     index = nothing,
 )
@@ -736,6 +750,7 @@ function build!(
                     _build!(
                         sim;
                         serialize = serialize,
+                        store_systems_in_results = store_systems_in_results,
                         setup_simulation_partitions = setup_simulation_partitions,
                         partitions = partitions,
                         index = index,
@@ -986,7 +1001,7 @@ function _execute!(
             something(cache_size_mib, DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB),
             something(min_cache_flush_size_mib, MIN_CACHE_FLUSH_SIZE_MiB),
         )
-    elseif !isnothing(cache_size_mib) || !isnothing(min_cache_flush_size_mib)
+    else
         rules = CacheFlushRules(;
             max_size = something(cache_size_mib, DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB) * MiB,
             min_flush_size = trunc(
