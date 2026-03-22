@@ -101,28 +101,68 @@ end
 # Default fallback for unsupported constraints.
 update_numerical_bounds(::NumericalBounds, func, idx) = nothing
 
+function merge_bounds!(dest::NumericalBounds, src::NumericalBounds)
+    if abs(src.min) < abs(dest.min)
+        dest.min = src.min
+        dest.min_index = src.min_index
+    end
+    if dest.max == -Inf || abs(src.max) > abs(dest.max)
+        dest.max = src.max
+        dest.max_index = src.max_index
+    end
+    return
+end
+
+function _compute_constraint_bounds(const_key, constraint_array)
+    bounds = ConstraintBounds()
+    if isa(constraint_array, SparseAxisArray)
+        for idx in eachindex(constraint_array)
+            constraint_array[idx] == 0.0 && continue
+            con_obj = JuMP.constraint_object(constraint_array[idx])
+            update_coefficient_bounds(bounds, con_obj, (const_key, idx))
+            update_rhs_bounds(bounds, con_obj, (const_key, idx))
+        end
+    else
+        for idx in Iterators.product(constraint_array.axes...)
+            !isassigned(constraint_array, idx...) && continue
+            con_obj = JuMP.constraint_object(constraint_array[idx...])
+            update_coefficient_bounds(bounds, con_obj, (const_key, idx))
+            update_rhs_bounds(bounds, con_obj, (const_key, idx))
+        end
+    end
+    return bounds
+end
+
+function _compute_variable_bounds(variable_key, variable_array)
+    bounds = VariableBounds()
+    if isa(variable_array, SparseAxisArray)
+        for idx in eachindex(variable_array)
+            var = variable_array[idx]
+            var == 0.0 && continue
+            update_variable_bounds(bounds, var, (variable_key, idx))
+        end
+    else
+        for idx in Iterators.product(variable_array.axes...)
+            var = variable_array[idx...]
+            update_variable_bounds(bounds, var, (variable_key, idx))
+        end
+    end
+    return bounds
+end
+
 function get_constraint_numerical_bounds(model::OperationModel)
     if !is_built(model)
         error("Model not built, can't calculate constraint numerical bounds")
     end
+    constraint_pairs = collect(get_constraints(get_optimization_container(model)))
+    tasks = map(constraint_pairs) do (const_key, constraint_array)
+        Threads.@spawn _compute_constraint_bounds(const_key, constraint_array)
+    end
     bounds = ConstraintBounds()
-    for (const_key, constraint_array) in get_constraints(get_optimization_container(model))
-        # TODO: handle this at compile and not at run time
-        if isa(constraint_array, SparseAxisArray)
-            for idx in eachindex(constraint_array)
-                constraint_array[idx] == 0.0 && continue
-                con_obj = JuMP.constraint_object(constraint_array[idx])
-                update_coefficient_bounds(bounds, con_obj, (const_key, idx))
-                update_rhs_bounds(bounds, con_obj, (const_key, idx))
-            end
-        else
-            for idx in Iterators.product(constraint_array.axes...)
-                !isassigned(constraint_array, idx...) && continue
-                con_obj = JuMP.constraint_object(constraint_array[idx...])
-                update_coefficient_bounds(bounds, con_obj, (const_key, idx))
-                update_rhs_bounds(bounds, con_obj, (const_key, idx))
-            end
-        end
+    for task in tasks
+        local_bounds = fetch(task)
+        merge_bounds!(bounds.coefficient, local_bounds.coefficient)
+        merge_bounds!(bounds.rhs, local_bounds.rhs)
     end
     return bounds
 end
@@ -131,20 +171,14 @@ function get_variable_numerical_bounds(model::OperationModel)
     if !is_built(model)
         error("Model not built, can't calculate variable numerical bounds")
     end
+    variable_pairs = collect(get_variables(get_optimization_container(model)))
+    tasks = map(variable_pairs) do (variable_key, variable_array)
+        Threads.@spawn _compute_variable_bounds(variable_key, variable_array)
+    end
     bounds = VariableBounds()
-    for (variable_key, variable_array) in get_variables(get_optimization_container(model))
-        if isa(variable_array, SparseAxisArray)
-            for idx in eachindex(variable_array)
-                var = variable_array[idx]
-                var == 0.0 && continue
-                update_variable_bounds(bounds, var, (variable_key, idx))
-            end
-        else
-            for idx in Iterators.product(variable_array.axes...)
-                var = variable_array[idx...]
-                update_variable_bounds(bounds, var, (variable_key, idx))
-            end
-        end
+    for task in tasks
+        local_bounds = fetch(task)
+        merge_bounds!(bounds.bounds, local_bounds.bounds)
     end
     return bounds
 end
