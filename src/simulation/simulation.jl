@@ -489,8 +489,8 @@ end
 
 function _initialize_problem_storage!(
     sim::Simulation,
-    cache_size_mib,
-    min_cache_flush_size_mib,
+    cache_size_mib::Int = DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB,
+    min_cache_flush_size_mib::Int = MIN_CACHE_FLUSH_SIZE_MiB,
 )
     sequence = get_sequence(sim)
     executions_by_model = sequence.executions_by_model
@@ -597,11 +597,43 @@ function _build!(
         _check_steps(sim, problem_initial_times)
     end
 
+    # Spawn system serialization (JSON conversion) in parallel with model builds.
+    # Systems are read-only during building, so this is safe.
+    serialization_task = Threads.@spawn _serialize_systems_to_json(sim)
+
     _build_decision_models!(sim)
     _build_emulation_model!(sim)
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation State" begin
         _initialize_simulation_state!(sim)
+    end
+
+    TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Problem Storage" begin
+        open_store(HdfSimulationStore, get_store_dir(sim), "w") do store
+            set_simulation_store!(sim, store)
+            try
+                _initialize_problem_storage!(sim)
+                # Fetch pre-computed JSON from the parallel task and write to HDF5 store.
+                serialized = fetch(serialization_task)
+                for (uuid, json_text) in serialized
+                    write_system_json!(store, uuid, json_text)
+                end
+            finally
+                set_simulation_store!(sim, nothing)
+            end
+        end
+    end
+
+    if serialize
+        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
+            serialize_simulation(sim)
+        end
+        for model in get_decision_models(simulation_models)
+            serialize_problem(model)
+        end
+        if em !== nothing
+            serialize_problem(em)
+        end
     end
 
     if setup_simulation_partitions
@@ -639,20 +671,6 @@ function _setup_simulation_partitions(sim::Simulation)
     IS.to_json(sim.internal.partitions, filename; pretty = true)
     for i in 1:get_num_partitions(sim.internal.partitions)
         mkdir(joinpath(sim.internal.partitions_dir, string(i)))
-    end
-
-    open_store(HdfSimulationStore, get_store_dir(sim), "w") do store
-        set_simulation_store!(sim, store)
-        try
-            _initialize_problem_storage!(
-                sim,
-                DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB,
-                MIN_CACHE_FLUSH_SIZE_MiB,
-            )
-            _serialize_systems_to_store!(store, sim)
-        finally
-            set_simulation_store!(sim, nothing)
-        end
     end
 end
 
@@ -921,8 +939,8 @@ end
 
 function _execute!(
     sim::Simulation;
-    cache_size_mib = DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB,
-    min_cache_flush_size_mib = MIN_CACHE_FLUSH_SIZE_MiB,
+    cache_size_mib::Union{Nothing, Int} = nothing,
+    min_cache_flush_size_mib::Union{Nothing, Int} = nothing,
     exports = nothing,
     enable_progress_bar = progress_meter_enabled(),
     disable_timer_outputs = false,
@@ -934,9 +952,22 @@ function _execute!(
     execution_order = get_execution_order(sim)
     steps = get_steps(sim)
     num_executions = steps * length(execution_order)
-    store_params =
-        _initialize_problem_storage!(sim, cache_size_mib, min_cache_flush_size_mib)
-    status = RunStatus.RUNNING
+    store = get_simulation_store(sim)
+    # For InMemorySimulationStore, initialize storage here since it doesn't persist from build.
+    if store isa InMemorySimulationStore
+        _initialize_problem_storage!(
+            sim,
+            something(cache_size_mib, DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB),
+            something(min_cache_flush_size_mib, MIN_CACHE_FLUSH_SIZE_MiB),
+        )
+    elseif !isnothing(cache_size_mib) || !isnothing(min_cache_flush_size_mib)
+        rules = CacheFlushRules(;
+            max_size = something(cache_size_mib, DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB) * MiB,
+            min_flush_size = trunc(something(min_cache_flush_size_mib, MIN_CACHE_FLUSH_SIZE_MiB) * MiB),
+        )
+        set_cache_flush_rules!(store, rules)
+    end
+    store_params = get_params(store)
     if exports !== nothing
         if !(exports isa SimulationResultsExport)
             exports = SimulationResultsExport(exports, store_params)
@@ -1095,25 +1126,33 @@ function execute!(sim::Simulation; kwargs...)
             "Simulation build status $sim_build_status, or Simulation run status $sim_run_status, are invalid, you need to rebuild the simulation",
         )
     end
+    file_mode = in_memory ? "w" : "rw"
     try
         Logging.with_logger(logger) do
-            open_store(store_type, get_store_dir(sim), "w") do store
+            open_store(store_type, get_store_dir(sim), file_mode) do store
                 set_simulation_store!(sim, store)
                 try
                     TimerOutputs.reset_timer!(RUN_SIMULATION_TIMER)
                     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Execute Simulation" begin
-                        _execute!(sim; [k => v for (k, v) in kwargs if k != :in_memory]...)
+                        _execute!(
+                            sim;
+                            [k => v for (k, v) in kwargs if k != :in_memory]...,
+                        )
                     end
                     @info ("\n$(RUN_SIMULATION_TIMER)\n")
                     set_simulation_status!(sim, RunStatus.SUCCESSFULLY_FINALIZED)
-                    if isnothing(sim.internal.partitions)
-                        # Partitioned simulations serialize the systems once during build.
-                        _serialize_systems_to_store!(store, sim)
-                    end
                     log_cache_hit_percentages(store)
                 catch e
                     set_simulation_status!(sim, RunStatus.FAILED)
                     @error "simulation failed" exception = (e, catch_backtrace())
+                end
+            end
+            # Delete incomplete store file after it has been closed
+            if get_simulation_status(sim) == RunStatus.FAILED && !in_memory
+                store_path = joinpath(get_store_dir(sim), HDF_FILENAME)
+                if isfile(store_path)
+                    rm(store_path; force = true)
+                    @warn "Deleted incomplete simulation store" store_path
                 end
             end
         end
@@ -1123,7 +1162,7 @@ function execute!(sim::Simulation; kwargs...)
         close(logger)
     end
 
-    if !in_memory
+    if !in_memory && get_simulation_status(sim) == RunStatus.SUCCESSFULLY_FINALIZED
         IS.compute_file_hash(get_store_dir(sim), HDF_FILENAME)
     end
 
@@ -1139,16 +1178,71 @@ function _empty_problem_caches!(sim::Simulation)
     return
 end
 
-function _serialize_systems_to_store!(store::SimulationStore, sim::Simulation)
-    simulation_models = get_models(sim)
-    for dm in get_decision_models(simulation_models)
-        serialize_system!(store, get_system(dm))
-    end
+"""
+    serialize_simulation(sim::Simulation, path = ".")
 
+Serialize the simulation to a directory in path.
+
+Return the serialized simulation directory name that is created.
+
+# Arguments
+
+  - `sim::Simulation`: simulation to serialize
+  - `path = "."`: path in which to create the serialzed directory
+  - `force = false`: If true, delete the directory if it already exists. Otherwise, it will
+    throw an exception.
+"""
+function serialize_simulation(sim::Simulation; path = nothing, force = false)
+    if path === nothing
+        directory = get_simulation_files_dir(sim)
+    else
+        directory = path
+    end
+    problems = get_model_names(get_models(sim))
+
+    if !isempty(readdir(directory)) && !force
+        throw(
+            ArgumentError(
+                "$directory has files already: $(readdir(directory)). Please delete them or pass force = true.",
+            ),
+        )
+    end
+    rm(directory; recursive = true, force = true)
+    mkdir(directory)
+
+    filename = joinpath(directory, SIMULATION_SERIALIZATION_FILENAME)
+    obj = SimulationSerializationWrapper(
+        get_steps(sim),
+        problems,
+        get_initial_time(sim),
+        get_sequence(sim),
+        get_simulation_dir(sim),
+        get_name(sim),
+    )
+    Serialization.serialize(filename, obj)
+    @info "Serialized simulation name = $(get_name(sim))" directory
+    return directory
+end
+
+function _serialize_systems_to_json(sim::Simulation)
+    simulation_models = get_models(sim)
+    results = Dict{String, String}()
+    for dm in get_decision_models(simulation_models)
+        sys = get_system(dm)
+        uuid = string(IS.get_uuid(sys))
+        if !haskey(results, uuid)
+            results[uuid] = PSY.to_json(sys)
+        end
+    end
     em = get_emulation_model(simulation_models)
     if !isnothing(em)
-        serialize_system!(store, get_system(em))
+        sys = get_system(em)
+        uuid = string(IS.get_uuid(sys))
+        if !haskey(results, uuid)
+            results[uuid] = PSY.to_json(sys)
+        end
     end
+    return results
 end
 
 function serialize_status(sim::Simulation)
