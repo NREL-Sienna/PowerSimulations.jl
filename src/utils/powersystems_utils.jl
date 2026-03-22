@@ -1,5 +1,12 @@
 function get_available_components(
     model::DeviceModel{T, <:AbstractDeviceFormulation},
+    ::PSY.System,
+) where {T <: PSY.ACTransmission}
+    return get_device_cache(model)
+end
+
+function get_available_components(
+    model::DeviceModel{T, <:AbstractDeviceFormulation},
     sys::PSY.System,
 ) where {T <: PSY.Component}
     subsystem = get_subsystem(model)
