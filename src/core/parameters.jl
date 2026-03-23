@@ -267,6 +267,16 @@ Parameter to define active power in time series
 struct ActivePowerInTimeSeriesParameter <: TimeSeriesParameter end
 
 """
+Parameter to define active power in time series
+"""
+struct ShiftUpActivePowerTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
+Parameter to define active power in time series
+"""
+struct ShiftDownActivePowerTimeSeriesParameter <: TimeSeriesParameter end
+
+"""
 Parameter to define requirement time series
 """
 struct RequirementTimeSeriesParameter <: TimeSeriesParameter end
@@ -417,3 +427,5 @@ convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{RequirementTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{UpperBoundValueParameter}) = true
 convert_result_to_natural_units(::Type{LowerBoundValueParameter}) = true
+convert_result_to_natural_units(::Type{ShiftUpActivePowerTimeSeriesParameter}) = true
+convert_result_to_natural_units(::Type{ShiftDownActivePowerTimeSeriesParameter}) = true
