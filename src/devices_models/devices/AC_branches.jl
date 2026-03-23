@@ -119,6 +119,60 @@ function add_variables!(
 end
 
 function add_variables!(
+    container::OptimizationContainer,
+    ::Type{T},
+    network_model::NetworkModel{<:PM.AbstractPowerModel},
+    devices::IS.FlattenIteratorWrapper{U},
+    formulation::AbstractBranchFormulation,
+) where {
+    T <: AbstractACActivePowerFlow,
+    U <: PSY.ACTransmission}
+    net_reduction_data = network_model.network_reduction
+    if isempty(net_reduction_data)
+        add_variables!(container, T, devices, formulation)
+        return
+    end
+    time_steps = get_time_steps(container)
+    branch_names = get_branch_argument_variable_axis(net_reduction_data, devices)
+    reduced_branch_tracker = get_reduced_branch_tracker(network_model)
+    all_branch_maps_by_type = PNM.get_all_branch_maps_by_type(net_reduction_data)
+
+    variable_container = add_variable_container!(
+        container,
+        T(),
+        U,
+        branch_names,
+        time_steps,
+    )
+
+    for (name, (arc, reduction)) in PNM.get_name_to_arc_map(net_reduction_data, U)
+        reduction_entry = all_branch_maps_by_type[reduction][U][arc]
+        has_entry, tracker_container = search_for_reduced_branch_argument!(
+            reduced_branch_tracker,
+            arc,
+            T,
+        )
+        if has_entry
+            @assert !isempty(tracker_container) name arc reduction
+        end
+        ub = get_variable_upper_bound(T(), reduction_entry, formulation)
+        lb = get_variable_lower_bound(T(), reduction_entry, formulation)
+        for t in time_steps
+            if !has_entry
+                tracker_container[t] = JuMP.@variable(
+                    get_jump_model(container),
+                    base_name = "$(T)_$(U)_$(reduction)_{$(name), $(t)}",
+                )
+                ub !== nothing && JuMP.set_upper_bound(tracker_container[t], ub)
+                lb !== nothing && JuMP.set_lower_bound(tracker_container[t], lb)
+            end
+            variable_container[name, t] = tracker_container[t]
+        end
+    end
+    return
+end
+
+function add_variables!(
     ::OptimizationContainer,
     ::Type{T},
     network_model::NetworkModel{<:AbstractPTDFModel},

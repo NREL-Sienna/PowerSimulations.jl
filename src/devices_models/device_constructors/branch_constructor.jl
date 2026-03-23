@@ -89,12 +89,14 @@ function construct_device!(
         add_variables!(
             container,
             FlowActivePowerSlackUpperBound,
+            network_model,
             devices,
             StaticBranch(),
         )
         add_variables!(
             container,
             FlowActivePowerSlackLowerBound,
+            network_model,
             devices,
             StaticBranch(),
         )
@@ -324,6 +326,7 @@ function construct_device!(
         add_variables!(
             container,
             FlowActivePowerSlackUpperBound,
+            network_model,
             devices,
             StaticBranch(),
         )
