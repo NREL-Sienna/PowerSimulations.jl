@@ -547,3 +547,33 @@ end
         @test isapprox(loss_vals, ft_vals .+ tf_vals; atol = 1e-9)
     end
 end
+
+@testset "Bus aux variable results use bus names not bus numbers" begin
+    system = build_system(PSITestSystems, "c_sys5_uc")
+
+    template = get_template_dispatch_with_network(
+        NetworkModel(
+            PTDFPowerModel;
+            PTDF_matrix = PTDF(system),
+            power_flow_evaluation = ACPowerFlow(),
+        ),
+    )
+    model_m = DecisionModel(template, system; optimizer = HiGHS_optimizer)
+    @test build!(model_m; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    @test solve!(model_m) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+
+    results = OptimizationProblemResults(model_m)
+    ad = read_aux_variables(results)
+
+    bus_names = Set(get_name.(get_components(ACBus, system)))
+    for key in ["PowerFlowVoltageAngle__ACBus", "PowerFlowVoltageMagnitude__ACBus"]
+        df = ad[key]
+        result_names = Set(unique(df.name))
+        @test result_names == bus_names
+        # Verify names are strings, not stringified integers
+        for name in result_names
+            @test tryparse(Int, name) === nothing
+        end
+    end
+end
