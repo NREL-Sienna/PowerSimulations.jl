@@ -144,7 +144,7 @@ end
                     2,
                 ]
         elseif source_formulation == FixedOutput
-            p_out = read_variable(
+            p_out = read_parameter(
                 res,
                 "ActivePowerOutTimeSeriesParameter__Source";
                 table_format = TableFormat.WIDE,
@@ -153,7 +153,7 @@ end
                 2,
             ]
             p_in =
-                read_variable(
+                read_parameter(
                     res,
                     "ActivePowerInTimeSeriesParameter__Source";
                     table_format = TableFormat.WIDE,
