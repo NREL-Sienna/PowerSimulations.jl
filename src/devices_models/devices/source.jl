@@ -24,7 +24,7 @@ get_multiplier_value(::ActivePowerOutTimeSeriesParameter, d::PSY.Source, ::Abstr
 get_multiplier_value(::ActivePowerInTimeSeriesParameter, d::PSY.Source, ::AbstractSourceFormulation) = PSY.get_active_power_limits(d).max
 get_multiplier_value(::ActivePowerTimeSeriesParameter, d::PSY.Source, ::FixedOutput) = PSY.get_active_power_limits(d).max
 get_multiplier_value(::ActivePowerOutTimeSeriesParameter, d::PSY.Source, ::FixedOutput) = PSY.get_active_power_limits(d).max
-get_multiplier_value(::ActivePowerInTimeSeriesParameter, d::PSY.Source, ::FixedOutput) = -PSY.get_active_power_limits(d).max
+get_multiplier_value(::ActivePowerInTimeSeriesParameter, d::PSY.Source, ::FixedOutput) = PSY.get_active_power_limits(d).min
 # This additional method definition is used to avoid ambiguity with the method defined in default_interface_methods.jl
 get_multiplier_value(::AbstractPiecewiseLinearBreakpointParameter, d::PSY.Source, ::AbstractSourceFormulation) = 1.0
 
