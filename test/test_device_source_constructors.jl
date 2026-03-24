@@ -70,7 +70,7 @@ end
 end
 
 @testset "Source With CopperPlate and TimeSeries" begin
-    for formulation in [ImportExportSourceModel, FixedOutput]
+    for source_formulation in [ImportExportSourceModel, FixedOutput]
         sys = make_5_bus_with_import_export(; add_single_time_series = true)
         source = get_component(Source, sys, "source")
 
@@ -107,7 +107,7 @@ end
         set_device_model!(template, PowerLoad, StaticPowerLoad)
         source_model = DeviceModel(
             Source,
-            ImportExportSourceModel;
+            source_formulation;
             attributes = Dict("reservation" => false),
         )
         set_device_model!(template, source_model)
@@ -125,24 +125,43 @@ end
         @test solve!(model) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
 
         res = OptimizationProblemResults(model)
-        p_out = read_variable(
-            res,
-            "ActivePowerOutVariable__Source";
-            table_format = TableFormat.WIDE,
-        )[
-            !,
-            2,
-        ]
-        p_in =
-            read_variable(
+        if source_formulation == ImportExportSourceModel
+            p_out = read_variable(
                 res,
-                "ActivePowerInVariable__Source";
+                "ActivePowerOutVariable__Source";
                 table_format = TableFormat.WIDE,
             )[
                 !,
                 2,
             ]
-
+            p_in =
+                read_variable(
+                    res,
+                    "ActivePowerInVariable__Source";
+                    table_format = TableFormat.WIDE,
+                )[
+                    !,
+                    2,
+                ]
+        elseif source_formulation == FixedOutput
+            p_out = read_variable(
+                res,
+                "ActivePowerOutTimeSeriesParameter__Source";
+                table_format = TableFormat.WIDE,
+            )[
+                !,
+                2,
+            ]
+            p_in =
+                read_variable(
+                    res,
+                    "ActivePowerInTimeSeriesParameter__Source";
+                    table_format = TableFormat.WIDE,
+                )[
+                    !,
+                    2,
+                ]
+        end
         # Test that is zero when the time series is zero
         @test p_out[5] == 0.0
         @test p_in[5] == 0.0
@@ -151,7 +170,7 @@ end
     end
 end
 
-@testset "ImportExportSource Source With CopperPlate and TimeSeries" begin
+@testset "ImportExportSource Source With ACPPowerModel and TimeSeries" begin
     sys = make_5_bus_with_import_export(; add_single_time_series = true)
     source = get_component(Source, sys, "source")
 
