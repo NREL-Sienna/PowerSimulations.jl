@@ -366,6 +366,7 @@ export CurrentAbsoluteValueConstraint
 export ShiftedActivePowerBalanceConstraint
 export ShiftUpActivePowerVariableLimitsConstraint
 export ShiftDownActivePowerVariableLimitsConstraint
+export RealizedShiftedLoadMinimumBoundConstraint
 
 # Parameters
 # Time Series Parameters
