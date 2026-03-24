@@ -426,6 +426,8 @@ convert_result_to_natural_units(
 ) = true
 convert_result_to_natural_units(::Type{ActivePowerTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{ReactivePowerTimeSeriesParameter}) = true
+convert_result_to_natural_units(::Type{ActivePowerOutTimeSeriesParameter}) = true
+convert_result_to_natural_units(::Type{ActivePowerInTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{RequirementTimeSeriesParameter}) = true
 convert_result_to_natural_units(::Type{UpperBoundValueParameter}) = true
 convert_result_to_natural_units(::Type{LowerBoundValueParameter}) = true
