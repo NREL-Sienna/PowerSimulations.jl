@@ -5,10 +5,12 @@ mutable struct PowerFlowEvaluationData{T <: PFS.PowerFlowContainer}
     The Symbol is a category of data: `:active_power`, `:reactive_power`, etc. The
     `OptimizationContainerKey` is a source of that data in the `OptimizationContainer`. For
     `PowerFlowData`, leaf values are `Dict{String, Int64}` mapping component name to matrix
-    index of bus; for `SystemPowerFlowContainer`, leaf values are Dict{Union{String, Int64},
-    Union{String, Int64}} mapping component name/bus number to component name/bus number.
+    index of bus; for `SystemPowerFlowContainer`, leaf values are `Dict{String, String}`
+    mapping component name to component name.
     """
     input_key_map::Dict{Symbol, <:Dict{<:OptimizationContainerKey, <:Any}}
+    "Precomputed bus name → PowerFlowData matrix index mapping (empty for SystemPowerFlowContainer)"
+    bus_name_to_ix::Dict{String, Int}
     is_solved::Bool
 end
 
@@ -32,6 +34,7 @@ function PowerFlowEvaluationData(power_flow_data::T) where {T <: PFS.PowerFlowCo
     return PowerFlowEvaluationData{T}(
         power_flow_data,
         Dict{Symbol, Dict{OptimizationContainerKey, <:Any}}(),
+        Dict{String, Int}(),
         false,
     )
 end

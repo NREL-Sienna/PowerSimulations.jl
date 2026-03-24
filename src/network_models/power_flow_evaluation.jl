@@ -95,19 +95,16 @@ function _make_temp_component_map(pf_data::PFS.PowerFlowData, sys::PSY.System)
     return temp_component_map
 end
 
-_get_temp_component_map_lhs(comp::PSY.Component) = PSY.get_name(comp)
-_get_temp_component_map_lhs(comp::PSY.Bus) = PSY.get_number(comp)
-
 # Creates dicts of components by type
 function _make_temp_component_map(::PFS.SystemPowerFlowContainer, sys::PSY.System)
     temp_component_map =
-        Dict{DataType, Dict{Union{String, Int64}, String}}()
+        Dict{DataType, Dict{String, String}}()
     relevant_components = PSY.get_available_components(RELEVANT_COMPONENTS_SELECTOR, sys)
     for comp_type in unique(typeof.(relevant_components))
         # NOTE we avoid using bus numbers here because PSY.get_bus(system, number) is O(n)
         temp_component_map[comp_type] =
             Dict(
-                _get_temp_component_map_lhs(c) => PSY.get_name(c) for
+                PSY.get_name(c) => PSY.get_name(c) for
                 c in relevant_components if c isa comp_type
             )
     end
@@ -121,7 +118,12 @@ function _make_pf_input_map!(
 )
     pf_data = get_power_flow_data(pf_e_data)
     temp_component_map = _make_temp_component_map(pf_data, sys)
-    map_type = valtype(temp_component_map)  # Dict{String, Int} for PowerFlowData, Dict{Union{String, Int64}, String} for SystemPowerFlowContainer
+    # Cache the ACBus name → index mapping for use during solve (avoids repeated system queries)
+    if haskey(temp_component_map, PSY.ACBus) &&
+       valtype(temp_component_map) <: Dict{String, Int}
+        merge!(pf_e_data.bus_name_to_ix, temp_component_map[PSY.ACBus])
+    end
+    map_type = valtype(temp_component_map)  # Dict{String, Int} for PowerFlowData, Dict{String, String} for SystemPowerFlowContainer
     pf_e_data.input_key_map = Dict{Symbol, Dict{OptimizationContainerKey, map_type}}()
 
     # available_keys is a vector of Pair{OptimizationContainerKey, data} containing all possibly relevant data sources to iterate over
@@ -155,11 +157,11 @@ end
         available_keys::Vector{Pair{OptimizationContainerKey, Any}},
         temp_component_map::Union{
             Dict{DataType, Dict{String, Int}},
-            Dict{DataType, Dict{Union{Int64, String}, String}},
+            Dict{DataType, Dict{String, String}},
         },
         pf_data_opt_container_map::Union{
             Dict{OptimizationContainerKey, Dict{String, Int}},
-            Dict{OptimizationContainerKey, Dict{Union{Int64, String}, String}},
+            Dict{OptimizationContainerKey, Dict{String, String}},
         },
     )
 
@@ -173,8 +175,8 @@ solve stage, before the power flow is solved.
 # Arguments
 - `precedence::Vector{DataType}`: A vector of `DataType` objects that defines the order of precedence for the variables that correspond to the category of variables (e.g. `:active_power` - first look for `ActivePowerVariable` for the component type, if not available then `PowerOutput`, and finally `ActivePowerTimeSeriesParameter`).
 - `available_keys::Vector{Pair{OptimizationContainerKey, Any}}`: A vector of key-value pairs where the key is an `OptimizationContainerKey` and the value contains data associated with the key.
-- `temp_component_map::Union{Dict{DataType, Dict{String, Int}}, Dict{DataType, Dict{Union{Int64, String}, String}}}`: A mapping for component types to point the component-level results (e.g. as voltage value for bus "A") to the appropriate variable in PowerFlowData (e.g. row 27 in the bus-related matrices).
-- `pf_data_opt_container_map::Union{Dict{OptimizationContainerKey, Dict{String, Int}}, Dict{OptimizationContainerKey, Dict{Union{Int64, String}, String}}}`: The target Dict that contains mappings for all relevant component types.
+- `temp_component_map::Union{Dict{DataType, Dict{String, Int}}, Dict{DataType, Dict{String, String}}}`: A mapping for component types to point the component-level results (e.g. as voltage value for bus "A") to the appropriate variable in PowerFlowData (e.g. row 27 in the bus-related matrices).
+- `pf_data_opt_container_map::Union{Dict{OptimizationContainerKey, Dict{String, Int}}, Dict{OptimizationContainerKey, Dict{String, String}}}`: The target Dict that contains mappings for all relevant component types.
 """
 function _add_category_to_map!(
     precedence::Vector{DataType},
@@ -314,12 +316,13 @@ _get_branch_component_tuples(sys::PSY.System) = [
     c in PSY.get_available_components(PSY.ACBranch, sys)
 ]
 
-_get_bus_component_tuples(pfd::PFS.PowerFlowData) =
-    tuple.(PSY.ACBus, keys(PFS.get_bus_lookup(pfd)))  # get_bus_type returns a ACBusTypes, not the DataType we need here
+_get_bus_component_tuples(::PFS.PowerFlowData, sys::PSY.System) =
+    [(typeof(c), PSY.get_name(c)) for c in PSY.get_available_components(PSY.ACBus, sys)]
 
-_get_bus_component_tuples(pfd::PFS.SystemPowerFlowContainer) =
+# SystemPowerFlowContainer maintains its own internal system copy
+_get_bus_component_tuples(pfd::PFS.SystemPowerFlowContainer, ::PSY.System) =
     [
-        (typeof(c), PSY.get_number(c)) for
+        (typeof(c), PSY.get_name(c)) for
         c in PSY.get_available_components(PSY.ACBus, PFS.get_system(pfd))
     ]
 
@@ -341,7 +344,7 @@ function add_power_flow_data!(
     # For each output key, what components are we working with?
     branch_aux_var_components =
         Dict{Type{<:AuxVariableType}, Set{Tuple{<:DataType, String}}}()
-    bus_aux_var_components = Dict{Type{<:AuxVariableType}, Set{Tuple{<:DataType, <:Int}}}()
+    bus_aux_var_components = Dict{Type{<:AuxVariableType}, Set{Tuple{<:DataType, String}}}()
     # we ought to be providing the time_steps when constructing the PF evaluation model,
     # but that value isn't known until runtime (and PF evaluation model is immutable).
     n_time_steps = length(get_time_steps(container))
@@ -363,10 +366,10 @@ function add_power_flow_data!(
             push!.(Ref(to_add_to), my_branch_components)
         end
 
-        my_bus_components = _get_bus_component_tuples(pf_data)
+        my_bus_components = _get_bus_component_tuples(pf_data, sys)
         for bus_aux_var in my_bus_aux_vars
             to_add_to =
-                get!(bus_aux_var_components, bus_aux_var, Set{Tuple{<:DataType, <:Int}}())
+                get!(bus_aux_var_components, bus_aux_var, Set{Tuple{<:DataType, String}}())
             push!.(Ref(to_add_to), my_bus_components)
         end
         push!(container.power_flow_evaluation_data, pf_e_data)
@@ -628,13 +631,11 @@ function calculate_aux_variable_value!(container::OptimizationContainer,
 ) where {T <: PowerFlowAuxVariableType}
     @debug "Updating $key from PowerFlowData"
     pf_data = get_power_flow_data(pf_e_data)
-    nrd = PFS.get_network_reduction_data(pf_data)
     src = _get_pf_result(T, pf_data)
-    bus_lookup = PFS.get_bus_lookup(pf_data)
     dest = get_aux_variable(container, key)
-    for bus_number in axes(dest, 1)
-        bus_ix = PNM.get_bus_index(bus_number, bus_lookup, nrd)
-        dest[bus_number, :] = src[bus_ix, :]
+    bus_name_to_ix = pf_e_data.bus_name_to_ix
+    for bus_name in axes(dest, 1)
+        dest[bus_name, :] = src[bus_name_to_ix[bus_name], :]
     end
     return
 end
