@@ -148,7 +148,7 @@ function set_cache_flush_rules!(store::HdfSimulationStore, flush_rules::CacheFlu
         new_cache.data[key] = output_cache
     end
     store.cache = new_cache
-    @info "Updated store cache rules" get_min_flush_size(store.cache) get_max_size(
+    @debug "Updated store cache rules" get_min_flush_size(store.cache) get_max_size(
         store.cache,
     )
     return
