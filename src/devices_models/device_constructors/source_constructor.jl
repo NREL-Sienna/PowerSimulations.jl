@@ -314,7 +314,7 @@ function construct_device!(
 end
 
 """
-This function creates the constraints for the model for a FixedOutput formulation for Source devices
+This function creates the arguments for the model for a FixedOutput formulation for Source devices
 """
 function construct_device!(
     container::OptimizationContainer,
@@ -351,7 +351,7 @@ function construct_device!(
 end
 
 """
-This function creates the constraints for the model for a FixedOutput formulation for Source devices
+This function creates the constraints for the model for a FixedOutput formulation for Source devices (no constraints added for FixedOutput)
 """
 function construct_device!(
     container::OptimizationContainer,
