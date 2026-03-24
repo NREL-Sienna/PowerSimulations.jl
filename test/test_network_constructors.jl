@@ -1708,3 +1708,29 @@ end
         end
     end
 end
+
+@testset "Network reductions - PowerModels with slacks" begin
+    sys = build_system(PSITestSystems, "case11_network_reductions")
+    add_dummy_time_series_data!(sys)
+    for (network_model, optimizer) in NETWORKS_FOR_TESTING
+        @testset "Network Model: $(network_model)" begin
+            template = ProblemTemplate(
+                NetworkModel(network_model;
+                    reduce_radial_branches = true,
+                    reduce_degree_two_branches = true,
+                    use_slacks = true),
+            )
+            set_device_model!(
+                template,
+                DeviceModel(Line, StaticBranch; use_slacks = true),
+            )
+            set_device_model!(
+                template,
+                DeviceModel(Transformer2W, StaticBranch; use_slacks = true),
+            )
+            ps_model = DecisionModel(template, sys; optimizer = optimizer)
+            @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
+        end
+    end
+end

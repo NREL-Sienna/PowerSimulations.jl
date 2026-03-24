@@ -128,10 +128,6 @@ function add_variables!(
     T <: AbstractACActivePowerFlow,
     U <: PSY.ACTransmission}
     net_reduction_data = network_model.network_reduction
-    if isempty(net_reduction_data)
-        add_variables!(container, T, devices, formulation)
-        return
-    end
     time_steps = get_time_steps(container)
     branch_names = get_branch_argument_variable_axis(net_reduction_data, devices)
     reduced_branch_tracker = get_reduced_branch_tracker(network_model)
