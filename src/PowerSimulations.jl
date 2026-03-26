@@ -118,7 +118,6 @@ export EconomicDispatchProblem
 export build!
 ## Op Model Exports
 export get_initial_conditions
-export serialize_problem
 export serialize_results
 export serialize_optimization_model
 ## Decision Model Export
@@ -604,7 +603,6 @@ include("operation/template_validation.jl")
 include("operation/decision_model.jl")
 include("operation/emulation_model.jl")
 include("operation/problem_results.jl")
-include("operation/operation_model_serialization.jl")
 include("operation/time_series_interface.jl")
 include("operation/optimization_debugging.jl")
 include("operation/model_numerical_analysis_utils.jl")
