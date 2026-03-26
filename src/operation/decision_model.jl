@@ -205,35 +205,6 @@ function DecisionModel{M}(
     )
 end
 
-"""
-Construct an DecisionProblem from a serialized file.
-
-# Arguments
-
-  - `directory::AbstractString`: Directory containing a serialized model
-  - `jump_model::Union{Nothing, JuMP.Model}` = nothing: The JuMP model does not get
-    serialized. Callers should pass whatever they passed to the original problem.
-  - `optimizer::Union{Nothing,MOI.OptimizerWithAttributes}` = nothing: The optimizer does
-    not get serialized. Callers should pass whatever they passed to the original problem.
-  - `system::Union{Nothing, PSY.System}`: Optionally, the system used for the model.
-    If nothing and sys_to_file was set to true when the model was created, the system will
-    be deserialized from a file.
-"""
-function DecisionModel(
-    directory::AbstractString,
-    optimizer::MOI.OptimizerWithAttributes;
-    jump_model::Union{Nothing, JuMP.Model} = nothing,
-    system::Union{Nothing, PSY.System} = nothing,
-)
-    return deserialize_problem(
-        DecisionModel,
-        directory;
-        jump_model = jump_model,
-        optimizer = optimizer,
-        system = system,
-    )
-end
-
 get_problem_type(::DecisionModel{M}) where {M <: DecisionProblem} = M
 
 function validate_template(::DecisionModel{M}) where {M <: DecisionProblem}
@@ -504,7 +475,6 @@ function solve!(
                 end
                 if export_optimization_problem
                     TimerOutputs.@timeit RUN_OPERATION_MODEL_TIMER "Serialize" begin
-                        serialize_problem(model; optimizer = optimizer)
                         serialize_optimization_model(model)
                     end
                 end
