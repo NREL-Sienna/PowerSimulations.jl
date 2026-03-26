@@ -99,41 +99,6 @@ function log_values(settings::Settings)
     @debug "Settings: $(join(text, ", "))" _group = LOG_GROUP_OPTIMIZATION_CONTAINER
 end
 
-function copy_for_serialization(settings::Settings)
-    vals = []
-    for name in fieldnames(Settings)
-        if name == :optimizer
-            # Cannot guarantee that the optimizer can be serialized.
-            val = nothing
-        else
-            val = getfield(settings, name)
-        end
-
-        push!(vals, val)
-    end
-
-    return deepcopy(Settings(vals...))
-end
-
-function restore_from_copy(
-    settings::Settings;
-    optimizer::Union{Nothing, MOI.OptimizerWithAttributes},
-)
-    vals = Dict{Symbol, Any}()
-    for name in fieldnames(Settings)
-        if name == :optimizer
-            vals[name] = optimizer
-        elseif name == :ext
-            continue
-        else
-            val = getfield(settings, name)
-            vals[name] = isa(val, Base.RefValue) ? val[] : val
-        end
-    end
-
-    return vals
-end
-
 get_horizon(settings::Settings) = settings.horizon[]
 get_resolution(settings::Settings) = settings.resolution[]
 get_initial_time(settings::Settings)::Dates.DateTime = settings.initial_time[]

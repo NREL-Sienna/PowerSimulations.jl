@@ -64,7 +64,6 @@ mutable struct OptimizationContainer <: ISOPT.AbstractOptimizationContainer
     JuMPmodel::JuMP.Model
     time_steps::UnitRange{Int}
     settings::Settings
-    settings_copy::Settings
     variables::OrderedDict{VariableKey, AbstractArray}
     aux_variables::OrderedDict{AuxVarKey, AbstractArray}
     duals::OrderedDict{ConstraintKey, AbstractArray}
@@ -107,7 +106,6 @@ function OptimizationContainer(
         jump_model === nothing ? JuMP.Model() : jump_model,
         1:1,
         settings,
-        copy_for_serialization(settings),
         OrderedDict{VariableKey, AbstractArray}(),
         OrderedDict{AuxVarKey, AbstractArray}(),
         OrderedDict{ConstraintKey, AbstractArray}(),
@@ -395,7 +393,6 @@ function check_optimization_container(container::OptimizationContainer)
             error("The model container has invalid values in $(encode_key_as_string(k))")
         end
     end
-    container.settings_copy = copy_for_serialization(container.settings)
     return
 end
 
