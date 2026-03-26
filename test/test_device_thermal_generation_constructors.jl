@@ -1242,7 +1242,7 @@ end
         simulation_folder = mktempdir(),
     )
 
-    build!(sim; console_level = Logging.Error, serialize = false)
+    build!(sim; console_level = Logging.Error)
     moi_tests(model, 432, 0, 192, 120, 72, false)
     execute!(sim)
 

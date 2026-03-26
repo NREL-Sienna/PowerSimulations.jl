@@ -161,7 +161,7 @@ try
         )
 
         build_out, time_build, _, _ =
-            @timed build!(sim; console_level = Logging.Error, serialize = false)
+            @timed build!(sim; console_level = Logging.Error)
 
         if build_out == PSI.SimulationBuildStatus.BUILT
             name = i > 1 ? "Postcompile" : "Precompile"

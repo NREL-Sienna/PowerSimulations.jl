@@ -212,7 +212,7 @@ function run_generic_mbc_sim(
         simulation_folder = mktempdir(),
     )
 
-    test_success && @test build!(sim; serialize = false) == PSI.SimulationBuildStatus.BUILT
+    test_success && @test build!(sim) == PSI.SimulationBuildStatus.BUILT
     test_success &&
         @test execute!(sim; in_memory = in_memory_store) ==
               PSI.RunStatus.SUCCESSFULLY_FINALIZED
