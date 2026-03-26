@@ -252,7 +252,7 @@ end
     @test var1_a == var1_b
 
     # Results were automatically serialized here.
-    results2 = OptimizationProblemResults(PSI.get_output_dir(model));
+    results2 = OptimizationProblemResults(PSI.get_output_dir(model))
     var2 = read_variable(results2, ActivePowerVariable, ThermalStandard)
     @test var1_a == var2
     @test get_system(results2) === nothing
