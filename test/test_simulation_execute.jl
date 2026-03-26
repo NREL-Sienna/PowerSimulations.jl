@@ -224,7 +224,6 @@ end
             model_name = "UC",
         )
     end
-
 end
 
 @testset "Test simulation with VariableReserve" begin
