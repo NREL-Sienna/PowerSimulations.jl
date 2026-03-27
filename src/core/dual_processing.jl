@@ -1,11 +1,3 @@
-struct PrimalVariableCache
-    ub::Float64
-    lb::Float64
-    value::Float64
-    is_integer::Bool
-    is_binary::Bool
-end
-
 function process_duals(container::OptimizationContainer, lp_optimizer)
     var_container = get_variables(container)
     for (k, v) in var_container
@@ -26,11 +18,13 @@ function process_duals(container::OptimizationContainer, lp_optimizer)
     cache = sizehint!(Dict{VariableKey, Dict}(), length(var_container))
     for (key, variable) in get_variables(container)
         is_integer_flag = false
+        is_binary_flag = false
         if isa(variable, JuMP.Containers.SparseAxisArray)
             continue
         else
             if JuMP.is_binary(first(variable))
                 JuMP.unset_binary.(variable)
+                is_binary_flag = true
             elseif JuMP.is_integer(first(variable))
                 JuMP.unset_integer.(variable)
                 is_integer_flag = true
