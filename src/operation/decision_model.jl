@@ -586,10 +586,10 @@ function handle_initial_conditions!(model::DecisionModel{<:DecisionProblem})
 end
 
 function _make_device_cache(
+    filter_function::Function,
     devices::IS.FlattenIteratorWrapper{T},
     check_components::Bool,
     sys::PSY.System,
-    filter_function::Function,
 ) where {T <: PSY.Device}
     device_cache = sizehint!(Vector{T}(), length(devices))
     for device in devices
@@ -602,10 +602,10 @@ function _make_device_cache(
 end
 
 function _make_device_cache(
+    ::Nothing,
     devices::IS.FlattenIteratorWrapper{T},
     check_components::Bool,
     sys::PSY.System,
-    ::Nothing,
 ) where {T <: PSY.Device}
     device_cache = sizehint!(Vector{T}(), length(devices))
     for device in devices
@@ -627,6 +627,6 @@ function make_device_cache!(
     devices = PSY.get_components(T, system; subsystem_name = subsystem)
     filt_func = get_attribute(model, "filter_function")
     model.device_cache =
-        _make_device_cache(devices, check_components, system, filt_func)
+        _make_device_cache(filt_func, devices, check_components, system)
     return
 end
