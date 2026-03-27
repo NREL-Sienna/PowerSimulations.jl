@@ -133,67 +133,6 @@ function add_dual!(model::NetworkModel, dual)
     return
 end
 
-#= Not needed for now
-function check_network_reduction_compatibility(
-    ::Type{T},
-) where {T <: PM.AbstractPowerModel}
-    if T ∈ INCOMPATIBLE_WITH_NETWORK_REDUCTION_POWERMODELS
-        error("Network Model $T is not compatible with network reduction")
-    end
-    return
-end
-=#
-
-function _model_has_branch_filters(branch_models::BranchModelContainer)
-    for (_, bm) in branch_models
-        if get_attribute(bm, "filter_function") !== nothing
-            return true
-        end
-    end
-    return false
-end
-
-function _check_branch_network_compatibility(
-    ::NetworkModel{T},
-    branch_models::BranchModelContainer,
-    sys::PSY.System,
-) where {T <: PM.AbstractPowerModel}
-    if requires_all_branch_models(T)
-        for d in PSY.get_existing_device_types(sys)
-            if d <: PSY.ACTransmission && !haskey(branch_models, Symbol(d))
-                throw(
-                    IS.ConflictingInputsError(
-                        "Network model $(T) requires all AC Transmission devices have a model \
-                        The system has a branch branch type $(d) but the DeviceModel is not included in the Template.",
-                    ),
-                )
-            end
-        end
-    end
-
-    if supports_branch_filtering(T) || !_model_has_branch_filters(branch_models)
-        return
-    elseif _model_has_branch_filters(branch_models)
-        if ignores_branch_filtering(T)
-            @warn "Branch filtering is ignored for network model $(T)"
-        else
-            throw(
-                IS.ConflictingInputsError(
-                    "Branch filtering is not supported for network model $(T). Remove branch \\
-                    filter functions from branch models or use a different network model.",
-                ),
-            )
-        end
-    else
-        throw(
-            IS.ConflictingInputsError(
-                "Network model $(T) can't be validated against branch models",
-            ),
-        )
-    end
-    return
-end
-
 function _get_filters(branch_models::BranchModelContainer)
     filters = Dict{DataType, Function}()
     for v in values(branch_models)
@@ -250,7 +189,6 @@ function instantiate_network_model!(
     number_of_steps::Int,
     sys::PSY.System,
 ) where {T <: PM.AbstractPowerModel}
-    _check_branch_network_compatibility(model, branch_models, sys)
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
@@ -309,7 +247,6 @@ function instantiate_network_model!(
     number_of_steps::Int,
     sys::PSY.System,
 )
-    _check_branch_network_compatibility(model, branch_models, sys)
     PNM.populate_branch_maps_by_type!(model.network_reduction)
     empty!(model.reduced_branch_tracker)
     set_number_of_steps!(model.reduced_branch_tracker, number_of_steps)
@@ -322,7 +259,6 @@ function instantiate_network_model!(
     number_of_steps::Int,
     sys::PSY.System,
 )
-    _check_branch_network_compatibility(model, branch_models, sys)
     if isempty(model.subnetworks)
         model.subnetworks = PNM.find_subnetworks(sys)
     end
@@ -347,12 +283,11 @@ function instantiate_network_model!(
         model,
         branch_models,
     )
-    _check_branch_network_compatibility(model, branch_models, sys)
     if get_PTDF_matrix(model) === nothing || !isempty(irreducible_buses)
         if get_PTDF_matrix(model) !== nothing
-            @warn "Provided PTDF Matrix is being ignored since irreducible buses were identified because of DLRs. Recalculating PTDF Matrix with PowerNetworkMatrices.PTDF and the identified irreducible buses."
+            @warn "Provided PTDF Matrix is being ignored since irreducible buses were identified because of DLRs. Recalculating PTDF Matrix with PowerNetworkMatrices.VirtualPTDF and the identified irreducible buses."
         else
-            @info "No PTDF Matrix provided. Calculating using PowerNetworkMatrices.PTDF"
+            @info "No PTDF Matrix provided. Calculating using PowerNetworkMatrices.VirtualPTDF"
         end
 
         if model.reduce_radial_branches && model.reduce_degree_two_branches

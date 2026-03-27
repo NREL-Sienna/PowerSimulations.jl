@@ -224,18 +224,6 @@ end
             model_name = "UC",
         )
     end
-
-    # @testset "Check Serialization - Deserialization of Sim" begin
-    #     path = mktempdir()
-    #     files_path = PSI.serialize_simulation(sim; path = path)
-    #     deserialized_sim = Simulation(files_path, stage_info)
-    #     build_out = build!(deserialized_sim)
-    #     @test build_out == PSI.SimulationBuildStatus.BUILT
-    #     for stage in values(PSI.get_stages(deserialized_sim))
-    #         @test PSI.is_stage_built(stage)
-    #     end
-    # end
-
 end
 
 @testset "Test simulation with VariableReserve" begin
