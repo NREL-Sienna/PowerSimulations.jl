@@ -505,6 +505,13 @@ function _add_variable_cost_to_objective!(
             component,
             t,
         )
+        add_to_expression!(
+            container,
+            FuelCostExpression,
+            pwl_cost_expressions[t],
+            component,
+            t,
+        )
         add_to_objective_invariant_expression!(container, pwl_cost_expressions[t])
     end
     return
@@ -550,6 +557,13 @@ function _add_variable_cost_to_objective!(
         add_to_expression!(
             container,
             ProductionCostExpression,
+            pwl_cost_expression,
+            component,
+            t,
+        )
+        add_to_expression!(
+            container,
+            FuelCostExpression,
             pwl_cost_expression,
             component,
             t,
