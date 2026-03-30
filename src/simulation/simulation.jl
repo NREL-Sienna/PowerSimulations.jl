@@ -552,7 +552,6 @@ end
 
 function _build!(
     sim::Simulation;
-    serialize = true,
     store_systems_in_results = true,
     setup_simulation_partitions = false,
     partitions = nothing,
@@ -609,9 +608,8 @@ function _build!(
         _build_decision_models!(sim)
         _build_emulation_model!(sim)
     catch
-        if store_systems_in_results
-            Base.throwto(serialization_task, InterruptException())
-        end
+        # Let the serialization task finish naturally — it's read-only and harmless.
+        # The fetch below won't be reached, so the task result is discarded on exit.
         rethrow()
     end
 
@@ -634,18 +632,6 @@ function _build!(
             finally
                 set_simulation_store!(sim, nothing)
             end
-        end
-    end
-
-    if serialize
-        TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Serializing Simulation Files" begin
-            serialize_simulation(sim)
-        end
-        for model in get_decision_models(simulation_models)
-            serialize_problem(model)
-        end
-        if em !== nothing
-            serialize_problem(em)
         end
     end
 
@@ -694,7 +680,6 @@ Build the Simulation, problems and the related folder structure.
 
   - `sim::Simulation`: simulation object
   - `recorders::Vector{Symbol} = []`: recorder names to register
-  - `serialize::Bool = true`: serializes the simulation objects in the simulation
   - `store_systems_in_results::Bool = true`: stores the systems as JSON in the results HDF5 file
   - `console_level = Logging.Error`:
   - `file_level = Logging.Info`:
@@ -704,7 +689,6 @@ function build!(
     recorders = [],
     console_level = Logging.Error,
     file_level = Logging.Info,
-    serialize = true,
     store_systems_in_results = true,
     partitions::Union{Nothing, SimulationPartitions} = nothing,
     index = nothing,
@@ -727,7 +711,6 @@ function build!(
                 try
                     _build!(
                         sim;
-                        serialize = serialize,
                         store_systems_in_results = store_systems_in_results,
                         setup_simulation_partitions = setup_simulation_partitions,
                         partitions = partitions,
@@ -1197,52 +1180,6 @@ function _empty_problem_caches!(sim::Simulation)
         empty_time_series_cache!(model)
     end
     return
-end
-
-"""
-    serialize_simulation(sim::Simulation, path = ".")
-
-Serialize the simulation to a directory in path.
-
-Return the serialized simulation directory name that is created.
-
-# Arguments
-
-  - `sim::Simulation`: simulation to serialize
-  - `path = "."`: path in which to create the serialzed directory
-  - `force = false`: If true, delete the directory if it already exists. Otherwise, it will
-    throw an exception.
-"""
-function serialize_simulation(sim::Simulation; path = nothing, force = false)
-    if path === nothing
-        directory = get_simulation_files_dir(sim)
-    else
-        directory = path
-    end
-    problems = get_model_names(get_models(sim))
-
-    if !isempty(readdir(directory)) && !force
-        throw(
-            ArgumentError(
-                "$directory has files already: $(readdir(directory)). Please delete them or pass force = true.",
-            ),
-        )
-    end
-    rm(directory; recursive = true, force = true)
-    mkdir(directory)
-
-    filename = joinpath(directory, SIMULATION_SERIALIZATION_FILENAME)
-    obj = SimulationSerializationWrapper(
-        get_steps(sim),
-        problems,
-        get_initial_time(sim),
-        get_sequence(sim),
-        get_simulation_dir(sim),
-        get_name(sim),
-    )
-    Serialization.serialize(filename, obj)
-    @info "Serialized simulation name = $(get_name(sim))" directory
-    return directory
 end
 
 function _serialize_systems_to_json(sim::Simulation)
