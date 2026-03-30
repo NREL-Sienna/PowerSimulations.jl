@@ -103,12 +103,25 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
+    # add_expressions!(container, ProductionCostExpression, devices, device_model)
+    # add_expressions!(container, FuelCostExpression, devices, device_model)
+    # add_expressions!(container, StartUpCostExpression, devices, device_model)
+    # add_expressions!(container, ShutDownCostExpression, devices, device_model)
+    # add_expressions!(container, FixedCostExpression, devices, device_model)
+    # add_expressions!(container, VOMCostExpression, devices, device_model)
 
     add_to_expression!(
         container,
@@ -259,12 +272,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -400,12 +420,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -550,12 +577,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -691,12 +725,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -821,12 +862,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -950,12 +998,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -1064,12 +1119,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -1209,12 +1271,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -1394,12 +1463,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -1577,12 +1653,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -1737,12 +1820,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -1895,12 +1985,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -2052,12 +2149,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -2184,12 +2288,19 @@ function construct_device!(
     )
 
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,
@@ -2336,13 +2447,20 @@ function construct_device!(
 
     initial_conditions!(container, devices, ThermalCompactDispatch())
 
-    add_expressions!(container, ProductionCostExpression, devices, device_model)
     add_expressions!(container, FuelConsumptionExpression, devices, device_model)
-    add_expressions!(container, FuelCostExpression, devices, device_model)
-    add_expressions!(container, StartUpCostExpression, devices, device_model)
-    add_expressions!(container, ShutDownCostExpression, devices, device_model)
-    add_expressions!(container, FixedCostExpression, devices, device_model)
-    add_expressions!(container, VOMCostExpression, devices, device_model)
+    add_expressions!(
+        container,
+        (
+            ProductionCostExpression,
+            FuelCostExpression,
+            StartUpCostExpression,
+            ShutDownCostExpression,
+            FixedCostExpression,
+            VOMCostExpression,
+        ),
+        devices,
+        device_model,
+    )
     
     add_to_expression!(
         container,

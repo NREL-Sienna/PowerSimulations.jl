@@ -1572,6 +1572,25 @@ function _add_expression_container!(
     return expr_container
 end
 
+function _add_expression_container!(
+    container::OptimizationContainer,
+    expr_keys::NTuple{N, ExpressionKey},
+    ::Type{T},
+    axs...;
+    sparse = false,
+) where {N, T <: JuMP.AbstractJuMPScalar}
+    return ntuple(i -> begin
+        expr_container = if sparse
+            sparse_container_spec(T, axs...)
+        else
+            container_spec(T, axs...)
+        end
+        remove_undef!(expr_container)
+        _assign_container!(container.expressions, expr_keys[i], expr_container)
+        expr_container
+    end, N)
+end
+
 function add_expression_container!(
     container::OptimizationContainer,
     ::T,
@@ -1604,6 +1623,26 @@ function add_expression_container!(
     return _add_expression_container!(
         container,
         expr_key,
+        expr_type,
+        axs...;
+        sparse = sparse,
+    )
+end
+
+function add_expression_container!(
+    container::OptimizationContainer,
+    expression_types::Tuple{Vararg{Type, N}},
+    ::Type{U},
+    axs...;
+    sparse = false,
+    meta = ISOPT.CONTAINER_KEY_EMPTY_META,
+) where {N, U <: Union{PSY.Component, PSY.System}}
+    @assert all(T <: CostExpressions for T in expression_types)
+    expr_keys = ntuple(i -> ExpressionKey(expression_types[i], U, meta), N)
+    expr_type = JuMP.QuadExpr
+    return _add_expression_container!(
+        container,
+        expr_keys,
         expr_type,
         axs...;
         sparse = sparse,

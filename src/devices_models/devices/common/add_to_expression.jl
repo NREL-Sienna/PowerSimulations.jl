@@ -31,6 +31,23 @@ end
 
 function add_expressions!(
     container::OptimizationContainer,
+    expression_types::Tuple{Vararg{Type, N}},
+    devices::U,
+    model::DeviceModel{D, W},
+) where {
+    N,
+    U <: Union{Vector{D}, IS.FlattenIteratorWrapper{D}},
+    W <: AbstractDeviceFormulation,
+} where {D <: PSY.Component}
+    @assert all(T <: CostExpressions for T in expression_types)
+    time_steps = get_time_steps(container)
+    names = PSY.get_name.(devices)
+    add_expression_container!(container, expression_types, D, names, time_steps)
+    return
+end
+
+function add_expressions!(
+    container::OptimizationContainer,
     ::Type{T},
     devices::U,
     model::DeviceModel{D, W},
