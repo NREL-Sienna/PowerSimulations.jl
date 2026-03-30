@@ -432,6 +432,7 @@ export PTDF
 export VirtualPTDF
 export LODF
 export VirtualLODF
+export VirtualMODF
 import InfrastructureSystems: @assert_op, TableFormat, list_recorder_events, get_name
 
 # IS.Optimization imports: functions that have PSY methods that IS needs to access (therefore necessary)
