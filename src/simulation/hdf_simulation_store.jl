@@ -883,7 +883,7 @@ function _deserialize_attributes!(store::HdfSimulationStore)
         end
 
         store.optimizer_stats_datasets[model_name] = problem_group[OPTIMIZER_STATS_PATH]
-        store.optimizer_stats_write_index[model_name] = 0
+        store.optimizer_stats_write_index[model_name] = 1
     end
 
     em_group = _get_emulation_model_path(store)

@@ -1172,6 +1172,7 @@ end
 function _serialize_systems_to_json(sim::Simulation)
     simulation_models = get_models(sim)
     results = Dict{String, String}()
+    @debug Threads.threadid() "Serializing systems to JSON in parallel with model building"
     for dm in get_decision_models(simulation_models)
         sys = get_system(dm)
         uuid = string(IS.get_uuid(sys))
