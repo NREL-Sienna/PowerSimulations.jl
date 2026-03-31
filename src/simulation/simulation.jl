@@ -604,14 +604,8 @@ function _build!(
         serialization_task = Threads.@spawn _serialize_systems_to_json(sim)
     end
 
-    try
-        _build_decision_models!(sim)
-        _build_emulation_model!(sim)
-    catch
-        # Let the serialization task finish naturally — it's read-only and harmless.
-        # The fetch below won't be reached, so the task result is discarded on exit.
-        rethrow()
-    end
+    _build_decision_models!(sim)
+    _build_emulation_model!(sim)
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation State" begin
         _initialize_simulation_state!(sim)
@@ -963,6 +957,7 @@ function _execute!(
             something(min_cache_flush_size_mib, MIN_CACHE_FLUSH_SIZE_MiB),
         )
     else
+        # Override cache flush rules from build phase if user passes kwargs at execution time.
         rules = CacheFlushRules(;
             max_size = something(cache_size_mib, DEFAULT_SIMULATION_STORE_CACHE_SIZE_MiB) * MiB,
             min_flush_size = trunc(
@@ -1149,14 +1144,6 @@ function execute!(sim::Simulation; kwargs...)
                 catch e
                     set_simulation_status!(sim, RunStatus.FAILED)
                     @error "simulation failed" exception = (e, catch_backtrace())
-                end
-            end
-            # Delete incomplete store file after it has been closed
-            if get_simulation_status(sim) == RunStatus.FAILED && !in_memory
-                store_path = joinpath(get_store_dir(sim), HDF_FILENAME)
-                if isfile(store_path)
-                    rm(store_path; force = true)
-                    @warn "Deleted incomplete simulation store" store_path
                 end
             end
         end
