@@ -427,7 +427,7 @@ import PowerSystems as PSY
 import InfrastructureSystems as IS
 import PowerFlows
 import PowerNetworkMatrices as PNM
-import PowerNetworkMatrices: PTDF, VirtualPTDF, LODF, VirtualLODF
+import PowerNetworkMatrices: PTDF, VirtualPTDF, LODF, VirtualLODF, VirtualMODF
 export PTDF
 export VirtualPTDF
 export LODF
