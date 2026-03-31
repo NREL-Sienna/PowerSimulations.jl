@@ -83,30 +83,6 @@ function get_emergency_min_max_limits(
     return minmax
 end
 
-function _make_branch_scuc_postcontingency_flow_expressions!(
-    jump_model::JuMP.Model,
-    name::String,
-    outage_id::String,
-    time_steps::UnitRange{Int},
-    lodf::Float64,
-    precontingency_outage_flow::DenseAxisArray{T, 1, <:Tuple{UnitRange{Int}}},#Vector{JuMP.VariableRef},
-    pre_contingency_flow::DenseAxisArray{T, 2, <:Tuple{Vector{String}, UnitRange{Int}}},
-) where {T}
-    # @debug "Making Flow Expression on thread $(Threads.threadid()) for branch $name"
-
-    expressions = Vector{JuMP.AffExpr}(undef, length(time_steps))
-    for t in time_steps
-        expressions[t] = JuMP.@expression(
-            jump_model,
-            pre_contingency_flow[name, t] +
-            (lodf * precontingency_outage_flow[t])
-        )
-    end
-    return name, expressions
-    # change when using the not concurrent version
-    #return expressions
-end
-
 """
 Add branch post-contingency rate limit constraints for ACBranch considering LODF and Security Constraints
 """
@@ -203,28 +179,6 @@ function add_constraints!(
         end
     end
     return
-end
-
-function _check_outage_data_branch_scuc(
-    contingency_device_name::String,
-    contingency_device_key::String,
-    outage_id::String,
-    V::Type{<:PSY.ACTransmission},
-    name_to_arc_map_contingency::Dict{String, String},
-)
-    if !haskey(name_to_arc_map_contingency, contingency_device_name)
-        error(
-            "The outage $outage_id was added to branch $contingency_device_name of type $V, but this case is not supported yet by the reductions algorithms.",
-        )
-    end
-    #Check if branch was reduced
-    if contingency_device_key != contingency_device_name
-        if V == PSY.PhaseShiftingTransformer
-            error(
-                "The outage $outage_id was added to branch $contingency_device_name of type $V, but this case is not supported yet by the reductions algorithms.",
-            )
-        end
-    end
 end
 
 function _add_post_contingency_flow_expressions_for_outage!(
