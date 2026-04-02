@@ -355,7 +355,10 @@ function get_min_max_limits(
     ::Type{<:ConstraintType},
     ::Type{<:AbstractBranchFormulation},
 ) #  -> Union{Nothing, NamedTuple{(:min, :max), Tuple{Float64, Float64}}}
-    return (min = -1 * PSY.get_rating(device), max = PSY.get_rating(device))
+    return (
+        min = -1 * PNM.get_equivalent_rating(device),
+        max = PNM.get_equivalent_rating(device),
+    )
 end
 
 """
