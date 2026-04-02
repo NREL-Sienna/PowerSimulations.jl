@@ -47,6 +47,10 @@ get_variable_warm_start_value(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, 
 get_variable_lower_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = _get_flow_bounds(d)[1]
 get_variable_upper_bound(::FlowActivePowerVariable, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation) = _get_flow_bounds(d)[2]
 
+get_parameter_multiplier(::FixValueParameter, ::PSY.DCBranch, ::AbstractBranchFormulation) = 1.0
+get_parameter_multiplier(::LowerBoundValueParameter, ::PSY.DCBranch, ::AbstractBranchFormulation) = 1.0
+get_parameter_multiplier(::UpperBoundValueParameter, ::PSY.DCBranch, ::AbstractBranchFormulation) = 1.0
+
 # This is an approximation for DC lines since the actual current limit depends on the voltage, that is a variable in the optimization problem
 function get_variable_lower_bound(::DCLineCurrent, d::PSY.TModelHVDCLine, ::AbstractBranchFormulation)
     p_min_flow = _get_flow_bounds(d)[1]
