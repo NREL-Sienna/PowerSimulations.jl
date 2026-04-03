@@ -578,11 +578,11 @@ _accumulate_headroom!(::PFS.PowerFlowData,
     ::OptimizationContainer,
     ::PSY.System,
     ::OptimizationContainerKey{<:ParameterType, <:PSY.Component},
-    ::Any,
+    ::Dict{String, Int},
     ::Int,
-    ::Any,
+    ::Matrix{PSY.ACBusTypes},
     ::Float64,
-    ::Any,
+    ::Vector{Dict{Tuple{DataType, String}, Float64}},
 ) = nothing
 
 """
@@ -596,11 +596,11 @@ function _accumulate_headroom!(
     container::OptimizationContainer,
     sys::PSY.System,
     key::OptimizationContainerKey{<:ISOPT.OptimizationKeyType, U},
-    component_map,
+    component_map::Dict{String, Int},
     n_time_steps::Int,
-    bus_types,
+    bus_types::Matrix{PSY.ACBusTypes},
     base_power::Float64,
-    computed_gspf,
+    computed_gspf::Vector{Dict{Tuple{DataType, String}, Float64}},
 ) where {U <: PSY.Component}
     result = lookup_value(container, key)
 
