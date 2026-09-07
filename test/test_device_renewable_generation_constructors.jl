@@ -177,7 +177,7 @@ end
             rev = true,
         ),
     )
-    availability = [isodd(t) ? 0.9 : 0.8 for t in 1:24]
+    availability = [isodd(t) ? 1.6 : 1.5 for t in 1:24]
     renewable = add_renewable_dispatch_with_time_series!(
         c_sys5,
         thermal_generator,
