@@ -121,6 +121,7 @@ function run_events_simulation(;
     ed_formulation,
     feedforward,
     in_memory,
+    attach_events::Bool = true,
 )
     sys_em = deepcopy(sys_emulator)
     sys_d1 = build_system(PSITestSystems, "c_sys5_events")
@@ -132,6 +133,11 @@ function run_events_simulation(;
         GeometricDistributionForcedOutage,
         POM.PresetTimeCondition([outage_time]),
     )
+    if attach_events
+        events = [event_model]
+    else
+        events = POM.EventModel[]
+    end
     if uc_formulation == "basic"
         template_d1 = get_template_basic_uc_simulation()
         set_network_model!(template_d1, NetworkModel(networks[1]))
@@ -212,13 +218,13 @@ function run_events_simulation(;
                     ),
                 ],
             ),
-            events = [event_model],
+            events = events,
         )
     else
         sequence = SimulationSequence(;
             models = models,
             ini_cond_chronology = InterProblemChronology(),
-            events = [event_model],
+            events = events,
         )
     end
     sim = Simulation(;

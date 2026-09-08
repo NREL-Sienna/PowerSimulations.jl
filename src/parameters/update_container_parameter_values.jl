@@ -310,7 +310,7 @@ function _update_parameter_values!(
     else
         t_step = model_resolution ÷ state_data.resolution
     end
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
     sim_timestamps = range(current_time; step = model_resolution, length = time[end])
     # Hoist underlying dense storage and per-axis name lookups so the inner loop
     # can index by integer pair, skipping DenseAxisArray's String-keyed lookup.
@@ -361,7 +361,7 @@ function _update_parameter_values!(
     else
         t_step = model_resolution ÷ state_data.resolution
     end
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
     sim_timestamps = range(current_time; step = model_resolution, length = time[end])
     # Hoist underlying dense storage and per-axis name lookups so the inner loop
     # can index by integer pair, skipping DenseAxisArray's String-keyed lookup.
@@ -412,7 +412,7 @@ function _update_parameter_values!(
     else
         t_step = model_resolution ÷ state_data.resolution
     end
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
 
     sim_timestamps = range(current_time; step = model_resolution, length = time[end])
     # Hoist underlying dense storage and per-axis name lookups so the inner loop
@@ -461,8 +461,7 @@ function _update_parameter_values!(
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, _ = axes(parameter_array)
     state_data = get_dataset(state, get_attribute_key(attributes))
-    state_timestamps = state_data.timestamps
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
     # Hoist underlying dense storage and per-axis name lookups.
     parent_param = parameter_array.data
     parent_state = state_values.data
@@ -493,8 +492,7 @@ function _update_parameter_values!(
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, _ = axes(parameter_array)
     state_data = get_dataset(state, get_attribute_key(attributes))
-    state_timestamps = state_data.timestamps
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
     has_outage = haskey(
         get_parameters_values(state),
         ParameterKey{
@@ -523,8 +521,7 @@ function _update_parameter_values!(
                 "",
             ),
         )
-        status_timestamps = status_data.timestamps
-        status_data_index = find_timestamp_index(status_timestamps, current_time)
+        status_data_index = find_aligned_timestamp_index(status_data, current_time)
         parent_status = status_values.data
         # `_AxisLookup{Dict{String,Int64}}` wraps a `Dict`; reach for `.data`
         # so we can `haskey` and integer-index without a String-keyed scan.
@@ -601,7 +598,7 @@ function _update_parameter_values!(
     else
         t_step = model_resolution ÷ state_data.resolution
     end
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
 
     sim_timestamps = range(current_time; step = model_resolution, length = time[end])
     # Hoist underlying dense storage and per-axis name lookups for the inner loop.
@@ -648,8 +645,7 @@ function _update_parameter_values!(
     state_values = get_dataset_values(state, U(), V)
     component_names, _ = axes(parameter_array)
     state_data = get_dataset(state, U(), V)
-    state_timestamps = state_data.timestamps
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
 
     # Hoist underlying dense storage and per-axis name lookups.
     parent_param = parameter_array.data

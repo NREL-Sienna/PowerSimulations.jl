@@ -233,6 +233,30 @@ function initialize_simulation_state!(
     return
 end
 
+"""
+Floor `timestamp` onto `dataset`'s own time grid: the row containing it. On-grid timestamps
+are returned unchanged. IOM's `find_timestamp_index` rejects off-grid timestamps, so a finer
+simulation clock must be aligned before reading a coarser dataset.
+"""
+function align_to_dataset_grid(dataset::InMemoryDataset, timestamp::Dates.DateTime)
+    grid_start = first(dataset.timestamps)
+    if timestamp < grid_start
+        error(
+            "Timestamp $timestamp precedes the dataset grid starting at $grid_start; " *
+            "a read this early has no containing row",
+        )
+    end
+    resolution = get_data_resolution(dataset)
+    return grid_start + ((timestamp - grid_start) ÷ resolution) * resolution
+end
+
+function find_aligned_timestamp_index(dataset::InMemoryDataset, timestamp::Dates.DateTime)
+    return find_timestamp_index(
+        dataset.timestamps,
+        align_to_dataset_grid(dataset, timestamp),
+    )
+end
+
 function update_decision_state!(
     state::SimulationState,
     key::ParameterKey{AvailableStatusChangeCountdownParameter, T},
@@ -339,8 +363,7 @@ function update_decision_state!(
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = model_resolution ÷ state_resolution
     @assert_op resolution_ratio >= 1
-    state_timestamps = state_data.timestamps
-    state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    state_data_index = find_aligned_timestamp_index(state_data, simulation_time)
     # The offset follows the countdown: it cancels the device's own time series while
     # the outage runs and is cleared everywhere else, so a stale offset cannot survive.
     for name in column_names, ix in axes(state_data.values)[2]
@@ -421,7 +444,7 @@ function update_decision_state!(
     event_occurrence_values = get_last_recorded_value(event_occurrence_data)
     state_data = get_decision_state_data(state, key)
     state_timestamps = state_data.timestamps
-    state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    state_data_index = find_aligned_timestamp_index(state_data, simulation_time)
     set_update_timestamp!(state_data, simulation_time)
     for name in column_names
         countdown = event_occurrence_values[name, 1]
@@ -454,8 +477,7 @@ function update_decision_state!(
     state_resolution = get_data_resolution(state_data)
     resolution_ratio = model_resolution ÷ state_resolution
     @assert_op resolution_ratio >= 1
-    state_timestamps = state_data.timestamps
-    state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    state_data_index = find_aligned_timestamp_index(state_data, simulation_time)
     for name in column_names, ix in axes(state_data.values)[2]
         state_data.values[name, ix] =
             POM.availability_from_countdown(event_occurrence_data.values[name, ix])
@@ -476,10 +498,9 @@ function update_decision_state!(
         get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), T)
     state_data = get_decision_state_data(state, key)
 
-    state_timestamps = state_data.timestamps
-    state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    state_data_index = find_aligned_timestamp_index(state_data, simulation_time)
     event_occurence_index =
-        find_timestamp_index(event_occurrence_data.timestamps, simulation_time)
+        find_aligned_timestamp_index(event_occurrence_data, simulation_time)
     for name in column_names
         if event_occurrence_data.values[name, event_occurence_index] > 0.0
             state_data.values[name, (state_data_index + 1):end] .=
@@ -502,10 +523,9 @@ function update_decision_state!(
         get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), T)
     state_data = get_decision_state_data(state, key)
 
-    state_timestamps = state_data.timestamps
-    state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    state_data_index = find_aligned_timestamp_index(state_data, simulation_time)
     event_occurence_index =
-        find_timestamp_index(event_occurrence_data.timestamps, simulation_time)
+        find_aligned_timestamp_index(event_occurrence_data, simulation_time)
     for name in column_names
         if event_occurrence_data.values[name, event_occurence_index] > 0.0
             for (time_off, ix) in
@@ -530,10 +550,9 @@ function update_decision_state!(
         get_decision_state_data(state, AvailableStatusChangeCountdownParameter(), U)
     state_data = get_decision_state_data(state, key)
 
-    state_timestamps = state_data.timestamps
-    state_data_index = find_timestamp_index(state_timestamps, simulation_time)
+    state_data_index = find_aligned_timestamp_index(state_data, simulation_time)
     event_occurence_index =
-        find_timestamp_index(event_occurrence_data.timestamps, simulation_time)
+        find_aligned_timestamp_index(event_occurrence_data, simulation_time)
     for name in column_names
         if event_occurrence_data.values[name, event_occurence_index] > 0.0
             state_data.values[name, (state_data_index + 1):end] .= 0.0
@@ -942,9 +961,10 @@ function update_system_state!(
     simulation_time::Dates.DateTime,
 )
     decision_dataset = get_dataset(decision_state, key)
+    aligned_time = align_to_dataset_grid(decision_dataset, simulation_time)
     # Gets the timestamp of the value used for the update, which might not match exactly the
     # simulation time since the value might have not been updated yet
-    ts = get_value_timestamp(decision_dataset, simulation_time)
+    ts = get_value_timestamp(decision_dataset, aligned_time)
     system_dataset = get_dataset(state, key)
     if ts == get_update_timestamp(system_dataset)
         return
@@ -959,7 +979,7 @@ function update_system_state!(
     set_update_timestamp!(system_dataset, ts)
     # Keep coordination between fields. System state is an array of size 1
     system_dataset.timestamps[1] = ts
-    data_set_value = get_dataset_value(decision_dataset, simulation_time)
+    data_set_value = get_dataset_value(decision_dataset, aligned_time)
     set_dataset_values!(state, key, 1, data_set_value)
     # This value shouldn't be other than one and after one execution is no-op.
     set_last_recorded_row!(system_dataset, 1)
@@ -973,15 +993,16 @@ function update_system_state!(
     simulation_time::Dates.DateTime,
 ) where {T <: Union{TimeDurationOn, TimeDurationOff}}
     decision_dataset = get_dataset(decision_state, key)
+    aligned_time = align_to_dataset_grid(decision_dataset, simulation_time)
     # Gets the timestamp of the value used for the update, which might not match exactly the
     # simulation time since the value might have not been updated yet
 
-    ts = get_value_timestamp(decision_dataset, simulation_time)
+    ts = get_value_timestamp(decision_dataset, aligned_time)
     system_dataset = get_dataset(state, key)
     system_state_resolution = get_data_resolution(system_dataset)
     decision_state_resolution = get_data_resolution(decision_dataset)
 
-    decision_state_value = get_dataset_value(decision_dataset, simulation_time)
+    decision_state_value = get_dataset_value(decision_dataset, aligned_time)
 
     if ts == get_update_timestamp(system_dataset)
         return

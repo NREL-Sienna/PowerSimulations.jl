@@ -91,10 +91,6 @@ end
 ### 5 MINUTE DATA (RESOLUTION MISMATCH) ###
 
 #Note: if using basic for ed, emulator fails at timestep  after outage due to OutageConstraint_ub
-#= TODO: a 5-minute emulator against hourly/daily decision models fails in
-# `_update_system_state!` -> `update_system_state!(::AuxVarKey{TimeDurationOn/Off})`,
-# which looks an off-the-hour timestamp up in an hourly decision dataset. Verified
-# independent of events: the same fixture fails with no event models attached.
 @testset "5 min; uc basic; ed nomin; no ff" begin
     res = run_events_simulation(;
         sys_emulator = build_system(PSITestSystems, "c_sys5_events_rt"),
@@ -115,12 +111,7 @@ end
         expected_on_variable_recovery = DateTime("2024-01-01T22:00:00"),
     )
 end
-=#
 
-#= TODO: a 5-minute emulator against hourly/daily decision models fails in
-# `_update_system_state!` -> `update_system_state!(::AuxVarKey{TimeDurationOn/Off})`,
-# which looks an off-the-hour timestamp up in an hourly decision dataset. Verified
-# independent of events: the same fixture fails with no event models attached.
 @testset "5 min; uc basic; ed basic; ff" begin
     res = run_events_simulation(;
         sys_emulator = build_system(PSITestSystems, "c_sys5_events_rt"),
@@ -141,15 +132,10 @@ end
         expected_on_variable_recovery = DateTime("2024-01-01T22:00:00"),
     )
 end
-=#
 
 # Note: Running a standard UC formulation without a feedforward to the ED is not a feasible modeling setup
 #Active power can change in Em without regard for OnVariable which messes up initializing the standard UC models.
 
-#= TODO: a 5-minute emulator against hourly/daily decision models fails in
-# `_update_system_state!` -> `update_system_state!(::AuxVarKey{TimeDurationOn/Off})`,
-# which looks an off-the-hour timestamp up in an hourly decision dataset. Verified
-# independent of events: the same fixture fails with no event models attached.
 @testset "5 min; uc standard; ed basic; ff" begin
     res = run_events_simulation(;
         sys_emulator = build_system(PSITestSystems, "c_sys5_events_rt"),
@@ -176,7 +162,36 @@ end
     p_recover_ix = indexin([DateTime("2024-01-01T22:00:00")], p_d2[!, :DateTime])[1]
     @test p_d2[p_recover_ix, "Alta"] < 40.0
 end
-=#
+
+@testset "5 min emulator; no events attached" begin
+    # Regression for the alignment bug: a sub-hourly emulator reading hourly decision
+    # state must succeed with no event models attached at all.
+    res = run_events_simulation(;
+        sys_emulator = build_system(PSITestSystems, "c_sys5_events_rt"),
+        networks = repeat([CopperPlateNetworkModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
+        outage_time = DateTime("2024-01-01T18:00:00"),
+        outage_length = 3.0,
+        uc_formulation = "basic",
+        ed_formulation = "nomin",
+        feedforward = false,
+        in_memory = true,
+        attach_events = false,
+    )
+    em = get_emulation_problem_results(res)
+    p = read_realized_variable(
+        em,
+        "ActivePowerVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+    @test nrow(p) > 0
+    @test p[2, :DateTime] - p[1, :DateTime] == Minute(5)
+    #Test the hourly D2 decision model is also readable
+    d2 = get_decision_problem_results(res, "D2")
+    p_d2 =
+        read_realized_variables(d2; table_format = TableFormat.WIDE)["ActivePowerVariable__ThermalStandard"]
+    @test nrow(p_d2) > 0
+end
 
 @testset "FixedForcedOutage with timeseries" begin
     dates_ts = collect(
