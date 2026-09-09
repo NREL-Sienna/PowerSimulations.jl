@@ -1449,6 +1449,16 @@ end
     template = ProblemTemplate(NetworkModel(PTDFPowerModel))
     set_device_model!(template, ThermalStandard, ThermalDispatchNoMin)
     set_device_model!(template, Line, StaticBranchBounds)
+    set_device_model!(
+        template,
+        DeviceModel(
+            Line,
+            StaticBranchBounds;
+            attributes = Dict(
+                "parallel_branch_max_rating_method" => "single_element_contingency",
+            ),
+        ),
+    )
     set_device_model!(template, TapTransformer, StaticBranchBounds)
     set_device_model!(template, Transformer2W, StaticBranchBounds)
     set_device_model!(template, PowerLoad, StaticPowerLoad)
