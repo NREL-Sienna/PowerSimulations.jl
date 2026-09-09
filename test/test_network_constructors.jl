@@ -1026,13 +1026,7 @@ end
         set_device_model!(template, AreaInterchange, StaticBranch)
         set_device_model!(
             template,
-            DeviceModel(
-                Line,
-                StaticBranch;
-                attributes = Dict(
-                    "parallel_branch_max_rating_method" => "single_element_contingency",
-                ),
-            ),
+            DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
         )
         ps_model =
             DecisionModel(
@@ -1358,23 +1352,11 @@ end
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Transformer2W,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Transformer2W, StaticBranch; attributes = PARALLEL_RATING),
     )
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -1404,23 +1386,11 @@ end
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Transformer2W,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Transformer2W, StaticBranch; attributes = PARALLEL_RATING),
     )
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -1450,23 +1420,11 @@ end
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Transformer2W,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Transformer2W, StaticBranch; attributes = PARALLEL_RATING),
     )
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -1505,23 +1463,11 @@ end
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Transformer2W,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Transformer2W, StaticBranch; attributes = PARALLEL_RATING),
     )
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -1552,23 +1498,11 @@ end
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranchBounds;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranchBounds; attributes = PARALLEL_RATING),
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Transformer2W,
-            StaticBranchBounds;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Transformer2W, StaticBranchBounds; attributes = PARALLEL_RATING),
     )
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -1604,23 +1538,11 @@ end
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranchBounds;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranchBounds; attributes = PARALLEL_RATING),
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Transformer2W,
-            StaticBranchBounds;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Transformer2W, StaticBranchBounds; attributes = PARALLEL_RATING),
     )
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -1650,23 +1572,11 @@ end
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranchBounds;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranchBounds; attributes = PARALLEL_RATING),
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Transformer2W,
-            StaticBranchBounds;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Transformer2W, StaticBranchBounds; attributes = PARALLEL_RATING),
     )
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -1722,23 +1632,11 @@ end
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranchBounds;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranchBounds; attributes = PARALLEL_RATING),
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Transformer2W,
-            StaticBranchBounds;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Transformer2W, StaticBranchBounds; attributes = PARALLEL_RATING),
     )
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -1774,23 +1672,11 @@ end
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Transformer2W,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Transformer2W, StaticBranch; attributes = PARALLEL_RATING),
     )
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -1814,13 +1700,7 @@ end
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
     )
     modeled_transformer_names = ["9-5-i_1"]
     set_device_model!(
@@ -1916,23 +1796,11 @@ end
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranchBounds;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranchBounds; attributes = PARALLEL_RATING),
     )
     set_device_model!(
         template,
-        DeviceModel(
-            Transformer2W,
-            StaticBranchBounds;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Transformer2W, StaticBranchBounds; attributes = PARALLEL_RATING),
     )
     ps_model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
     @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -1972,23 +1840,11 @@ end
             )
             set_device_model!(
                 template,
-                DeviceModel(
-                    Line,
-                    StaticBranch;
-                    attributes = Dict(
-                        "parallel_branch_max_rating_method" => "single_element_contingency",
-                    ),
-                ),
+                DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
             )
             set_device_model!(
                 template,
-                DeviceModel(
-                    Transformer2W,
-                    StaticBranch;
-                    attributes = Dict(
-                        "parallel_branch_max_rating_method" => "single_element_contingency",
-                    ),
-                ),
+                DeviceModel(Transformer2W, StaticBranch; attributes = PARALLEL_RATING),
             )
             ps_model = DecisionModel(template, sys; optimizer = optimizer)
             @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -2005,23 +1861,11 @@ end
             )
             set_device_model!(
                 template,
-                DeviceModel(
-                    Line,
-                    StaticBranch;
-                    attributes = Dict(
-                        "parallel_branch_max_rating_method" => "single_element_contingency",
-                    ),
-                ),
+                DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
             )
             set_device_model!(
                 template,
-                DeviceModel(
-                    Transformer2W,
-                    StaticBranch;
-                    attributes = Dict(
-                        "parallel_branch_max_rating_method" => "single_element_contingency",
-                    ),
-                ),
+                DeviceModel(Transformer2W, StaticBranch; attributes = PARALLEL_RATING),
             )
             ps_model = DecisionModel(template, sys; optimizer = optimizer)
             @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -2038,23 +1882,11 @@ end
             )
             set_device_model!(
                 template,
-                DeviceModel(
-                    Line,
-                    StaticBranch;
-                    attributes = Dict(
-                        "parallel_branch_max_rating_method" => "single_element_contingency",
-                    ),
-                ),
+                DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
             )
             set_device_model!(
                 template,
-                DeviceModel(
-                    Transformer2W,
-                    StaticBranch;
-                    attributes = Dict(
-                        "parallel_branch_max_rating_method" => "single_element_contingency",
-                    ),
-                ),
+                DeviceModel(Transformer2W, StaticBranch; attributes = PARALLEL_RATING),
             )
             ps_model = DecisionModel(template, sys; optimizer = optimizer)
             @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
@@ -2084,9 +1916,7 @@ end
                     Line,
                     StaticBranch;
                     use_slacks = true,
-                    attributes = Dict(
-                        "parallel_branch_max_rating_method" => "single_element_contingency",
-                    ),
+                    attributes = PARALLEL_RATING,
                 ),
             )
             set_device_model!(
@@ -2095,9 +1925,7 @@ end
                     Transformer2W,
                     StaticBranch;
                     use_slacks = true,
-                    attributes = Dict(
-                        "parallel_branch_max_rating_method" => "single_element_contingency",
-                    ),
+                    attributes = PARALLEL_RATING,
                 ),
             )
             ps_model = DecisionModel(template, sys; optimizer = optimizer)

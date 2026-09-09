@@ -32,13 +32,7 @@ function get_thermal_dispatch_template_network(network = CopperPlatePowerModel)
     set_device_model!(template, MonitoredLine, StaticBranchBounds)
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
     )
     set_device_model!(template, Transformer2W, StaticBranch)
     set_device_model!(template, TapTransformer, StaticBranch)
@@ -102,13 +96,7 @@ function get_template_dispatch_with_network(network = PTDFPowerModel)
     set_device_model!(template, ThermalStandard, ThermalBasicDispatch)
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
     )
     set_device_model!(template, Transformer2W, StaticBranchBounds)
     set_device_model!(template, TapTransformer, StaticBranchBounds)

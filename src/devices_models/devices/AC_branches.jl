@@ -59,9 +59,11 @@ end
 """
 DeviceModel attribute key selecting which `PowerNetworkMatrices` function aggregates
 the individual circuit ratings of a `PNM.BranchesParallel` into a single maximum flow
-limit. Valid values: `"single_element_contingency"` (default; N-1, post-trip surviving
-capacity), `"sum_of_max"` (plain Σ Sᵢ), `"impedance_averaged"` (susceptance-weighted
-average). `PNM.MixedBranchesParallel` groups always use `sum_of_max`.
+limit. Has no default: it must be set explicitly whenever the network reduction can
+produce a homogeneous parallel group. Valid values: `"single_element_contingency"`
+(N-1, post-trip surviving capacity), `"sum_of_max"` (plain Σ Sᵢ),
+`"impedance_averaged"` (susceptance-weighted average). `PNM.MixedBranchesParallel`
+groups always use `sum_of_max`.
 """
 const PARALLEL_BRANCH_MAX_RATING_KEY = "parallel_branch_max_rating_method"
 
@@ -77,7 +79,7 @@ function get_default_attributes(
     ::Type{V},
 ) where {U <: PSY.ACTransmission, V <: AbstractSecurityConstrainedStaticBranch}
     return Dict{String, Any}(
-        PARALLEL_BRANCH_MAX_RATING_KEY => "single_element_contingency",
+        PARALLEL_BRANCH_MAX_RATING_KEY => "",
         "include_planned_outages" => false,
     )
 end
@@ -97,7 +99,7 @@ function get_default_attributes(
     ::Type{V},
 ) where {V <: AbstractBranchFormulation}
     return Dict{String, Any}(
-        PARALLEL_BRANCH_MAX_RATING_KEY => "single_element_contingency",
+        PARALLEL_BRANCH_MAX_RATING_KEY => "",
         MODEL_ALL_BRANCHES_KEY => false,
     )
 end
@@ -107,7 +109,7 @@ function get_default_attributes(
     ::Type{V},
 ) where {V <: AbstractSecurityConstrainedStaticBranch}
     return Dict{String, Any}(
-        PARALLEL_BRANCH_MAX_RATING_KEY => "single_element_contingency",
+        PARALLEL_BRANCH_MAX_RATING_KEY => "",
         "include_planned_outages" => false,
         MODEL_ALL_BRANCHES_KEY => false,
     )

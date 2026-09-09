@@ -252,13 +252,7 @@ end
         set_device_model!(template_uc, PowerLoad, StaticPowerLoad)
         set_device_model!(
             template_uc,
-            DeviceModel(
-                Line,
-                StaticBranch;
-                attributes = Dict(
-                    "parallel_branch_max_rating_method" => "single_element_contingency",
-                ),
-            ),
+            DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
         )
 
         if hvdc_type == TwoTerminalVSCLine
@@ -300,13 +294,7 @@ end
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
     )
     set_device_model!(
         template,
@@ -458,13 +446,7 @@ end
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
     )
     set_device_model!(template, DeviceModel(TwoTerminalVSCLine, HVDCTwoTerminalLossless))
     model = DecisionModel(template, sys5; optimizer = HiGHS_optimizer, horizon = Hour(2))
@@ -530,13 +512,7 @@ function _build_rts_hvdc_acpf_model(hvdc_formulation; loss = nothing, stored_flo
     set_device_model!(template, PowerLoad, StaticPowerLoad)
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
     )
     set_device_model!(
         template,
@@ -1330,13 +1306,7 @@ end
     set_device_model!(template, DeviceModel(Source, FixedOutput))
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
     )
 
     uc_model = DecisionModel(
@@ -1429,13 +1399,7 @@ end
     set_device_model!(template, DeviceModel(Source, FixedOutput))
     set_device_model!(
         template,
-        DeviceModel(
-            Line,
-            StaticBranch;
-            attributes = Dict(
-                "parallel_branch_max_rating_method" => "single_element_contingency",
-            ),
-        ),
+        DeviceModel(Line, StaticBranch; attributes = PARALLEL_RATING),
     )
 
     uc_model = DecisionModel(
