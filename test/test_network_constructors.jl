@@ -1060,7 +1060,7 @@ end
 @testset "AreaPTDFPowerModel Hydro Pump Balance Expressions" begin
     c_sys = PSB.build_system(PSISystems, "two_area_pjm_DA")
     transform_single_time_series!(c_sys, Hour(24), Hour(1))
-    pump_bus = first(get_components(PSY.ACBus, c_sys))
+    pump_bus = get_component(PSY.ACBus, c_sys, "Bus_nodeC_2")
     pump = PSY.HydroPumpTurbine(;
         name = "AreaPump",
         available = true,
@@ -1106,7 +1106,7 @@ end
     psi_constraint_test(ps_model, constraint_keys)
     moi_tests(ps_model, 312, 0, 600, 600, 48, false)
     psi_checkobjfun_test(ps_model, GAEVF)
-    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 388168.0726209814, 1e-3)
+    psi_checksolve_test(ps_model, [MOI.OPTIMAL], 314479.0428904646, 1e-3)
 
     container = PSI.get_optimization_container(ps_model)
     pump_variable = PSI.get_variable(
@@ -1119,7 +1119,7 @@ end
     pump_name = PSY.get_name(pump)
     area_name = PSY.get_name(PSY.get_area(pump_bus))
     bus_no = PNM.get_mapped_bus_number(
-        PSI.get_network_reduction(PSI.get_network_model(template)),
+        PSI.get_network_reduction(PSI.get_network_model(ps_model.template)),
         pump_bus,
     )
 
