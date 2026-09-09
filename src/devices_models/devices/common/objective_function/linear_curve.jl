@@ -192,8 +192,8 @@ function _add_curtailment_cost!(
 
     name = PSY.get_name(component)
     dispatch_vars = get_variable(container, T(), PSY.RenewableDispatch)
-    param_array =
-        get_parameter_array(
+    param_container =
+        get_parameter(
             container,
             ActivePowerTimeSeriesParameter(),
             PSY.RenewableDispatch,
@@ -203,11 +203,15 @@ function _add_curtailment_cost!(
         ActivePowerTimeSeriesParameter(),
         PSY.RenewableDispatch,
     )
-    has_ts_param = name in axes(param_array)[1]
+    has_ts_param = haskey(get_attributes(param_container).component_name_to_ts_uuid, name)
+    availability = nothing
+    if has_ts_param
+        availability = get_parameter_column_refs(param_container, name)
+    end
 
     for t in get_time_steps(container)
         offer_max = if has_ts_param
-            param_multiplier[name, t] * param_array[name, t]
+            param_multiplier[name, t] * availability[t]
         else
             PSY.get_max_active_power(component)
         end
@@ -263,18 +267,22 @@ function _add_curtailment_cost!(
 
     name = PSY.get_name(component)
     dispatch_vars = get_variable(container, T(), PSY.RenewableGen)
-    param_array =
-        get_parameter_array(container, ActivePowerTimeSeriesParameter(), PSY.RenewableGen)
+    param_container =
+        get_parameter(container, ActivePowerTimeSeriesParameter(), PSY.RenewableGen)
     param_multiplier = get_parameter_multiplier_array(
         container,
         ActivePowerTimeSeriesParameter(),
         PSY.RenewableGen,
     )
-    has_ts_param = name in axes(param_array)[1]
+    has_ts_param = haskey(get_attributes(param_container).component_name_to_ts_uuid, name)
+    availability = nothing
+    if has_ts_param
+        availability = get_parameter_column_refs(param_container, name)
+    end
 
     for t in get_time_steps(container)
         offer_max = if has_ts_param
-            param_multiplier[name, t] * param_array[name, t]
+            param_multiplier[name, t] * availability[t]
         else
             PSY.get_max_active_power(component)
         end
