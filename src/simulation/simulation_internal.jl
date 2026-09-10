@@ -52,7 +52,7 @@ function SimulationInternal(
     end
 
     sim_files_dir = joinpath(simulation_dir, "simulation_files")
-    store_dir = joinpath(simulation_dir, "data_store")
+    store_dir = joinpath(simulation_dir, STORE_DIR)
     logs_dir = joinpath(simulation_dir, "logs")
     models_dir = joinpath(simulation_dir, "problems")
     recorder_dir = joinpath(simulation_dir, "recorder")

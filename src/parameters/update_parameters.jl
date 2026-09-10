@@ -6,8 +6,6 @@ function update_parameter_values!(
     key::ParameterKey{T, U},
     simulation_state::SimulationState,
 ) where {T <: ParameterType, U <: PSY.Component}
-    # Enable again for detailed debugging
-    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
     optimization_container = get_optimization_container(model)
     input = get_decision_states(simulation_state)
     update_container_parameter_values!(optimization_container, model, key, input)
@@ -19,7 +17,6 @@ function update_parameter_values!(
         get_current_timestamp(model),
         get_name(model),
     )
-    #end
     return
 end
 
@@ -51,40 +48,5 @@ function _fix_parameter_value!(
             end
         end
     end
-    return
-end
-
-function update_parameter_values!(
-    model::IOM.AbstractOptimizationModel,
-    key::ParameterKey{FixValueParameter, T},
-    simulation_state::SimulationState,
-) where {T <: PSY.Service}
-    # Enable again for detailed debugging
-    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
-    optimization_container = get_optimization_container(model)
-    # Note: Do not instantite a new key here because it might not match the param keys in the container
-    # if the keys have strings in the meta fields
-    parameter_array = get_parameter_array(optimization_container, key)
-    parameter_attributes = get_parameter_attributes(optimization_container, key)
-    service = PSY.get_component(T, get_system(model), key.meta)
-    @assert !isnothing(service)
-    input = get_decision_states(simulation_state)
-    _update_parameter_values!(
-        parameter_array,
-        FixValueParameter(),
-        parameter_attributes,
-        service,
-        model,
-        input,
-    )
-    _fix_parameter_value!(optimization_container, parameter_array, parameter_attributes)
-    IS.@record :execution ParameterUpdateEvent(
-        FixValueParameter,
-        T,
-        parameter_attributes,
-        get_current_timestamp(model),
-        get_name(model),
-    )
-    #end
     return
 end

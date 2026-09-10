@@ -84,13 +84,13 @@ function apply_event_step!(
     for (dtype, device_names) in device_type_maps
         POM.supports_events(dtype) || continue
         countdown_key = ParameterKey(AvailableStatusChangeCountdownParameter, dtype)
-        haskey(sim_state.system_states.parameters, countdown_key) || continue
+        has_dataset(get_system_states(sim_state), countdown_key) || continue
 
         # An outage detected at one step takes effect at the next, so availability now
         # follows the countdown as it stood at the end of the previous step -- before
         # this step decays it or samples a new outage into it.
         status_key = ParameterKey(AvailableStatusParameter, dtype)
-        if haskey(sim_state.system_states.parameters, status_key)
+        if has_dataset(get_system_states(sim_state), status_key)
             countdown_values =
                 get_last_recorded_value(get_system_state_data(sim_state, countdown_key))
             status_data = get_system_state_data(sim_state, status_key)
@@ -116,7 +116,7 @@ function apply_event_step!(
             P in (AvailableStatusChangeCountdownParameter, AvailableStatusParameter) &&
                 continue
             key = ParameterKey(P, dtype)
-            haskey(sim_state.system_states.parameters, key) || continue
+            has_dataset(get_system_states(sim_state), key) || continue
             update_system_state!(
                 sim_state,
                 key,
@@ -143,12 +143,12 @@ function apply_event_step!(
         # emulator against an hourly unit commitment). Projecting on a step the decision
         # state has no row for would be an alignment error; the system state keeps the
         # countdown, so nothing is lost by waiting for the next aligned step.
-        haskey(sim_state.decision_states.parameters, countdown_key) || continue
+        has_dataset(get_decision_states(sim_state), countdown_key) || continue
         sim_time in get_decision_state_data(sim_state, countdown_key).timestamps ||
             continue
         for P in POM.EVENT_PARAMETER_UPDATE_ORDER
             key = ParameterKey(P, dtype)
-            haskey(sim_state.decision_states.parameters, key) || continue
+            has_dataset(get_decision_states(sim_state), key) || continue
             update_decision_state!(
                 sim_state,
                 key,

@@ -56,7 +56,7 @@ function SimulationProblemResults{T}(
         system,
         problem_params.system_uuid,
         IOM.get_resolution(problem_params),
-        store isa HdfSimulationStore ? nothing : store,
+        _retained_store(store),
     )
 end
 
@@ -207,12 +207,12 @@ locate_system_file(results::IOM.OptimizationProblemOutputs) = joinpath(
 set_system!(results::IOM.OptimizationProblemOutputs, system) =
     set_source_data!(results, system)
 
+# Only the in-memory store is kept on the results; an HDF store is reopened on demand.
+_retained_store(::HdfSimulationStore) = nothing
+_retained_store(store::InMemorySimulationStore) = store
+
 function _deserialize_system(results::SimulationProblemResults, ::Nothing)
-    open_store(
-        HdfSimulationStore,
-        joinpath(get_execution_path(results), "data_store"),
-        "r",
-    ) do store
+    _open_results_store(get_execution_path(results)) do store
         system = deserialize_system(store, results.system_uuid)
         @info "De-serialized the system from the simulation store. The system does " *
               "not include time series data."
@@ -703,16 +703,11 @@ Return the optimizer stats for the problem as a DataFrame.
   - `store::SimulationStore`: a store that has been opened for reading
 """
 function IOM.read_optimizer_stats(res::SimulationProblemResults; store = nothing)
-    _store = isnothing(store) ? res.store : store
-    return _read_optimizer_stats(res, _store)
+    return _read_optimizer_stats(res, try_resolve_store(store, res.store))
 end
 
 function _read_optimizer_stats(res::SimulationProblemResults, ::Nothing)
-    open_store(
-        HdfSimulationStore,
-        joinpath(get_execution_path(res), "data_store"),
-        "r",
-    ) do store
+    _open_results_store(get_execution_path(res)) do store
         _read_optimizer_stats(res, store)
     end
 end

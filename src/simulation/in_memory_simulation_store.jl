@@ -19,14 +19,6 @@ end
 
 function get_number_of_dimensions(
     store::InMemorySimulationStore,
-    i::Type{EmulationModelIndexType},
-    key::OptimizationContainerKey,
-)
-    return length(get_column_names(store, i, key))
-end
-
-function get_number_of_dimensions(
-    store::InMemorySimulationStore,
     i::Type{DecisionModelIndexType},
     model_name::Symbol,
     key::OptimizationContainerKey,
@@ -58,10 +50,6 @@ Base.isopen(::InMemorySimulationStore) = true
 Base.close(::InMemorySimulationStore) = nothing
 Base.flush(::InMemorySimulationStore) = nothing
 get_params(store::InMemorySimulationStore) = store.params
-
-function get_decision_model_params(store::InMemorySimulationStore, model_name::Symbol)
-    return get_params(store).decision_models_params[model_name]
-end
 
 get_container_key_lookup(store::InMemorySimulationStore) = store.container_key_lookup
 
@@ -164,15 +152,6 @@ function get_column_names(
     return get_column_names(get_dm_data(store)[model_name], key)
 end
 
-function get_column_names(
-    store::InMemorySimulationStore,
-    ::Type{EmulationModelIndexType},
-    model_name::Symbol,
-    key::OptimizationContainerKey,
-)
-    return get_column_names(get_em_data(store)[model_name], key)
-end
-
 function read_result(
     ::Type{DenseAxisArray},
     store::InMemorySimulationStore,
@@ -241,7 +220,6 @@ function write_optimizer_stats!(
     stats = get_optimizer_stats(model)
     dm_data = get_dm_data(store)
     write_optimizer_stats!(dm_data[get_name(model)], stats, index)
-    IOM.read_optimizer_stats(dm_data[get_name(model)])
     return
 end
 
@@ -256,5 +234,4 @@ function write_optimizer_stats!(
     return
 end
 
-serialize_system!(::InMemorySimulationStore, ::PSY.System) = nothing
 write_system_json!(::InMemorySimulationStore, ::String, ::String) = nothing

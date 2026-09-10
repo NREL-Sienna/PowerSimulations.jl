@@ -55,7 +55,10 @@ Return the step offset for valid data at the given index.
 """
 function get_valid_step_offset(partitions::SimulationPartitions, index::Int)
     _check_partition_index(partitions, index)
-    return index == 1 ? 1 : partitions.num_overlap_steps + 1
+    if index == 1
+        return 1
+    end
+    return partitions.num_overlap_steps + 1
 end
 
 """
@@ -68,7 +71,10 @@ function get_valid_step_length(partitions::SimulationPartitions, index::Int)
     end
 
     remainder = partitions.num_steps % partitions.period
-    return remainder == 0 ? partitions.period : remainder
+    if iszero(remainder)
+        return partitions.period
+    end
+    return remainder
 end
 
 function _check_partition_index(partitions::SimulationPartitions, index::Int)

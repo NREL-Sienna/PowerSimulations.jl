@@ -12,14 +12,8 @@ function update_model!(
     return
 end
 
-function update_parameters!(model::EmulationModel, state::SimulationState)
-    data = get_decision_states(state)
-    update_parameters!(model, data)
-    return
-end
-
 function update_parameters!(
-    model::DecisionModel,
+    model::IOM.AbstractOptimizationModel,
     simulation_state::SimulationState,
 )
     cost_function_unsynch(get_optimization_container(model))

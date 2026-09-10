@@ -95,7 +95,7 @@ function _update_parameter_values!(
                 # first two axes of parameter_array are component, time; we care about any additional ones
                 unwrapped_value =
                     unwrap_for_param(W(), value, additional_axes)
-                if !all(isfinite.(unwrapped_value))
+                if !all(isfinite, unwrapped_value)
                     error("The value for the time series $(ts_name) is not finite. \
                           Check that the data in the time series is valid.")
                 end
@@ -209,7 +209,7 @@ function _update_parameter_values!(
     additional_axes = lookup_additional_axes(parameter_array)
     for (t, value) in enumerate(ts_vector)
         unwrapped_value = unwrap_for_param(W(), value, additional_axes)
-        if !all(isfinite.(unwrapped_value))
+        if !all(isfinite, unwrapped_value)
             error("The value for the time series $(ts_name) is not finite. \
                   Check that the data in the time series is valid.")
         end
@@ -561,18 +561,6 @@ function _update_parameter_values!(
 end
 
 function _update_parameter_values!(
-    ::AbstractArray{T},
-    ::ParameterType,
-    ::VariableValueAttributes,
-    ::Type{<:PSY.Component},
-    ::EmulationModel,
-    ::EmulationModelStore,
-) where {T <: Union{JuMP.VariableRef, Float64}}
-    error("The emulation model has parameters that can't be updated from its results")
-    return
-end
-
-function _update_parameter_values!(
     parameter_array::DenseAxisArray{T},
     attributes::EventParametersAttributes{W, U},
     ::Type{V},
@@ -674,8 +662,6 @@ function IOM.update_container_parameter_values!(
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ParameterType, U <: PSY.Component}
-    # Enable again for detailed debugging
-    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
@@ -690,8 +676,6 @@ function IOM.update_container_parameter_values!(
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: EventParameter, U <: PSY.Component}
-    # Enable again for detailed debugging
-    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)

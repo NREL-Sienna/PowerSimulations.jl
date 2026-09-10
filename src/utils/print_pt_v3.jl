@@ -1,7 +1,3 @@
-# list_variable_names/list_dual_names/etc. (simulation_problem_results.jl) call this
-# unqualified; it is missing from the main module's IOM import block.
-import InfrastructureOptimizationModels: encode_keys_as_strings
-
 function Base.show(io::IO, ::MIME"text/plain", input::SimulationModels)
     IOM._show_method(io, input, :auto)
 end
@@ -17,9 +13,6 @@ function Base.show(io::IO, ::MIME"text/html", input::SimulationModels)
     )
 end
 
-_get_model_type(::DecisionModel{T}) where {T <: POM.AbstractPowerDecisionProblem} = T
-_get_model_type(::EmulationModel{T}) where {T <: POM.AbstractPowerEmulationProblem} = T
-
 function IOM._show_method(io::IO, sim_models::SimulationModels, backend::Symbol; kwargs...)
     println(io)
     header = ["Model Name", "Model Type", "Status", "Output Directory"]
@@ -27,7 +20,7 @@ function IOM._show_method(io::IO, sim_models::SimulationModels, backend::Symbol;
     table = Matrix{Any}(undef, length(sim_models.decision_models), length(header))
     for (ix, model) in enumerate(sim_models.decision_models)
         table[ix, 1] = string(get_name(model))
-        table[ix, 2] = IS.strip_module_name(string(_get_model_type(model)))
+        table[ix, 2] = IS.strip_module_name(string(get_problem_type(model)))
         table[ix, 3] = string(get_status(model))
         table[ix, 4] = get_output_dir(model)
     end
@@ -47,7 +40,7 @@ function IOM._show_method(io::IO, sim_models::SimulationModels, backend::Symbol;
         table = Matrix{Any}(undef, 1, length(header))
         table[1, 1] = string(get_name(sim_models.emulation_model))
         table[1, 2] =
-            IS.strip_module_name(string(_get_model_type(sim_models.emulation_model)))
+            IS.strip_module_name(string(get_problem_type(sim_models.emulation_model)))
         table[1, 3] = string(get_status(sim_models.emulation_model))
         table[1, 4] = get_output_dir(sim_models.emulation_model)
 
@@ -255,12 +248,11 @@ function IOM._show_method(io::IO, results::SimulationResults, backend::Symbol; k
     )
 end
 
-ProblemResultsTypes = Union{SimulationProblemResults}
-function Base.show(io::IO, ::MIME"text/plain", input::ProblemResultsTypes)
+function Base.show(io::IO, ::MIME"text/plain", input::SimulationProblemResults)
     IOM._show_method(io, input, :auto)
 end
 
-function Base.show(io::IO, ::MIME"text/html", input::ProblemResultsTypes)
+function Base.show(io::IO, ::MIME"text/html", input::SimulationProblemResults)
     # The tf_html_simple format was eliminated from PrettyTables and it was added to PowerSystems
     IOM._show_method(
         io,
@@ -273,10 +265,10 @@ end
 
 function IOM._show_method(
     io::IO,
-    results::T,
+    results::SimulationProblemResults,
     backend::Symbol;
     kwargs...,
-) where {T <: ProblemResultsTypes}
+)
     timestamps = get_timestamps(results)
 
     # `get_resolution` returns `nothing` when there is a single timestamp (no
@@ -304,11 +296,7 @@ function IOM._show_method(
         "Parameters" => list_parameter_names(results),
     )
 
-    if hasfield(T, :problem)
-        name = results.problem
-    else
-        name = "PowerSimulations"
-    end
+    name = results.problem
 
     for (k, val) in values
         if !isempty(val)

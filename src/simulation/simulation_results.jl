@@ -7,7 +7,7 @@ function check_folder_integrity(folder::String)
     else
         @warn "Unrecognized simulation files: $(sort(alien_files))"
     end
-    if "data_store" ∉ folder_files
+    if STORE_DIR ∉ folder_files
         error("The file path doesn't contain any data_store folder")
     end
     return false
@@ -42,7 +42,7 @@ function SimulationResults(path::AbstractString, execution = nothing; ignore_sta
         return SimulationResults(path, name, execution; ignore_status = ignore_status)
     end
 
-    if "data_store" in readdir(path)
+    if STORE_DIR in readdir(path)
         return SimulationResults(
             dirname(path),
             basename(path),
@@ -66,6 +66,9 @@ Construct SimulationResults from a simulation output directory.
   - `execution::AbstractString`: Execution number. Default is the most recent.
   - `ignore_status::Bool`: If true, return results even if the simulation failed.
 """
+_emulation_system(::Nothing) = nothing
+_emulation_system(model::EmulationModel) = get_system(model)
+
 function SimulationResults(
     path::AbstractString,
     name::AbstractString,
@@ -93,7 +96,7 @@ function SimulationResults(
               "This can lead to errors or unwanted results."
     end
 
-    simulation_store_path = joinpath(execution_path, "data_store")
+    simulation_store_path = joinpath(execution_path, STORE_DIR)
     check_file_integrity(simulation_store_path)
 
     return open_store(HdfSimulationStore, simulation_store_path, "r") do store
@@ -185,7 +188,7 @@ function SimulationResults(sim::Simulation; ignore_status = false, kwargs...)
         sim_params,
         execution_path,
         container_key_lookup;
-        system = isnothing(emulation_model) ? nothing : get_system(emulation_model),
+        system = _emulation_system(emulation_model),
     )
 
     return SimulationResults(
@@ -210,7 +213,6 @@ end
 Base.isempty(res::SimulationResults) = all(isempty, values(res.decision_problem_results))
 Base.length(res::SimulationResults) =
     mapreduce(length, +, values(res.decision_problem_results))
-get_exports_folder(x::SimulationResults) = joinpath(x.path, "exports")
 
 """
 Return SimulationProblemResults corresponding to a SimulationResults
@@ -347,128 +349,65 @@ An example JSON file demonstrating possible options is below. Note that `start_t
 ```
 """
 function export_results(results::SimulationResults, exports)
-    if results.store isa InMemorySimulationStore
-        export_results(results, exports, results.store)
-    else
-        simulation_store_path = joinpath(results.path, "data_store")
-        open_store(HdfSimulationStore, simulation_store_path, "r") do store
-            export_results(results, exports, store)
-        end
+    _export_results_with_store(results, exports, results.store)
+    return
+end
+
+_export_results_with_store(results, exports, store::InMemorySimulationStore) =
+    export_results(results, exports, store)
+function _export_results_with_store(results, exports, ::Union{Nothing, HdfSimulationStore})
+    _open_results_store(results.path) do store
+        export_results(results, exports, store)
     end
     return
 end
 
 function export_results(results::SimulationResults, exports, store::SimulationStore)
-    if !(exports isa SimulationResultsExport)
-        exports = SimulationResultsExport(exports, results.params)
-    end
-
+    exports = _as_results_export(exports, results.params)
     file_type = get_export_file_type(exports)
 
     for problem_results in values(results.decision_problem_results)
         problem_exports = get_problem_exports(exports, problem_results.problem)
-        path =
-            isnothing(exports.path) ? problem_results.results_output_folder : exports.path
+        if isnothing(exports.path)
+            path = problem_results.results_output_folder
+        else
+            path = exports.path
+        end
         for timestamp in get_timestamps(problem_results)
             !should_export(exports, timestamp) && continue
-
-            export_path = mkpath(joinpath(path, problem_results.problem, "variables"))
-            for name in list_variable_names(problem_results)
-                if should_export_variable(problem_exports, name)
-                    dfs = read_variable(
+            for (folder, list_names, should_export_fn, read_fn) in (
+                ("variables", list_variable_names, should_export_variable, read_variable),
+                (
+                    "aux_variables",
+                    list_aux_variable_names,
+                    should_export_aux_variable,
+                    read_aux_variable,
+                ),
+                (
+                    "parameters",
+                    list_parameter_names,
+                    should_export_parameter,
+                    read_parameter,
+                ),
+                ("duals", list_dual_names, should_export_dual, read_dual),
+                (
+                    "expression",
+                    list_expression_names,
+                    should_export_expression,
+                    read_expression,
+                ),
+            )
+                export_path = mkpath(joinpath(path, problem_results.problem, folder))
+                for name in list_names(problem_results)
+                    should_export_fn(problem_exports, name) || continue
+                    dfs = read_fn(
                         problem_results,
                         name;
                         start_time = timestamp,
                         len = 1,
                         store = store,
                     )
-                    export_output(
-                        file_type,
-                        export_path,
-                        name,
-                        timestamp,
-                        dfs[timestamp],
-                    )
-                end
-            end
-
-            export_path = mkpath(joinpath(path, problem_results.problem, "aux_variables"))
-            for name in list_aux_variable_names(problem_results)
-                if should_export_aux_variable(problem_exports, name)
-                    dfs = read_aux_variable(
-                        problem_results,
-                        name;
-                        start_time = timestamp,
-                        len = 1,
-                        store = store,
-                    )
-                    export_output(
-                        file_type,
-                        export_path,
-                        name,
-                        timestamp,
-                        dfs[timestamp],
-                    )
-                end
-            end
-
-            export_path = mkpath(joinpath(path, problem_results.problem, "parameters"))
-            for name in list_parameter_names(problem_results)
-                if should_export_parameter(problem_exports, name)
-                    dfs = read_parameter(
-                        problem_results,
-                        name;
-                        start_time = timestamp,
-                        len = 1,
-                        store = store,
-                    )
-                    export_output(
-                        file_type,
-                        export_path,
-                        name,
-                        timestamp,
-                        dfs[timestamp],
-                    )
-                end
-            end
-
-            export_path = mkpath(joinpath(path, problem_results.problem, "duals"))
-            for name in list_dual_names(problem_results)
-                if should_export_dual(problem_exports, name)
-                    dfs = read_dual(
-                        problem_results,
-                        name;
-                        start_time = timestamp,
-                        len = 1,
-                        store = store,
-                    )
-                    export_output(
-                        file_type,
-                        export_path,
-                        name,
-                        timestamp,
-                        dfs[timestamp],
-                    )
-                end
-            end
-
-            export_path = mkpath(joinpath(path, problem_results.problem, "expression"))
-            for name in list_expression_names(problem_results)
-                if should_export_expression(problem_exports, name)
-                    dfs = read_expression(
-                        problem_results,
-                        name;
-                        start_time = timestamp,
-                        len = 1,
-                        store = store,
-                    )
-                    export_output(
-                        file_type,
-                        export_path,
-                        name,
-                        timestamp,
-                        dfs[timestamp],
-                    )
+                    export_output(file_type, export_path, name, timestamp, dfs[timestamp])
                 end
             end
         end

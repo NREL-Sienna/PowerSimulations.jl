@@ -23,7 +23,9 @@ get_system_states(s::SimulationState) = s.system_states
 function get_system_states_resolution(s::SimulationState)
     system_state = get_system_states(s)
     # All the system states have the same resolution
-    return get_data_resolution(first(values(system_state.variables)))
+    return get_data_resolution(
+        get_dataset(system_state, first(get_dataset_keys(system_state))),
+    )
 end
 
 function set_current_time!(s::SimulationState, val::Dates.DateTime)
@@ -504,7 +506,7 @@ function update_decision_state!(
     for name in column_names
         if event_occurrence_data.values[name, event_occurence_index] > 0.0
             state_data.values[name, (state_data_index + 1):end] .=
-                IOM.MISSING_INITIAL_CONDITIONS_TIME_COUNT
+                MISSING_INITIAL_CONDITIONS_TIME_COUNT
         end
     end
     return
@@ -635,7 +637,7 @@ function update_decision_state!(
     result_time_index = axes(store_data)[2]
     set_update_timestamp!(state_data, simulation_time)
 
-    if resolution_ratio == 1.0
+    if isone(resolution_ratio)
         increment_per_period = 1.0
     elseif state_resolution < Dates.Day(365) && state_resolution > Dates.Minute(1)
         increment_per_period = Dates.value(Dates.Minute(state_resolution))
@@ -678,32 +680,11 @@ function get_decision_state_data(
     state::SimulationState,
     ::T,
     ::Type{U},
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_decision_state_data(state, VariableKey(T, U))
-end
-
-function get_decision_state_data(
-    state::SimulationState,
-    ::T,
-    ::Type{U},
-) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_decision_state_data(state, AuxVarKey(T, U))
-end
-
-function get_decision_state_data(
-    state::SimulationState,
-    ::T,
-    ::Type{U},
-) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    return get_decision_state_data(state, ConstraintKey(T, U))
-end
-
-function get_decision_state_data(
-    state::SimulationState,
-    ::T,
-    ::Type{U},
-) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
-    return get_decision_state_data(state, ParameterKey(T, U))
+) where {
+    T <: Union{VariableType, AuxVariableType, ConstraintType, ParameterType},
+    U <: Union{PSY.Component, PSY.System},
+}
+    return get_dataset(get_decision_states(state), T, U)
 end
 
 function get_decision_state_value(
@@ -722,6 +703,28 @@ function get_system_state_value(state::SimulationState, key::OptimizationContain
     return get_dataset_values(get_system_states(state), key)[:, 1]
 end
 
+function get_system_state_value(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {
+    T <: Union{VariableType, AuxVariableType, ConstraintType, ParameterType},
+    U <: Union{PSY.Component, PSY.System},
+}
+    return get_dataset_values(get_system_states(state), T, U)[:, 1]
+end
+
+function get_system_state_data(
+    state::SimulationState,
+    ::T,
+    ::Type{U},
+) where {
+    T <: Union{VariableType, AuxVariableType, ConstraintType, ParameterType},
+    U <: Union{PSY.Component, PSY.System},
+}
+    return get_dataset(get_system_states(state), T, U)
+end
+
 function update_system_state!(
     state::DatasetContainer{InMemoryDataset},
     key::OptimizationContainerKey,
@@ -734,19 +737,7 @@ function update_system_state!(
     res = read_result(DenseAxisArray, store, model_name, key, ix)
     dataset = get_dataset(state, key)
     set_update_timestamp!(dataset, simulation_time)
-    if typeof(store) == HdfSimulationStore
-        set_dataset_values!(state, key, 1, res)
-    else
-        # Handle different dimensionality of results
-        num_dims = ndims(res)
-        if num_dims == 2
-            set_dataset_values!(state, key, 1, res[:, ix])
-        elseif num_dims == 3
-            set_dataset_values!(state, key, 1, res[:, :, ix])
-        else
-            error("Unsupported number of dimensions for emulation result: $num_dims")
-        end
-    end
+    set_dataset_values!(state, key, 1, _last_recorded_state_value(store, res, ix))
     set_last_recorded_row!(dataset, 1)
     return
 end
@@ -923,7 +914,7 @@ function update_system_state!(
     set_update_timestamp!(system_dataset, simulation_time)
     for name in column_names
         if event_occurrence_values[name] > 0.0
-            current_status_data.values[name, 1] = IOM.MISSING_INITIAL_CONDITIONS_TIME_COUNT
+            current_status_data.values[name, 1] = MISSING_INITIAL_CONDITIONS_TIME_COUNT
         end
     end
     return
@@ -999,15 +990,13 @@ function update_system_state!(
 
     ts = get_value_timestamp(decision_dataset, aligned_time)
     system_dataset = get_dataset(state, key)
-    system_state_resolution = get_data_resolution(system_dataset)
-    decision_state_resolution = get_data_resolution(decision_dataset)
-
-    decision_state_value = get_dataset_value(decision_dataset, aligned_time)
-
     if ts == get_update_timestamp(system_dataset)
         return
     end
     # TODO: past-timestamp protection removed; see note in the dataset variant above.
+    system_state_resolution = get_data_resolution(system_dataset)
+    decision_state_resolution = get_data_resolution(decision_dataset)
+    decision_state_value = get_dataset_value(decision_dataset, aligned_time)
 
     # Writes the timestamp of the value used for the update
     set_update_timestamp!(system_dataset, ts)
@@ -1021,68 +1010,4 @@ function update_system_state!(
     # This value shouldn't be other than one and after one execution is no-op.
     set_last_recorded_row!(system_dataset, 1)
     return
-end
-
-function get_system_state_value(
-    state::SimulationState,
-    ::T,
-    ::Type{U},
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_value(state, VariableKey(T, U))
-end
-
-function get_system_state_value(
-    state::SimulationState,
-    ::T,
-    ::Type{U},
-) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_value(state, AuxVarKey(T, U))
-end
-
-function get_system_state_value(
-    state::SimulationState,
-    ::T,
-    ::Type{U},
-) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_value(state, ConstraintKey(T, U))
-end
-
-function get_system_state_value(
-    state::SimulationState,
-    ::T,
-    ::Type{U},
-) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_value(state, ParameterKey(T, U))
-end
-
-function get_system_state_data(
-    state::SimulationState,
-    ::T,
-    ::Type{U},
-) where {T <: VariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_data(state, VariableKey(T, U))
-end
-
-function get_system_state_data(
-    state::SimulationState,
-    ::T,
-    ::Type{U},
-) where {T <: AuxVariableType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_data(state, AuxVarKey(T, U))
-end
-
-function get_system_state_data(
-    state::SimulationState,
-    ::T,
-    ::Type{U},
-) where {T <: ConstraintType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_data(state, ConstraintKey(T, U))
-end
-
-function get_system_state_data(
-    state::SimulationState,
-    ::T,
-    ::Type{U},
-) where {T <: ParameterType, U <: Union{PSY.Component, PSY.System}}
-    return get_system_state_data(state, ParameterKey(T, U))
 end

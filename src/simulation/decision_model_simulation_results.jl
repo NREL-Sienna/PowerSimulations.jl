@@ -88,27 +88,6 @@ get_cached_parameters(res::SimulationProblemResults{DecisionModelSimulationResul
 get_cached_variables(res::SimulationProblemResults{DecisionModelSimulationResults}) =
     res.values.variables.cached_outputs
 
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::AuxVarKey,
-) = get_cached_aux_variables(res)
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::ConstraintKey,
-) = get_cached_duals(res)
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::ExpressionKey,
-) = get_cached_expressions(res)
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::ParameterKey,
-) = get_cached_parameters(res)
-get_cached_results(
-    res::SimulationProblemResults{DecisionModelSimulationResults},
-    ::VariableKey,
-) = get_cached_variables(res)
-
 function IOM.get_forecast_horizon(
     res::SimulationProblemResults{DecisionModelSimulationResults},
 )
@@ -121,8 +100,7 @@ function _get_store_value(
     timestamps,
     ::Nothing,
 )
-    simulation_store_path = joinpath(get_execution_path(res), "data_store")
-    return open_store(HdfSimulationStore, simulation_store_path, "r") do store
+    return _open_results_store(get_execution_path(res)) do store
         _get_store_value(res, container_keys, timestamps, store)
     end
 end
@@ -152,7 +130,7 @@ function _get_store_value(
     key::OptimizationContainerKey,
     timestamps::Vector{Dates.DateTime},
     store::SimulationStore,
-) where {T <: DenseAxisArray{Float64, 2}}
+) where {N, T <: DenseAxisArray{Float64, N}}
     resolution = get_resolution(sim_results)
     horizon = get_forecast_horizon(sim_results)
     base_power = get_model_base_power(sim_results)
@@ -163,7 +141,7 @@ function _get_store_value(
         resolution,
         get_column_names(store, DecisionModelIndexType, model_name, key),
     )
-    array_size::Union{Nothing, Tuple{Int, Int}} = nothing
+    array_size::Union{Nothing, NTuple{N, Int}} = nothing
     for ts in timestamps
         array = read_result(DenseAxisArray, store, model_name, key, ts)
         if isnothing(array_size)
@@ -176,48 +154,8 @@ function _get_store_value(
         if convert_output_to_natural_units(key)
             array.data .*= base_power
         end
-        if array_size[2] != horizon
-            @warn "$(encode_key_as_string(key)) has a different horizon than the " *
-                  "problem specification. Can't assign timestamps to the resulting DataFrame."
-            results_by_time.resolution = Dates.Period(Dates.Millisecond(0))
-        end
-        results_by_time[ts] = array
-    end
-
-    return results_by_time
-end
-
-function _get_store_value(
-    ::Type{T},
-    sim_results::SimulationProblemResults{DecisionModelSimulationResults},
-    key::OptimizationContainerKey,
-    timestamps::Vector{Dates.DateTime},
-    store::SimulationStore,
-) where {T <: DenseAxisArray{Float64, 3}}
-    resolution = get_resolution(sim_results)
-    horizon = get_forecast_horizon(sim_results)
-    base_power = get_model_base_power(sim_results)
-    model_name = Symbol(get_model_name(sim_results))
-    results_by_time = OutputsByTime(
-        key,
-        SortedDict{Dates.DateTime, T}(),
-        resolution,
-        get_column_names(store, DecisionModelIndexType, model_name, key),
-    )
-    array_size::Union{Nothing, Tuple{Int, Int, Int}} = nothing
-    for ts in timestamps
-        array = read_result(DenseAxisArray, store, model_name, key, ts)
-        if isnothing(array_size)
-            array_size = size(array)
-        elseif size(array) != array_size
-            error(
-                "Arrays for $(encode_key_as_string(key)) at different timestamps have different sizes",
-            )
-        end
-        if convert_output_to_natural_units(key)
-            array.data .*= base_power
-        end
-        if array_size[3] != horizon
+        # The last axis is time.
+        if array_size[end] != horizon
             @warn "$(encode_key_as_string(key)) has a different horizon than the " *
                   "problem specification. Can't assign timestamps to the resulting DataFrame."
             results_by_time.resolution = Dates.Period(Dates.Millisecond(0))
@@ -298,7 +236,7 @@ function _read_results(
 
     _store = try_resolve_store(store, res.store)
     existing_keys = list_result_keys(res, first(result_keys))
-    IOM._validate_keys(existing_keys, result_keys)
+    _validate_keys(existing_keys, result_keys)
     cached_results = get_cached_results(res, eltype(result_keys))
     if _are_results_cached(res, result_keys, timestamps, keys(cached_results))
         @debug "reading results from SimulationsResults cache"  # NOTE tests match on this
@@ -489,7 +427,9 @@ function IOM.get_realized_timestamps(
     resolution = get_resolution(res)
     interval = get_interval(res)
     horizon = get_forecast_horizon(res)
-    start_time = isnothing(start_time) ? first(timestamps) : start_time
+    if isnothing(start_time)
+        start_time = first(timestamps)
+    end
     end_time =
         if isnothing(len)
             last(timestamps) + interval - resolution
@@ -597,7 +537,9 @@ function load_results!(
     expressions = Vector{Tuple}(),
     store::Union{Nothing, <:SimulationStore} = nothing,
 )
-    initial_time = isnothing(initial_time) ? first(get_timestamps(res)) : initial_time
+    if isnothing(initial_time)
+        initial_time = first(get_timestamps(res))
+    end
     count = max(count, length(get_results_timestamps(res)))
     new_timestamps = _process_timestamps(res, initial_time, count)
 

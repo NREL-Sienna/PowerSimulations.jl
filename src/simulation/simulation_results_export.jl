@@ -1,5 +1,6 @@
 
-const _SUPPORTED_FORMATS = ("csv",)
+_parse_export_time(x::AbstractString) = Dates.DateTime(x)
+_parse_export_time(x) = x
 
 mutable struct SimulationResultsExport
     models::Dict{Symbol, IOM.OptimizationProblemOutputsExport}
@@ -8,6 +9,10 @@ mutable struct SimulationResultsExport
     path::Union{Nothing, String}
     format::String
 end
+
+# Callers may pass either a built export spec or the raw user input for one.
+_as_results_export(x::SimulationResultsExport, _) = x
+_as_results_export(x, params) = SimulationResultsExport(x, params)
 
 function SimulationResultsExport(
     models::Vector{IOM.OptimizationProblemOutputsExport},
@@ -92,15 +97,8 @@ function SimulationResultsExport(data::AbstractDict, params::SimulationStorePara
         push!(models, problem_export)
     end
 
-    start_time = get(data, "start_time", nothing)
-    if start_time isa AbstractString
-        start_time = Dates.DateTime(start_time)
-    end
-
-    end_time = get(data, "end_time", nothing)
-    if end_time isa AbstractString
-        end_time = Dates.DateTime(end_time)
-    end
+    start_time = _parse_export_time(get(data, "start_time", nothing))
+    end_time = _parse_export_time(get(data, "end_time", nothing))
 
     return SimulationResultsExport(
         models,

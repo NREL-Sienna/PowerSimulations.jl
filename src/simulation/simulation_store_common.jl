@@ -17,211 +17,92 @@ function write_results!(
         export_params = nothing
     end
 
-    write_model_dual_results!(store, model, index, update_timestamp, export_params)
-    write_model_parameter_results!(store, model, index, update_timestamp, export_params)
-    write_model_variable_results!(store, model, index, update_timestamp, export_params)
-    write_model_aux_variable_results!(store, model, index, update_timestamp, export_params)
-    write_model_expression_results!(store, model, index, update_timestamp, export_params)
-    return
-end
-
-function write_model_dual_results!(
-    store,
-    model::T,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType},
-    update_timestamp::Dates.DateTime,
-    export_params::Union{Dict{Symbol, Any}, Nothing},
-) where {T <: IOM.AbstractOptimizationModel}
-    container = get_optimization_container(model)
-    model_name = get_name(model)
-    if !isnothing(export_params)
-        exports_path = joinpath(export_params[:exports_path], "duals")
-        mkpath(exports_path)
-    end
-
-    for (key, constraint) in get_duals(container)
-        !should_write_resulting_value(key) && continue
-        data = jump_value.(constraint)
-        write_result!(store, model_name, key, index, update_timestamp, data)
-
-        if !isnothing(export_params) &&
-           should_export_dual(export_params[:exports], update_timestamp, model_name, key)
-            horizon_count = export_params[:horizon_count]
-            resolution = export_params[:resolution]
-            file_type = export_params[:file_type]
-            df = to_dataframe(jump_value.(constraint), key)
-            time_col = range(index; length = horizon_count, step = resolution)
-            DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_output(file_type, exports_path, key, index, df)
-        end
-    end
-    return
-end
-
-function write_model_parameter_results!(
-    store,
-    model::T,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType},
-    update_timestamp::Dates.DateTime,
-    export_params::Union{Dict{Symbol, Any}, Nothing},
-) where {T <: IOM.AbstractOptimizationModel}
-    container = get_optimization_container(model)
-    model_name = get_name(model)
-    if !isnothing(export_params)
-        exports_path = joinpath(export_params[:exports_path], "parameters")
-        mkpath(exports_path)
-    end
-
-    horizon = get_horizon(get_settings(model))
-    resolution = get_resolution(get_settings(model))
-    horizon_count = horizon ÷ resolution
-
-    parameters = get_parameters(container)
-    for (key, container) in parameters
-        !should_write_resulting_value(key) && continue
-        data = calculate_parameter_values(container)
-        write_result!(store, model_name, key, index, update_timestamp, data)
-
-        if !isnothing(export_params) &&
-           should_export_parameter(
-            export_params[:exports],
+    for field in (:duals, :parameters, :variables, :aux_variables, :expressions)
+        _write_model_field_results!(
+            store,
+            model,
+            index,
             update_timestamp,
-            model_name,
-            key,
+            export_params,
+            Val(field),
         )
-            resolution = export_params[:resolution]
-            file_type = export_params[:file_type]
-            df = to_dataframe(data, key)
-            time_col = range(index; length = horizon_count, step = resolution)
-            DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_output(file_type, exports_path, key, index, df)
-        end
     end
     return
 end
 
-function write_model_variable_results!(
-    store,
-    model::T,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType},
-    update_timestamp::Dates.DateTime,
-    export_params::Union{Dict{Symbol, Any}, Nothing},
-) where {T <: IOM.AbstractOptimizationModel}
-    container = get_optimization_container(model)
-    model_name = get_name(model)
-    if !isnothing(export_params)
-        exports_path = joinpath(export_params[:exports_path], "variables")
-        mkpath(exports_path)
-    end
-
+_result_source(container::OptimizationContainer, ::Val{:duals}) = get_duals(container)
+_result_source(container::OptimizationContainer, ::Val{:parameters}) =
+    get_parameters(container)
+_result_source(container::OptimizationContainer, ::Val{:aux_variables}) =
+    get_aux_variables(container)
+function _result_source(container::OptimizationContainer, ::Val{:variables})
     if !isempty(container.primal_values_cache)
-        variables = container.primal_values_cache.variables_cache
-    else
-        variables = get_variables(container)
+        return container.primal_values_cache.variables_cache
     end
-
-    for (key, variable) in variables
-        !should_write_resulting_value(key) && continue
-        data = jump_value.(variable)
-        write_result!(store, model_name, key, index, update_timestamp, data)
-
-        if !isnothing(export_params) &&
-           should_export_variable(
-            export_params[:exports],
-            update_timestamp,
-            model_name,
-            key,
-        )
-            horizon_count = export_params[:horizon_count]
-            resolution = export_params[:resolution]
-            file_type = export_params[:file_type]
-            df = to_dataframe(data, key)
-            time_col = range(index; length = horizon_count, step = resolution)
-            DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_output(file_type, exports_path, key, index, df)
-        end
-    end
-    return
+    return get_variables(container)
 end
-
-function write_model_aux_variable_results!(
-    store,
-    model::T,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType},
-    update_timestamp::Dates.DateTime,
-    export_params::Union{Dict{Symbol, Any}, Nothing},
-) where {T <: IOM.AbstractOptimizationModel}
-    container = get_optimization_container(model)
-    model_name = get_name(model)
-    if !isnothing(export_params)
-        exports_path = joinpath(export_params[:exports_path], "aux_variables")
-        mkpath(exports_path)
-    end
-
-    for (key, variable) in get_aux_variables(container)
-        !should_write_resulting_value(key) && continue
-        data = jump_value.(variable)
-        write_result!(store, model_name, key, index, update_timestamp, data)
-
-        if !isnothing(export_params) &&
-           should_export_aux_variable(
-            export_params[:exports],
-            update_timestamp,
-            model_name,
-            key,
-        )
-            horizon_count = export_params[:horizon_count]
-            resolution = export_params[:resolution]
-            file_type = export_params[:file_type]
-            df = to_dataframe(data, key)
-            time_col = range(index; length = horizon_count, step = resolution)
-            DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_output(file_type, exports_path, key, index, df)
-        end
-    end
-    return
-end
-
-function write_model_expression_results!(
-    store,
-    model::T,
-    index::Union{DecisionModelIndexType, EmulationModelIndexType},
-    update_timestamp::Dates.DateTime,
-    export_params::Union{Dict{Symbol, Any}, Nothing},
-) where {T <: IOM.AbstractOptimizationModel}
-    container = get_optimization_container(model)
-    model_name = get_name(model)
-    if !isnothing(export_params)
-        exports_path = joinpath(export_params[:exports_path], "expressions")
-        mkpath(exports_path)
-    end
-
+function _result_source(container::OptimizationContainer, ::Val{:expressions})
     if !isempty(container.primal_values_cache)
-        expressions = container.primal_values_cache.expressions_cache
-    else
-        expressions = get_expressions(container)
+        return container.primal_values_cache.expressions_cache
+    end
+    return get_expressions(container)
+end
+
+_result_values(x, ::Val) = jump_value.(x)
+_result_values(x, ::Val{:parameters}) = calculate_parameter_values(x)
+
+_should_export_field(exports, ts, model_name, key, ::Val{:duals}) =
+    should_export_dual(exports, ts, model_name, key)
+_should_export_field(exports, ts, model_name, key, ::Val{:parameters}) =
+    should_export_parameter(exports, ts, model_name, key)
+_should_export_field(exports, ts, model_name, key, ::Val{:variables}) =
+    should_export_variable(exports, ts, model_name, key)
+_should_export_field(exports, ts, model_name, key, ::Val{:aux_variables}) =
+    should_export_aux_variable(exports, ts, model_name, key)
+_should_export_field(exports, ts, model_name, key, ::Val{:expressions}) =
+    should_export_expression(exports, ts, model_name, key)
+
+function _write_model_field_results!(
+    store,
+    model::IOM.AbstractOptimizationModel,
+    index::Union{DecisionModelIndexType, EmulationModelIndexType},
+    update_timestamp::Dates.DateTime,
+    export_params::Union{Dict{Symbol, Any}, Nothing},
+    field::Val{F},
+) where {F}
+    container = get_optimization_container(model)
+    model_name = get_name(model)
+    if !isnothing(export_params)
+        exports_path = joinpath(export_params[:exports_path], string(F))
+        mkpath(exports_path)
     end
 
-    for (key, expression) in expressions
+    for (key, value) in _result_source(container, field)
         !should_write_resulting_value(key) && continue
-        data = jump_value.(expression)
+        data = _result_values(value, field)
         write_result!(store, model_name, key, index, update_timestamp, data)
 
         if !isnothing(export_params) &&
-           should_export_expression(
+           _should_export_field(
             export_params[:exports],
             update_timestamp,
             model_name,
             key,
+            field,
         )
-            horizon_count = export_params[:horizon_count]
-            resolution = export_params[:resolution]
-            file_type = export_params[:file_type]
             df = to_dataframe(data, key)
-            time_col = range(index; length = horizon_count, step = resolution)
+            time_col = range(
+                index;
+                length = export_params[:horizon_count],
+                step = export_params[:resolution],
+            )
             DataFrames.insertcols!(df, 1, :DateTime => time_col)
-            export_output(file_type, exports_path, key, index, df)
+            export_output(export_params[:file_type], exports_path, key, index, df)
         end
     end
     return
+end
+
+function _open_results_store(f, execution_path::AbstractString)
+    return open_store(f, HdfSimulationStore, joinpath(execution_path, STORE_DIR), "r")
 end

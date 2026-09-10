@@ -1,8 +1,9 @@
 # File Names definitions
 const SIMULATION_LOG_FILENAME = "simulation.log"
 const REQUIRED_RECORDERS = (:simulation_status, :execution)
+const STORE_DIR = "data_store"
 const KNOWN_SIMULATION_PATHS = [
-    "data_store",
+    STORE_DIR,
     "logs",
     "models_json",
     "problems",
@@ -11,14 +12,4 @@ const KNOWN_SIMULATION_PATHS = [
     "simulation_files",
     "simulation_partitions",
 ]
-"If the name of an extraneous file that appears in simulation results matches one of these regexes, it is safe to ignore"
-const IGNORABLE_FILES = [
-    r"^\.DS_Store$",
-    r"^\.Trashes$",
-    r"^\.Trash-.*$",
-    r"^\.nfs.*$",
-    r"^[Dd]esktop.ini$",
-]
 const RESULTS_DIR = "results"
-
-const RUN_SIMULATION_TIMER = TimerOutputs.TimerOutput()

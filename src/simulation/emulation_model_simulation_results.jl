@@ -117,8 +117,7 @@ function _get_store_value(
     len = nothing,
     table_format = TableFormat.LONG,
 )
-    simulation_store_path = joinpath(get_execution_path(res), "data_store")
-    return open_store(HdfSimulationStore, simulation_store_path, "r") do store
+    return _open_results_store(get_execution_path(res)) do store
         _get_store_value(
             res,
             container_keys,
@@ -207,9 +206,9 @@ function _read_results(
     isempty(result_keys) && return Dict{OptimizationContainerKey, DataFrames.DataFrame}()
     _store = try_resolve_store(store, res.store)
     existing_keys = list_result_keys(res, first(result_keys))
-    # IOM._validate_keys is unexported; mirrors the call in
+    # _validate_keys is unexported; mirrors the call in
     # IOM.optimization_problem_outputs.jl's `_read_outputs`.
-    IOM._validate_keys(existing_keys, result_keys)
+    _validate_keys(existing_keys, result_keys)
     cached_results = Dict(
         k => v for
         (k, v) in get_cached_results(res, eltype(result_keys)) if !isempty(v)
@@ -277,6 +276,10 @@ like `"ActivePowerVariable__ThermalStandard"`` or a Tuple with its constituent t
   - `parameters::Vector{Union{String, Tuple}}`: Optional list of parameters to load.
   - `variables::Vector{Union{String, Tuple}}`: Optional list of variables to load.
 """
+_with_results_store(f, store::InMemorySimulationStore, ::AbstractString) = f(store)
+_with_results_store(f, ::Nothing, execution_path::AbstractString) =
+    _open_results_store(f, execution_path)
+
 function load_results!(
     res::SimulationProblemResults{EmulationModelSimulationResults};
     aux_variables = Vector{Tuple}(),
@@ -299,14 +302,7 @@ function load_results!(
         merge!(get_cached_variables(res), _read_results(res, variable_keys, store))
     end
 
-    if res.store isa InMemorySimulationStore
-        merge_results(res.store)
-    else
-        simulation_store_path = joinpath(res.execution_path, "data_store")
-        open_store(HdfSimulationStore, simulation_store_path, "r") do store
-            merge_results(store)
-        end
-    end
+    _with_results_store(merge_results, res.store, res.execution_path)
 
     return
 end

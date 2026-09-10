@@ -14,9 +14,6 @@ function IOM.update_initial_conditions!(
     ::SimulationState,
     ::IntraProblemChronology,
 )
-    #for key in keys(get_initial_conditions(model))
-    #    update_initial_conditions!(model, key, state)
-    #end
     error("Not Implemented yet")
     return
 end
@@ -41,15 +38,16 @@ function IOM.update_initial_conditions!(
         },
     },
 }
+    isempty(ics) && return
+    component_type = get_component_type(first(ics))
+    var_val = get_system_state_value(state, TimeDurationOn(), component_type)
+    state_resolution =
+        get_data_resolution(get_system_state_data(state, TimeDurationOn(), component_type))
+    # The state data is stored in the state resolution (i.e. lowest resolution among all models)
+    # so this step scales the data to the model resolution.
+    scale = model_resolution / state_resolution
     for ic in ics
-        var_val = get_system_state_value(state, TimeDurationOn(), get_component_type(ic))
-        state_resolution = get_data_resolution(
-            get_system_state_data(state, TimeDurationOn(), get_component_type(ic)),
-        )
-        # The state data is stored in the state resolution (i.e. lowest resolution among all models)
-        # so this step scales the data to the model resolution.
-        val = var_val[get_component_name(ic)] / (model_resolution / state_resolution)
-        set_ic_quantity!(ic, val)
+        set_ic_quantity!(ic, var_val[get_component_name(ic)] / scale)
     end
     return
 end
@@ -74,16 +72,17 @@ function IOM.update_initial_conditions!(
         },
     },
 }
+    isempty(ics) && return
+    component_type = get_component_type(first(ics))
+    var_val = get_system_state_value(state, TimeDurationOff(), component_type)
+    state_resolution =
+        get_data_resolution(get_system_state_data(state, TimeDurationOff(), component_type))
+    # The state data is stored in the state resolution (i.e. lowest resolution among all models)
+    # so this step scales the data to the model resolution.
+    scale = model_resolution / state_resolution
     for ic in ics
         isnothing(get_value(ic)) && continue
-        var_val = get_system_state_value(state, TimeDurationOff(), get_component_type(ic))
-        state_resolution = get_data_resolution(
-            get_system_state_data(state, TimeDurationOff(), get_component_type(ic)),
-        )
-        # The state data is stored in the state resolution (i.e. lowest resolution among all models)
-        # so this step scales the data to the model resolution.
-        val = var_val[get_component_name(ic)] / (model_resolution / state_resolution)
-        set_ic_quantity!(ic, val)
+        set_ic_quantity!(ic, var_val[get_component_name(ic)] / scale)
     end
     return
 end
@@ -108,16 +107,18 @@ function IOM.update_initial_conditions!(
         },
     },
 }
+    isempty(ics) && return
+    comp_type = get_component_type(first(ics))
+    power_vals = get_system_state_value(state, ActivePowerVariable(), comp_type)
     for ic in ics
         comp_name = get_component_name(ic)
-        comp_type = get_component_type(ic)
         comp = IOM.get_component(ic)
         if hasmethod(PSY.get_must_run, Tuple{comp_type}) && PSY.get_must_run(comp)
             status_val = 1.0
         else
             status_val = get_system_state_value(state, OnVariable(), comp_type)[comp_name]
         end
-        var_val = get_system_state_value(state, ActivePowerVariable(), comp_type)[comp_name]
+        var_val = power_vals[comp_name]
         if !isapprox(status_val, 0.0; atol = ABSOLUTE_TOLERANCE)
             min = PSY.get_active_power_limits(comp, PSY.SU).min
             max = PSY.get_active_power_limits(comp, PSY.SU).max
@@ -164,9 +165,10 @@ function IOM.update_initial_conditions!(
         },
     },
 }
+    isempty(ics) && return
+    var_val = get_system_state_value(state, OnVariable(), get_component_type(first(ics)))
     for ic in ics
         isnothing(get_value(ic)) && continue
-        var_val = get_system_state_value(state, OnVariable(), get_component_type(ic))
         set_ic_quantity!(ic, var_val[get_component_name(ic)])
     end
     return
@@ -192,12 +194,13 @@ function IOM.update_initial_conditions!(
         },
     },
 }
+    isempty(ics) && return
+    var_val = get_system_state_value(
+        state,
+        PowerAboveMinimumVariable(),
+        get_component_type(first(ics)),
+    )
     for ic in ics
-        var_val = get_system_state_value(
-            state,
-            PowerAboveMinimumVariable(),
-            get_component_type(ic),
-        )
         set_ic_quantity!(ic, var_val[get_component_name(ic)])
     end
     return
@@ -223,8 +226,10 @@ function IOM.update_initial_conditions!(
         },
     },
 }
+    isempty(ics) && return
+    var_val =
+        get_system_state_value(state, EnergyVariable(), get_component_type(first(ics)))
     for ic in ics
-        var_val = get_system_state_value(state, EnergyVariable(), get_component_type(ic))
         set_ic_quantity!(ic, var_val[get_component_name(ic)])
     end
     return
@@ -250,12 +255,13 @@ function IOM.update_initial_conditions!(
         },
     },
 }
+    isempty(ics) && return
+    var_val = get_system_state_value(
+        state,
+        HydroReservoirVolumeVariable(),
+        get_component_type(first(ics)),
+    )
     for ic in ics
-        var_val = get_system_state_value(
-            state,
-            HydroReservoirVolumeVariable(),
-            get_component_type(ic),
-        )
         set_ic_quantity!(ic, var_val[get_component_name(ic)])
     end
     return

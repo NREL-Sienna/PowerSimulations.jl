@@ -212,10 +212,7 @@ function _attach_events!(
     event_models::Vector{<:POM.EventModel},
 )
     isempty(event_models) && return
-    sim_models = IOM.AbstractOptimizationModel[get_decision_models(models)...]
-    em_model = get_emulation_model(models)
-    isnothing(em_model) || push!(sim_models, em_model)
-    for model in sim_models, event_model in event_models
+    for model in get_all_models(models), event_model in event_models
         set_event_model!(get_template(model), event_model)
     end
     return

@@ -4,17 +4,6 @@ const EMULATION_MODEL_PATH = "$HDF_SIMULATION_ROOT_PATH/emulation_model"
 const OPTIMIZER_STATS_PATH = "optimizer_stats"
 const SERIALIZED_KEYS_PATH = "serialized_keys"
 
-# This only applies if chunks are enabled, and that will only likely happen if we enable
-# compression.
-# The optimal number of chunks to store in memory will vary widely.
-# The HDF docs recommend keeping chunk byte sizes between 10 KiB - 1 MiB.
-# We want to make it big enough to compress duplicate values.
-# The downside to making this larger is that any read causes the
-# entire chunk to be read.
-# If one variable has 10,000 components and each value is a Float64 then one row would
-# consume 10,000 * 8 = 78 KiB
-DEFAULT_MAX_CHUNK_BYTES = 128 * KiB
-
 """
 Stores simulation data in an HDF file.
 """
@@ -45,7 +34,11 @@ function HdfSimulationStore(file_path::AbstractString, mode::AbstractString)
         throw(IS.ConflictingInputsError("$file_path already exists"))
     end
 
-    hdf5_mode = mode == "rw" ? "r+" : mode
+    if mode == "rw"
+        hdf5_mode = "r+"
+    else
+        hdf5_mode = mode
+    end
     file = HDF5.h5open(file_path, hdf5_mode)
     if mode == "w"
         HDF5.create_group(file, HDF_SIMULATION_ROOT_PATH)
@@ -126,7 +119,7 @@ function Base.close(store::HdfSimulationStore)
 end
 
 function Base.isopen(store::HdfSimulationStore)
-    return isnothing(store.file) ? false : HDF5.isopen(store.file)
+    return HDF5.isopen(store.file)
 end
 
 function Base.flush(store::HdfSimulationStore)
@@ -152,14 +145,6 @@ function set_cache_flush_rules!(store::HdfSimulationStore, flush_rules::CacheFlu
         store.cache,
     )
     return
-end
-
-function get_decision_model_params(store::HdfSimulationStore, model_name::Symbol)
-    return get_decision_model_params(get_params(store), model_name)
-end
-
-function get_emulation_model_params(store::HdfSimulationStore)
-    return get_emulation_model_params(get_params(store))
 end
 
 function get_container_key_lookup(store::HdfSimulationStore)
@@ -210,9 +195,7 @@ function write_optimizer_stats!(
     dataset = _get_dataset(OptimizerStats, store, model_name)
 
     # Uncomment for performance measures of HDF Store
-    #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write optimizer stats" begin
     dataset[:, store.optimizer_stats_write_index[model_name]] = to_matrix(stats)
-    #end
 
     store.optimizer_stats_write_index[model_name] += 1
     return
@@ -488,16 +471,6 @@ function get_column_names(
     return get_column_names(key, dataset)
 end
 
-function get_column_names(
-    store::HdfSimulationStore,
-    ::Type{EmulationModelIndexType},
-    key::OptimizationContainerKey,
-)
-    !isopen(store) && throw(ArgumentError("store must be opened prior to reading"))
-    dataset = _get_em_dataset(store, key)
-    return get_column_names(key, dataset)
-end
-
 function get_number_of_dimensions(
     store::HdfSimulationStore,
     i::Type{DecisionModelIndexType},
@@ -505,14 +478,6 @@ function get_number_of_dimensions(
     key::OptimizationContainerKey,
 )
     return length(get_column_names(store, i, model_name, key))
-end
-
-function get_number_of_dimensions(
-    store::HdfSimulationStore,
-    i::Type{EmulationModelIndexType},
-    key::OptimizationContainerKey,
-)
-    return length(get_column_names(store, i, key))
 end
 
 function get_emulation_model_dataset_size(
@@ -543,7 +508,6 @@ function _read_result(
     dataset = _get_em_dataset(store, key)
     dset = dataset.values
     # Uncomment for performance checking
-    #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Read dataset" begin
     num_dims = ndims(dset)
     if num_dims == 2
         data = dset[index, :]
@@ -552,9 +516,10 @@ function _read_result(
     else
         error("Unsupported number of dimensions for emulation dataset: $num_dims")
     end
-    #end
     columns = get_column_names(key, dataset)
-    data = ndims(data) == 1 ? permutedims(data) : data
+    if ndims(data) == 1
+        data = permutedims(data)
+    end
     return data, columns
 end
 
@@ -593,7 +558,6 @@ function _read_result(
     columns = get_column_names(key, dataset)
 
     # Uncomment for performance checking
-    #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Read dataset" begin
     num_dims = ndims(dset)
     if num_dims == 3
         data = dset[:, :, row_index]
@@ -602,7 +566,6 @@ function _read_result(
     else
         error("unsupported dims: $num_dims")
     end
-    #end
 
     return data, columns
 end
@@ -635,7 +598,6 @@ function write_result!(
     # Disabled because this is currently a noop.
     #if is_full(store.cache)
     #    _flush_data!(store.cache, store)
-    #end
 
     @debug "write_result" get_size(store.cache) encode_key_as_string(key)
     return
@@ -675,7 +637,6 @@ function write_result!(
     # Disabled because this is currently a noop.
     #if is_full(store.cache)
     #    _flush_data!(store.cache, store)
-    #end
 
     @debug "write_result" get_size(store.cache) encode_key_as_string(key)
     return
@@ -725,7 +686,11 @@ function write_result!(
     # Not sure why the special case for this dimension size is needed.
     # It fails with the key = InfrastructureSystems.Optimization.ParameterKey{OnStatusParameter, ThermalStandard}("")
     # The array size is 5 x 1
-    data = size(array, 2) == 1 ? reshape(array.data, length(array.data)) : array.data
+    if size(array, 2) == 1
+        data = reshape(array.data, length(array.data))
+    else
+        data = array.data
+    end
     dataset = _get_em_dataset(store, key)
     _write_dataset!(dataset.values, data, index)
     set_last_recorded_row!(dataset, index)
@@ -770,21 +735,6 @@ function write_result!(
     return
 end
 
-function serialize_system!(store::HdfSimulationStore, sys::PSY.System)
-    root = store.file[HDF_SIMULATION_ROOT_PATH]
-    systems_group = _get_group_or_create(root, "systems")
-    uuid = string(PSY.get_system_uuid(sys))
-    if haskey(systems_group, uuid)
-        @debug "System with UUID = $uuid is already stored" _group =
-            LOG_GROUP_SIMULATION_STORE
-        return
-    end
-
-    json_text = PSY.to_json(sys)
-    systems_group[uuid] = json_text
-    return
-end
-
 function write_system_json!(store::HdfSimulationStore, uuid::String, json_text::String)
     root = store.file[HDF_SIMULATION_ROOT_PATH]
     systems_group = _get_group_or_create(root, "systems")
@@ -814,33 +764,6 @@ function _check_state(store::HdfSimulationStore)
     if has_dirty(store.cache)
         error("BUG!!! dirty cache is present at shutdown: $(store.file)")
     end
-end
-
-function _compute_chunk_count(dims, dtype; max_chunk_bytes = DEFAULT_MAX_CHUNK_BYTES)
-    bytes_per_element = sizeof(dtype)
-
-    if length(dims) == 2
-        size_row = dims[1] * bytes_per_element
-    elseif length(dims) == 3
-        size_row = dims[1] * dims[2] * bytes_per_element
-    elseif length(dims) == 4
-        size_row = dims[1] * dims[2] * dims[3] * bytes_per_element
-    else
-        error("unsupported dims = $dims")
-    end
-
-    chunk_count = minimum((trunc(max_chunk_bytes / size_row), dims[end]))
-    if chunk_count == 0
-        error(
-            "HDF Max Chunk Bytes is smaller than the size of a row. Please increase it. " *
-            "max_chunk_bytes=$max_chunk_bytes dims=$dims " *
-            "size_row=$size_row",
-        )
-    end
-
-    chunk_dims = [x for x in dims]
-    chunk_dims[end] = chunk_count
-    return chunk_dims
 end
 
 function _create_dataset(group, name, reqs)
@@ -1029,9 +952,7 @@ function _flush_data!(
     end_index = dataset.write_index + length(timestamps) - 1
     write_range = (dataset.write_index):end_index
     # Enable only for development and benchmarking
-    #TimerOutputs.@timeit RUN_SIMULATION_TIMER "Write $(key.key) array to HDF" begin
     _write_dataset!(dataset.values, data, write_range)
-    #end
 
     discard && discard_results!(cache, timestamps)
 
@@ -1046,10 +967,6 @@ end
 
 function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore, model_name)
     return store.optimizer_stats_datasets[model_name]
-end
-
-function _get_dataset(::Type{OptimizerStats}, store::HdfSimulationStore)
-    return store.optimizer_stats_datasets
 end
 
 function _get_em_dataset(store::HdfSimulationStore, key::OptimizationContainerKey)
@@ -1106,11 +1023,6 @@ end
 _get_root(store::HdfSimulationStore) = store.file[HDF_SIMULATION_ROOT_PATH]
 _get_emulation_model_path(store::HdfSimulationStore) = store.file[EMULATION_MODEL_PATH]
 
-function _read_column_names(::Type{OptimizerStats}, store::HdfSimulationStore)
-    dataset = _get_dataset(OptimizerStats, store)
-    return HDF5.read(HDF5.attributes(dataset), "columns")
-end
-
 function _read_data_columns(
     store::HdfSimulationStore,
     model_name::Symbol,
@@ -1119,14 +1031,7 @@ function _read_data_columns(
 )
     if is_cached(store.cache, model_name, key, index)
         data = read_result(store.cache, model_name, key, index)
-        column_dataset = _get_dm_dataset(store, model_name, key).column_dataset
-        if ndims(column_dataset) == 1
-            columns = (column_dataset[:],)
-        elseif ndims(column_dataset) == 2
-            columns = (column_dataset[:, 1], column_dataset[:, 2])
-        else
-            error("Datasets with $(ndims(column_dataset)) columns not supported")
-        end
+        columns = get_column_names(key, _get_dm_dataset(store, model_name, key))
     else
         data, columns = _read_result(store, model_name, key, index)
     end
@@ -1139,20 +1044,7 @@ function _read_data_columns(
     key::OptimizationContainerKey,
     index::EmulationModelIndexType,
 )
-    # TODO: Enable once the cache is in use for em_data
-    #if is_cached(store.cache, model_name, key, index)
-    # data = read_result(store.cache, model_name, key, index)
-    #columns = _get_em_dataset(store, model_name, key).column_dataset[:]
-    #else
-    #    data, columns = _read_result(store, model_name, key, index)
-    #end
-
     return _read_result(store, model_name, key, index)
-end
-
-function _read_length(::Type{OptimizerStats}, store::HdfSimulationStore)
-    dataset = _get_dataset(OptimizerStats, store)
-    return HDF5.read(HDF5.attributes(dataset), "columns")
 end
 
 # Specific data set writing function that writes decision model data. It dispatches on the index type of the dataset as a range

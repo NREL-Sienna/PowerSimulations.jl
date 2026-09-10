@@ -95,12 +95,10 @@ handle_variable_cost_parameter(
 const _AnyPiecewiseLinearParameter =
     Union{AbstractPiecewiseLinearSlopeParameter, AbstractPiecewiseLinearBreakpointParameter}
 
-# Maps a breakpoint parameter type to its paired block-width constraint type (mirrors
-# `IOM._block_width_constraint` applied to the offer-constraint type at build time).
-_linear_block_offer_constraint(::Type{IncrementalPiecewiseLinearBreakpointParameter}) =
-    PiecewiseLinearBlockIncrementalOfferConstraint
-_linear_block_offer_constraint(::Type{DecrementalPiecewiseLinearBreakpointParameter}) =
-    PiecewiseLinearBlockDecrementalOfferConstraint
+_linear_block_width_constraint(::Type{IncrementalPiecewiseLinearBreakpointParameter}) =
+    PiecewiseLinearBlockIncrementalWidthConstraint
+_linear_block_width_constraint(::Type{DecrementalPiecewiseLinearBreakpointParameter}) =
+    PiecewiseLinearBlockDecrementalWidthConstraint
 
 """
 Set each per-block width constraint's RHS from updated breakpoints. Mirrors
@@ -117,9 +115,7 @@ function _update_pwl_width_constraint!(
     time_period::Int,
     cost_data::PSY.PiecewiseStepData,
 ) where {P <: AbstractPiecewiseLinearBreakpointParameter, T <: PSY.Component}
-    # IOM._block_width_constraint is not exported; reached directly.
-    width_type = IOM._block_width_constraint(_linear_block_offer_constraint(P))
-    width_container = get_constraint(container, width_type, T)
+    width_container = get_constraint(container, _linear_block_width_constraint(P), T)
     breakpoints = PSY.get_x_coords(cost_data)
     for ix in 1:(length(breakpoints) - 1)
         JuMP.set_normalized_rhs(
@@ -145,7 +141,7 @@ function update_variable_cost!(
     converted_data = get_piecewise_curve_per_system_unit(
         function_data,
         power_units,
-        IOM.get_model_base_power(container),
+        get_model_base_power(container),
         PSY.get_base_power(component),
     )
     _update_pwl_width_constraint!(
@@ -163,12 +159,12 @@ _maybe_tuple(::AbstractCostAtMinParameter, value) = value
 _cost_ts_key(
     param::Union{StartupCostParameter, AbstractCostAtMinParameter},
     op_cost::PSY.OfferCurveCost,
-) = IOM._get_parameter_field(typeof(param), op_cost)
+) = _get_parameter_field(typeof(param), op_cost)
 _cost_ts_key(param::ShutdownCostParameter, op_cost::PSY.OfferCurveCost) =
-    IS.get_time_series_key(IOM._get_parameter_field(typeof(param), op_cost))
+    IS.get_time_series_key(_get_parameter_field(typeof(param), op_cost))
 _cost_ts_key(param::_AnyPiecewiseLinearParameter, op_cost::PSY.OfferCurveCost) =
     IS.get_time_series_key(
-        PSY.get_value_curve(IOM._get_parameter_field(typeof(param), op_cost)),
+        PSY.get_value_curve(_get_parameter_field(typeof(param), op_cost)),
     )
 
 # A key carries only its store-minted association id; the name lives in the catalog.
@@ -191,10 +187,10 @@ function handle_variable_cost_parameter(
     horizon,
     ts_type,
 )
-    is_time_variant(IOM._get_parameter_field(typeof(param), op_cost)) || return
+    is_time_variant(_get_parameter_field(typeof(param), op_cost)) || return
     container = get_optimization_container(model)
     ts_name = _cost_ts_name(param, component, op_cost)
-    raw_values = IOM.get_time_series_values!(
+    raw_values = get_time_series_values!(
         ts_type,
         model,
         component,
@@ -233,11 +229,11 @@ function handle_variable_cost_parameter(
     horizon,
     ts_type,
 ) where {T <: _AnyPiecewiseLinearParameter}
-    is_time_variant(IOM._get_parameter_field(typeof(param), op_cost)) || return
+    is_time_variant(_get_parameter_field(typeof(param), op_cost)) || return
     container = get_optimization_container(model)
     ts_name = _cost_ts_name(param, component, op_cost)
-    power_units = IS.get_power_units(IOM._get_parameter_field(typeof(param), op_cost))
-    raw_values = IOM.get_time_series_values!(
+    power_units = IS.get_power_units(_get_parameter_field(typeof(param), op_cost))
+    raw_values = get_time_series_values!(
         ts_type,
         model,
         component,
@@ -281,7 +277,7 @@ function handle_variable_cost_parameter(
     ts_key = IS.get_time_series_key(PSY.get_value_curve(offer_curve))
     ts_name = _ts_name_from_key(component, ts_key)
     power_units = IS.get_power_units(offer_curve)
-    raw_values = IOM.get_time_series_values!(
+    raw_values = get_time_series_values!(
         ts_type,
         model,
         component,
@@ -337,7 +333,7 @@ function handle_variable_cost_parameter(
     container = get_optimization_container(model)
     device_model = get_model(get_template(model), typeof(component))
     ts_name = IOM.get_time_series_names(device_model)[FuelCostParameter]
-    raw_values = IOM.get_time_series_values!(
+    raw_values = get_time_series_values!(
         ts_type,
         model,
         component,
@@ -458,7 +454,7 @@ function update_variable_cost!(
     converted_data = get_piecewise_curve_per_system_unit(
         function_data,
         power_units,
-        IOM.get_model_base_power(container),
+        get_model_base_power(container),
         PSY.get_base_power(component),
     )
     gen_cost =
