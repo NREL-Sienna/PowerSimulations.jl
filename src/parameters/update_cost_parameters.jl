@@ -157,15 +157,14 @@ _maybe_tuple(::AbstractCostAtMinParameter, value) = value
 # resolved from it. Mirrors POM's build-time `_get_time_series_name` /
 # `_device_offer_curve_ts_key` (PowerOperationsModels.jl/src/common_models/add_parameters.jl).
 _cost_ts_key(
-    param::Union{StartupCostParameter, AbstractCostAtMinParameter},
+    ::T,
     op_cost::PSY.OfferCurveCost,
-) = _get_parameter_field(typeof(param), op_cost)
-_cost_ts_key(param::ShutdownCostParameter, op_cost::PSY.OfferCurveCost) =
-    IS.get_time_series_key(_get_parameter_field(typeof(param), op_cost))
-_cost_ts_key(param::_AnyPiecewiseLinearParameter, op_cost::PSY.OfferCurveCost) =
-    IS.get_time_series_key(
-        PSY.get_value_curve(_get_parameter_field(typeof(param), op_cost)),
-    )
+) where {T <: Union{StartupCostParameter, AbstractCostAtMinParameter}} =
+    _get_parameter_field(T, op_cost)
+_cost_ts_key(::T, op_cost::PSY.OfferCurveCost) where {T <: ShutdownCostParameter} =
+    IS.get_time_series_key(_get_parameter_field(T, op_cost))
+_cost_ts_key(::T, op_cost::PSY.OfferCurveCost) where {T <: _AnyPiecewiseLinearParameter} =
+    IS.get_time_series_key(PSY.get_value_curve(_get_parameter_field(T, op_cost)))
 
 # A key carries only its store-minted association id; the name lives in the catalog.
 _ts_name_from_key(owner::PSY.Component, key::IS.TimeSeriesKey) =
@@ -175,7 +174,7 @@ _cost_ts_name(param, owner, op_cost::PSY.OfferCurveCost) =
     _ts_name_from_key(owner, _cost_ts_key(param, op_cost))
 
 function handle_variable_cost_parameter(
-    param::Union{StartupCostParameter, ShutdownCostParameter, AbstractCostAtMinParameter},
+    param::T,
     op_cost::PSY.OfferCurveCost,
     component,
     name,
@@ -186,8 +185,10 @@ function handle_variable_cost_parameter(
     initial_forecast_time,
     horizon,
     ts_type,
-)
-    is_time_variant(_get_parameter_field(typeof(param), op_cost)) || return
+) where {
+    T <: Union{StartupCostParameter, ShutdownCostParameter, AbstractCostAtMinParameter},
+}
+    is_time_variant(_get_parameter_field(T, op_cost)) || return
     container = get_optimization_container(model)
     ts_name = _cost_ts_name(param, component, op_cost)
     raw_values = get_time_series_values!(
@@ -198,10 +199,36 @@ function handle_variable_cost_parameter(
         initial_forecast_time,
         horizon,
     )
+    _update_scalar_cost_values!(
+        param,
+        container,
+        raw_values,
+        parameter_array,
+        parameter_multiplier,
+        attributes,
+        component,
+        name,
+    )
+    return
+end
+
+# Function barrier: `raw_values` comes back from the time-series read abstractly typed, so the
+# per-step loop is specialized here on its concrete runtime element type.
+function _update_scalar_cost_values!(
+    param::T,
+    container::OptimizationContainer,
+    raw_values,
+    parameter_array,
+    parameter_multiplier,
+    attributes,
+    component,
+    name,
+) where {
+    T <: Union{StartupCostParameter, ShutdownCostParameter, AbstractCostAtMinParameter},
+}
     additional_axes = lookup_additional_axes(parameter_array)
     for (t, raw_value) in enumerate(raw_values)
         value = unwrap_for_param(param, raw_value, additional_axes)
-        # startup needs Tuple(value), rest just value. (slight type instability)
         _set_param_value!(parameter_array, _maybe_tuple(param, value), name, t)
         update_variable_cost!(
             param,
@@ -229,10 +256,11 @@ function handle_variable_cost_parameter(
     horizon,
     ts_type,
 ) where {T <: _AnyPiecewiseLinearParameter}
-    is_time_variant(_get_parameter_field(typeof(param), op_cost)) || return
+    offer_curve = _get_parameter_field(T, op_cost)
+    is_time_variant(offer_curve) || return
     container = get_optimization_container(model)
     ts_name = _cost_ts_name(param, component, op_cost)
-    power_units = IS.get_power_units(_get_parameter_field(typeof(param), op_cost))
+    power_units = IS.get_power_units(offer_curve)
     raw_values = get_time_series_values!(
         ts_type,
         model,
@@ -341,6 +369,31 @@ function handle_variable_cost_parameter(
         initial_forecast_time,
         horizon,
     )
+    _update_fuel_cost_values!(
+        container,
+        raw_values,
+        parameter_array,
+        parameter_multiplier,
+        attributes,
+        component,
+        fuel_curve,
+        name,
+    )
+    return
+end
+
+# Function barrier: `raw_values` comes back from the time-series read abstractly typed, so the
+# per-step loop is specialized here on its concrete runtime element type.
+function _update_fuel_cost_values!(
+    container::OptimizationContainer,
+    raw_values,
+    parameter_array,
+    parameter_multiplier,
+    attributes,
+    component,
+    fuel_curve,
+    name,
+)
     for (t, value) in enumerate(raw_values)
         _set_param_value!(parameter_array, value, name, t)
         update_variable_cost!(
