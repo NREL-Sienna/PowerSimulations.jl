@@ -874,61 +874,77 @@ function _last_recorded_state_value(
 end
 
 function _write_state_to_store!(store::SimulationStore, sim::Simulation)
-    sim_state = get_simulation_state(sim)
-    system_state = get_system_states(sim_state)
-    model_name = get_last_decision_model(sim_state)
+    system_state = get_system_states(get_simulation_state(sim))
     em_store = get_em_data(store)
     simulation_time = get_current_time(sim)
+    for key in get_dataset_keys(system_state)
+        # The store can never be ahead of the clock while the step loop is writing. (After the
+        # last step it legitimately is: a single-model sequence holds the state through the
+        # end of its interval, so this check does not apply to the trailing flush.)
+        @assert get_last_updated_timestamp(em_store, key) <= simulation_time
+        _write_state_rows!(store, sim, key, get_update_timestamp(system_state, key))
+    end
+    return
+end
+
+# A key coarser than the state grid last updates at its final aligned boundary, so the step
+# loop never reaches the sub-rows of the last window. Carry the held value through the end of
+# the simulation, otherwise those rows stay unwritten and read back as NaN.
+function _write_trailing_state_to_store!(store::SimulationStore, sim::Simulation)
+    sim_state = get_simulation_state(sim)
+    system_state = get_system_states(sim_state)
+    state_resolution = get_system_states_resolution(sim_state)
+    sim_end =
+        get_initial_time(sim) + get_steps(sim) * get_step_resolution(get_sequence(sim))
+    for key in get_dataset_keys(system_state)
+        _write_state_rows!(store, sim, key, sim_end - state_resolution)
+    end
+    return
+end
+
+function _write_state_rows!(
+    store::SimulationStore,
+    sim::Simulation,
+    key::OptimizationContainerKey,
+    until::Dates.DateTime,
+)
+    sim_state = get_simulation_state(sim)
+    model_name = get_last_decision_model(sim_state)
+    em_store = get_em_data(store)
     sim_ini_time = get_initial_time(sim)
     state_resolution = get_system_states_resolution(sim_state)
-    for key in get_dataset_keys(system_state)
-        store_update_time = get_last_updated_timestamp(em_store, key)
-        state_update_time = get_update_timestamp(system_state, key)
-        # If the store is outdated w.r.t to the state
-        @assert store_update_time <= simulation_time
-        if store_update_time < state_update_time
-            # A key's own decision-state resolution can be coarser than the simulation-wide
-            # `state_resolution` (the finest resolution across all models) whenever the key
-            # is unique to a coarser-resolution model. `_update_timestamp` walks the
-            # simulation-wide grid, so it must be floored onto the key's own grid (a
-            # zero-order hold) before reading `decision_states`, whose dataset only has
-            # entries at its native resolution.
-            decision_dataset = get_dataset(get_decision_states(sim_state), key)
-            decision_resolution = get_data_resolution(decision_dataset)
-            window_start = first(decision_dataset.timestamps)
-            _update_timestamp = max(store_update_time + state_resolution, sim_ini_time)
-            while _update_timestamp <= state_update_time
-                aligned_timestamp =
-                    sim_ini_time +
-                    ((_update_timestamp - sim_ini_time) ÷ decision_resolution) *
-                    decision_resolution
-                if aligned_timestamp < window_start
-                    # The owning model has already rebuilt for its next window (single-shot
-                    # models with no rolling overlap between executions) before this
-                    # straggling sub-tick could be flushed. The held value hasn't changed
-                    # since the last row actually written to the store, so reuse it instead
-                    # of `decision_states`, whose window no longer covers `aligned_timestamp`.
-                    last_row = get_last_recorded_row(em_store, key)
-                    raw_state_values =
-                        read_result(DenseAxisArray, store, model_name, key, last_row)
-                    state_values =
-                        _last_recorded_state_value(store, raw_state_values, last_row)
-                else
-                    state_values =
-                        get_decision_state_value(sim_state, key, aligned_timestamp)
-                end
-                ix = get_last_recorded_row(em_store, key) + 1
-                write_result!(
-                    store,
-                    model_name,
-                    key,
-                    ix,
-                    _update_timestamp,
-                    state_values,
-                )
-                _update_timestamp += state_resolution
-            end
+    store_update_time = get_last_updated_timestamp(em_store, key)
+    store_update_time >= until && return
+    # A key's own decision-state resolution can be coarser than the simulation-wide
+    # `state_resolution` (the finest resolution across all models) whenever the key
+    # is unique to a coarser-resolution model. `_update_timestamp` walks the
+    # simulation-wide grid, so it must be floored onto the key's own grid (a
+    # zero-order hold) before reading `decision_states`, whose dataset only has
+    # entries at its native resolution.
+    decision_dataset = get_dataset(get_decision_states(sim_state), key)
+    decision_resolution = get_data_resolution(decision_dataset)
+    window_start = first(decision_dataset.timestamps)
+    _update_timestamp = max(store_update_time + state_resolution, sim_ini_time)
+    while _update_timestamp <= until
+        aligned_timestamp =
+            sim_ini_time +
+            ((_update_timestamp - sim_ini_time) ÷ decision_resolution) *
+            decision_resolution
+        if aligned_timestamp < window_start
+            # The owning model has already rebuilt for its next window (single-shot
+            # models with no rolling overlap between executions) before this
+            # straggling sub-tick could be flushed. The held value hasn't changed
+            # since the last row actually written to the store, so reuse it instead
+            # of `decision_states`, whose window no longer covers `aligned_timestamp`.
+            last_row = get_last_recorded_row(em_store, key)
+            raw_state_values = read_result(DenseAxisArray, store, model_name, key, last_row)
+            state_values = _last_recorded_state_value(store, raw_state_values, last_row)
+        else
+            state_values = get_decision_state_value(sim_state, key, aligned_timestamp)
         end
+        ix = get_last_recorded_row(em_store, key) + 1
+        write_result!(store, model_name, key, ix, _update_timestamp, state_values)
+        _update_timestamp += state_resolution
     end
     return
 end
@@ -1116,6 +1132,7 @@ function _execute!(
             "done",
         )
     end # Steps for loop
+    _write_trailing_state_to_store!(store, sim)
     return
 end
 

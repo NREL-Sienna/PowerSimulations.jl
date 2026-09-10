@@ -767,16 +767,14 @@ function _check_state(store::HdfSimulationStore)
 end
 
 function _create_dataset(group, name, reqs)
+    # No chunking or compression: read performance is the priority. A row that is never
+    # written must read back as NaN, not as the HDF5 default of 0.0.
     dataset = HDF5.create_dataset(
         group,
         name,
         HDF5.datatype(Float64),
-        HDF5.dataspace(reqs["dims"]),
-        # We are choosing to optimize read performance in the first implementation.
-        # Compression would slow that down.
-        #chunk = _compute_chunk_count(reqs["dims"], Float64),
-        #shuffle = (),
-        #deflate = 3,
+        HDF5.dataspace(reqs["dims"]);
+        fill_value = NaN,
     )
     @debug "Created dataset for" group name size(dataset)
     return dataset

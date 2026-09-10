@@ -163,6 +163,35 @@ end
     @test p_d2[p_recover_ix, "Alta"] < 40.0
 end
 
+# A UC-only key updates the system state at hourly boundaries only, so the 5-minute rows of
+# the final hour are never flushed by the step loop. They must still be written, holding the
+# last hourly value, or the store reads them back as NaN (in memory) or 0.0 (HDF).
+function _test_trailing_rows_held(res)
+    em = get_emulation_problem_results(res)
+    on_em = read_realized_variable(
+        em,
+        "OnVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+    last_hour = on_em[(end - 11):end, :]
+    @test last_hour[1, :DateTime] == DateTime("2024-01-01T23:00:00")
+    @test !any(isnan, Matrix(last_hour[:, Not(:DateTime)]))
+    # Both D1 and D2 write OnVariable; the hourly D2 runs after the daily D1, so its 23:00
+    # solve is the last writer of the decision state the emulator copies verbatim.
+    d2 = get_decision_problem_results(res, "D2")
+    on_d2 = read_realized_variable(
+        d2,
+        "OnVariable__ThermalStandard";
+        table_format = TableFormat.WIDE,
+    )
+    held = on_d2[on_d2.DateTime .== DateTime("2024-01-01T23:00:00"), :]
+    @test nrow(held) == 1
+    for name in names(last_hour, Not(:DateTime))
+        @test all(last_hour[!, name] .== held[1, name])
+    end
+    return
+end
+
 @testset "5 min emulator; no events attached" begin
     # Regression for the alignment bug: a sub-hourly emulator reading hourly decision
     # state must succeed with no event models attached at all.
@@ -191,6 +220,23 @@ end
     p_d2 =
         read_realized_variables(d2; table_format = TableFormat.WIDE)["ActivePowerVariable__ThermalStandard"]
     @test nrow(p_d2) > 0
+    _test_trailing_rows_held(res)
+end
+
+@testset "5 min emulator; no events attached; HDF store" begin
+    res = run_events_simulation(;
+        sys_emulator = build_system(PSITestSystems, "c_sys5_events_rt"),
+        networks = repeat([CopperPlateNetworkModel], 3),
+        optimizers = repeat([HiGHS_optimizer_small_gap], 3),
+        outage_time = DateTime("2024-01-01T18:00:00"),
+        outage_length = 3.0,
+        uc_formulation = "basic",
+        ed_formulation = "nomin",
+        feedforward = false,
+        in_memory = false,
+        attach_events = false,
+    )
+    _test_trailing_rows_held(res)
 end
 
 @testset "FixedForcedOutage with timeseries" begin

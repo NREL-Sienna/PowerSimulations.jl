@@ -23,3 +23,28 @@
         DateTime("2023-12-31T23:00:00"),
     )
 end
+
+@testset "duration aux variables scale to the system-state resolution for every device type" begin
+    # A decision model at hourly resolution writes TimeDurationOn in hours; the system state
+    # runs at the finest simulation resolution (5 minutes here), so the copied value must be
+    # rescaled by 12 regardless of the device type carrying the key.
+    ts = DateTime("2024-01-01T00:00:00")
+    for device_type in (ThermalStandard, ThermalMultiStart)
+        key = PSI.AuxVarKey(PSI.TimeDurationOn, device_type)
+        decision = PSI.DatasetContainer{PSI.InMemoryDataset}()
+        PSI.set_dataset!(
+            decision,
+            key,
+            PSI.InMemoryDataset(0.0, ts, Millisecond(Hour(1)), 0, 3, ["gen"]),
+        )
+        PSI.get_dataset(decision, key).values["gen", 1] = 3.0
+        system = PSI.DatasetContainer{PSI.InMemoryDataset}()
+        PSI.set_dataset!(
+            system,
+            key,
+            PSI.make_system_state(ts, Millisecond(Minute(5)), (["gen"],)),
+        )
+        PSI.update_system_state!(system, key, decision, ts)
+        @test PSI.get_dataset_values(system, key)["gen", 1] == 36.0
+    end
+end

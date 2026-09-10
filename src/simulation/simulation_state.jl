@@ -979,10 +979,10 @@ end
 
 function update_system_state!(
     state::DatasetContainer{InMemoryDataset},
-    key::AuxVarKey{T, PSY.ThermalStandard},
+    key::AuxVarKey{T, U},
     decision_state::DatasetContainer{InMemoryDataset},
     simulation_time::Dates.DateTime,
-) where {T <: Union{TimeDurationOn, TimeDurationOff}}
+) where {T <: Union{TimeDurationOn, TimeDurationOff}, U <: PSY.Component}
     decision_dataset = get_dataset(decision_state, key)
     aligned_time = align_to_dataset_grid(decision_dataset, simulation_time)
     # Gets the timestamp of the value used for the update, which might not match exactly the
