@@ -106,7 +106,7 @@ function _partition_path(x::SimulationPartitionResults, i)
     return execution_path
 end
 
-_store_subpath() = joinpath("data_store", "simulation_store.h5")
+_store_subpath() = joinpath(STORE_DIR, "simulation_store.h5")
 _store_path(x::SimulationPartitionResults) = joinpath(x.path, _store_subpath())
 
 """

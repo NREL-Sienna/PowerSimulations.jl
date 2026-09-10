@@ -67,7 +67,7 @@ function _update_parameter_values!(
     else
         device_model = get_model(template, V, subsystem)
     end
-    components = get_available_components(device_model, get_system(model))
+    components = IOM.get_available_components(device_model, get_system(model))
     # Hoist the underlying dense storage and per-component name lookup once so each
     # write skips DenseAxisArray's String-keyed axis lookup. `additional_axes` is
     # invariant for the lifetime of this update call.
@@ -94,8 +94,8 @@ function _update_parameter_values!(
             for (t, value) in enumerate(ts_vector)
                 # first two axes of parameter_array are component, time; we care about any additional ones
                 unwrapped_value =
-                    _unwrap_for_param(W(), value, additional_axes)
-                if !all(isfinite.(unwrapped_value))
+                    unwrap_for_param(W(), value, additional_axes)
+                if !all(isfinite, unwrapped_value)
                     error("The value for the time series $(ts_name) is not finite. \
                           Check that the data in the time series is valid.")
                 end
@@ -208,8 +208,8 @@ function _update_parameter_values!(
     i_param = parameter_array.lookup[1][ts_uuid]
     additional_axes = lookup_additional_axes(parameter_array)
     for (t, value) in enumerate(ts_vector)
-        unwrapped_value = _unwrap_for_param(W(), value, additional_axes)
-        if !all(isfinite.(unwrapped_value))
+        unwrapped_value = unwrap_for_param(W(), value, additional_axes)
+        if !all(isfinite, unwrapped_value)
             error("The value for the time series $(ts_name) is not finite. \
                   Check that the data in the time series is valid.")
         end
@@ -228,7 +228,7 @@ function _update_parameter_values!(
     initial_forecast_time = get_current_time(model)
     template = get_template(model)
     device_model = get_model(template, V)
-    components = get_available_components(device_model, get_system(model))
+    components = IOM.get_available_components(device_model, get_system(model))
     ts_name = get_time_series_name(attributes)
     ts_resolution = get_resolution(get_settings(model))
     # Hoist the underlying dense storage and per-component name lookup once.
@@ -310,7 +310,7 @@ function _update_parameter_values!(
     else
         t_step = model_resolution ÷ state_data.resolution
     end
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
     sim_timestamps = range(current_time; step = model_resolution, length = time[end])
     # Hoist underlying dense storage and per-axis name lookups so the inner loop
     # can index by integer pair, skipping DenseAxisArray's String-keyed lookup.
@@ -361,7 +361,7 @@ function _update_parameter_values!(
     else
         t_step = model_resolution ÷ state_data.resolution
     end
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
     sim_timestamps = range(current_time; step = model_resolution, length = time[end])
     # Hoist underlying dense storage and per-axis name lookups so the inner loop
     # can index by integer pair, skipping DenseAxisArray's String-keyed lookup.
@@ -412,7 +412,7 @@ function _update_parameter_values!(
     else
         t_step = model_resolution ÷ state_data.resolution
     end
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
 
     sim_timestamps = range(current_time; step = model_resolution, length = time[end])
     # Hoist underlying dense storage and per-axis name lookups so the inner loop
@@ -461,8 +461,7 @@ function _update_parameter_values!(
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, _ = axes(parameter_array)
     state_data = get_dataset(state, get_attribute_key(attributes))
-    state_timestamps = state_data.timestamps
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
     # Hoist underlying dense storage and per-axis name lookups.
     parent_param = parameter_array.data
     parent_state = state_values.data
@@ -493,11 +492,10 @@ function _update_parameter_values!(
     state_values = get_dataset_values(state, get_attribute_key(attributes))
     component_names, _ = axes(parameter_array)
     state_data = get_dataset(state, get_attribute_key(attributes))
-    state_timestamps = state_data.timestamps
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
     has_outage = haskey(
         get_parameters_values(state),
-        ISOPT.ParameterKey{
+        ParameterKey{
             AvailableStatusParameter,
             U,
         }(
@@ -507,7 +505,7 @@ function _update_parameter_values!(
     if has_outage
         status_values = get_dataset_values(
             state,
-            ISOPT.ParameterKey{
+            ParameterKey{
                 AvailableStatusParameter,
                 U,
             }(
@@ -516,15 +514,14 @@ function _update_parameter_values!(
         )
         status_data = get_dataset(
             state,
-            ISOPT.ParameterKey{
+            ParameterKey{
                 AvailableStatusParameter,
                 U,
             }(
                 "",
             ),
         )
-        status_timestamps = status_data.timestamps
-        status_data_index = find_timestamp_index(status_timestamps, current_time)
+        status_data_index = find_aligned_timestamp_index(status_data, current_time)
         parent_status = status_values.data
         # `_AxisLookup{Dict{String,Int64}}` wraps a `Dict`; reach for `.data`
         # so we can `haskey` and integer-index without a String-keyed scan.
@@ -564,18 +561,6 @@ function _update_parameter_values!(
 end
 
 function _update_parameter_values!(
-    ::AbstractArray{T},
-    ::ParameterType,
-    ::VariableValueAttributes,
-    ::Type{<:PSY.Component},
-    ::EmulationModel,
-    ::EmulationModelStore,
-) where {T <: Union{JuMP.VariableRef, Float64}}
-    error("The emulation model has parameters that can't be updated from its results")
-    return
-end
-
-function _update_parameter_values!(
     parameter_array::DenseAxisArray{T},
     attributes::EventParametersAttributes{W, U},
     ::Type{V},
@@ -601,7 +586,7 @@ function _update_parameter_values!(
     else
         t_step = model_resolution ÷ state_data.resolution
     end
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
 
     sim_timestamps = range(current_time; step = model_resolution, length = time[end])
     # Hoist underlying dense storage and per-axis name lookups for the inner loop.
@@ -648,8 +633,7 @@ function _update_parameter_values!(
     state_values = get_dataset_values(state, U(), V)
     component_names, _ = axes(parameter_array)
     state_data = get_dataset(state, U(), V)
-    state_timestamps = state_data.timestamps
-    state_data_index = find_timestamp_index(state_timestamps, current_time)
+    state_data_index = find_aligned_timestamp_index(state_data, current_time)
 
     # Hoist underlying dense storage and per-axis name lookups.
     parent_param = parameter_array.data
@@ -670,16 +654,14 @@ function _update_parameter_values!(
 end
 
 """
-Update parameter function an OperationModel
+Update parameter function an IOM.AbstractOptimizationModel
 """
-function update_container_parameter_values!(
+function IOM.update_container_parameter_values!(
     optimization_container::OptimizationContainer,
-    model::OperationModel,
+    model::IOM.AbstractOptimizationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ParameterType, U <: PSY.Component}
-    # Enable again for detailed debugging
-    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
@@ -688,14 +670,12 @@ function update_container_parameter_values!(
     return
 end
 
-function update_container_parameter_values!(
+function IOM.update_container_parameter_values!(
     optimization_container::OptimizationContainer,
-    model::OperationModel,
+    model::IOM.AbstractOptimizationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: EventParameter, U <: PSY.Component}
-    # Enable again for detailed debugging
-    # TimerOutputs.@timeit RUN_SIMULATION_TIMER "$T $U Parameter Update" begin
     # Note: Do not instantite a new key here because it might not match the param keys in the container
     # if the keys have strings in the meta fields
     parameter_array = get_parameter_array(optimization_container, key)
@@ -704,9 +684,9 @@ function update_container_parameter_values!(
     return
 end
 
-function update_container_parameter_values!(
+function IOM.update_container_parameter_values!(
     optimization_container::OptimizationContainer,
-    model::OperationModel,
+    model::IOM.AbstractOptimizationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Component}
@@ -728,9 +708,9 @@ function update_container_parameter_values!(
     return
 end
 
-function update_container_parameter_values!(
+function IOM.update_container_parameter_values!(
     optimization_container::OptimizationContainer,
-    model::OperationModel,
+    model::IOM.AbstractOptimizationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ObjectiveFunctionParameter, U <: PSY.Service}
@@ -753,9 +733,9 @@ function update_container_parameter_values!(
     return
 end
 
-function update_container_parameter_values!(
+function IOM.update_container_parameter_values!(
     optimization_container::OptimizationContainer,
-    model::OperationModel,
+    model::IOM.AbstractOptimizationModel,
     key::ParameterKey{FixValueParameter, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {U <: PSY.Component}
@@ -775,9 +755,9 @@ function update_container_parameter_values!(
     return
 end
 
-function update_container_parameter_values!(
+function IOM.update_container_parameter_values!(
     optimization_container::OptimizationContainer,
-    model::OperationModel,
+    model::IOM.AbstractOptimizationModel,
     key::ParameterKey{FixValueParameter, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {U <: PSY.Service}
@@ -802,9 +782,28 @@ function update_container_parameter_values!(
     return
 end
 
-function update_container_parameter_values!(
+function IOM.update_container_parameter_values!(
     optimization_container::OptimizationContainer,
-    model::OperationModel,
+    model::IOM.AbstractOptimizationModel,
+    key::ParameterKey{T, U},
+    input::DatasetContainer{InMemoryDataset},
+) where {T <: TimeSeriesParameter, U <: PSY.Service}
+    # Time-series service parameters (e.g. `RequirementTimeSeriesParameter`) are per-type
+    # containers keyed `(T, ServiceType)` with an empty `key.meta` -- the name axis inside
+    # `parameter_array` holds every service of type `U` (POM
+    # `common_models/add_parameters.jl`). There is no single named component to look up by
+    # `key.meta`, so this routes through the generic per-type `_update_parameter_values!`
+    # used for device time series instead of the per-instance lookup the method below
+    # performs for feedforward-sourced (`VariableValueAttributes`) service parameters.
+    parameter_array = get_parameter_array(optimization_container, key)
+    parameter_attributes = get_parameter_attributes(optimization_container, key)
+    _update_parameter_values!(parameter_array, T(), parameter_attributes, U, model, input)
+    return
+end
+
+function IOM.update_container_parameter_values!(
+    optimization_container::OptimizationContainer,
+    model::IOM.AbstractOptimizationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: ParameterType, U <: PSY.Service}
@@ -829,9 +828,9 @@ function update_container_parameter_values!(
 end
 
 # This method is included to avoid ambiguities
-function update_container_parameter_values!(
+function IOM.update_container_parameter_values!(
     optimization_container::OptimizationContainer,
-    model::OperationModel,
+    model::IOM.AbstractOptimizationModel,
     key::ParameterKey{T, U},
     input::DatasetContainer{InMemoryDataset},
 ) where {T <: EventParameter, U <: PSY.Service}

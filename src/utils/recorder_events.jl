@@ -57,6 +57,10 @@ struct InitialConditionUpdateEvent <: IS.AbstractRecorderEvent
     model_name::String
 end
 
+# A missing initial-condition value is recorded as a sentinel the event schema can hold.
+_recorded_ic_value(::Nothing) = 1e8
+_recorded_ic_value(x) = x
+
 function InitialConditionUpdateEvent(
     simulation_time,
     ic::InitialCondition,
@@ -69,8 +73,8 @@ function InitialConditionUpdateEvent(
         string(get_ic_type(ic)),
         string(get_component_type(ic)),
         get_component_name(ic),
-        isnothing(get_condition(ic)) ? 1e8 : get_condition(ic),
-        isnothing(previous_value) ? 1e8 : previous_value,
+        _recorded_ic_value(get_condition(ic)),
+        _recorded_ic_value(previous_value),
         string(model_name),
     )
 end
@@ -86,7 +90,7 @@ end
 
 function ParameterUpdateEvent(
     parameter_type::Type{<:ParameterType},
-    component_type::DataType,
+    component_type::Type,
     tag::String,
     simulation_time::Dates.DateTime,
     model_name::Symbol,
@@ -103,7 +107,7 @@ end
 
 function ParameterUpdateEvent(
     parameter_type::Type{<:ParameterType},
-    component_type::DataType,
+    component_type::Type,
     attributes::TimeSeriesAttributes,
     simulation_time::Dates.DateTime,
     model_name::Symbol,
@@ -119,7 +123,7 @@ end
 
 function ParameterUpdateEvent(
     parameter_type::Type{<:ParameterType},
-    component_type::DataType,
+    component_type::Type,
     attributes::EventParametersAttributes,
     simulation_time::Dates.DateTime,
     model_name::Symbol,
@@ -135,7 +139,7 @@ end
 
 function ParameterUpdateEvent(
     parameter_type::Type{<:ParameterType},
-    component_type::DataType,
+    component_type::Type,
     attributes::VariableValueAttributes,
     simulation_time::Dates.DateTime,
     model_name::Symbol,
@@ -152,7 +156,7 @@ end
 
 function ParameterUpdateEvent(
     parameter_type::Type{<:ParameterType},
-    component_type::DataType,
+    component_type::Type,
     attributes::CostFunctionAttributes,
     simulation_time::Dates.DateTime,
     model_name::Symbol,
@@ -436,14 +440,7 @@ function show_recorder_events(
     wall_time = false,
     kwargs...,
 ) where {T <: IS.AbstractRecorderEvent}
-    if wall_time
-        IS.show_recorder_events(io, T, filename, filter_func)
-    else
-        # This will not display the first column, 'timestamp'.
-        # Passign filters_col No longer supported in PrettyTables
-        # f_c(data, i) = i > 1
-        IS.show_recorder_events(io, T, filename, filter_func; kwargs...)
-    end
+    IS.show_recorder_events(io, T, filename, filter_func; kwargs...)
 end
 
 function show_recorder_events(
@@ -453,12 +450,5 @@ function show_recorder_events(
     wall_time = false,
     kwargs...,
 ) where {T <: IS.AbstractRecorderEvent}
-    if wall_time
-        IS.show_recorder_events(io, events; kwargs...)
-    else
-        # This will not display the first column, 'timestamp'.
-        # Passign filters_col No longer supported in PrettyTables
-        #f_c(data, i) = i > 1
-        IS.show_recorder_events(io, events; kwargs...)
-    end
+    IS.show_recorder_events(io, events; kwargs...)
 end

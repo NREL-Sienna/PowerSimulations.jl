@@ -1,4 +1,8 @@
-function update_model!(model::OperationModel, source::SimulationState, ini_cond_chronology)
+function update_model!(
+    model::IOM.AbstractOptimizationModel,
+    source::SimulationState,
+    ini_cond_chronology,
+)
     TimerOutputs.@timeit RUN_SIMULATION_TIMER "Parameter Updates" begin
         update_parameters!(model, source)
     end
@@ -8,14 +12,8 @@ function update_model!(model::OperationModel, source::SimulationState, ini_cond_
     return
 end
 
-function update_parameters!(model::EmulationModel, state::SimulationState)
-    data = get_decision_states(state)
-    update_parameters!(model, data)
-    return
-end
-
 function update_parameters!(
-    model::DecisionModel,
+    model::IOM.AbstractOptimizationModel,
     simulation_state::SimulationState,
 )
     cost_function_unsynch(get_optimization_container(model))

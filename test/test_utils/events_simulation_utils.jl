@@ -15,7 +15,7 @@ function run_fixed_forced_outage_sim_with_timeseries(;
     transform_single_time_series!(sys_d2, Hour(4), Hour(1))
     event_model = EventModel(
         FixedForcedOutage,
-        PSI.ContinuousCondition();
+        POM.ContinuousCondition();
         timeseries_mapping = Dict(
             :outage_status => "outage_profile_1",
         ),
@@ -30,8 +30,8 @@ function run_fixed_forced_outage_sim_with_timeseries(;
     set_device_model!(template_d2, RenewableDispatch, renewable_formulation)
     set_device_model!(template_em, RenewableDispatch, renewable_formulation)
     set_device_model!(template_em, ThermalStandard, ThermalBasicDispatch)
-    set_service_model!(template_d1, ServiceModel(ConstantReserve{ReserveUp}, RangeReserve))
-    set_service_model!(template_d2, ServiceModel(ConstantReserve{ReserveUp}, RangeReserve))
+    set_service_model!(template_d1, ServiceModel(OnlineReserve{ReserveUp}, RangeReserve))
+    set_service_model!(template_d2, ServiceModel(OnlineReserve{ReserveUp}, RangeReserve))
     set_device_model!(template_em, InterruptiblePowerLoad, PowerLoadDispatch)
     set_device_model!(template_d1, InterruptiblePowerLoad, PowerLoadDispatch)
     set_device_model!(template_d2, InterruptiblePowerLoad, PowerLoadDispatch)
@@ -104,9 +104,9 @@ function run_fixed_forced_outage_sim_with_timeseries(;
         simulation_folder = mktempdir(; cleanup = true),
     )
     build_out = build!(sim; console_level = Logging.Error)
-    @test build_out == PSI.SimulationBuildStatus.BUILT
+    @test build_out == SimulationBuildStatus.BUILT
     execute_out = execute!(sim; in_memory = true)
-    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    @test execute_out == IOM.RunStatus.SUCCESSFULLY_FINALIZED
     results = SimulationResults(sim; ignore_status = true)
     return results
 end
@@ -121,6 +121,7 @@ function run_events_simulation(;
     ed_formulation,
     feedforward,
     in_memory,
+    attach_events::Bool = true,
 )
     sys_em = deepcopy(sys_emulator)
     sys_d1 = build_system(PSITestSystems, "c_sys5_events")
@@ -130,8 +131,13 @@ function run_events_simulation(;
 
     event_model = EventModel(
         GeometricDistributionForcedOutage,
-        PSI.PresetTimeCondition([outage_time]),
+        POM.PresetTimeCondition([outage_time]),
     )
+    if attach_events
+        events = [event_model]
+    else
+        events = POM.EventModel[]
+    end
     if uc_formulation == "basic"
         template_d1 = get_template_basic_uc_simulation()
         set_network_model!(template_d1, NetworkModel(networks[1]))
@@ -156,8 +162,8 @@ function run_events_simulation(;
     set_device_model!(template_d2, Line, StaticBranch)
     set_device_model!(template_em, Line, StaticBranch)
 
-    set_service_model!(template_d1, ServiceModel(ConstantReserve{ReserveUp}, RangeReserve))
-    set_service_model!(template_d2, ServiceModel(ConstantReserve{ReserveUp}, RangeReserve))
+    set_service_model!(template_d1, ServiceModel(OnlineReserve{ReserveUp}, RangeReserve))
+    set_service_model!(template_d2, ServiceModel(OnlineReserve{ReserveUp}, RangeReserve))
 
     for sys in [sys_d1, sys_d2, sys_em]
         outage_gens = ["Alta"]
@@ -212,13 +218,13 @@ function run_events_simulation(;
                     ),
                 ],
             ),
-            events = [event_model],
+            events = events,
         )
     else
         sequence = SimulationSequence(;
             models = models,
             ini_cond_chronology = InterProblemChronology(),
-            events = [event_model],
+            events = events,
         )
     end
     sim = Simulation(;
@@ -229,9 +235,9 @@ function run_events_simulation(;
         simulation_folder = mktempdir(; cleanup = true),
     )
     build_out = build!(sim; console_level = Logging.Error)
-    @test build_out == PSI.SimulationBuildStatus.BUILT
+    @test build_out == SimulationBuildStatus.BUILT
     execute_out = execute!(sim; in_memory = in_memory)
-    @test execute_out == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    @test execute_out == IOM.RunStatus.SUCCESSFULLY_FINALIZED
     results = SimulationResults(sim; ignore_status = true)
     return results
 end

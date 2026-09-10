@@ -46,30 +46,43 @@ function RealizedMeta(
     )
 end
 
+# Row window of one step's DataFrame that belongs to the realized output: the first step
+# starts at the offset, the last step stops short by the end offset.
+function _realized_step_bounds(step::Int, meta::RealizedMeta, df::DataFrame, key)
+    if step > 1
+        first_id = 1
+    else
+        first_id = meta.start_offset
+    end
+    if step == meta.len
+        last_id = meta.interval_len - meta.end_offset
+    else
+        last_id = meta.interval_len
+    end
+    if last_id - first_id > DataFrames.nrow(df)
+        error(
+            "Variable $(encode_key_as_string(key)) has $(DataFrames.nrow(df)) number of steps, that is different than the default problem horizon. \
+        Can't calculate the realized variables. Use `read_variables` instead and write your own concatenation",
+        )
+    end
+    return first_id, last_id
+end
+
 function _make_dataframe(
-    results_by_time::ResultsByTime{DataFrame, N},
+    results_by_time::OutputsByTime{DataFrame, N},
     num_timestamps::Int,
     meta::RealizedMeta,
     key::OptimizationContainerKey,
     ::Val{TableFormat.LONG},
 ) where {N}
     @assert !isempty(results_by_time)
-    row_index = 1
     dfs = DataFrame[]
     first_cols = names(first(values(results_by_time.data)))
     for (step, (_, df)) in enumerate(results_by_time)
         if step > 1 && names(df) != first_cols
             error("Mismatched columns. First df = $(first_cols), other df = $(names(df))")
         end
-        first_id = step > 1 ? 1 : meta.start_offset
-        last_id =
-            step == meta.len ? meta.interval_len - meta.end_offset : meta.interval_len
-        if last_id - first_id > DataFrames.nrow(df)
-            error(
-                "Variable $(encode_key_as_string(key)) has $(DataFrames.nrow(df)) number of steps, that is different than the default problem horizon. \
-            Can't calculate the realized variables. Use `read_variables` instead and write your own concatenation",
-            )
-        end
+        first_id, last_id = _realized_step_bounds(step, meta, df, key)
         offset = (step - 1) * meta.interval_len
         df2 = @chain df begin
             @subset(first_id .<= :time_index .<= last_id)
@@ -78,7 +91,6 @@ function _make_dataframe(
             @rename(:time_index = :actual_time_index)
         end
         push!(dfs, df2)
-        row_index += last_id - first_id + 1
     end
 
     combined_df = vcat(dfs...)
@@ -105,32 +117,22 @@ function _make_dataframe(
 end
 
 function _make_dataframe(
-    results_by_time::ResultsByTime{DataFrame, N},
+    results_by_time::OutputsByTime{DataFrame, N},
     num_timestamps::Int,
     meta::RealizedMeta,
     key::OptimizationContainerKey,
     ::Val{TableFormat.WIDE},
 ) where {N}
     @assert !isempty(results_by_time)
-    row_index = 1
     dfs = DataFrame[]
     first_cols = names(first(values(results_by_time.data)))
     for (step, (_, df)) in enumerate(results_by_time)
         if step > 1 && names(df) != first_cols
             error("Mismatched columns. First df = $(first_cols), other df = $(names(df))")
         end
-        first_id = step > 1 ? 1 : meta.start_offset
-        last_id =
-            step == meta.len ? meta.interval_len - meta.end_offset : meta.interval_len
-        if last_id - first_id > DataFrames.nrow(df)
-            error(
-                "Variable $(encode_key_as_string(key)) has $(DataFrames.nrow(df)) number of steps, that is different than the default problem horizon. \
-            Can't calculate the realized variables. Use `read_variables` instead and write your own concatenation",
-            )
-        end
+        first_id, last_id = _realized_step_bounds(step, meta, df, key)
         df2 = df[first_id:last_id, :]
         push!(dfs, df2)
-        row_index += last_id - first_id + 1
     end
 
     df = vcat(dfs...)
@@ -150,7 +152,7 @@ function _make_dataframe(
 end
 
 function get_realization(
-    results::Dict{OptimizationContainerKey, ResultsByTime{DataFrame}},
+    results::Dict{OptimizationContainerKey, OutputsByTime{DataFrame}},
     meta::RealizedMeta;
     table_format = TableFormat.LONG,
 )

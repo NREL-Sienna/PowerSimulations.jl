@@ -25,3 +25,8 @@ abstract type SimulationStore end
 
 get_dm_data(store::SimulationStore) = store.dm_data
 get_em_data(store::SimulationStore) = store.em_data
+
+get_decision_model_params(store::SimulationStore, model_name::Symbol) =
+    get_decision_model_params(get_params(store), model_name)
+get_emulation_model_params(store::SimulationStore) =
+    get_emulation_model_params(get_params(store))

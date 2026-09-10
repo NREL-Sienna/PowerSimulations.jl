@@ -17,8 +17,10 @@ the simulation is executed.
 # Example
 
 ```julia
-template_uc = template_unit_commitment()
-template_ed = template_economic_dispatch()
+template_uc = PowerOperationsProblemTemplate(NetworkModel(CopperPlateNetworkModel))
+set_device_model!(template_uc, ThermalStandard, ThermalBasicUnitCommitment)
+template_ed = PowerOperationsProblemTemplate(NetworkModel(CopperPlateNetworkModel))
+set_device_model!(template_ed, ThermalStandard, ThermalBasicDispatch)
 my_decision_model_uc = DecisionModel(template_1, sys_uc, optimizer, name = "UC")
 my_decision_model_ed = DecisionModel(template_ed, sys_ed, optimizer, name = "ED")
 models = SimulationModels(
@@ -39,13 +41,7 @@ mutable struct SimulationModels
     )
         all_names = [get_name(x) for x in decision_models]
         !isnothing(emulation_model) && push!(all_names, get_name(emulation_model))
-        model_count =
-            if isnothing(emulation_model)
-                length(decision_models)
-            else
-                length(decision_models) + 1
-            end
-        if length(Set(all_names)) != model_count
+        if !allunique(all_names)
             error("All model names must be unique: $all_names")
         end
 
@@ -179,11 +175,13 @@ function initialize_simulation_internals!(models::SimulationModels, uuid::Base.U
     return
 end
 
-function get_model_names(models::SimulationModels)
-    all_names = get_name.(get_decision_models(models))
+function get_all_models(models::SimulationModels)
+    all_models = IOM.AbstractOptimizationModel[get_decision_models(models)...]
     em = get_emulation_model(models)
     if !isnothing(em)
-        push!(all_names, get_name(em))
+        push!(all_models, em)
     end
-    return all_names
+    return all_models
 end
+
+get_model_names(models::SimulationModels) = get_name.(get_all_models(models))
