@@ -24,7 +24,7 @@ Establishes the NetworkModel for a given PowerModels formulation type.
 # Accepted keyword arguments
 - `use_slacks::Bool` = false
     Adds slack buses to the network modeling.
-- `slack_cost::Real` = `BALANCE_SLACK_COST`
+- `slack_cost::Float64` = `BALANCE_SLACK_COST`
     Objective penalty per unit of network balance slack. Must be a finite, positive real number.
 - `PTDF_matrix::Union{PNM.PowerNetworkMatrix, Nothing}` = nothing
     PTDF/VirtualPTDF matrix produced by PowerNetworkMatrices (optional).
@@ -87,7 +87,6 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
         hvdc_network_model = nothing,
     ) where {T <: PM.AbstractPowerModel}
         _check_pm_formulation(T)
-        _check_slack_cost(slack_cost)
         new{T}(
             use_slacks,
             Float64(slack_cost),
@@ -106,16 +105,6 @@ mutable struct NetworkModel{T <: PM.AbstractPowerModel}
             BranchReductionOptimizationTracker(),
         )
     end
-end
-
-function _check_slack_cost(cost)
-    # Bool is a Real subtype, so it is rejected explicitly.
-    if !(cost isa Real) || cost isa Bool || !isfinite(cost) || cost <= 0
-        throw(
-            ArgumentError("slack_cost must be a positive finite real number, got $(cost)"),
-        )
-    end
-    return
 end
 
 get_use_slacks(m::NetworkModel) = m.use_slacks

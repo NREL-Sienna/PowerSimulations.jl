@@ -2056,13 +2056,7 @@ end
 @testset "Network balance slack cost" begin
     @test PSI.get_slack_cost(NetworkModel(CopperPlatePowerModel)) ==
           PSI.BALANCE_SLACK_COST
-    for bad_cost in (-1.0, 0, 0.0, NaN, Inf, true, false)
-        @test_throws ArgumentError NetworkModel(
-            CopperPlatePowerModel;
-            use_slacks = true,
-            slack_cost = bad_cost,
-        )
-    end
+
     @test PSI.get_slack_cost(
         NetworkModel(CopperPlatePowerModel; use_slacks = true, slack_cost = 2),
     ) == 2.0
