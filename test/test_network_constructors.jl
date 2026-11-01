@@ -2052,3 +2052,46 @@ end
         end
     end
 end
+
+@testset "Network balance slack cost" begin
+    @test PSI.get_slack_cost(NetworkModel(CopperPlatePowerModel)) ==
+          PSI.BALANCE_SLACK_COST
+
+    @test PSI.get_slack_cost(
+        NetworkModel(CopperPlatePowerModel; use_slacks = true, slack_cost = 2),
+    ) == 2.0
+
+    c_sys5 = PSB.build_system(PSITestSystems, "c_sys5_re")
+    template = get_thermal_dispatch_template_network(
+        NetworkModel(CopperPlatePowerModel; use_slacks = true, slack_cost = 123.0),
+    )
+    ps_model = DecisionModel(template, c_sys5; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    container = PSI.get_optimization_container(ps_model)
+    variable = PSI.get_variable(container, PSI.SystemBalanceSlackUp(), PSY.System)
+    ref_bus = first(axes(variable, 1))
+    @test JuMP.coefficient(
+        JuMP.objective_function(PSI.get_jump_model(container)),
+        variable[ref_bus, 1],
+    ) == 123.0
+
+    c_sys = build_system(PSITestSystems, "c_sys5_uc")
+    areas = [Area("Area_1", 0, 0, 0), Area("Area_2", 0, 0, 0)]
+    add_components!(c_sys, areas)
+    for (i, comp) in enumerate(get_components(ACBus, c_sys))
+        (i < 3) ? set_area!(comp, areas[1]) : set_area!(comp, areas[2])
+    end
+    template = get_thermal_dispatch_template_network(
+        NetworkModel(AreaBalancePowerModel; use_slacks = true, slack_cost = 123.0),
+    )
+    ps_model = DecisionModel(template, c_sys; optimizer = HiGHS_optimizer)
+    @test build!(ps_model; output_dir = mktempdir(; cleanup = true)) ==
+          PSI.ModelBuildStatus.BUILT
+    container = PSI.get_optimization_container(ps_model)
+    variable = PSI.get_variable(container, PSI.SystemBalanceSlackUp(), PSY.Area)
+    @test JuMP.coefficient(
+        JuMP.objective_function(PSI.get_jump_model(container)),
+        variable["Area_1", 1],
+    ) == 123.0
+end

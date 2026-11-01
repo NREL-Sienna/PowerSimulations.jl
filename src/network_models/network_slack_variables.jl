@@ -130,7 +130,7 @@ function objective_function!(
     for t in get_time_steps(container), n in reference_buses
         add_to_objective_invariant_expression!(
             container,
-            (variable_dn[n, t] + variable_up[n, t]) * BALANCE_SLACK_COST,
+            (variable_dn[n, t] + variable_up[n, t]) * get_slack_cost(network_model),
         )
     end
     return
@@ -148,7 +148,7 @@ function objective_function!(
     for t in get_time_steps(container), n in areas
         add_to_objective_invariant_expression!(
             container,
-            (variable_dn[n, t] + variable_up[n, t]) * BALANCE_SLACK_COST,
+            (variable_dn[n, t] + variable_up[n, t]) * get_slack_cost(network_model),
         )
     end
     return
@@ -166,7 +166,7 @@ function objective_function!(
     for t in get_time_steps(container), n in bus_numbers
         add_to_objective_invariant_expression!(
             container,
-            (variable_dn[n, t] + variable_up[n, t]) * BALANCE_SLACK_COST,
+            (variable_dn[n, t] + variable_up[n, t]) * get_slack_cost(network_model),
         )
     end
     return
@@ -191,7 +191,7 @@ function objective_function!(
                 variable_p_up[n, t] +
                 variable_q_dn[n, t] +
                 variable_q_up[n, t]
-            ) * BALANCE_SLACK_COST,
+            ) * get_slack_cost(network_model),
         )
     end
     return
