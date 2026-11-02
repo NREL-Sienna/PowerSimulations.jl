@@ -267,7 +267,10 @@ function _ic_values_reconciled(all_values::Vector)
 end
 
 # Compare initial conditions for all `InitialConditionType`s with the
-# `requires_reconciliation` trait across `models`, log @info messages for mismatches
+# `requires_reconciliation` trait across `models`, log @info messages for mismatches.
+# Models need not carry the same components: the simulation state holds each key over the
+# union of the models' components, so values are compared for the components every model
+# with the key carries.
 function _initial_conditions_reconciliation!(
     models::Vector{<:IOM.AbstractOptimizationModel})
     model_names = get_name.(models)
@@ -296,12 +299,10 @@ function _initial_conditions_reconciliation!(
             ic_vals_per_model[i] = ic_vals_per_component
         end
 
-        # Assert that all models have the same components for current ic_key
-        @assert allequal(Set.(keys.(values(ic_vals_per_model)))) "For IC key $ic_key, not all models have the same components"
-
-        # For each component in current ic_key, compare values across models
-        component_names = keys(first(values(ic_vals_per_model)))
-        for component_name in component_names
+        # For each component every model with the current ic_key carries, compare values
+        # across models
+        component_names = intersect(Set.(keys.(values(ic_vals_per_model)))...)
+        for component_name in sort!(collect(component_names))
             all_values = [result[component_name] for result in values(ic_vals_per_model)]
             if !_ic_values_reconciled(all_values)
                 has_mismatches = true

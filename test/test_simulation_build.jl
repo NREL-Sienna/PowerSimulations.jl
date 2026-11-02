@@ -506,3 +506,31 @@ end
     @test build!(sim; console_level = Logging.AboveMaxLevel) ==
           PSI.SimulationBuildStatus.BUILT
 end
+
+@testset "Models with different units compare initial conditions on the units they share" begin
+    sys_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
+    sys_ed = PSB.build_system(PSITestSystems, "c_sys5_ed")
+    # The ED does not model Brighton, and starts Park City 50 MW above where the UC does.
+    set_available!(get_component(ThermalStandard, sys_ed, "Brighton"), false)
+    park_city = get_component(ThermalStandard, sys_ed, "Park City")
+    set_active_power!(park_city, (get_active_power(park_city, u"SU") + 0.5) * u"SU")
+    # Ramp limits give the ED a DevicePower initial condition to compare with the UC's.
+    template_ed = get_template_nomin_ed_simulation()
+    set_device_model!(template_ed, ThermalStandard, ThermalStandardDispatch)
+    models = create_simulation_build_test_problems(
+        get_template_standard_uc_simulation(), template_ed, sys_uc, sys_ed)
+    sequence = SimulationSequence(; models, ini_cond_chronology = InterProblemChronology())
+    sim = Simulation(; name = "ic_shared_units", steps = 1, models, sequence,
+        simulation_folder = mktempdir(; cleanup = true))
+    @test build!(sim; console_level = Logging.AboveMaxLevel) ==
+          PSI.SimulationBuildStatus.BUILT
+
+    reconcile() =
+        PSI._initial_conditions_reconciliation!(
+            PSI.get_decision_models(PSI.get_models(sim)),
+        )
+    ics =
+        @test_logs (:info, r"mismatch on component Park City") match_mode = :any reconcile()
+    power = ics[IOM.InitialConditionKey(POM.DevicePower, ThermalStandard)]
+    @test "Brighton" in keys(power[1]) && !("Brighton" in keys(power[2]))
+end
