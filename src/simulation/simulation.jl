@@ -404,6 +404,93 @@ function _initialize_simulation_state!(sim::Simulation)
     return
 end
 
+# The number of executions of model `n` over the whole simulation.
+function _total_executions(sim::Simulation, n::Int)
+    return count(==(n), get_execution_order(get_sequence(sim))) * get_steps(sim)
+end
+
+# Every execution but the simulation's first updates the parameters of the model it runs.
+function _reads_parameters_from_state(sim::Simulation, n::Int)
+    first_run = first(get_execution_order(get_sequence(sim))) == n ? 1 : 0
+    return _total_executions(sim, n) > first_run
+end
+
+# A model keeps its own initial conditions at its first execution.
+_reads_initial_conditions_from_state(sim::Simulation, n::Int) =
+    _total_executions(sim, n) > 1
+
+_state_columns(states, key) =
+    has_dataset(states, key) ? Set(axes(get_dataset_values(states, key))[1]) : Set{String}()
+
+function _missing_source_error(model, what, source_key, missing_names, remedy)
+    shown = join(first(sort!(missing_names), 5), ", ")
+    more = length(missing_names) > 5 ? " and $(length(missing_names) - 5) more" : ""
+    return IS.ConflictingInputsError(
+        "$(get_name(model)) reads $(encode_key_as_string(source_key)) from the simulation \
+        state for $(what), but no model writes it for $(shown)$(more). $(remedy)",
+    )
+end
+
+# A model reads each parameter set by a feedforward from the decision state of the
+# feedforward's source key, for every component of the parameter. The state holds a key over
+# the union of the components the models have for it, so a component that no model has for
+# the source key has no value to read.
+function _check_parameter_sources(sim::Simulation, model)
+    states = get_decision_states(get_simulation_state(sim))
+    container = get_optimization_container(model)
+    for (key, parameter) in get_parameters(container)
+        attributes = get_attributes(parameter)
+        attributes isa VariableValueAttributes || continue
+        source_key = get_attribute_key(attributes)
+        columns = _state_columns(states, source_key)
+        names = String.(axes(get_parameter_array(parameter))[1])
+        missing_names = [name for name in names if !(name in columns)]
+        isempty(missing_names) && continue
+        throw(
+            _missing_source_error(model, encode_key_as_string(key), source_key,
+                missing_names,
+                "Every component a feedforward affects must be in its source model."),
+        )
+    end
+    return
+end
+
+# The initial power of a unit that is not must-run is taken with its status, read from the
+# `OnVariable` of the system state. A unit that no model commits has no status to read.
+function _check_initial_power_sources(sim::Simulation, model)
+    states = get_system_states(get_simulation_state(sim))
+    for (key, ics) in get_initial_conditions(model)
+        get_entry_type(key) === DevicePower || continue
+        status_key = VariableKey(OnVariable, get_component_type(key))
+        columns = _state_columns(states, status_key)
+        missing_names = String[
+            get_component_name(ic) for ic in ics if
+            !IOM.get_must_run(IOM.get_component(ic)) && !(get_component_name(ic) in columns)
+        ]
+        isempty(missing_names) && continue
+        throw(
+            _missing_source_error(model, "the status behind the initial power of a unit",
+                status_key, missing_names,
+                "Commit those units in some model, or make them must-run."),
+        )
+    end
+    return
+end
+
+# Check, at build, that every value a model will read from the simulation state by component
+# name has a model that writes it.
+function _check_state_sources(sim::Simulation)
+    models = get_models(sim)
+    for n in unique(get_execution_order(get_sequence(sim)))
+        model = get_simulation_model(models, n)
+        _reads_parameters_from_state(sim, n) && _check_parameter_sources(sim, model)
+        get_ini_cond_chronology(sim) isa InterProblemChronology &&
+            _reads_initial_conditions_from_state(sim, n) &&
+            _check_initial_power_sources(sim, model)
+    end
+    return
+end
+
 _keep_in_cache(::Union{ConstraintKey, VariableKey, AuxVarKey}) = true
 _keep_in_cache(::Union{ParameterKey, ExpressionKey}) = false
 _requirement_array(x) = x
@@ -630,6 +717,7 @@ function _build!(
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation State" begin
         _initialize_simulation_state!(sim)
     end
+    _check_state_sources(sim)
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Problem Storage" begin
         open_store(HdfSimulationStore, get_store_dir(sim), "w") do store

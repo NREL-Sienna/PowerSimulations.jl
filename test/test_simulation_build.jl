@@ -506,3 +506,72 @@ end
     @test build!(sim; console_level = Logging.AboveMaxLevel) ==
           PSI.SimulationBuildStatus.BUILT
 end
+
+# A UC and a 5-minute ED over the 5-bus systems; `uc_without` names a unit the UC does not
+# model, and `ed_thermal` is the ED's thermal formulation.
+function _state_source_simulation(;
+    uc_without = nothing,
+    ed_thermal = ThermalDispatchNoMin,
+    feedforward = true,
+    ed_must_run = nothing,
+)
+    sys_uc = PSB.build_system(PSITestSystems, "c_sys5_uc")
+    sys_ed = PSB.build_system(PSITestSystems, "c_sys5_ed")
+    isnothing(uc_without) ||
+        set_available!(get_component(ThermalStandard, sys_uc, uc_without), false)
+    isnothing(ed_must_run) ||
+        set_commitment_mode!(get_component(ThermalStandard, sys_ed, ed_must_run),
+            CommitmentModes.MUST_RUN)
+    template_ed = get_template_nomin_ed_simulation()
+    set_device_model!(template_ed, ThermalStandard, ed_thermal)
+    models = create_simulation_build_test_problems(
+        get_template_basic_uc_simulation(), template_ed, sys_uc, sys_ed)
+    feedforwards = Dict(
+        "ED" => [
+            SemiContinuousFeedforward(;
+                component_type = ThermalStandard,
+                source = OnVariable,
+                affected_values = [ActivePowerVariable],
+            ),
+        ],
+    )
+    sequence = SimulationSequence(;
+        models,
+        feedforwards = feedforward ? feedforwards : Dict(),
+        ini_cond_chronology = InterProblemChronology(),
+    )
+    return Simulation(; name = "state_sources", steps = 1, models, sequence,
+        simulation_folder = mktempdir(; cleanup = true))
+end
+
+_build_error(sim) =
+    try
+        build!(sim; console_level = Logging.AboveMaxLevel)
+        nothing
+    catch e
+        e
+    end
+
+@testset "A feedforward to a component its source model lacks fails at build" begin
+    @test build!(_state_source_simulation(); console_level = Logging.AboveMaxLevel) ==
+          PSI.SimulationBuildStatus.BUILT
+    err = _build_error(_state_source_simulation(; uc_without = "Alta"))
+    @test err isa IS.ConflictingInputsError
+    msg = sprint(showerror, err)
+    @test occursin("ED", msg) && occursin("Alta", msg) && occursin("OnVariable", msg)
+end
+
+@testset "An initial power without a status source fails at build unless the unit is must-run" begin
+    # The ED gives every unit an initial power, and only the UC commits units.
+    dispatch = (; ed_thermal = ThermalStandardDispatch, feedforward = false)
+    @test build!(_state_source_simulation(; dispatch...);
+        console_level = Logging.AboveMaxLevel) == PSI.SimulationBuildStatus.BUILT
+    err = _build_error(_state_source_simulation(; uc_without = "Alta", dispatch...))
+    @test err isa IS.ConflictingInputsError
+    msg = sprint(showerror, err)
+    @test occursin("ED", msg) && occursin("Alta", msg) && occursin("OnVariable", msg)
+    # A must-run unit's status is taken as on, so it needs no model to commit it.
+    sim = _state_source_simulation(; uc_without = "Alta", ed_must_run = "Alta", dispatch...)
+    @test build!(sim; console_level = Logging.AboveMaxLevel) ==
+          PSI.SimulationBuildStatus.BUILT
+end
