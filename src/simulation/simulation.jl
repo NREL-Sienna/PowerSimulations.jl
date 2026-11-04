@@ -267,7 +267,10 @@ function _ic_values_reconciled(all_values::Vector)
 end
 
 # Compare initial conditions for all `InitialConditionType`s with the
-# `requires_reconciliation` trait across `models`, log @info messages for mismatches
+# `requires_reconciliation` trait across `models`, log @info messages for mismatches.
+# Models need not carry the same components: the simulation state holds each key over the
+# union of the models' components, so values are compared for the components every model
+# with the key carries.
 function _initial_conditions_reconciliation!(
     models::Vector{<:IOM.AbstractOptimizationModel})
     model_names = get_name.(models)
@@ -296,12 +299,10 @@ function _initial_conditions_reconciliation!(
             ic_vals_per_model[i] = ic_vals_per_component
         end
 
-        # Assert that all models have the same components for current ic_key
-        @assert allequal(Set.(keys.(values(ic_vals_per_model)))) "For IC key $ic_key, not all models have the same components"
-
-        # For each component in current ic_key, compare values across models
-        component_names = keys(first(values(ic_vals_per_model)))
-        for component_name in component_names
+        # For each component every model with the current ic_key carries, compare values
+        # across models
+        component_names = intersect(Set.(keys.(values(ic_vals_per_model)))...)
+        for component_name in sort!(collect(component_names))
             all_values = [result[component_name] for result in values(ic_vals_per_model)]
             if !_ic_values_reconciled(all_values)
                 has_mismatches = true
@@ -345,6 +346,7 @@ function _build_single_model_for_simulation(
         # TODO-PJ: Temporary while are able to switch from PJ to POI
         container = get_optimization_container(model)
         container.built_for_recurrent_solves = true
+        _restrict_feedforwards!(sim, model)
         POM.build_model!(model)
         sim.internal.date_ref[model_number] = initial_time
         set_status!(model, ModelBuildStatus.BUILT)
@@ -401,6 +403,181 @@ function _initialize_simulation_state!(sim::Simulation)
         step_resolution,
         get_initial_time(sim),
     )
+    return
+end
+
+# The number of executions of model `n` over the whole simulation.
+function _total_executions(sim::Simulation, n::Int)
+    return count(==(n), get_execution_order(get_sequence(sim))) * get_steps(sim)
+end
+
+# Every execution but the simulation's first updates the parameters of the model it runs.
+function _reads_parameters_from_state(sim::Simulation, n::Int)
+    first_run = first(get_execution_order(get_sequence(sim))) == n ? 1 : 0
+    return _total_executions(sim, n) > first_run
+end
+
+# A model keeps its own initial conditions at its first execution.
+_reads_initial_conditions_from_state(sim::Simulation, n::Int) =
+    _total_executions(sim, n) > 1
+
+_state_columns(states, key) =
+    has_dataset(states, key) ? Set(axes(get_dataset_values(states, key))[1]) : Set{String}()
+
+_shown_names(names) =
+    join(first(sort!(names), 5), ", ") *
+    (length(names) > 5 ? " and $(length(names) - 5) more" : "")
+
+function _missing_source_error(model, what, source_key, missing_names, remedy;
+    writer = "no model")
+    return IS.ConflictingInputsError(
+        "$(get_name(model)) reads $(encode_key_as_string(source_key)) from the simulation \
+        state for $(what), but $(writer) writes it for $(_shown_names(missing_names)). \
+        $(remedy)",
+    )
+end
+
+# The components that the decision models other than `model` write to the decision state
+# for `key`.
+function _components_written_by_others(sim::Simulation, model, key)
+    names = Set{String}()
+    for other in get_decision_models(get_models(sim))
+        other === model && continue
+        container = get_optimization_container(other)
+        for field in fieldnames(DatasetContainer)
+            values = getfield(container, field)
+            haskey(values, key) || continue
+            union!(names, get_column_names(container, field, values[key], key)[1])
+        end
+    end
+    return names
+end
+
+const FEEDFORWARD_SOURCES_KEY = "feedforward_sources"
+
+_template_device_models(model) =
+    Iterators.flatten((
+        values(POM.get_device_models(get_template(model))),
+        values(POM.get_branch_models(get_template(model))),
+    ))
+
+# Applies each feedforward of `model` that can leave components out only to the components
+# that the models already built write for its source key. A component outside them is built
+# as if the feedforward were not attached. A source key that no built model writes is left
+# to `_check_parameter_sources`.
+function _restrict_feedforwards!(sim::Simulation, model)
+    sources = Dict{OptimizationContainerKey, Set{String}}()
+    for device_model in _template_device_models(model)
+        feedforwards = POM.get_feedforwards(device_model)
+        for (ix, ff) in enumerate(feedforwards)
+            ff isa POM.ComponentSubsetFeedforward || continue
+            source_key = POM.get_optimization_container_key(ff)
+            names = get!(sources, source_key) do
+                _components_written_by_others(sim, model, source_key)
+            end
+            isempty(names) && continue
+            feedforwards[ix] = POM.restrict_feedforward(ff, names)
+        end
+    end
+    filter!(!isempty ∘ last, sources)
+    IOM.get_internal(model).ext[FEEDFORWARD_SOURCES_KEY] = sources
+    return
+end
+
+# Every component a feedforward was restricted away from must have no source among the
+# models built after it; reports the components each feedforward leaves out.
+function _check_feedforward_components(sim::Simulation, model)
+    restricted = get(IOM.get_internal(model).ext, FEEDFORWARD_SOURCES_KEY, nothing)
+    isnothing(restricted) && return
+    container = get_optimization_container(model)
+    for device_model in _template_device_models(model), ff in POM.get_feedforwards(device_model)
+        source_key = POM.get_optimization_container_key(ff)
+        haskey(restricted, source_key) || continue
+        for affected_key in POM.get_affected_values(ff)
+            affected_key isa VariableKey || continue
+            haskey(get_variables(container), affected_key) || continue
+            names = String.(axes(get_variable(container, affected_key))[1])
+            left_out = setdiff(names, restricted[source_key])
+            isempty(left_out) && continue
+            late = intersect(left_out, _components_written_by_others(sim, model, source_key))
+            if !isempty(late)
+                throw(
+                    IS.ConflictingInputsError(
+                        "$(get_name(model)) was built before the model that writes \
+                         $(encode_key_as_string(source_key)) for \
+                         $(_shown_names(collect(late))), so its feedforward on \
+                         $(encode_key_as_string(affected_key)) leaves them out. List the \
+                         models that write a feedforward's source before the models that \
+                         read it.",
+                    ),
+                )
+            end
+            @info "$(get_name(model)) leaves $(length(left_out)) components out of the \
+                feedforward on $(encode_key_as_string(affected_key)), since no other model \
+                writes $(encode_key_as_string(source_key)) for them: \
+                $(_shown_names(left_out))"
+        end
+    end
+    return
+end
+
+# A model reads each parameter set by a feedforward from the decision state of the
+# feedforward's source key, which another model writes for every component of the parameter.
+function _check_parameter_sources(sim::Simulation, model, reads_parameters::Bool)
+    reads_parameters || return
+    container = get_optimization_container(model)
+    for (key, parameter) in get_parameters(container)
+        attributes = get_attributes(parameter)
+        attributes isa VariableValueAttributes || continue
+        source_key = get_attribute_key(attributes)
+        sources = _components_written_by_others(sim, model, source_key)
+        names = String.(axes(get_parameter_array(parameter))[1])
+        missing_names = [name for name in names if !(name in sources)]
+        isempty(missing_names) && continue
+        throw(
+            _missing_source_error(model, encode_key_as_string(key), source_key,
+                missing_names,
+                "Every component this feedforward affects must be in its source model.";
+                writer = "no other model"),
+        )
+    end
+    return
+end
+
+# The initial power of a unit that is not must-run is taken with its status, read from the
+# `OnVariable` of the system state. A unit that no model commits has no status to read.
+function _check_initial_power_sources(sim::Simulation, model)
+    states = get_system_states(get_simulation_state(sim))
+    for (key, ics) in get_initial_conditions(model)
+        get_entry_type(key) === DevicePower || continue
+        status_key = VariableKey(OnVariable, get_component_type(key))
+        columns = _state_columns(states, status_key)
+        missing_names = String[
+            get_component_name(ic) for ic in ics if
+            !IOM.get_must_run(IOM.get_component(ic)) && !(get_component_name(ic) in columns)
+        ]
+        isempty(missing_names) && continue
+        throw(
+            _missing_source_error(model, "the status behind the initial power of a unit",
+                status_key, missing_names,
+                "Commit those units in some model, or make them must-run."),
+        )
+    end
+    return
+end
+
+# Check, at build, that every value a model will read from the simulation state by component
+# name has a model that writes it.
+function _check_state_sources(sim::Simulation)
+    models = get_models(sim)
+    for n in unique(get_execution_order(get_sequence(sim)))
+        model = get_simulation_model(models, n)
+        _check_feedforward_components(sim, model)
+        _check_parameter_sources(sim, model, _reads_parameters_from_state(sim, n))
+        get_ini_cond_chronology(sim) isa InterProblemChronology &&
+            _reads_initial_conditions_from_state(sim, n) &&
+            _check_initial_power_sources(sim, model)
+    end
     return
 end
 
@@ -630,6 +807,7 @@ function _build!(
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Simulation State" begin
         _initialize_simulation_state!(sim)
     end
+    _check_state_sources(sim)
 
     TimerOutputs.@timeit BUILD_PROBLEMS_TIMER "Initialize Problem Storage" begin
         open_store(HdfSimulationStore, get_store_dir(sim), "w") do store
@@ -1129,6 +1307,7 @@ function _execute!(
     enable_progress_bar = progress_meter_enabled(),
     disable_timer_outputs = false,
     results_channel = nothing,
+    release_models = false,
 )
     @assert !isnothing(sim.internal)
 
@@ -1147,6 +1326,8 @@ function _execute!(
     end
     sequence = get_sequence(sim)
     models = get_models(sim)
+    last_execution_index =
+        Dict(n => findlast(==(n), execution_order) for n in unique(execution_order))
 
     prog_bar = ProgressMeter.Progress(num_executions; enabled = enable_progress_bar)
     disable_timer_outputs && TimerOutputs.disable_timer!(RUN_SIMULATION_TIMER)
@@ -1248,6 +1429,13 @@ function _execute!(
                     if warm_start_enabled(model)
                         _apply_warm_start!(model)
                     end
+                    if release_models && model isa DecisionModel
+                        if step == steps && ix == last_execution_index[model_number]
+                            _release_model!(model)
+                        elseif get_rebuild_model(model)
+                            _release_solved_model!(model)
+                        end
+                    end
                 end #execution problem timer
             catch
                 IS.@record :simulation_status ProblemExecutionEvent(
@@ -1275,6 +1463,30 @@ function _execute!(
     return
 end
 
+# Frees the JuMP model of a decision model that is rebuilt at its next execution, with the
+# solver's copy and the variables, constraints and expressions built on it. The parameters and
+# initial conditions stay: the next update writes the new values into them and the rebuild
+# reads them. The full collection makes the freed memory available before the next model
+# allocates.
+function _release_solved_model!(model::DecisionModel)
+    reset_optimization_model!(get_optimization_container(model))
+    GC.gc()
+    return
+end
+
+# Frees what a decision model holds once it solves no more in the simulation: its JuMP
+# model with the solver's copy, and its optimization containers. Its results are already in
+# the simulation store.
+function _release_model!(model::DecisionModel)
+    container = get_optimization_container(model)
+    reset_optimization_model!(container)
+    empty!(IOM.get_parameters(container))
+    empty!(IOM.get_initial_conditions(container))
+    empty_time_series_cache!(model)
+    GC.gc()
+    return
+end
+
 """
 Solves the simulation model for sequential Simulations.
 
@@ -1284,6 +1496,18 @@ Solves the simulation model for sequential Simulations.
 
 The optional keyword argument `exports` controls exporting of results to CSV files as
 the simulation runs.
+
+With `release_models = true`, decision models free their memory once their solutions are in
+the simulation store, so the models that run next do not run on top of it:
+
+  - A model built with `rebuild_model = true` frees its JuMP model, the solver's copy and the
+    variables, constraints and expressions built on it right after every execution; its next
+    execution rebuilds it from the updated parameters and initial conditions.
+  - Every decision model frees its JuMP model, the solver's copy and its optimization
+    containers right after its last execution in the simulation.
+
+Results are read from the simulation store, so they are unaffected; a released model cannot
+be inspected afterwards.
 
 # Example
 ```julia
