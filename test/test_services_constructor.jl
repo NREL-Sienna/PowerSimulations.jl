@@ -1283,6 +1283,87 @@ end
         Dict("mixed_line" => 1, "mixed_monitored" => -1),
         net_reduction_data,
     )
+
+    # Three-winding windings are ACTransmission leaves but are unsupported in TI
+    # membership; fail loud rather than silently returning false via the generic leaf.
+    bus_p = ACBus(;
+        number = 201,
+        name = "bus_201",
+        available = true,
+        bustype = ACBusTypes.PV,
+        angle = 0.0,
+        magnitude = 1.0,
+        voltage_limits = (min = 0.9, max = 1.1),
+        base_voltage = 230.0,
+    )
+    bus_s = ACBus(;
+        number = 202,
+        name = "bus_202",
+        available = true,
+        bustype = ACBusTypes.PQ,
+        angle = 0.0,
+        magnitude = 1.0,
+        voltage_limits = (min = 0.9, max = 1.1),
+        base_voltage = 230.0,
+    )
+    bus_t = ACBus(;
+        number = 203,
+        name = "bus_203",
+        available = true,
+        bustype = ACBusTypes.PQ,
+        angle = 0.0,
+        magnitude = 1.0,
+        voltage_limits = (min = 0.9, max = 1.1),
+        base_voltage = 230.0,
+    )
+    star_bus = ACBus(;
+        number = 204,
+        name = "star_204",
+        available = true,
+        bustype = ACBusTypes.PQ,
+        angle = 0.0,
+        magnitude = 1.0,
+        voltage_limits = (min = 0.9, max = 1.1),
+        base_voltage = 230.0,
+    )
+    transformer3w = Transformer3W(;
+        name = "ti_helper_t3w",
+        available = true,
+        primary_star_arc = Arc(; from = bus_p, to = star_bus),
+        secondary_star_arc = Arc(; from = bus_s, to = star_bus),
+        tertiary_star_arc = Arc(; from = bus_t, to = star_bus),
+        star_bus = star_bus,
+        active_power_flow_primary = 0.0,
+        reactive_power_flow_primary = 0.0,
+        active_power_flow_secondary = 0.0,
+        reactive_power_flow_secondary = 0.0,
+        active_power_flow_tertiary = 0.0,
+        reactive_power_flow_tertiary = 0.0,
+        r_primary = 0.01,
+        x_primary = 0.1,
+        r_secondary = 0.01,
+        x_secondary = 0.1,
+        r_tertiary = 0.01,
+        x_tertiary = 0.1,
+        r_12 = 0.01,
+        x_12 = 0.1,
+        r_23 = 0.01,
+        x_23 = 0.1,
+        r_13 = 0.01,
+        x_13 = 0.1,
+        base_power_12 = 100.0,
+        base_power_23 = 100.0,
+        base_power_13 = 100.0,
+        rating = nothing,
+        rating_primary = 1.0,
+        rating_secondary = 1.0,
+        rating_tertiary = 0.5,
+    )
+    winding = PNM.ThreeWindingTransformerWinding(transformer3w, 1)
+    @test_throws ArgumentError PSI._reduced_entry_in_interface(
+        winding,
+        PSY.ACTransmission[],
+    )
 end
 
 @testset "DegreeTwo series InterfaceTotalFlow keeps both segment contributions" begin

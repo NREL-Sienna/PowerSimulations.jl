@@ -2148,6 +2148,21 @@ function _reduced_entry_in_interface(
 end
 
 function _reduced_entry_in_interface(
+    reduction_entry::PNM.ThreeWindingTransformerWinding,
+    ::Vector{<:PSY.ACTransmission},
+)
+    # Prefer PNM.get_name: IS.summary/PSY.get_name expect a `.name` field that
+    # ThreeWindingTransformerWinding does not have.
+    throw(
+        ArgumentError(
+            "TransmissionInterface does not yet support three-winding transformers " *
+            "(encountered $(PNM.get_name(reduction_entry))). Remove three-winding devices " *
+            "from the interface contributing devices.",
+        ),
+    )
+end
+
+function _reduced_entry_in_interface(
     reduction_entry::PNM.AbstractBranchesParallel,
     contributing_devices::Vector{<:PSY.ACTransmission},
 )
