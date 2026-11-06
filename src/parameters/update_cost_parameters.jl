@@ -352,7 +352,10 @@ function _update_scalar_cost_values!(
     for (t, raw_value) in enumerate(raw_values)
         value = unwrap_for_param(param, raw_value, additional_axes)
         _set_param_value!(parameter_array, _maybe_tuple(param, value), name, t)
-        _edits_in_place(container) && update_variable_cost!(
+    end
+    _edits_in_place(container) || return
+    for t in eachindex(raw_values)
+        update_variable_cost!(
             param,
             container,
             parameter_array,
@@ -403,15 +406,8 @@ function handle_variable_cost_parameter(
         name,
         power_units,
     )
-    _edits_in_place(container) &&
-        _update_pwl_offsets!(
-            param,
-            container,
-            component,
-            raw_values,
-            power_units,
-            formulation,
-        )
+    _edits_in_place(container) || return
+    _update_pwl_offsets!(param, container, component, raw_values, power_units, formulation)
     return
 end
 
@@ -472,7 +468,10 @@ function _update_piecewise_cost_values!(
     for (t, value::PSY.PiecewiseStepData) in enumerate(raw_values)
         unwrapped_value = unwrap_for_param(T(), value, additional_axes)
         _set_param_value!(parameter_array, unwrapped_value, name, t)
-        _edits_in_place(container) && update_variable_cost!(
+    end
+    _edits_in_place(container) || return
+    for (t, value::PSY.PiecewiseStepData) in enumerate(raw_values)
+        update_variable_cost!(
             param,
             container,
             _pad_to_blocks(value, n_blocks),
@@ -551,7 +550,10 @@ function _update_fuel_cost_values!(
 )
     for (t, value) in enumerate(raw_values)
         _set_param_value!(parameter_array, value, name, t)
-        _edits_in_place(container) && update_variable_cost!(
+    end
+    _edits_in_place(container) || return
+    for t in eachindex(raw_values)
+        update_variable_cost!(
             FuelCostParameter(),
             container,
             parameter_array,
