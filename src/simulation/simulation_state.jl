@@ -770,6 +770,30 @@ function update_missing_state_columns!(
     return
 end
 
+# A model has a status column only for the components its system schedules. The others take
+# their unscheduled status from the model's own system; a component that system does not
+# contain has no status there, so it keeps the value its last writer left.
+function update_missing_state_columns!(
+    state_data::InMemoryDataset,
+    ::ParameterKey{<:POM.ComponentStatusParameter, D},
+    model::IOM.AbstractOptimizationModel,
+    columns::AbstractVector{String},
+    state_rows::UnitRange{Int},
+    ::AbstractVector{Dates.DateTime},
+) where {D <: PSY.Component}
+    sys = get_system(model)
+    values = state_data.values
+    for name in columns
+        component = PSY.get_component(D, sys, name)
+        isnothing(component) && continue
+        status = POM.unscheduled_component_status(component)
+        for row in state_rows
+            values[name, row] = status
+        end
+    end
+    return
+end
+
 # Advance a dataset to the window starting at `simulation_time`, as a model writing the key
 # does when the window passes the end of the dataset's step. A model writing the key then
 # overwrites the rows it covers; here no row is written, so the rows keep their timestamps:
