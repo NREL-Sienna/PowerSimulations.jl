@@ -1444,7 +1444,7 @@ end
     @test !isapprox(itf_abs, seg2_abs; atol = 1e-10)
 end
 
-@testset "MixedBranchesParallel TransmissionInterface builds on PTDFPowerModel" begin
+@testset "MixedBranchesParallel TransmissionInterface builds" begin
     # Line + MonitoredLine on one arc form MixedBranchesParallel. PNM registers the
     # group under both concrete types; InterfaceTotalFlow must membership-check the
     # full contributor set and count the reduced flow once (not once per type).
@@ -1473,104 +1473,73 @@ end
     )
     add_service!(sys, interface, [line, monitored])
 
-    template = get_thermal_dispatch_template_network(
-        NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(sys)),
-    )
-    set_device_model!(template, Line, StaticBranch)
-    set_device_model!(template, MonitoredLine, StaticBranch)
-    set_service_model!(
-        template,
-        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow),
-    )
+    for model_name in ("PTDFPowerModel", "DCPPowerModel")
+        @testset "$model_name" begin
+            network = if model_name == "PTDFPowerModel"
+                NetworkModel(PTDFPowerModel; PTDF_matrix = PTDF(sys))
+            else
+                DCPPowerModel
+            end
+            template = get_thermal_dispatch_template_network(network)
+            set_device_model!(template, Line, StaticBranch)
+            set_device_model!(template, MonitoredLine, StaticBranch)
+            set_service_model!(
+                template,
+                ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow),
+            )
 
-    model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.ModelBuildStatus.BUILT
+            model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
+            @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
+                  PSI.ModelBuildStatus.BUILT
 
-    container = PSI.get_optimization_container(model)
-    interface_expr =
-        PSI.get_expression(container, PSI.InterfaceTotalFlow(), TransmissionInterface)
-    line_flow = PSI.get_expression(container, PSI.PTDFBranchFlow(), Line)
-    ml_flow = PSI.get_expression(container, PSI.PTDFBranchFlow(), MonitoredLine)
+            container = PSI.get_optimization_container(model)
+            interface_expr = PSI.get_expression(
+                container,
+                PSI.InterfaceTotalFlow(),
+                TransmissionInterface,
+            )
+            # PTDF stores the reduced flow as an AffExpr; DCP stores a flow variable.
+            # First-visit type wins; both type containers hold the same reduced object.
+            if model_name == "PTDFPowerModel"
+                line_flow = PSI.get_expression(container, PSI.PTDFBranchFlow(), Line)
+                ml_flow = PSI.get_expression(container, PSI.PTDFBranchFlow(), MonitoredLine)
+            else
+                line_flow = PSI.get_variable(container, PSI.FlowActivePowerVariable(), Line)
+                ml_flow = PSI.get_variable(
+                    container,
+                    PSI.FlowActivePowerVariable(),
+                    MonitoredLine,
+                )
+            end
 
-    reduced_names = intersect(String.(axes(line_flow, 1)), String.(axes(ml_flow, 1)))
-    reduced_names = filter(n -> occursin("double_circuit", n), reduced_names)
-    @test length(reduced_names) == 1
-    reduced_name = only(reduced_names)
+            reduced_names =
+                intersect(String.(axes(line_flow, 1)), String.(axes(ml_flow, 1)))
+            reduced_names = filter(n -> occursin("double_circuit", n), reduced_names)
+            @test length(reduced_names) == 1
+            reduced_name = only(reduced_names)
 
-    itf = interface_expr["mixed_parallel_ti", 1]
-    # First-visit type wins; both type containers hold the same reduced AffExpr.
-    # Coefficients must match 1× that flow, not 2× from double-counting.
-    ref_flow = line_flow[reduced_name, 1]
-    for (coef, var) in JuMP.linear_terms(ref_flow)
-        @test isapprox(JuMP.coefficient(itf, var), coef; atol = 1e-10)
+            itf = interface_expr["mixed_parallel_ti", 1]
+            # Coefficients must match 1× that flow, not 2× from double-counting.
+            if model_name == "PTDFPowerModel"
+                ref_flow = line_flow[reduced_name, 1]
+                for (coef, var) in JuMP.linear_terms(ref_flow)
+                    @test isapprox(JuMP.coefficient(itf, var), coef; atol = 1e-10)
+                end
+                itf_abs = sum(abs(c) for (c, _) in JuMP.linear_terms(itf))
+                ref_abs = sum(abs(c) for (c, _) in JuMP.linear_terms(ref_flow))
+                @test isapprox(itf_abs, ref_abs; atol = 1e-10)
+                @test !isapprox(itf_abs, 2 * ref_abs; atol = 1e-10)
+            else
+                ref_var = line_flow[reduced_name, 1]
+                @test isapprox(JuMP.coefficient(itf, ref_var), 1.0; atol = 1e-10)
+                @test !isapprox(JuMP.coefficient(itf, ref_var), 2.0; atol = 1e-10)
+                itf_abs = sum(abs(c) for (c, _) in JuMP.linear_terms(itf))
+                ref_coef = abs(JuMP.coefficient(itf, ref_var))
+                @test isapprox(itf_abs, ref_coef; atol = 1e-10)
+                @test !isapprox(itf_abs, 2 * ref_coef; atol = 1e-10)
+            end
+        end
     end
-    itf_abs = sum(abs(c) for (c, _) in JuMP.linear_terms(itf))
-    ref_abs = sum(abs(c) for (c, _) in JuMP.linear_terms(ref_flow))
-    @test isapprox(itf_abs, ref_abs; atol = 1e-10)
-    @test !isapprox(itf_abs, 2 * ref_abs; atol = 1e-10)
-end
-
-@testset "MixedBranchesParallel TransmissionInterface builds on DCPPowerModel" begin
-    # Same MixedBranchesParallel setup as the PTDF twin; exercises the shared
-    # FlowActivePowerVariable / AbstractActivePowerModel InterfaceTotalFlow path.
-    sys = PSB.build_system(PSITestSystems, "c_sys5")
-    line = get_component(Line, sys, "1")
-    add_equivalent_ac_transmission_with_parallel_circuits!(
-        sys,
-        line,
-        PSY.Line,
-        PSY.MonitoredLine,
-    )
-    monitored = get_component(MonitoredLine, sys, "1_copy")
-    @test !isnothing(monitored)
-    # Helper copies `services` by reference from the seed Line; give the copy its
-    # own vector so add_service! can attach to each device independently.
-    set_services!(monitored, Device[])
-
-    interface = TransmissionInterface(;
-        name = "mixed_parallel_ti",
-        available = true,
-        active_power_flow_limits = (min = -1e3, max = 1e3),
-        direction_mapping = Dict(
-            PSY.get_name(line) => 1,
-            PSY.get_name(monitored) => 1,
-        ),
-    )
-    add_service!(sys, interface, [line, monitored])
-
-    template = get_thermal_dispatch_template_network(DCPPowerModel)
-    set_device_model!(template, Line, StaticBranch)
-    set_device_model!(template, MonitoredLine, StaticBranch)
-    set_service_model!(
-        template,
-        ServiceModel(TransmissionInterface, ConstantMaxInterfaceFlow),
-    )
-
-    model = DecisionModel(template, sys; optimizer = HiGHS_optimizer)
-    @test build!(model; output_dir = mktempdir(; cleanup = true)) ==
-          PSI.ModelBuildStatus.BUILT
-
-    container = PSI.get_optimization_container(model)
-    interface_expr =
-        PSI.get_expression(container, PSI.InterfaceTotalFlow(), TransmissionInterface)
-    line_flow = PSI.get_variable(container, PSI.FlowActivePowerVariable(), Line)
-    ml_flow = PSI.get_variable(container, PSI.FlowActivePowerVariable(), MonitoredLine)
-
-    reduced_names = intersect(String.(axes(line_flow, 1)), String.(axes(ml_flow, 1)))
-    reduced_names = filter(n -> occursin("double_circuit", n), reduced_names)
-    @test length(reduced_names) == 1
-    reduced_name = only(reduced_names)
-
-    itf = interface_expr["mixed_parallel_ti", 1]
-    # First-visit type wins; both type containers hold the same reduced VariableRef.
-    # Coefficients must match 1× that flow, not 2× from double-counting.
-    ref_var = line_flow[reduced_name, 1]
-    @test isapprox(JuMP.coefficient(itf, ref_var), 1.0; atol = 1e-10)
-    @test !isapprox(JuMP.coefficient(itf, ref_var), 2.0; atol = 1e-10)
-    itf_abs = sum(abs(c) for (c, _) in JuMP.linear_terms(itf))
-    @test isapprox(itf_abs, abs(JuMP.coefficient(itf, ref_var)); atol = 1e-10)
-    @test !isapprox(itf_abs, 2 * abs(JuMP.coefficient(itf, ref_var)); atol = 1e-10)
 end
 
 @testset "Test ORDC with TimeSeries" begin
