@@ -517,3 +517,102 @@ end
         test_2_stage_fix_value_feedforward(in_memory)
     end
 end
+
+function _fix_value_feedforward_simulation(
+    steps;
+    rebuild_model = false,
+    release_model = false,
+)
+    template_uc = get_template_basic_uc_simulation()
+    template_ed = get_template_nomin_ed_simulation()
+    set_device_model!(template_ed, ThermalStandard, ThermalBasicUnitCommitment)
+    set_network_model!(
+        template_ed,
+        NetworkModel(CopperPlateNetworkModel; use_slacks = true),
+    )
+    models = SimulationModels(;
+        decision_models = [
+            DecisionModel(
+                template_uc,
+                PSB.build_system(PSITestSystems, "c_sys5_hy_uc");
+                name = "UC",
+                optimizer = HiGHS_optimizer,
+                rebuild_model = rebuild_model,
+                release_model = release_model,
+            ),
+            DecisionModel(
+                template_ed,
+                PSB.build_system(PSITestSystems, "c_sys5_hy_ed");
+                name = "ED",
+                optimizer = HiGHS_optimizer,
+                rebuild_model = rebuild_model,
+                release_model = release_model,
+            ),
+        ],
+    )
+    sequence = SimulationSequence(;
+        models = models,
+        feedforwards = Dict(
+            "ED" => [
+                FixValueFeedforward(;
+                    component_type = ThermalStandard,
+                    source = OnVariable,
+                    affected_values = [OnVariable],
+                ),
+            ],
+        ),
+        ini_cond_chronology = InterProblemChronology(),
+    )
+    return Simulation(;
+        name = "release_model",
+        steps = steps,
+        models = models,
+        sequence = sequence,
+        simulation_folder = mktempdir(; cleanup = true),
+    )
+end
+
+function _single_model_simulation(model, initial_time)
+    models = SimulationModels(; decision_models = [model])
+    sequence = SimulationSequence(;
+        models = models,
+        ini_cond_chronology = InterProblemChronology(),
+    )
+    return Simulation(;
+        name = "single_model",
+        steps = 2,
+        models = models,
+        sequence = sequence,
+        initial_time = initial_time,
+        simulation_folder = mktempdir(; cleanup = true),
+    )
+end
+
+@testset "A rebuilt model takes its updates without a JuMP model" begin
+    feedforward = _fix_value_feedforward_simulation(2; rebuild_model = true)
+    market_bid = _single_model_simulation(
+        build_generic_mbc_model(build_sys_incr(true, true, true); rebuild_model = true),
+        TIME1,
+    )
+    fuel_sys, _, _, fuel_windows = fuel_cost_time_series_system()
+    fuel_cost = _single_model_simulation(
+        DecisionModel(
+            test_template_unit_commitment(CopperPlateNetworkModel),
+            fuel_sys;
+            name = "UC",
+            optimizer = HiGHS_optimizer_small_gap,
+            rebuild_model = true,
+        ),
+        first(first(fuel_windows)),
+    )
+    for (sim, model_name) in ((feedforward, "ED"), (market_bid, "UC"), (fuel_cost, "UC"))
+        @test build!(sim; console_level = Logging.Error) ==
+              PSI.SimulationBuildStatus.BUILT
+        @test execute!(sim; in_memory = true) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+        model = PSI.get_simulation_model(sim, Symbol(model_name))
+        # Back to the last solved window, so the update reads data the run has.
+        IOM.set_execution_count!(model, IOM.get_execution_count(model) - 1)
+        IOM.reset_optimization_model!(IOM.get_optimization_container(model))
+        @test isnothing(PSI.update_parameters!(model, PSI.get_simulation_state(sim)))
+    end
+end

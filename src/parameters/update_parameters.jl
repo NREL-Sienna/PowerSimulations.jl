@@ -25,6 +25,7 @@ function _fix_parameter_value!(
     parameter_array::DenseAxisArray{Float64, 2},
     parameter_attributes::VariableValueAttributes,
 )
+    _edits_in_place(container) || return
     affected_variable_keys = parameter_attributes.affected_keys
     @assert !isempty(affected_variable_keys)
     # Hoist underlying dense storage for the parameter array once. The variable
