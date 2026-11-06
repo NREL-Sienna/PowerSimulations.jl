@@ -1084,8 +1084,63 @@ function update_model!(model::IOM.AbstractOptimizationModel, sim::Simulation)
         set_initial_time!(model, get_current_time(sim))
         POM.build_problem!(container, get_template(model), get_system(model))
         set_initial_time!(model, initial_time)
+        IOM.set_released!(model, false)
     end
 
+    return
+end
+
+# Frees the model's JuMP model and solver copy. The parameter and initial condition values
+# stay, because a rebuilt model's next build reads them.
+function _release_built_model!(model::IOM.AbstractOptimizationModel)
+    reset_optimization_model!(get_optimization_container(model))
+    IOM.set_released!(model, true)
+    return
+end
+
+# Frees everything a model holds for its solves, once it has no solve left in the simulation.
+function _release_model!(model::IOM.AbstractOptimizationModel)
+    _release_built_model!(model)
+    container = get_optimization_container(model)
+    empty!(IOM.get_parameters(container))
+    empty!(IOM.get_initial_conditions(container))
+    empty_time_series_cache!(model)
+    return
+end
+
+# A rebuilt model is built again before each of its solves, so its build from `build!` is
+# only used by the model that solves first: that solve skips the update and rebuild.
+function _release_waiting_models!(sim::Simulation)
+    models = get_models(sim)
+    execution_order = get_execution_order(sim)
+    for model_number in unique(execution_order)
+        model_number == first(execution_order) && continue
+        model = get_simulation_model(models, model_number)
+        if IOM.get_release_model(model) && get_rebuild_model(model)
+            _release_built_model!(model)
+        end
+    end
+    return
+end
+
+# The position in the execution order of each model's last execution within a step.
+function _last_executions(sim::Simulation)
+    last_executions = Dict{Int, Int}()
+    for (ix, model_number) in enumerate(get_execution_order(sim))
+        last_executions[model_number] = ix
+    end
+    return last_executions
+end
+
+function _release_solved_model!(
+    model::IOM.AbstractOptimizationModel,
+    last_execution::Bool,
+)
+    if last_execution
+        _release_model!(model)
+    elseif get_rebuild_model(model)
+        _release_built_model!(model)
+    end
     return
 end
 
@@ -1138,6 +1193,8 @@ function _execute!(
     num_executions = steps * length(execution_order)
     store = get_simulation_store(sim)
     _prepare_execution_store!(sim, store, cache_size_mib, min_cache_flush_size_mib)
+    _release_waiting_models!(sim)
+    last_executions = _last_executions(sim)
     store_params = get_params(store)
     if !isnothing(exports)
         exports = _as_results_export(exports, store_params)
@@ -1248,6 +1305,14 @@ function _execute!(
                     if warm_start_enabled(model)
                         _apply_warm_start!(model)
                     end
+
+                    if status == RunStatus.SUCCESSFULLY_FINALIZED &&
+                       IOM.get_release_model(model)
+                        _release_solved_model!(
+                            model,
+                            step == steps && ix == last_executions[model_number],
+                        )
+                    end
                 end #execution problem timer
             catch
                 IS.@record :simulation_status ProblemExecutionEvent(
@@ -1284,6 +1349,17 @@ Solves the simulation model for sequential Simulations.
 
 The optional keyword argument `exports` controls exporting of results to CSV files as
 the simulation runs.
+
+A model built with `release_model = true` frees its JuMP model and solver copy once the
+simulation no longer needs them, to lower the simulation's peak memory:
+
+  - with `rebuild_model = true`, the model is released after each solve and while it waits
+    for its first solve, and is built again before each solve;
+  - with `rebuild_model = false`, the model is released after its last solve.
+
+A model's last solve also frees its parameter and initial condition values and its time
+series cache. Its results stay in the simulation store, but the model itself cannot be
+inspected after the simulation: reading its JuMP model raises an error.
 
 # Example
 ```julia

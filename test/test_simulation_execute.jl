@@ -521,7 +521,7 @@ end
 function _fix_value_feedforward_simulation(
     steps;
     rebuild_model = false,
-    release_model = false,
+    released = (),
 )
     template_uc = get_template_basic_uc_simulation()
     template_ed = get_template_nomin_ed_simulation()
@@ -538,7 +538,7 @@ function _fix_value_feedforward_simulation(
                 name = "UC",
                 optimizer = HiGHS_optimizer,
                 rebuild_model = rebuild_model,
-                release_model = release_model,
+                release_model = "UC" in released,
             ),
             DecisionModel(
                 template_ed,
@@ -546,7 +546,7 @@ function _fix_value_feedforward_simulation(
                 name = "ED",
                 optimizer = HiGHS_optimizer,
                 rebuild_model = rebuild_model,
-                release_model = release_model,
+                release_model = "ED" in released,
             ),
         ],
     )
@@ -615,4 +615,101 @@ end
         IOM.reset_optimization_model!(IOM.get_optimization_container(model))
         @test isnothing(PSI.update_parameters!(model, PSI.get_simulation_state(sim)))
     end
+end
+
+function _realized_variables(results)
+    values = Dict{String, DataFrame}()
+    for key in list_variable_names(results)
+        df = read_realized_variable(results, key)
+        values[key] = sort(df, names(df))
+    end
+    return values
+end
+
+function _realized_variables(sim::Simulation, model_names)
+    results = SimulationResults(sim)
+    return Dict(
+        name => _realized_variables(get_decision_problem_results(results, name)) for
+        name in model_names
+    )
+end
+
+function _run(sim; in_memory = true)
+    @test build!(sim; console_level = Logging.Error) == PSI.SimulationBuildStatus.BUILT
+    @test execute!(sim; in_memory = in_memory) == PSI.RunStatus.SUCCESSFULLY_FINALIZED
+    return sim
+end
+
+function _is_emptied(model)
+    container = IOM.get_optimization_container(model)
+    return JuMP.num_variables(IOM.get_jump_model(container)) == 0 &&
+           isempty(IOM.get_variables(container)) &&
+           isempty(IOM.get_parameters(container)) &&
+           isempty(IOM.get_initial_conditions(container))
+end
+
+@testset "Released models leave the simulation results unchanged" begin
+    for rebuild_model in (false, true), in_memory in (true, false)
+        kept = _run(
+            _fix_value_feedforward_simulation(2; rebuild_model = rebuild_model);
+            in_memory = in_memory,
+        )
+        released = _run(
+            _fix_value_feedforward_simulation(
+                2;
+                rebuild_model = rebuild_model,
+                released = ("UC", "ED"),
+            );
+            in_memory = in_memory,
+        )
+        @test _realized_variables(released, ("UC", "ED")) ==
+              _realized_variables(kept, ("UC", "ED"))
+        for name in (:UC, :ED)
+            model = PSI.get_simulation_model(released, name)
+            @test IOM.is_released(model)
+            @test _is_emptied(model)
+            @test JuMP.num_variables(
+                IOM.get_jump_model(PSI.get_simulation_model(kept, name)),
+            ) > 0
+        end
+    end
+end
+
+@testset "A rebuilt model waits released and the first model stays built" begin
+    sim = _fix_value_feedforward_simulation(
+        2;
+        rebuild_model = true,
+        released = ("UC", "ED"),
+    )
+    @test build!(sim; console_level = Logging.Error) == PSI.SimulationBuildStatus.BUILT
+    PSI._release_waiting_models!(sim)
+    uc = PSI.get_simulation_model(sim, :UC)
+    ed = PSI.get_simulation_model(sim, :ED)
+    @test !IOM.is_released(uc)
+    @test JuMP.num_variables(IOM.get_jump_model(uc)) > 0
+    @test IOM.is_released(ed)
+    ed_container = IOM.get_optimization_container(ed)
+    @test JuMP.num_variables(IOM.get_jump_model(ed_container)) == 0
+    @test !isempty(IOM.get_parameters(ed_container))
+end
+
+@testset "A released model refuses its JuMP model" begin
+    sim = _run(_fix_value_feedforward_simulation(1; released = ("ED",)))
+    err = try
+        IOM.get_jump_model(PSI.get_simulation_model(sim, :ED))
+        nothing
+    catch e
+        e
+    end
+    @test err isa ArgumentError
+    @test occursin("release_model = true", err.msg)
+end
+
+@testset "A model without release_model is untouched" begin
+    sim = _run(_fix_value_feedforward_simulation(2; released = ("UC",)))
+    @test IOM.is_released(PSI.get_simulation_model(sim, :UC))
+    ed = PSI.get_simulation_model(sim, :ED)
+    @test !IOM.is_released(ed)
+    @test JuMP.num_variables(IOM.get_jump_model(ed)) > 0
+    @test !isempty(IOM.get_variables(IOM.get_optimization_container(ed)))
 end
