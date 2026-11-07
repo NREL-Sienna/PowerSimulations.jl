@@ -179,6 +179,7 @@ function _update_parameter_values!(
             push!(ts_uuids, ts_uuid)
         end
     end
+    IOM.refresh_row_aggregates!(attributes, parent_param)
     return
 end
 
